@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 import { buildRegisteredIntakeCandidate } from "../build-registered-intake-reload-candidate.mjs";
-import { buildPhysicalPlan, validatePhysicalPlan } from "../stage-registered-intake-partial.mjs";
+import { buildPhysicalPlan, validatePhysicalPlan, OUTCOME_MEASURE_PARITY_SQL } from "../stage-registered-intake-partial.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const registry = JSON.parse(fs.readFileSync(path.join(ROOT, "datasets/tenant-inputs/tenant-input-registry.json"), "utf8"));
@@ -32,6 +32,11 @@ test("v6 keeps the exact source set and distinguishes unverified assertions from
   assert.equal(report.gates.find((gate) => gate.id === "foundation_declared_identity")?.status, "pass");
   assert.equal(report.gates.find((gate) => gate.id === "relationship_source_census")?.status, "pass");
   assert.equal(report.canonical.foundations.source_objects.length, 1157);
+  const executive = report.views.command_center.find((row) => row.row_key === "executive_summary");
+  assert.equal(executive.foundations.source_objects, undefined);
+  assert.equal(executive.foundations.application_rows, report.canonical.foundations.application_rows);
+  assert.deepEqual(executive.foundations.relationship_census, report.canonical.foundations.relationship_census);
+  assert.ok(Buffer.byteLength(JSON.stringify(executive)) < 32_000);
   assert.deepEqual(report.canonical.foundations.relationship_census,
     { source_rows: 2302, complete_declared_endpoint_ids: 2123, missing_from_id: 173,
       missing_to_id: 6, unique_declared_edge_keys: 2027, repeated_declared_edge_rows: 96,
@@ -76,6 +81,58 @@ test("v6 physical plan ties each asserted amount to one exact source record and 
   assert.equal(plan.sourceRecords.filter((row) => row.record_type === "maturity_source_record_identity_unresolved").length, 17);
   assert.equal(plan.objects.filter((row) => row.attributes_json.source_population === "registered_foundation_intake").length, 1157);
   assert.equal(plan.sourceFiles.filter((row) => row.file_name.startsWith("extracts/")).length, 0);
+});
+
+test("v6 outcome readback distinguishes text observations from source-only Finance amounts", () => {
+  const report = build("source-assertions-v1");
+  const { plan, viewCounts } = buildPhysicalPlan(report);
+  const metricRows = plan.valueRows.filter((row) => row.row_key.startsWith("metric:") &&
+    row.display_payload_json.source_asserted_finance_value_usd !== null);
+  assert.equal(metricRows.length, 7);
+  for (const row of metricRows) {
+    const assertion = plan.measures.find((measure) =>
+      measure.id === row.display_payload_json.source_finance_assertion_measure_id);
+    assert.equal(assertion?.metric_key, "outcome_source_finance_assertion_usd");
+    assert.equal(assertion.value_number, row.display_payload_json.source_asserted_finance_value_usd);
+    assert.equal(assertion.source_record_id, row.source_record_id);
+    assert.equal(assertion.scenario, "candidate");
+    assert.equal(row.claimable_value_usd, null);
+    assert.ok(plan.projectionMeasureRefs.some((ref) =>
+      ref.projection_entry_id === row.projection_entry_id && ref.measure_id === assertion.id));
+  }
+  assert.match(OUTCOME_MEASURE_PARITY_SQL, /when 'outcome_source_value' then/);
+  assert.match(OUTCOME_MEASURE_PARITY_SQL, /when 'outcome_source_finance_assertion_usd' then/);
+  assert.match(OUTCOME_MEASURE_PARITY_SQL, /m\.value_number is distinct from \(p\.display_payload_json ->> 'source_asserted_finance_value_usd'\)::numeric/);
+  assert.equal(validatePhysicalPlan(report, plan, viewCounts).status, "pass");
+  metricRows[0].display_payload_json.source_finance_assertion_measure_id = plan.measures.find((measure) =>
+    measure.metric_key === "outcome_source_value")?.id;
+  const failed = validatePhysicalPlan(report, plan, viewCounts);
+  assert.equal(failed.status, "fail");
+  assert.ok(failed.errors.some((error) => error.includes("outcome finance assertion is not tied")));
+});
+
+test("v6 source scenario follows reported meaning while review and claim gates stay closed", () => {
+  const report = build("source-assertions-v1");
+  const { plan, viewCounts } = buildPhysicalPlan(report);
+  for (const [metric, scenario] of Object.entries({
+    spend_source_prior_year_actual_usd: "actual",
+    spend_source_forecast_next_year_usd: "forecast",
+    benefit_feed_source_actual_spend_ytd_usd: "actual",
+    ai_outcome_feed_baseline: "baseline",
+    ai_outcome_feed_target: "target",
+    ai_outcome_feed_actual: "actual",
+    outcome_source_finance_assertion_usd: "candidate",
+  })) {
+    const measures = plan.measures.filter((row) => row.metric_key === metric);
+    assert.ok(measures.length > 0, `${metric} has source rows`);
+    assert.ok(measures.every((row) => row.scenario === scenario &&
+      row.review_state === "not_reviewed" && row.attributes_json.claimable_value_usd === null), metric);
+  }
+  plan.measures.find((row) => row.metric_key === "spend_source_prior_year_actual_usd").scenario = "planned";
+  plan.measures.find((row) => row.metric_key === "ai_outcome_feed_actual").scenario = "planned";
+  const failed = validatePhysicalPlan(report, plan, viewCounts);
+  assert.equal(failed.status, "fail");
+  assert.ok(failed.errors.filter((error) => error.includes("source assertion scenario or review state differs")).length >= 2);
 });
 
 test("v6 physical gate rejects altered program, outcome and benefit assertions", () => {

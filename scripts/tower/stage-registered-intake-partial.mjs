@@ -39,6 +39,58 @@ const FOUNDATION_MEASURES = {
     ["automation_pct", "process_source_automation_pct", "percent"],
     ["cost_per_transaction", "process_source_cost_per_transaction", "source_unit"]],
 };
+const SOURCE_ASSERTION_SCENARIOS = {
+  program_source_expected_value_usd: "planned",
+  spend_source_prior_year_actual_usd: "actual",
+  spend_source_forecast_next_year_usd: "forecast",
+  spend_source_savings_opportunity_usd: "planned",
+  benefit_feed_source_finance_assertion_usd: "candidate",
+  benefit_feed_source_funded_spend_usd: "planned",
+  benefit_feed_source_actual_spend_ytd_usd: "actual",
+  usage_feed_source_promised_value_usd: "planned",
+  usage_feed_source_finance_assertion_usd: "candidate",
+  ai_outcome_feed_baseline: "baseline",
+  ai_outcome_feed_target: "target",
+  ai_outcome_feed_actual: "actual",
+  ai_outcome_feed_source_finance_assertion_usd: "candidate",
+  outcome_source_finance_assertion_usd: "candidate",
+  organization_source_budget_authority_usd: "candidate",
+  application_source_annual_cost_usd: "candidate",
+  infrastructure_source_annual_cost_usd: "candidate",
+  infrastructure_source_utilization_pct: "candidate",
+  process_source_transaction_volume: "candidate",
+  process_source_error_rate_pct: "candidate",
+  process_source_rework_pct: "candidate",
+  process_source_automation_pct: "candidate",
+  process_source_cost_per_transaction: "candidate",
+};
+export const OUTCOME_MEASURE_PARITY_SQL = `
+  select count(*)::int as mismatches
+  from ecl_projection.tower_value_chain p
+  join ecl_projection.projection_entry_measure_ref r
+    on r.tenant_key = p.tenant_key and r.assessment_id = p.assessment_id
+   and r.projection_entry_id = p.projection_entry_id
+  left join ecl_context.measure m
+    on m.tenant_key = p.tenant_key and m.assessment_id = p.assessment_id and m.id = r.measure_id
+  where p.tenant_key = $1 and p.assessment_id = $2 and p.page_key = 'value_proof'
+    and p.row_key like 'metric:%'
+    and (m.id is null or m.subject_object_id is distinct from p.primary_object_id
+      or m.source_record_id is distinct from p.source_record_id
+      or case m.metric_key
+        when 'outcome_source_value' then
+          m.value_number is not null or m.scenario not in ('baseline', 'target', 'actual')
+          or m.value_text is distinct from case m.scenario
+            when 'baseline' then p.display_payload_json ->> 'baseline'
+            when 'target' then p.display_payload_json ->> 'target'
+            when 'actual' then p.display_payload_json ->> 'observed'
+            end
+        when 'outcome_source_finance_assertion_usd' then
+          m.value_text is not null or m.scenario <> 'candidate'
+          or m.id::text is distinct from p.display_payload_json ->> 'source_finance_assertion_measure_id'
+          or m.value_number is distinct from (p.display_payload_json ->> 'source_asserted_finance_value_usd')::numeric
+          or m.attributes_json ->> 'source_assertion_only' is distinct from 'true'
+          or p.claimable_value_usd is not null
+        else true end)`;
 
 function candidateConfig(report) {
   const sourceAssertions = report.candidate_rules_version === SOURCE_ASSERTIONS_VARIANT;
@@ -121,15 +173,16 @@ function addObject(plan, report, type, key, title, ref, attrs = {}, reviewState 
   return id;
 }
 
-function addMeasure(plan, report, object, metric, value, unit, ref, state, attrs = {}) {
+function addMeasure(plan, report, object, metric, value, unit, ref, state, attrs = {}, scenario) {
   if (value === null || value === undefined) return;
+  if (!scenario) throw new Error(`Measure scenario must be declared independently of value state: ${metric}`);
   plan.measures.push({
     id: uuid("measure", report.tenant_key, report.assessment_id, object, metric,
       ref?.source_file || "aggregate", ref?.source_row || "aggregate"),
     tenant_key: report.tenant_key, assessment_id: report.assessment_id,
     subject_object_id: object, metric_key: metric, value_number: value,
     value_text: null, unit, period_start: null, period_end: null,
-    scenario: state === "estimated" ? "planned" : "current",
+    scenario,
     source_record_id: ref ? sourceRowId(report, ref) : null,
     document_extraction_id: null, basis: "source_recorded", value_state: state,
     quality_state: state === "estimated" ? "estimated" : "usable",
@@ -262,7 +315,7 @@ function addCanonicalRows(plan, report) {
     "USD", null, "estimated", { source_basis: IDENTITY.aggregate_spend_metric.basis,
       period: "annual_unspecified_year", source_refs: spendRefs,
       money_population: "modeled_it_spend", amount_role: "aggregate",
-      do_not_add_to_category_rows: true, do_not_add_to_contract_spend: true });
+      do_not_add_to_category_rows: true, do_not_add_to_contract_spend: true }, "planned");
   plan.measures.at(-1).basis = "calculated";
   for (const row of report.views.cost_lens.filter((item) => item.row_key.startsWith("spend:"))) {
     const ref = sourceRefsFor(row)[0];
@@ -276,18 +329,18 @@ function addCanonicalRows(plan, report) {
         amount_role: "aggregate_component", parent_metric_key: SPEND_METRIC_KEY,
         period: "annual_unspecified_year", do_not_add_to_aggregate: true,
         do_not_add_to_contract_spend: true,
-      });
+      }, "planned");
     if (candidateConfig(report).sourceAssertions) {
-      for (const [metric, field, sourceField] of [
-        ["spend_source_prior_year_actual_usd", "source_prior_year_actual_usd", "prior_year_actual_usd"],
-        ["spend_source_forecast_next_year_usd", "source_forecast_next_year_usd", "forecast_next_year_usd"],
-        ["spend_source_savings_opportunity_usd", "source_savings_opportunity_usd", "savings_opportunity_usd"],
+      for (const [metric, field, sourceField, scenario] of [
+        ["spend_source_prior_year_actual_usd", "source_prior_year_actual_usd", "prior_year_actual_usd", "actual"],
+        ["spend_source_forecast_next_year_usd", "source_forecast_next_year_usd", "forecast_next_year_usd", "forecast"],
+        ["spend_source_savings_opportunity_usd", "source_savings_opportunity_usd", "savings_opportunity_usd", "planned"],
       ]) addMeasure(plan, report, spendId, metric, row[field], "USD", ref, "estimated", {
         category_business_id: null, category_label: row.category_label,
         identity_basis: "source_row_only", source_field: sourceField,
         source_assertion_only: true, approved_fy_budget_usd: null, claimable_value_usd: null,
         period_basis: "source_text_unverified", additive_to_aggregate_spend: false,
-      });
+      }, scenario);
     }
   }
   for (const program of report.canonical.programs) {
@@ -316,11 +369,11 @@ function addCanonicalRows(plan, report) {
         } : {}) });
     addMeasure(plan, report, id, "program_planning_budget_usd", program.planning_budget_usd, "USD", program.source_ref,
       "estimated", { approved_fy_budget_usd: null, fiscal_year: null,
-        funding_approval_status: "not_verified", period_basis: "unspecified" });
+        funding_approval_status: "not_verified", period_basis: "unspecified" }, "planned");
     if (candidateConfig(report).sourceAssertions) addMeasure(plan, report, id,
       "program_source_expected_value_usd", program.source_stated_expected_value_usd, "USD", program.source_ref,
       "estimated", { source_assertion_only: true, claimable_value_usd: null,
-        period_basis: "unspecified", source_field: "expected_value_usd" });
+        period_basis: "unspecified", source_field: "expected_value_usd" }, "planned");
   }
   for (const item of report.canonical.ai_use_cases) {
     addObject(plan, report, "ai_use_case", item.id, item.name, item.source_refs[0],
@@ -387,7 +440,7 @@ function addCanonicalRows(plan, report) {
         reported_usage_rate_denominator: claim.usage_feed_usage_rate_basis,
         benefit_feed_usage_rate_denominator: claim.benefit_feed_usage_rate_basis,
         raw_detail_validates_usage: report.raw_usage_validation.validates_claim_usage,
-        value_attribution_usd: null });
+        value_attribution_usd: null }, "current");
     if (candidateConfig(report).sourceAssertions) {
       for (const [metric, value, unit, sourceField] of [
         ["usage_feed_power_users", claim.usage_power_users, "users", "power_users"],
@@ -396,41 +449,41 @@ function addCanonicalRows(plan, report) {
         source_field: sourceField, source_assertion_only: true,
         usage_period_start: claim.usage_period_start, usage_period_end: claim.usage_period_end,
         value_attribution_usd: null,
-      });
+      }, "current");
     }
     const benefitRef = claim.source_refs.find((item) => item.source_file.startsWith("SA08_"));
     addMeasure(plan, report, id, "benefit_feed_planning_promise_usd", claim.planning_promise_usd, "USD", benefitRef,
-      "estimated", { cross_source_conflict: claim.source_conflict, claimable_value_usd: null });
+      "estimated", { cross_source_conflict: claim.source_conflict, claimable_value_usd: null }, "planned");
     if (candidateConfig(report).sourceAssertions) addMeasure(plan, report, id,
       "benefit_feed_source_finance_assertion_usd", claim.source_asserted_finance_value_usd,
       "USD", benefitRef, "estimated", { source_assertion_only: true, claimable_value_usd: null,
         source_field: "finance_validated_value_usd", source_finance_validation_status: claim.source_finance_validation_status,
         source_evidence_id: claim.source_evidence_id, cross_feed_conflict: claim.finance_feed_conflict,
-        evidence_reference_registered: claim.evidence_reference_registered });
+        evidence_reference_registered: claim.evidence_reference_registered }, "candidate");
     if (candidateConfig(report).sourceAssertions) {
-      for (const [metric, value, sourceField, sourceRef] of [
-        ["benefit_feed_source_funded_spend_usd", claim.benefit_feed_source_funded_spend_usd, "funded_spend_usd", benefitRef],
-        ["benefit_feed_source_actual_spend_ytd_usd", claim.benefit_feed_source_actual_spend_ytd_usd, "actual_spend_ytd_usd", benefitRef],
-        ["usage_feed_source_promised_value_usd", claim.usage_feed_source_promised_value_usd, "promised_value_usd", ref],
-        ["usage_feed_source_finance_assertion_usd", claim.usage_feed_source_finance_assertion_usd, "finance_validated_value_usd", ref],
+      for (const [metric, value, sourceField, sourceRef, scenario] of [
+        ["benefit_feed_source_funded_spend_usd", claim.benefit_feed_source_funded_spend_usd, "funded_spend_usd", benefitRef, "planned"],
+        ["benefit_feed_source_actual_spend_ytd_usd", claim.benefit_feed_source_actual_spend_ytd_usd, "actual_spend_ytd_usd", benefitRef, "actual"],
+        ["usage_feed_source_promised_value_usd", claim.usage_feed_source_promised_value_usd, "promised_value_usd", ref, "planned"],
+        ["usage_feed_source_finance_assertion_usd", claim.usage_feed_source_finance_assertion_usd, "finance_validated_value_usd", ref, "candidate"],
       ]) addMeasure(plan, report, id, metric, value, "USD", sourceRef, "estimated", {
         source_field: sourceField, source_assertion_only: true,
         approved_fy_budget_usd: null, claimable_value_usd: null,
         do_not_sum_across_feeds: true, cross_feed_conflict: claim.finance_feed_conflict,
-      });
+      }, scenario);
     }
     if (candidateConfig(report).sourceAssertions) {
       const outcomeRef = claim.source_refs.find((item) => item.source_file.startsWith("SA11_"));
-      for (const [metric, value, unit, sourceField] of [
-        ["ai_outcome_feed_baseline", claim.outcome_feed_baseline, claim.outcome_feed_unit, "baseline_value"],
-        ["ai_outcome_feed_target", claim.outcome_feed_target, claim.outcome_feed_unit, "target_value"],
-        ["ai_outcome_feed_actual", claim.outcome_feed_actual, claim.outcome_feed_unit, "actual_value"],
-        ["ai_outcome_feed_source_finance_assertion_usd", claim.outcome_feed_source_finance_assertion_usd, "USD", "finance_validated_value_usd"],
+      for (const [metric, value, unit, sourceField, scenario] of [
+        ["ai_outcome_feed_baseline", claim.outcome_feed_baseline, claim.outcome_feed_unit, "baseline_value", "baseline"],
+        ["ai_outcome_feed_target", claim.outcome_feed_target, claim.outcome_feed_unit, "target_value", "target"],
+        ["ai_outcome_feed_actual", claim.outcome_feed_actual, claim.outcome_feed_unit, "actual_value", "actual"],
+        ["ai_outcome_feed_source_finance_assertion_usd", claim.outcome_feed_source_finance_assertion_usd, "USD", "finance_validated_value_usd", "candidate"],
       ]) addMeasure(plan, report, id, metric, value, unit, outcomeRef, "estimated", {
         source_field: sourceField, source_assertion_only: true, claimable_value_usd: null,
         measurement_period_start: claim.outcome_feed_period_start,
         measurement_period_end: claim.outcome_feed_period_end,
-      });
+      }, scenario);
     }
   }
   for (const vendor of report.canonical.contract_exposure) {
@@ -448,7 +501,7 @@ function addCanonicalRows(plan, report) {
       "USD", vendor.source_ref, "estimated", {
         money_population: "vendor_contract_exposure", amount_role: "separate_exposure",
         overlap_with_it_spend: "unknown", additive_to_it_spend: false,
-      });
+      }, "planned");
   }
   for (const row of report.views.risk_lens) {
     addObject(plan, report, "risk", row.row_key, row.title, sourceRefsFor(row)[0],
@@ -493,7 +546,7 @@ function addCanonicalRows(plan, report) {
         claimable_value_usd: null, source_field: "finance_attested_value_usd",
         source_value_claim_status: metric.source_value_claim_status,
         source_claim_readiness: metric.source_claim_readiness,
-        source_evidence_basis: metric.evidence_basis });
+        source_evidence_basis: metric.evidence_basis }, "candidate");
   }
   for (const item of report.canonical.foundations.source_objects || []) {
     const id = addObject(plan, report, item.object_type, item.id, item.name, item.source_ref,
@@ -510,7 +563,7 @@ function addCanonicalRows(plan, report) {
         source_field: sourceField, source_assertion_only: true,
         approved_fy_budget_usd: null, claimable_value_usd: null,
         overlap_with_modeled_spend: "unknown", source_unit_not_normalized: unit === "source_unit",
-      });
+      }, "candidate");
     }
   }
 }
@@ -1101,6 +1154,31 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
         errors.push(`outcome period was normalized or lost: ${row.row_key}:${field}`);
       }
     }
+    if (candidateConfig(report).sourceAssertions && row.display_payload_json.source_asserted_finance_value_usd !== null) {
+      const assertion = measuresById.get(row.display_payload_json.source_finance_assertion_measure_id);
+      const linked = assertion && plan.projectionMeasureRefs.some((ref) =>
+        ref.projection_entry_id === row.projection_entry_id && ref.measure_id === assertion.id);
+      if (!assertion || assertion.metric_key !== "outcome_source_finance_assertion_usd" ||
+          assertion.subject_object_id !== row.primary_object_id ||
+          assertion.source_record_id !== row.source_record_id ||
+          assertion.value_number !== row.display_payload_json.source_asserted_finance_value_usd ||
+          assertion.value_text !== null || assertion.scenario !== "candidate" ||
+          assertion.attributes_json.source_assertion_only !== true || !linked ||
+          row.claimable_value_usd !== null) {
+        errors.push(`outcome finance assertion is not tied to its canonical measure: ${row.row_key}`);
+      }
+    }
+  }
+  if (candidateConfig(report).sourceAssertions) {
+    for (const measure of plan.measures) {
+      const expectedScenario = SOURCE_ASSERTION_SCENARIOS[measure.metric_key];
+      if (expectedScenario && (measure.scenario !== expectedScenario ||
+          measure.attributes_json.source_assertion_only !== true ||
+          measure.review_state !== "not_reviewed" ||
+          measure.attributes_json.claimable_value_usd !== null)) {
+        errors.push(`source assertion scenario or review state differs: ${measure.metric_key}:${measure.id}`);
+      }
+    }
   }
   for (const row of rowsForPage(plan, "adoption_lens")) {
     const matching = plan.measures.filter((measure) => measure.subject_object_id === row.use_case_object_id &&
@@ -1386,25 +1464,8 @@ async function writePlan(report, plan) {
       [report.tenant_key, report.assessment_id],
     );
     if (costParity.rows[0].mismatches !== 0) throw new Error("Transaction cost measure parity failed");
-    const outcomeParity = await client.query(`
-      select count(*)::int as mismatches
-      from ecl_projection.tower_value_chain p
-      join ecl_projection.projection_entry_measure_ref r
-        on r.tenant_key = p.tenant_key and r.assessment_id = p.assessment_id
-       and r.projection_entry_id = p.projection_entry_id
-      left join ecl_context.measure m
-        on m.tenant_key = p.tenant_key and m.assessment_id = p.assessment_id and m.id = r.measure_id
-      where p.tenant_key = $1 and p.assessment_id = $2 and p.page_key = 'value_proof'
-        and p.row_key like 'metric:%'
-        and (m.id is null or m.subject_object_id is distinct from p.primary_object_id
-          or m.metric_key <> 'outcome_source_value'
-          or m.value_text is distinct from case m.scenario
-            when 'baseline' then p.display_payload_json ->> 'baseline'
-            when 'target' then p.display_payload_json ->> 'target'
-            when 'actual' then p.display_payload_json ->> 'observed'
-            else null end)`,
-      [report.tenant_key, report.assessment_id],
-    );
+    const outcomeParity = await client.query(OUTCOME_MEASURE_PARITY_SQL,
+      [report.tenant_key, report.assessment_id]);
     if (outcomeParity.rows[0].mismatches !== 0) throw new Error("Transaction outcome measure parity failed");
     const measureRefCount = await client.query(`
       select count(*)::int as rows from ecl_projection.projection_entry_measure_ref

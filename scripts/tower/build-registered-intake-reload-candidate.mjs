@@ -518,6 +518,8 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
     })),
   };
 
+  const foundationSummary = sourceAssertionsEnabled ? { ...canonical.foundations } : canonical.foundations;
+  if (sourceAssertionsEnabled) delete foundationSummary.source_objects;
   const pages = Object.fromEntries(PAGES.map((key) => [key, []]));
   addPage(pages, "command_center", "executive_summary", "Tower at a glance",
     "Approved FY budget is not supplied. The annual spend figure is a planning estimate from one source; program budgets cover unspecified periods. No realized AI value is ready to claim.",
@@ -536,7 +538,7 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
       claim_status_feed_conflict_count: claimStatusConflicts.length,
       raw_usage_validates_claim_feed: rawUsageValidation.validates_claim_usage,
       use_case_to_benefit_ids_joined: declaredCrosswalk,
-      foundations: canonical.foundations,
+      foundations: foundationSummary,
     });
   for (const program of canonical.programs) {
     addPage(pages, "decision_lanes", program.id, program.name,

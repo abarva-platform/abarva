@@ -37,11 +37,12 @@ Release lane: `client-data-lane`.
 - Retains outcome, benefit, and usage feed Finance-labeled amounts, benefit-feed spend, source promises, and statuses as separate source assertions with record lineage and plain-language caveats. Conflicting feeds remain separate.
 - Loads declared-ID Foundation records as individual objects. Raw relationship and maturity rows remain in Layer 2; neither becomes a graph edge or an inferred maturity object. Evidence register content remains excluded because approval is absent.
 - Requires full source-to-canonical-to-projection parity for mapped fields and refuses an unsupported claimable or approved amount.
+- Keeps detailed Foundation records in the canonical layer while the Tower summary carries only counts and coverage notes. Source-reported actuals, forecasts, targets, and baselines retain their distinct measure scenarios without changing review or claim status.
 - Adds a manifest with `load_approval` and `serving_approval` null.
 
 ## QA / Validation
 
-- Focused candidate and physical-plan tests pass, including altered-source refusal and refusal to stage without exact-version approval.
+- Eight focused candidate and physical-plan tests pass, including outcome text and Finance-assertion reference parity, source scenario semantics, bounded summary payload, altered-source refusal, and refusal to stage without exact-version approval. The database parity SQL is covered by a local contract test; it has not been executed against a private database.
 - The dataset manifest validator passes. The local dry-stage candidate and physical quality gate pass against the unchanged registered source hashes; the dry-stage output records exact row and measure counts and `materialized: false`.
 - Focused ESLint, MJS syntax checks, the Tower quote-mode lineage report, and all release-control gates pass. Review the dry-stage candidate fingerprint, source hashes, row and measure counts, source-assertion coverage gate, and approval refusal before any operator job.
 - No physical database stage, private Blob proof, deploy, promotion, or signed-in page proof is claimed by this release.
