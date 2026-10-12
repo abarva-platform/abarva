@@ -11,16 +11,33 @@ import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 
 const mockCorrectionTransaction = jest.fn();
 const mockCorrectionPolicy = jest.fn();
-const mockCorrectionConnection = jest.fn((ctx?: unknown) => ({
-  candidates: ctx ? ["mock-tenant-connection"] : [],
-}));
+const mockCorrectionConnection = jest.fn(
+  (
+    ctx?: import("@/lib/data-plane/tenantConnectionResolver").TenantConnectionScope,
+    _env?: NodeJS.ProcessEnv,
+    _options?: import("@/lib/data-plane/tenantConnectionResolver").TenantConnectionResolutionOptions,
+  ): Pick<
+    import("@/lib/data-plane/tenantConnectionResolver").TenantConnectionResolution,
+    "candidates"
+  > => {
+    void _env;
+    void _options;
+    return { candidates: ctx ? ["mock-tenant-connection"] : [] };
+  },
+);
 jest.mock("@/lib/auth/program-access-policy", () => ({
   loadUserProgramAccessPolicy: (...args: unknown[]) =>
     mockCorrectionPolicy(...args),
 }));
 jest.mock("@/lib/data-plane/tenantConnectionResolver", () => ({
-  resolveTenantDatabaseConnection: (...args: unknown[]) =>
-    mockCorrectionConnection(...args),
+  ...jest.requireActual<
+    typeof import("@/lib/data-plane/tenantConnectionResolver")
+  >("@/lib/data-plane/tenantConnectionResolver"),
+  resolveTenantDatabaseConnection: (
+    ...args: Parameters<
+      typeof import("@/lib/data-plane/tenantConnectionResolver").resolveTenantDatabaseConnection
+    >
+  ) => mockCorrectionConnection(...args),
 }));
 
 jest.mock("@/lib/features/is-feature-enabled", () => ({
@@ -28,6 +45,12 @@ jest.mock("@/lib/features/is-feature-enabled", () => ({
 }));
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureWriteFluentClient: jest.fn(),
+  resolveDatabaseUrlCandidates: (env: NodeJS.ProcessEnv) =>
+    jest
+      .requireActual<
+        typeof import("@/lib/data-plane/postgresCompat")
+      >("@/lib/data-plane/postgresCompat")
+      .resolveDatabaseUrlCandidates(env),
   withAzureWriteTransaction: (...args: unknown[]) =>
     mockCorrectionTransaction(...args),
 }));
@@ -771,6 +794,146 @@ describe("retained reviewed P0 capture correction", () => {
       expect(after.state_jsonb.untouched).toBe("Keep metadata");
       expect(result.values[field.key]).toBe(field.retained);
     }
+  });
+  it("uses the declared synthetic shared transport through the real resolver and transaction boundary", async () => {
+    const declarations =
+      await import("../../../../datasets/tenant-inputs/tenant-input-registry.json");
+    const synthetic = declarations.activeTenants.find(
+      (tenant) =>
+        tenant.packets.length > 0 &&
+        tenant.packets.every(
+          (packet) => packet.classification === "synthetic-demo",
+        ),
+    );
+    if (!synthetic) throw new Error("Declared synthetic fixture required");
+    const t = transactionFixture();
+    t.f.ctx.clientKey = synthetic.tenantKey;
+    const previousEnv = process.env;
+    const fixtureUrl = "postgresql://fixture:fixture@localhost:1/fixture";
+    process.env = { NODE_ENV: "test", DATABASE_URL: fixtureUrl };
+    const actualResolver = jest.requireActual<
+      typeof import("@/lib/data-plane/tenantConnectionResolver")
+    >("@/lib/data-plane/tenantConnectionResolver");
+    mockCorrectionConnection.mockImplementation(
+      actualResolver.resolveTenantDatabaseConnection,
+    );
+    try {
+      // The scoped resolver has no URL in this established synthetic shape.
+      expect(
+        actualResolver.resolveTenantDatabaseConnection(t.f.ctx).candidates,
+      ).toEqual([]);
+      const result = await restoreP0ReviewedCapture(
+        t.f.ctx,
+        t.f.program.id,
+        t.f.command,
+      );
+      expect(result).toMatchObject({
+        persisted: true,
+        correctionAuditId: "audit-correction",
+        preservedBindings: true,
+      });
+      expect(mockCorrectionTransaction).toHaveBeenCalledWith(
+        fixtureUrl,
+        expect.any(Function),
+        { includeReads: true },
+      );
+      expect(t.statements[0]).toBe("BEGIN ISOLATION LEVEL SERIALIZABLE");
+      expect(t.statements.at(-1)).toBe("COMMIT");
+      expect(t.stored.program).toEqual(t.before.program);
+      expect(t.stored.snapshot).toEqual(t.before.snapshot);
+      expect(t.stored.signed).toEqual(t.before.signed);
+      expect(t.stored.requests).toEqual(t.before.requests);
+    } finally {
+      process.env = previousEnv;
+    }
+  });
+  it("prefers declared tenant URLs and refuses shared transport for private, unknown or explicitly bound deployments", async () => {
+    const actualResolver = jest.requireActual<
+      typeof import("@/lib/data-plane/tenantConnectionResolver")
+    >("@/lib/data-plane/tenantConnectionResolver");
+    mockCorrectionConnection.mockImplementation(
+      actualResolver.resolveTenantDatabaseConnection,
+    );
+    const { resolveP0ReviewedCaptureConnection } =
+      await import("@/lib/data-plane/write-adapters/p0ReviewedCaptureCorrectionAdapter");
+    const declarations =
+      await import("../../../../datasets/tenant-inputs/tenant-input-registry.json");
+    const { TENANT_KEY_ALIASES, canonicalTenantKey } =
+      await import("@/lib/tenant-keys");
+    const synthetic = declarations.activeTenants.find(
+      (tenant) =>
+        tenant.packets.length > 0 &&
+        tenant.packets.every(
+          (packet) => packet.classification === "synthetic-demo",
+        ),
+    );
+    if (!synthetic) throw new Error("Declared synthetic fixture required");
+    const ctx = {
+      ...reviewedCorrectionFixture().ctx,
+      clientKey: synthetic.tenantKey,
+    };
+    const shared = "postgresql://fixture:fixture@localhost:1/shared";
+    const scoped = "postgresql://fixture:fixture@localhost:1/scoped";
+    const env: NodeJS.ProcessEnv = {
+      NODE_ENV: "test",
+      DATABASE_URL: shared,
+      ABARVA_ALLOW_SHARED_DATABASE_URL_FALLBACK: "true",
+    };
+    const tenantName = actualResolver.tenantDatabaseEnvNamesForScope(ctx)[0];
+    expect(
+      resolveP0ReviewedCaptureConnection(ctx, { ...env, [tenantName]: scoped }),
+    ).toBe(scoped);
+    expect(resolveP0ReviewedCaptureConnection(ctx, env)).toBe(shared);
+    expect(
+      resolveP0ReviewedCaptureConnection(ctx, { NODE_ENV: "test" }),
+    ).toBeUndefined();
+    expect(
+      resolveP0ReviewedCaptureConnection(
+        { ...ctx, clientKey: "unregistered-private-fixture" },
+        env,
+      ),
+    ).toBeUndefined();
+    expect(
+      resolveP0ReviewedCaptureConnection(ctx, {
+        ...env,
+        ABARVA_ACTIVE_CLIENT_KEY: ctx.clientKey,
+      }),
+    ).toBeUndefined();
+    expect(
+      resolveP0ReviewedCaptureConnection(ctx, {
+        ...env,
+        ABARVA_ACTIVE_CLIENT_ID: "another-plane",
+      }),
+    ).toBeUndefined();
+    const alias = Object.keys(TENANT_KEY_ALIASES).find(
+      (candidate) =>
+        candidate !== ctx.clientKey &&
+        canonicalTenantKey(candidate) === ctx.clientKey,
+    );
+    if (!alias) throw new Error("Declared tenant alias fixture required");
+    expect(
+      resolveP0ReviewedCaptureConnection(
+        { ...ctx, clientKey: alias },
+        { ...env, [tenantName]: scoped },
+      ),
+    ).toBe(scoped);
+    expect(
+      resolveP0ReviewedCaptureConnection(
+        { ...ctx, clientKey: alias },
+        { ...env, ABARVA_ACTIVE_CLIENT_ID: "another-plane" },
+      ),
+    ).toBeUndefined();
+    const aliasName = actualResolver.tenantDatabaseEnvNamesForScope({
+      ...ctx,
+      clientKey: alias,
+    })[0];
+    expect(
+      resolveP0ReviewedCaptureConnection(
+        { ...ctx, clientKey: alias },
+        { ...env, [aliasName]: scoped },
+      ),
+    ).toBe(scoped);
+    expect(mockCorrectionTransaction).not.toHaveBeenCalled();
   });
   it.each([
     "expectedRevision",
