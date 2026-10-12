@@ -1,0 +1,6 @@
+Synthetic scenario: written renewal notice is due 120 days before 2028-12-31; deadline 2028-09-02.
+Synthetic scenario: the subscription renews unless notice is delivered by the declared deadline.
+Synthetic scenario: monthly price is USD 219.2 per licensed account.
+Synthetic scenario: renewal quantity cannot fall below 2200 licensed accounts.
+Synthetic scenario: reduction is allowed only at renewal after the notice requirement is met; inactive accounts alone create no refund right.
+Synthetic scenario only. No real agreement execution, approval or signature is asserted.

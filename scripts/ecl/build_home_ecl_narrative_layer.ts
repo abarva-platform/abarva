@@ -50,12 +50,19 @@ import {
 import {
   PROJECTION_READINESS_TABLE,
   SIGNAL_READINESS_TABLE,
+  narrativeReadinessOnlyMode,
+  assertNarrativeInspectionScope,
   readinessKey,
+  narrativeReadinessIssues,
   signalSourceHash,
   verifiedReadiness,
   type NarrativeReadinessProof,
 } from "./home-narrative-readiness";
 import { isDirectInvocation } from "../exec/cli-entry.mjs";
+import {
+  narrativeProjectionVersion, assertNarrativePlanVersion, assertNarrativeRowVersion,
+  type NarrativeProjectionVersion,
+} from "./home-narrative-projection-version";
 
 type EnterpriseSignalPacket = ReturnType<typeof buildEnterpriseSignalPacket>;
 type VerifiedEnterpriseThesisResult = Awaited<ReturnType<typeof buildVerifiedEnterpriseThesisFromSignalPacket>>;
@@ -128,7 +135,6 @@ const HOME_PAGE_PROMPT_CONTRACT_PATH = "docs/architecture/home-v2-page-prompt-co
 const DEFAULT_TENANT_KEY = "meridian-health";
 const DEFAULT_ASSESSMENT_ID = "assessment-dense-source-room-20260823";
 const DEFAULT_OUT_DIR = "/tmp/home-ecl-narrative-layer";
-const PROJECTION_VERSION = 1;
 const STORY_PLAN_CONTRACT_VERSION = "home-executive-story-plan/v1" as const;
 const WRITE = process.env.HOME_ECL_NARRATIVE_WRITE === "true" && process.env.HOME_ECL_NARRATIVE_WRITE_APPROVED === "true";
 const RAW_PUBLICATION_MAX_UNSUPPORTED = 0;
@@ -214,6 +220,7 @@ const CHAPTER_IDS: ChapterId[] = [
 interface CliOptions {
   tenantKey: string;
   assessmentId: string;
+  projectionVersion: NarrativeProjectionVersion;
   outDir: string;
   chapterIds: ChapterId[];
   fromPlanPath: string | null;
@@ -223,6 +230,7 @@ interface CliOptions {
 interface HomeNarrativePlanResult {
   tenantKey: string;
   assessmentId: string;
+  projectionVersion?: NarrativeProjectionVersion;
   writeApplied: boolean;
   chapters: ChapterView[];
   storyPlan?: HomeExecutiveStoryPlanV1;
@@ -326,6 +334,7 @@ function parseCli(): CliOptions {
   return {
     tenantKey: cliValue("--tenant") ?? process.env.ECL_DENSE_TENANT_KEY ?? DEFAULT_TENANT_KEY,
     assessmentId: cliValue("--assessment") ?? process.env.ECL_DENSE_ASSESSMENT_ID ?? DEFAULT_ASSESSMENT_ID,
+    projectionVersion: narrativeProjectionVersion(cliValue("--projection-version") ?? process.env.HOME_ECL_NARRATIVE_PROJECTION_VERSION),
     outDir: cliValue("--out-dir") ?? DEFAULT_OUT_DIR,
     chapterIds: parseChapterIds(cliValue("--chapter")),
     fromPlanPath: cliValue("--from-plan") ?? process.env.HOME_ECL_NARRATIVE_FROM_PLAN ?? null,
@@ -2312,7 +2321,8 @@ function buildEclSourceSummaries(rows: EclSourceRecordSummaryRow[]): SourceSumma
     .sort((a, b) => (b.rawRowCount ?? 0) - (a.rawRowCount ?? 0) || a.sourcePath.localeCompare(b.sourcePath));
 }
 
-async function readHomeProjectionRows(db: Client, tenantKey: string, assessmentId: string): Promise<HomeProjectionWriteRow[]> {
+export async function readHomeProjectionRows(db: Client, tenantKey: string, assessmentId: string,
+  projectionVersion: NarrativeProjectionVersion): Promise<HomeProjectionWriteRow[]> {
   const result = await db.query<HomeProjectionWriteRow>(
     `
       select
@@ -2346,8 +2356,9 @@ async function readHomeProjectionRows(db: Client, tenantKey: string, assessmentI
       where tenant_key = $1 and assessment_id = $2 and projection_version = $3
       order by page_key, row_key
     `,
-    [tenantKey, assessmentId, PROJECTION_VERSION],
+    [tenantKey, assessmentId, projectionVersion],
   );
+  assertNarrativeRowVersion(result.rows, tenantKey, assessmentId, projectionVersion);
   return result.rows;
 }
 
@@ -2743,6 +2754,7 @@ function readApprovedNarrativePlan(
     throw new Error(`Approved plan hash mismatch: expected ${options.planSha256}, got ${planSha256}.`);
   }
   const plan = JSON.parse(planBytes.toString("utf8")) as HomeNarrativePlanResult;
+  assertNarrativePlanVersion(plan.projectionVersion, options.projectionVersion);
   const issues: string[] = [];
   if (plan.tenantKey !== options.tenantKey) issues.push(`tenant_mismatch:${plan.tenantKey}`);
   if (plan.assessmentId !== options.assessmentId) issues.push(`assessment_mismatch:${plan.assessmentId}`);
@@ -2803,7 +2815,7 @@ async function writeNarrativeRows(
           and row_type = 'chapter_claim'
           and page_key = any($4::text[])
       `,
-      [options.tenantKey, options.assessmentId, PROJECTION_VERSION, Array.from(selectedIds)],
+      [options.tenantKey, options.assessmentId, options.projectionVersion, Array.from(selectedIds)],
     );
     await db.query(
       `
@@ -2815,7 +2827,7 @@ async function writeNarrativeRows(
           and row_type = 'chapter_claim'
           and split_part(row_key, '_writer_claim_', 1) = any($5::text[])
       `,
-      [options.tenantKey, options.assessmentId, PROJECTION_VERSION, HOME_SURFACE_KEY, Array.from(selectedIds)],
+      [options.tenantKey, options.assessmentId, options.projectionVersion, HOME_SURFACE_KEY, Array.from(selectedIds)],
     );
     await db.query(
       `
@@ -2825,7 +2837,7 @@ async function writeNarrativeRows(
           and projection_version = $3
           and row_type = 'story_plan'
       `,
-      [options.tenantKey, options.assessmentId, PROJECTION_VERSION],
+      [options.tenantKey, options.assessmentId, options.projectionVersion],
     );
     await db.query(
       `
@@ -2836,7 +2848,7 @@ async function writeNarrativeRows(
           and surface_key = $4
           and row_type = 'story_plan'
       `,
-      [options.tenantKey, options.assessmentId, PROJECTION_VERSION, HOME_SURFACE_KEY],
+      [options.tenantKey, options.assessmentId, options.projectionVersion, HOME_SURFACE_KEY],
     );
 
     for (const chapter of chapters) {
@@ -2883,7 +2895,7 @@ async function writeNarrativeRows(
         [
           options.tenantKey,
           options.assessmentId,
-          PROJECTION_VERSION,
+          options.projectionVersion,
           summaryRow.projection_entry_id,
           summarySourceHash,
           JSON.stringify({ page_key: chapter.chapterId, section_key: summaryRow.section_key, title: chapter.headline }),
@@ -2906,7 +2918,7 @@ async function writeNarrativeRows(
         [
           options.tenantKey,
           options.assessmentId,
-          PROJECTION_VERSION,
+          options.projectionVersion,
           chapter.headline,
           chapter.executive_synthesis,
           JSON.stringify(writerPayload),
@@ -2956,7 +2968,7 @@ async function writeNarrativeRows(
             options.assessmentId,
             summaryRow.snapshot_id,
             summaryRow.projection_manifest_id,
-            PROJECTION_VERSION,
+            options.projectionVersion,
             HOME_SURFACE_KEY,
             rowKey,
             rowHash,
@@ -3003,7 +3015,7 @@ async function writeNarrativeRows(
             summaryRow.snapshot_id,
             summaryRow.projection_manifest_id,
             entryResult.rows[0].id,
-            PROJECTION_VERSION,
+            options.projectionVersion,
             chapter.chapterId,
             rowKey,
             claim.statement,
@@ -3049,7 +3061,7 @@ async function writeNarrativeRows(
         options.assessmentId,
         storyPlanAnchor.snapshot_id,
         storyPlanAnchor.projection_manifest_id,
-        PROJECTION_VERSION,
+        options.projectionVersion,
         HOME_SURFACE_KEY,
         storyPlan.storyPlanHash,
         hashJson({ sourceClaimRefs: storyPlan.sourceClaimRefs }),
@@ -3096,7 +3108,7 @@ async function writeNarrativeRows(
         storyPlanAnchor.snapshot_id,
         storyPlanAnchor.projection_manifest_id,
         storyPlanEntry.rows[0].id,
-        PROJECTION_VERSION,
+        options.projectionVersion,
         storyPlan.overallEvidenceBoundary,
         JSON.stringify(storyPlanPayload),
         storyPlan.storyPlanHash,
@@ -3112,19 +3124,30 @@ async function writeNarrativeRows(
 
 async function main() {
   const options = parseCli();
+  const readinessOnly = narrativeReadinessOnlyMode(process.argv, process.env, WRITE, options.fromPlanPath);
+  if (readinessOnly) assertNarrativeInspectionScope(
+    cliValue("--tenant") ?? process.env.ECL_DENSE_TENANT_KEY,
+    cliValue("--assessment") ?? process.env.ECL_DENSE_ASSESSMENT_ID,
+  );
   fs.mkdirSync(options.outDir, { recursive: true });
 
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required to read ECL Home projection rows.");
   if (options.fromPlanPath && !WRITE) throw new Error("--from-plan is only valid with approved write mode.");
   if (WRITE && !options.fromPlanPath) throw new Error("Approved writes require --from-plan <plan-json>; rerun plan first and commit that artifact.");
-  if (!options.fromPlanPath && !process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is required to generate Home narrative.");
+  if (!readinessOnly && !options.fromPlanPath && !process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is required to generate Home narrative.");
 
   const db = new Client({ connectionString: process.env.DATABASE_URL });
 
   await db.connect();
   try {
-    const rows = await readHomeProjectionRows(db, options.tenantKey, options.assessmentId);
-    if (rows.length === 0) throw new Error(`No Home ECL projection rows found for ${options.tenantKey}/${options.assessmentId}.`);
+    if (readinessOnly) {
+      await db.query("begin isolation level repeatable read read only");
+      await db.query("select set_config('app.tenant_key', $1, true)", [options.tenantKey]);
+      await db.query("set local statement_timeout = '60s'");
+      await db.query("set local lock_timeout = '15s'");
+    }
+    const rows = await readHomeProjectionRows(db, options.tenantKey, options.assessmentId, options.projectionVersion);
+    if (!readinessOnly && rows.length === 0) throw new Error(`No Home ECL projection rows found for ${options.tenantKey}/${options.assessmentId}.`);
 
     const readinessProofs = await readNarrativeReadinessProofs(db, options.tenantKey);
     const verifiedSourceRefs = await readNarrativeSourceLinks(db, options.tenantKey, options.assessmentId);
@@ -3140,6 +3163,58 @@ async function main() {
       sourceRows,
       readinessProofs,
     );
+    if (readinessOnly) {
+      const refusal = narrativeEvidenceRefusal({ signalPacket, contextPolicyProof });
+      const result = {
+        contract_version: "home-narrative-readiness-inspection/v1",
+        tenantKey: options.tenantKey,
+        assessmentId: options.assessmentId,
+        projectionVersion: options.projectionVersion,
+        writeApplied: false,
+        modelInvoked: false,
+        source_projection_rows: rows.length,
+        projection_content_hash: hashJson(rows),
+        tenant_readiness_records: readinessProofs.size,
+        projection_readiness_issues: rows.filter(isFactCandidateRow).map((row) => ({
+          projection_entry_id: row.projection_entry_id,
+          page_key: row.page_key,
+          row_key: row.row_key,
+          issues: narrativeReadinessIssues(
+            readinessProofs.get(readinessKey(PROJECTION_READINESS_TABLE, row.projection_entry_id)),
+            options.tenantKey,
+            row.source_hash,
+            hashJson(row),
+          ),
+        })).filter((row) => row.issues.length > 0),
+        verified_source_linked_entries: rows.filter((row) => verifiedSourceRefs.get(row.projection_entry_id)?.has(row.source_hash)).length,
+        signal_count: signalPacket.signals.length,
+        context_item_count: signalPacket.contextItems.length,
+        contextPolicyProof,
+        governed_evidence_ready: refusal === null,
+        refusal,
+        scope: "Governed packet readiness only; no publication, review, serving, or activation proof.",
+      };
+      await db.query("rollback");
+      const outFile = path.join(options.outDir, `${options.tenantKey}-home-narrative-readiness.json`);
+      fs.writeFileSync(outFile, JSON.stringify(result, null, 2));
+      console.log(JSON.stringify({
+        checkpoint: "home_narrative_readiness",
+        tenantKey: result.tenantKey,
+        assessmentId: result.assessmentId,
+        projectionVersion: result.projectionVersion,
+        writeApplied: false,
+        modelInvoked: false,
+        source_projection_rows: result.source_projection_rows,
+        readiness_issue_rows: result.projection_readiness_issues.length,
+        verified_source_linked_entries: result.verified_source_linked_entries,
+        signal_count: result.signal_count,
+        governed_evidence_ready: result.governed_evidence_ready,
+        refusal: result.refusal,
+        out_file: outFile,
+      }));
+      emitHomeNarrativeProofBundle(outFile, result, options);
+      return;
+    }
     const narrativePacketArtifact = createHomeNarrativePacketArtifact({
       tenantKey: options.tenantKey,
       assessmentId: options.assessmentId,
@@ -3236,6 +3311,7 @@ async function main() {
     const result = {
       tenantKey: options.tenantKey,
       assessmentId: options.assessmentId,
+      projectionVersion: options.projectionVersion,
       writeApplied: WRITE,
       chapters,
       storyPlan: buildHomeExecutiveStoryPlan(options, rows, chapters, signalPacket),
@@ -3287,6 +3363,7 @@ async function main() {
     }));
     emitHomeNarrativeProofBundle(outFile, result, options);
   } finally {
+    if (readinessOnly) await db.query("rollback").catch(() => undefined);
     await db.end();
   }
 }

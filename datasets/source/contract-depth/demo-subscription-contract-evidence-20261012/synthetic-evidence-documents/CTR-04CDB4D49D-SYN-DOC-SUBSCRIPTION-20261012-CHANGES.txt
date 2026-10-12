@@ -1,0 +1,2 @@
+Synthetic scenario: the change ledger contains no approved changes within the fixed reporting period. No approval or signature is fabricated.
+Synthetic scenario only. No real agreement execution, approval or signature is asserted.

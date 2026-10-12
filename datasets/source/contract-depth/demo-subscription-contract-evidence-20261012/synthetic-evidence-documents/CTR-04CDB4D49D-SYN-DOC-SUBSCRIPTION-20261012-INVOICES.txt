@@ -1,0 +1,2 @@
+Synthetic scenario: each invoice line reconciles quantity times monthly unit price. Payment references are distinct; the last period is explicitly unpaid. This is not a connected ERP export.
+Synthetic scenario only. No real agreement execution, approval or signature is asserted.
