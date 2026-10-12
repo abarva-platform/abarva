@@ -3,6 +3,7 @@
 import { ModelAuthoredChart } from "./ModelAuthoredChart";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { graphPlot } from "@/lib/intelligence/answer/model-exhibit-layout";
+import { sourceDisplayLabel } from "@/lib/intelligence/answer/source-display-label";
 
 export function ModelAuthoredExhibits({ answer }: { answer: AvaAnswerPacket }) {
   return (
@@ -124,10 +125,10 @@ export function ModelAuthoredExhibits({ answer }: { answer: AvaAnswerPacket }) {
               <li key={c.id}>
                 {c.url ? (
                   <a href={c.url} target="_blank" rel="noreferrer">
-                    {c.label}
+                    {sourceDisplayLabel(c.label)}
                   </a>
                 ) : (
-                  c.label
+                  sourceDisplayLabel(c.label)
                 )}
               </li>
             ))}

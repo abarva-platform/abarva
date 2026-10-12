@@ -705,7 +705,7 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
     ? CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH
     : CONSULTANT_ANSWER_SHAPE_CONTRACT;
   const rawSystem = modelAuthored
-    ? `${contextBlocks.join("\n\n")}\n\n${EXECUTIVE_BRIEF_CONTRACT}`
+    ? `${contextBlocks.join("\n\n")}\n\n${EXECUTIVE_BRIEF_CONTRACT}\n\n${executiveContext?.decisionGuard ?? ""}`
     : contextBlocks.length > 0
       ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`
       : `${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`;
@@ -741,9 +741,10 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
   );
 
   try {
-    const model = modelAuthored && isExplicitConciseAsk(args.query)
-      ? "claude-sonnet-4-6"
-      : chooseModel(args.intent, args.query);
+    const model =
+      modelAuthored && isExplicitConciseAsk(args.query)
+        ? "claude-sonnet-4-6"
+        : chooseModel(args.intent, args.query);
     const primaryTokenBudget = modelAuthored
       ? 8192
       : answerOnly
@@ -807,7 +808,10 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
       stream: true,
       ...(modelAuthored
         ? {
-            thinking: { type: "adaptive" as const, display: "omitted" as const },
+            thinking: {
+              type: "adaptive" as const,
+              display: "omitted" as const,
+            },
             output_config: { effort: "high" as const },
           }
         : {}),
