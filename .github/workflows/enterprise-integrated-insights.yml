@@ -1,0 +1,50 @@
+name: Integrated insight candidate contract
+
+on:
+  pull_request:
+    paths:
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'package.json'
+      - 'src/lib/ecl/insights/**'
+      - 'scripts/ecl/integrated_insights_job.ts'
+      - 'scripts/ecl/__tests__/integrated-insights*'
+      - 'supabase/migrations/20261011210000_enterprise_integrated_insight_candidates.sql'
+      - 'docs/governance/dataset-manifests/enterprise-integrated-insights-v1.json'
+      - '.github/workflows/enterprise-integrated-insights.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  candidate-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: insight_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run test:ecl-integrated-insights
+      - run: npm run test:ecl-integrated-insights:postgres
+        env:
+          INSIGHT_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/insight_test
+      - run: npx jest src/lib/ecl/insights/__tests__/engine.test.ts --runInBand --no-coverage
+      - run: npm run validate:context-corpus:manifests

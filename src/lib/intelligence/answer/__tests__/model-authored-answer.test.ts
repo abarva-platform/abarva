@@ -40,7 +40,7 @@ const chart = {
 const fence = (kind: string, value: unknown) =>
   `\`\`\`${kind}\n${JSON.stringify(value)}\n\`\`\``;
 
-it("preserves qualitative matrix categories without inventing numeric priority scores", () => {
+it.each(["chart", "quadrant-matrix"])("preserves qualitative matrix categories in a %s fence without inventing numeric priority scores", (kind) => {
   const matrix = {
     id: "bets",
     kind: "quadrant-matrix",
@@ -63,12 +63,12 @@ it("preserves qualitative matrix categories without inventing numeric priority s
       },
     ],
   };
-  const raw = `Validate first.\n\n${fence("chart", matrix)}`;
+  const raw = `Validate first.\n\n${fence(kind, matrix)}`;
   const answer = modelAuthoredAnswerPacket(raw, "Compare the bets", "test", []);
   expect(answer.artifacts).toEqual([{ ...matrix, artifact: "chart" }]);
   expect(answer.modelAuthored?.rawText).toBe(raw);
   expect(isIntactModelAuthoredPacket(answer)).toBe(true);
-  const invalid = fence("chart", {
+  const invalid = fence(kind, {
     ...matrix,
     data: [{ label: "Assist", Effort: 40, Potential: 80 }, matrix.data[1]],
   });
@@ -77,7 +77,7 @@ it("preserves qualitative matrix categories without inventing numeric priority s
     artifacts: [],
     followups: [],
     sourceIds: [],
-    protocolIssues: ["Unrendered chart block; original content retained."],
+    protocolIssues: [`Unrendered ${kind} block; original content retained.`],
   });
 });
 
@@ -132,6 +132,7 @@ it("retains malformed and unsupported payloads verbatim rather than repairing or
   for (const block of [
     fence("graph", { ...graph, edges: [{ from: "missing", to: "b" }] }),
     fence("chart", { ...chart, data: [{ period: "A", value: "unknown" }] }),
+    fence("quadrant-matrix", chart),
     "```table\n{bad JSON}\n```",
     fence("table", { ...table, extra: "Unsupported field" }),
   ]) {
