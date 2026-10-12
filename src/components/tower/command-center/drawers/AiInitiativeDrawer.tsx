@@ -31,6 +31,12 @@ const KIND_LABEL: Record<TowerAiView["kind"], string> = {
   unknown: "Spend type not loaded",
 };
 
+function kindLabel(a: TowerAiView): string {
+  return a.kind === "funded" && a.aiAmountBasis !== "approved_funding"
+    ? "Program"
+    : KIND_LABEL[a.kind];
+}
+
 /**
  * The "in plain terms" sentence for an AI item. Definitions are fixed per spend
  * type — they explain the *category*, which is a stable product concept, not a
@@ -161,6 +167,9 @@ export function plainAi(a: TowerAiView): string {
   if (isToolRollout(a)) {
     return "This is an AI tool rollout. Read it through adoption against target, active usage, linked business cases and the controls that govern use.";
   }
+  if (a.kind === "funded" && a.aiAmountBasis !== "approved_funding") {
+    return `This is a program row. Approved funding is not verified. Recommended posture: ${a.posture}.`;
+  }
   const definition: Record<TowerAiView["kind"], string> = {
     funded: "an approved program with recorded funding",
     embedded:
@@ -184,7 +193,7 @@ export function AiInitiativeDrawer({
   const open = item !== null;
   const a = item;
   const plainTone =
-    a?.kind === "funded"
+    a?.kind === "funded" && a.aiAmountBasis === "approved_funding"
       ? "pTeal"
       : a?.kind === "governance"
         ? "pAmber"
@@ -194,7 +203,7 @@ export function AiInitiativeDrawer({
     <DrawerShell
       open={open}
       onClose={onClose}
-      eyebrow={a ? `AI capability ${a.n} · ${KIND_LABEL[a.kind]}` : ""}
+      eyebrow={a ? `AI capability ${a.n} · ${kindLabel(a)}` : ""}
       title={a?.name ?? ""}
       footer={
         <>
@@ -540,7 +549,17 @@ export function AiInitiativeDrawer({
           <DrawerSection>Vendor &amp; system</DrawerSection>
           <DrawerRow label="Vendor" value={a.vendor ?? "Not recorded"} />
           <DrawerRow label="System" value={a.system ?? "Not recorded"} />
-          <DrawerRow label="Spend type" value={AI_KIND_WORD[a.kind]} />
+          <DrawerRow
+            label="Portfolio category"
+            value={a.kind === "funded" && a.aiAmountBasis !== "approved_funding" ? "Program" : AI_KIND_WORD[a.kind]}
+          />
+          {a.originalItemKind !== "unknown" ? (
+            <DrawerRow
+              label="Source category key"
+              value={a.originalItemKind}
+              sub="This category does not establish approved funding."
+            />
+          ) : null}
           <DrawerRow label="Category" value={a.category ?? "Not recorded"} />
           {!isToolRollout(a) ? (
             <>

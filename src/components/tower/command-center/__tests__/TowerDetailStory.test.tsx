@@ -69,6 +69,26 @@ describe("Tower detail proof states", () => {
     expect(within(drawer).getByText(/not a measured or Finance-verified benefit/)).toBeInTheDocument();
   });
 
+  it("keeps a source program category from claiming unverified funding approval", () => {
+    const caseRow: TowerAiView = {
+      ...view.allInitiatives[0]!,
+      populationKind: "ai_case",
+      kind: "funded",
+      originalItemKind: "funded_program",
+      aiAmountBasis: "unknown",
+      aiSpendLoaded: false,
+    };
+    render(<AiInitiativeDrawer item={caseRow} onClose={() => {}} />);
+    const drawer = screen.getByRole("dialog");
+    expect(within(drawer).getByText(`AI capability ${caseRow.n} · Program`)).toBeInTheDocument();
+    expect(within(drawer).getByText(/This is a program row. Approved funding is not verified/)).toBeInTheDocument();
+    expect(within(drawer).getByText("Source category key")).toBeInTheDocument();
+    expect(within(drawer).getByText("funded_program")).toBeInTheDocument();
+    expect(within(drawer).getByText("This category does not establish approved funding.")).toBeInTheDocument();
+    expect(within(drawer).queryByText(/Funded program/)).not.toBeInTheDocument();
+    expect(within(drawer).queryByText(/an approved program with recorded funding/)).not.toBeInTheDocument();
+  });
+
   it.each(["active_users", "adoption"])(
     "shows a %s source usage count without a bar when no adoption rate is loaded",
     (usageMetric) => {

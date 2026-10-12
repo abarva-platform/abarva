@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The Tower program and AI use-case details now explain source status, work stage, and expected benefit type in everyday words. Each row also shows the exact source value, so a reader can check what the intake actually said. The program-by-function panel describes loaded row counts and clearly marks approved funding by function as unverified. Usage counts in AI details appear as text without a percentage bar when the adoption rate is missing. The wording describes a plan or reported state; it does not turn it into a verified result.
+The Tower program and AI use-case details now explain source status, work stage, and expected benefit type in everyday words. Each row also shows the source value, so a reader can check what the intake actually said. The program-by-function panel describes loaded row counts and clearly marks approved funding by function as unverified. Usage counts in AI details appear as text without a percentage bar when the adoption rate is missing. A source category that sounds funded is shown as a program until approved funding is verified. The wording describes a plan or reported state; it does not turn it into a verified result.
 
 ## Layer Impact
 
@@ -37,10 +37,11 @@ Release lane: `global-control-lane`.
 - Keeps planned benefit language separate from measured or Finance-verified value.
 - Labels the program-by-function panel as loaded row counts; it does not add planning amounts or imply approved funding by function.
 - Shows count-only AI usage as text and reserves the percentage bar for recorded adoption rates.
+- Keeps a source category suggesting funded work visible as a source key, while the drawer uses a neutral program label until approved funding is recorded.
 
 ## QA / Validation
 
-- Pass: 42 focused Tower tests across four suites cover source-code readback, planned-benefit language, the three registered expected-benefit types, program-by-function copy with and without rows, and two count-only usage metrics without a percentage bar, including one named Adoption.
+- Pass: 43 focused Tower tests across four suites cover source-code readback, planned-benefit language, the three registered expected-benefit types, program-by-function copy with and without rows, two count-only usage metrics without a percentage bar, and a funded-sounding source category with unverified funding.
 - Pass: focused ESLint, full TypeScript typecheck, `git diff --check`, and all 11 release checks.
 - Pending: protected PR CI for the updated head. It is required before merge.
 
