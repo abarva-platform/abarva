@@ -513,6 +513,7 @@ synthetic-v-folder-reference,scripts/skyharbor/stages/07_verify/fact_fingerprint
 synthetic-v-folder-reference,scripts/skyharbor/verify-airline-pattern-overlay.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/skyharbor/verify-skyharbor-substrate.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/source/__tests__/candidate-supplier-registry-package.test.ts,non-loader historical reference
+synthetic-v-folder-reference,scripts/source/__tests__/load-contract-depth-document-evidence.test.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/source/load-candidate-supplier-registry.ts,non-loader historical reference
 synthetic-v-folder-reference,scripts/source/load-servicenow-sourcing-requests.ts,non-loader historical reference
 synthetic-v-folder-reference,scripts/source/validate-candidate-supplier-registry-package.ts,non-loader historical reference

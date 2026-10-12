@@ -1,13 +1,26 @@
 /** @jest-environment jsdom */
 
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import {
   previewMatchesApproval,
   readApprovedRomSnapshot,
   type ApprovedRomSnapshot,
 } from "@/lib/pricing/moves-workflow/approved-rom-snapshot";
+import { evaluateValueCase } from "@/lib/programs/value-engine";
+import { readValueModel } from "@/lib/programs/value-model-capture";
+import { valueCaseForViewer } from "@/lib/programs/value-engine/value-case-view";
+import {
+  withCostBasis,
+  type CostBasis,
+} from "@/lib/programs/value-engine/cost-basis";
 import { stepPageHref } from "@/lib/programs/step-page-views";
 import { P4_STEP_PAGES } from "../p4-step-pages";
 import { P5_STEP_PAGES } from "../p5-step-pages";
@@ -391,7 +404,9 @@ describe("P4 and P5 step pages", () => {
   });
 
   it("shows unavailable value-case readback without presenting client figures", async () => {
-    global.fetch = jest.fn().mockResolvedValue({ ok: false });
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({ ok: false, json: async () => ({}) });
     render(page(P4_STEP_PAGES, "p4-value", host(4)));
     await waitFor(() =>
       expect(screen.getByText(/Value case unavailable/)).toBeInTheDocument(),
@@ -433,8 +448,15 @@ describe("P4 and P5 step pages", () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        result: {
+        ok: true,
+        programId: "move-1",
+        status: "evaluated",
+        readyForApproval: true,
+        figuresRedacted: false,
+        costBasis: { status: "resolved", source: "rom:v1" },
+        case: {
           status: "evaluated",
+          mustValidate: [],
           levers: [
             {
               leverId: "L1",
@@ -470,6 +492,479 @@ describe("P4 and P5 step pages", () => {
     expect(screen.getAllByText(/register:V3/).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Estimate").length).toBeGreaterThan(0);
   });
+
+  const literal = (value: number) => ({
+    kind: "literal" as const,
+    value,
+    source: "[A:V3] synthetic test",
+  });
+  const valuePlan = JSON.stringify({
+    kind: "value_model",
+    version: 1,
+    case: {
+      horizonYears: 3,
+      discountRate: literal(0.08),
+      cost: { kind: "rom", snapshotId: "v2" },
+      levers: [
+        {
+          id: "L1",
+          name: "Reduced spend",
+          conversion: "cost_reduction",
+          driver: {
+            name: "share no longer bought",
+            unit: "share",
+            direction: "increase",
+            baseline: literal(0),
+            target: literal(1),
+          },
+          terms: [
+            { role: "base", label: "Spend base", ref: literal(100_000) },
+            { role: "driver_delta" },
+          ],
+          attribution: literal(1),
+          probability: literal(1),
+          timing: { startMonth: 1, rampMonths: 0, paymentLagMonths: 0 },
+        },
+        {
+          id: "L2",
+          name: "Days-AR",
+          conversion: "non_cash",
+          metricUnit: "days",
+          driver: {
+            name: "days AR",
+            unit: "days",
+            direction: "decrease",
+            baseline: literal(40),
+            target: literal(32),
+          },
+          terms: [{ role: "driver_delta" }],
+          attribution: literal(1),
+          probability: literal(1),
+          timing: { startMonth: 1, rampMonths: 0, paymentLagMonths: 2 },
+        },
+      ],
+    },
+  });
+  const resolved: CostBasis = {
+    status: "resolved",
+    basis: "rom_snapshot",
+    source: "rom:v2",
+    deliveryModel: null,
+    cents: { low: 10_000_000, base: 10_000_000, high: 10_000_000 },
+    planningBenchmark: null,
+  };
+  function realBody(
+    options: {
+      redacted?: boolean;
+      blocked?: boolean;
+      provisional?: boolean;
+    } = {},
+  ) {
+    const model = readValueModel(valuePlan);
+    if (model.kind !== "model") throw new Error("fixture");
+    const basis: CostBasis = options.blocked
+      ? {
+          status: "blocked",
+          reason: "rom_snapshot_not_approved",
+          detail: "The selected estimate is stale; reapprove it in P3 Step 4.",
+          planningBenchmark: null,
+        }
+      : resolved;
+    const result = evaluateValueCase(withCostBasis(model.model.case, basis));
+    if (options.provisional) result.mustValidate = ["L1.attribution"];
+    return valueCaseForViewer(
+      { programId: "move-1", result, costBasis: basis, registerInputs: [] },
+      { seesFigures: !options.redacted },
+    );
+  }
+  function mockBody(body: Record<string, unknown>) {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => body });
+  }
+
+  it("waits for the value capture save before reading and invalidates figures on edit", async () => {
+    mockBody(realBody());
+    const props = host(4, {
+      value_plan: valuePlan,
+      funding_governance: "Finance review",
+    });
+    props.captureSaved = { value_plan: false, funding_governance: true };
+    const { rerender } = render(page(P4_STEP_PAGES, "p4-value", props));
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(screen.getByText(/value plan is still saving/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    rerender(
+      page(P4_STEP_PAGES, "p4-value", {
+        ...props,
+        captureSaved: { value_plan: true, funding_governance: true },
+      }),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled(),
+    );
+    rerender(
+      page(P4_STEP_PAGES, "p4-value", {
+        ...props,
+        values: {
+          ...props.values,
+          value_plan: valuePlan.replace("Reduced spend", "Reviewed spend"),
+        },
+      }),
+    );
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("NPV")).toBeNull();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+  });
+
+  it.each(["model", "Move"])(
+    "ignores a late read for the previous %s",
+    async (changed) => {
+      let completeOld: (value: unknown) => void = () => {
+        throw new Error("Missing request");
+      };
+      global.fetch = jest
+        .fn()
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              completeOld = resolve;
+            }),
+        )
+        .mockResolvedValueOnce({
+          ok: false,
+          json: async () => ({ detail: "The current calculation is blocked." }),
+        });
+      const props = host(4, {
+        value_plan: valuePlan,
+        funding_governance: "Finance review",
+      });
+      const { rerender } = render(page(P4_STEP_PAGES, "p4-value", props));
+      rerender(
+        page(P4_STEP_PAGES, "p4-value", {
+          ...props,
+          ...(changed === "Move"
+            ? { move: { ...props.move, id: "move-2" } }
+            : {
+                values: {
+                  ...props.values,
+                  value_plan: valuePlan.replace(
+                    "Reduced spend",
+                    "Reviewed spend",
+                  ),
+                },
+              }),
+        }),
+      );
+      await waitFor(() =>
+        expect(
+          screen.getByText("The current calculation is blocked."),
+        ).toBeInTheDocument(),
+      );
+      await act(async () => {
+        completeOld({ ok: true, json: async () => realBody() });
+      });
+      expect(
+        screen.getByText("The current calculation is blocked."),
+      ).toBeInTheDocument();
+      expect(screen.queryByText("NPV")).toBeNull();
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    },
+  );
+
+  it("hides the previous evaluated model while the saved replacement is being read", async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => realBody() })
+      .mockImplementationOnce(() => new Promise(() => {}));
+    const props = host(4, {
+      value_plan: valuePlan,
+      funding_governance: "Finance review",
+    });
+    const { rerender } = render(page(P4_STEP_PAGES, "p4-value", props));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled(),
+    );
+    rerender(
+      page(P4_STEP_PAGES, "p4-value", {
+        ...props,
+        values: {
+          ...props.values,
+          value_plan: valuePlan.replace("Reduced spend", "Reviewed spend"),
+        },
+      }),
+    );
+    expect(screen.getByText("Reading the value case…")).toBeInTheDocument();
+    expect(screen.queryByText("NPV")).toBeNull();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+  });
+
+  it("uses the host's shared readback without issuing a second value read", () => {
+    mockBody(realBody());
+    const props = host(4, {
+      value_plan: valuePlan,
+      funding_governance: "Finance review",
+    });
+    props.p4ValueReadback = {
+      body: realBody(),
+      status: "",
+      ready: true,
+      canRetry: false,
+      retry: jest.fn(),
+    };
+    render(page(P4_STEP_PAGES, "p4-value", props));
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(screen.getByText(/plan 200%/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+  });
+
+  it("keeps Continue blocked until the current funding route is saved", async () => {
+    mockBody(realBody());
+    const props = host(4, {
+      value_plan: valuePlan,
+      funding_governance: "Finance review",
+    });
+    props.captureSaved = { value_plan: true, funding_governance: false };
+    const { rerender } = render(page(P4_STEP_PAGES, "p4-value", props));
+    expect(
+      screen.getByRole("status", { name: "What to do next" }),
+    ).toHaveTextContent("funding route is still saving");
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    rerender(
+      page(P4_STEP_PAGES, "p4-value", {
+        ...props,
+        captureSaved: { value_plan: true, funding_governance: true },
+      }),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled(),
+    );
+    expect(screen.getByText("NPV")).toBeInTheDocument();
+  });
+
+  it.each(["value_plan", "funding_governance"])(
+    "shows the exact %s save refusal without reading unsaved value",
+    (key) => {
+      mockBody(realBody());
+      const props = host(4, {
+        value_plan: valuePlan,
+        funding_governance: "Finance review",
+      });
+      props.captureSaved = {
+        value_plan: true,
+        funding_governance: true,
+        [key]: false,
+      };
+      props.captureSaveErrors = {
+        [key]: "The saved capture has changed. Reload before saving this edit.",
+      };
+      render(page(P4_STEP_PAGES, "p4-value", props));
+      expect(
+        screen.getByText(
+          "The saved capture has changed. Reload before saving this edit.",
+        ),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+      if (key === "value_plan") expect(global.fetch).not.toHaveBeenCalled();
+      else {
+        expect(screen.getByText("Finance review")).toBeInTheDocument();
+        fireEvent.click(
+          screen.getByRole("button", {
+            name: "Try saving funding route again",
+          }),
+        );
+        expect(props.setValue).toHaveBeenCalledWith(
+          "funding_governance",
+          "Finance review",
+        );
+        expect(
+          screen.getByRole("button", { name: "Reload saved capture" }),
+        ).toBeInTheDocument();
+      }
+    },
+  );
+
+  it("reads the actual API case projection and labels ROM cost, cash ROI and timing", async () => {
+    mockBody(realBody());
+    render(
+      page(
+        P4_STEP_PAGES,
+        "p4-value",
+        host(4, {
+          value_plan: valuePlan,
+          funding_governance: "Finance review",
+        }),
+      ),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByText("Three-year credited cash ROI"),
+      ).toBeInTheDocument(),
+    );
+    expect(screen.getByText(/plan 200%/)).toBeInTheDocument();
+    expect(screen.getByText(/rom:v2/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/register budget is a ceiling/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/day-level improvement does not establish/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Days-AR · starts month 1 · ramp 0 months · cash lag 2 months/,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/\$0: no release path/)).toBeInTheDocument();
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/v1/programs/move-1/value-case",
+      expect.objectContaining({ cache: "no-store" }),
+    );
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+  });
+
+  it("preserves a named refusal and permits a read-only retry", async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ detail: "This Move has no P4 value plan yet." }),
+      })
+      .mockResolvedValueOnce({ ok: true, json: async () => realBody() });
+    render(
+      page(
+        P4_STEP_PAGES,
+        "p4-value",
+        host(4, {
+          value_plan: valuePlan,
+          funding_governance: "Finance review",
+        }),
+      ),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByText("This Move has no P4 value plan yet."),
+      ).toBeInTheDocument(),
+    );
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled(),
+    );
+  });
+
+  it("keeps blocked economics figure-free and carries the exact cost-basis reason", async () => {
+    const body = realBody({ blocked: true });
+    // Even a malformed blocked body carrying amounts cannot display them.
+    (body.case as Record<string, unknown>).economics = (
+      realBody().case as Record<string, unknown>
+    ).economics;
+    mockBody(body);
+    render(
+      page(
+        P4_STEP_PAGES,
+        "p4-value",
+        host(4, {
+          value_plan: valuePlan,
+          funding_governance: "Finance review",
+        }),
+      ),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getAllByText(
+          "The selected estimate is stale; reapprove it in P3 Step 4.",
+        ).length,
+      ).toBeGreaterThan(0),
+    );
+    expect(screen.queryByText("NPV")).not.toBeInTheDocument();
+    expect(screen.queryByText("Payback")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Three-year credited cash ROI"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+  });
+
+  it("withholds figures and source terms for a restricted viewer", async () => {
+    const body = realBody({ redacted: true });
+    (body.case as Record<string, unknown>).economics = (
+      realBody().case as Record<string, unknown>
+    ).economics;
+    mockBody(body);
+    render(
+      page(
+        P4_STEP_PAGES,
+        "p4-value",
+        host(4, {
+          value_plan: valuePlan,
+          funding_governance: "Finance review",
+        }),
+      ),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Figures are withheld for your access level/),
+      ).toBeInTheDocument(),
+    );
+    expect(screen.queryByText("NPV")).not.toBeInTheDocument();
+    expect(screen.queryByText(/plan 200%/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\$0: no release path/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+  });
+
+  it("lists counted open inputs for validation before the value row settles", async () => {
+    mockBody(realBody({ provisional: true }));
+    render(
+      page(
+        P4_STEP_PAGES,
+        "p4-value",
+        host(4, {
+          value_plan: valuePlan,
+          funding_governance: "Finance review",
+        }),
+      ),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByText("Validate before funding: L1.attribution"),
+      ).toBeInTheDocument(),
+    );
+    expect(screen.getByText("NPV")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+  });
+
+  it.each(["wrong Move", "old result key", "unknown state"])(
+    "refuses an unverifiable readback: %s",
+    async (fault) => {
+      const body = realBody();
+      if (fault === "wrong Move") body.programId = "move-2";
+      if (fault === "old result key") {
+        body.result = body.case;
+        delete body.case;
+      }
+      if (fault === "unknown state") body.status = "unknown";
+      mockBody(body);
+      render(
+        page(
+          P4_STEP_PAGES,
+          "p4-value",
+          host(4, {
+            value_plan: valuePlan,
+            funding_governance: "Finance review",
+          }),
+        ),
+      );
+      await waitFor(() =>
+        expect(
+          screen.getByText(
+            "The value-case readback could not be verified. Try again.",
+          ),
+        ).toBeInTheDocument(),
+      );
+      expect(screen.queryByText("NPV")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    },
+  );
 
   it("shows evaluator status beside P5 text rather than implying the hard check passed", () => {
     const props = host(
