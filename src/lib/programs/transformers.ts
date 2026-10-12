@@ -60,6 +60,7 @@ type TransformerOptions = {
   supabase?: unknown;
   evaluateGateCriteria?: boolean;
   loadPhaseSnapshots?: typeof getPhaseSnapshots;
+  readSet?: import("./phase-page-gate-reads").PhasePageReadSet;
 };
 
 function displayText(value: unknown, fallback = "—"): string {
@@ -1264,6 +1265,7 @@ export function deriveMapLabel(move: Pick<ProgramCore, "name">): string {
 export async function getMoveStatus(
   ctx: TenancyCtx,
   move: Pick<ProgramCore, "id" | "status" | "lifecycleState" | "currentPhase">,
+  opts: Pick<TransformerOptions, "loadPhaseSnapshots"> = {},
 ): Promise<MoveStatus> {
   const [
     latestSnapshot,
@@ -1271,12 +1273,23 @@ export async function getMoveStatus(
     pendingFounderResult,
     milestonesResult,
   ] = await Promise.all([
-    azureRead.maybeSingle<{ approval_status?: string; created_at: string }>({
-      table: "phase_snapshots",
-      columns: ["approval_status", "created_at"],
-      where: { engagement_id: move.id },
-      orderBy: { column: "created_at", direction: "desc" },
-    }),
+    opts.loadPhaseSnapshots
+      ? opts.loadPhaseSnapshots(ctx, move.id).then((rows) =>
+          rows[0]
+            ? {
+                approval_status: rows[0].approvalStatus,
+                created_at: rows[0].createdAt,
+              }
+            : null,
+        )
+      : azureRead.maybeSingle<{ approval_status?: string; created_at: string }>(
+          {
+            table: "phase_snapshots",
+            columns: ["approval_status", "created_at"],
+            where: { engagement_id: move.id },
+            orderBy: { column: "created_at", direction: "desc" },
+          },
+        ),
     azureRead.select<{ severity: string | null }>({
       table: "maestro_oversight_flags",
       columns: ["severity"],
@@ -1403,28 +1416,40 @@ function compactDeliverablePreview(content: string | null | undefined): string {
 
 async function fetchMoveDeliverables(
   moveId: string,
+  ctx?: TenancyCtx,
+  opts: TransformerOptions = {},
 ): Promise<StrategicMove["deliverables"]> {
-  const rows = await azureRead.select<{
-    id: string;
-    deliverable_type_key: string;
-    title: string | null;
-    status: string | null;
-    current_version: number | null;
-    updated_at: string | null;
-  }>({
-    table: "deliverables_v2",
-    columns: [
-      "id",
-      "deliverable_type_key",
-      "title",
-      "status",
-      "current_version",
-      "updated_at",
-    ],
-    where: { engagement_id: moveId },
-    orderBy: { column: "updated_at", direction: "desc" },
-    limit: 24,
-  });
+  const rows =
+    opts.readSet && ctx && !opts.supabase
+      ? await opts
+          .readSet(ctx, moveId, "deliverables", async () => {
+            const { getProgramDeliverables } = await import("./queries");
+            return getProgramDeliverables(ctx, moveId, {
+              readSet: opts.readSet,
+            });
+          })
+          .then((all) => all.slice(0, 24))
+      : await azureRead.select<{
+          id: string;
+          deliverable_type_key: string;
+          title: string | null;
+          status: string | null;
+          current_version: number | null;
+          updated_at: string | null;
+        }>({
+          table: "deliverables_v2",
+          columns: [
+            "id",
+            "deliverable_type_key",
+            "title",
+            "status",
+            "current_version",
+            "updated_at",
+          ],
+          where: { engagement_id: moveId },
+          orderBy: { column: "updated_at", direction: "desc" },
+          limit: 24,
+        });
 
   if (rows.length === 0) {
     return fetchArtifactIndexFallback(moveId);
@@ -1511,6 +1536,50 @@ export async function buildStrategicMove(
   move: ProgramCore,
   opts: TransformerOptions = {},
 ): Promise<StrategicMove> {
+  const discloseRolePlaceholders =
+    isFeatureEnabled(ctx, "moves_step_pages_v3") &&
+    isFeatureEnabled(ctx, "moves_step_pages_p0p1_v1");
+  const readParticipants = () =>
+    azureRead
+      .select<{
+        person_id: string | null;
+        user_id: string;
+        role: string | null;
+        approval_authority: string | null;
+      }>({
+        table: "engagement_participants",
+        columns: ["person_id", "user_id", "role", "approval_authority"],
+        where: { engagement_id: move.id },
+      })
+      .catch(() => []);
+  const readParticipantNames = (
+    rows: Awaited<ReturnType<typeof readParticipants>>,
+  ) => {
+    const personIds = Array.from(
+      new Set(rows.map((row) => row.person_id || row.user_id).filter(Boolean)),
+    );
+    return personIds.length
+      ? azureRead
+          .select<{
+            id: string;
+            name: string | null;
+            role: string | null;
+            personal_threads?: unknown;
+          }>({
+            table: "persons",
+            columns: discloseRolePlaceholders
+              ? ["id", "name", "role", "personal_threads"]
+              : ["id", "name", "role"],
+            where: { id: { op: "in", value: personIds } },
+          })
+          .catch(() => [])
+      : Promise.resolve([]);
+  };
+  const participantsPrefetch = opts.loadPhaseSnapshots
+    ? readParticipants()
+    : null;
+  const participantNamesPrefetch =
+    participantsPrefetch?.then(readParticipantNames);
   const [
     clientRow,
     peopleRows,
@@ -1532,18 +1601,7 @@ export async function buildStrategicMove(
       columns: ["id", "name", "industry_code", "slug"],
       where: { id: move.clientId },
     }),
-    azureRead
-      .select<{
-        person_id: string | null;
-        user_id: string;
-        role: string | null;
-        approval_authority: string | null;
-      }>({
-        table: "engagement_participants",
-        columns: ["person_id", "user_id", "role", "approval_authority"],
-        where: { engagement_id: move.id },
-      })
-      .catch(() => []),
+    participantsPrefetch ?? readParticipants(),
     azureRead
       .select<{
         created_at: string;
@@ -1621,8 +1679,8 @@ export async function buildStrategicMove(
           })
           .catch(() => []),
     fetchLinkedEvidence(move.id).catch(() => []),
-    fetchMoveDeliverables(move.id).catch(() => []),
-    getMoveStatus(ctx, move).catch(() => ({
+    fetchMoveDeliverables(move.id, ctx, opts).catch(() => []),
+    getMoveStatus(ctx, move, opts).catch(() => ({
       statusKey: "idle",
       statusText: "Needs setup",
       statusDescription:
@@ -1632,30 +1690,25 @@ export async function buildStrategicMove(
   ]);
 
   const participantRows = peopleRows;
-  const personIds = Array.from(
-    new Set(
-      participantRows
-        .map((row) => row.person_id || row.user_id)
-        .filter(Boolean),
-    ),
-  );
-  const personData = personIds.length
-    ? await azureRead
-        .select<{
-          id: string;
-          name: string | null;
-          role: string | null;
-        }>({
-          table: "persons",
-          columns: ["id", "name", "role"],
-          where: { id: { op: "in", value: personIds } },
-        })
-        .catch(() => [])
-    : [];
-  const personMap = new Map<string, { name: string; role: string }>(
+  const personData = await (participantNamesPrefetch ??
+    readParticipantNames(participantRows));
+  const personMap = new Map<
+    string,
+    { name: string; role: string; declaredRoleOnly?: boolean }
+  >(
     personData.map((row) => [
       row.id,
-      { name: row.name ?? "Unknown", role: row.role ?? "Team member" },
+      {
+        name: row.name ?? "Unknown",
+        role: row.role ?? "Team member",
+        ...(discloseRolePlaceholders
+          ? {
+              declaredRoleOnly:
+                Array.isArray(row.personal_threads) &&
+                row.personal_threads.includes("origination_placeholder"),
+            }
+          : {}),
+      },
     ]),
   );
 
@@ -1669,6 +1722,9 @@ export async function buildStrategicMove(
       personId: key,
       name: person.name,
       role: row.role ?? row.approval_authority ?? person.role,
+      ...(discloseRolePlaceholders
+        ? { declaredRoleOnly: person.declaredRoleOnly === true }
+        : {}),
     };
   });
 

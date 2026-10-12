@@ -118,6 +118,29 @@ function page(view: keyof typeof P2_STEP_PAGES, props: StepPageHostProps) {
 }
 
 describe("P2 step pages", () => {
+  it("keeps the blocked Evidence Plan's refusal and canonical empty work state visible", () => {
+    const props = host();
+    props.p2Evidence = {
+      ...props.p2Evidence!,
+      readable: false,
+      readiness: null,
+    };
+    const { container } = render(page("p2-evidence-plan", props));
+    expect(
+      screen.getByRole("status", { name: "What to do next" }),
+    ).toHaveTextContent(
+      "Wait for the P2 evidence and gate readbacks to be available",
+    );
+    const note = screen.getByText(
+      /Previously saved answers remain on the Move/,
+    );
+    expect(
+      container.querySelector('[class*="work"] [class*="empty-note"]'),
+    ).toBe(note);
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    expect(props.setValue).not.toHaveBeenCalled();
+  });
+
   it("keeps approved packet coverage separate from report readiness", () => {
     render(page("p2-evidence-plan", host("p2_readiness_cleared")));
     expect(

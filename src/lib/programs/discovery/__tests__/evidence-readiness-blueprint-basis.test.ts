@@ -50,6 +50,67 @@ describe("discovery readiness shares the page's authorized program", () => {
     expect(mockQuery).not.toHaveBeenCalled();
     expect(mockGetProgramById).not.toHaveBeenCalled();
   });
+
+  it("starts the approved and backlog readbacks together after the authorized program resolves", async () => {
+    let finish!: (rows: unknown[]) => void;
+    const approved = new Promise<unknown[]>((resolve) => {
+      finish = resolve;
+    });
+    mockQuery.mockImplementation((sql: string) =>
+      sql.includes("INNER JOIN") ? approved : Promise.resolve([]),
+    );
+    const loadProgram = jest.fn(
+      async () =>
+        ({
+          id: "move-a",
+          functionPackKey: "governed_data_foundation",
+        }) as never,
+    );
+    const options = { loadProgram, parallelReadbacks: true };
+    const reading = loadDiscoveryEvidenceReadiness(ctx, "move-a", options);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    try {
+      expect(mockQuery).toHaveBeenCalledTimes(2);
+      for (const [, params] of mockQuery.mock.calls)
+        expect(params[0]).toBe("move-a");
+    } finally {
+      finish([]);
+      await reading;
+    }
+  });
+
+  it.each(["approved", "backlog"])(
+    "keeps a failed %s flagged readback unavailable",
+    async (read) => {
+      const error = new Error(`${read} unavailable`);
+      mockQuery.mockImplementation(async (sql: string) => {
+        if (sql.includes("INNER JOIN") === (read === "approved")) throw error;
+        return [];
+      });
+      const loadProgram = jest.fn(
+        async () =>
+          ({
+            id: "move-a",
+            functionPackKey: "governed_data_foundation",
+          }) as never,
+      );
+      const options = { loadProgram, parallelReadbacks: true };
+      await expect(
+        loadDiscoveryEvidenceReadiness(ctx, "move-a", options),
+      ).rejects.toBe(error);
+    },
+  );
+
+  it("does not read evidence for an unreadable program during flagged prefetch", async () => {
+    const options = {
+      loadProgram: jest.fn(async () => null),
+      parallelReadbacks: true,
+    };
+    await expect(
+      loadDiscoveryEvidenceReadiness(ctx, "move-a", options),
+    ).rejects.toThrow("Move unavailable");
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
 });
 
 /** Resolve a program exactly as `loadDiscoveryEvidenceReadiness` does. */

@@ -358,6 +358,7 @@ interface PhaseContract {
 }
 
 interface MovesPhaseStandaloneClientProps {
+  initialOriginationApproval?: import("@/lib/programs/approved-gate-phases").OriginationApprovalReadback;
   /** Server-resolved permission for evidence and phase approval actions. */
   canApproveGates?: boolean;
   /**
@@ -1111,6 +1112,7 @@ export function MovesPhaseStandaloneClient({
   priorPhaseCaptureValues = null,
   initialReferenceDraftValues = {},
   initialPhaseCaptureRevision,
+  initialOriginationApproval,
   initialBusinessChangeAssessment = "",
   initialApprovedEvidenceReferences = [],
   initialApprovedP1CaptureEvidenceReferences = [],
@@ -1198,6 +1200,10 @@ export function MovesPhaseStandaloneClient({
   );
   const [workspaceView, setWorkspaceView] =
     useState<WorkspaceView>(initialWorkspaceView);
+  const phaseLinkNavigationPending = useRef(false);
+  useEffect(() => {
+    phaseLinkNavigationPending.current = false;
+  }, [move.id, phaseNum]);
   // The finalized step page for P3 Gate readiness, behind `moves_step_pages_v3`
   // and only with the redesigned capture on. Opened with `?step=gate`.
   const gateStepId = resolvePhaseWorkflow(
@@ -1539,13 +1545,17 @@ export function MovesPhaseStandaloneClient({
     completed: boolean;
     loadFailed: boolean;
     deliverableSignOffStatus?: unknown;
-  }>(() => initialSignOffReadable === undefined
-    ? { completed: false, loadFailed: false }
-    : {
-        completed: true,
-        loadFailed: !initialSignOffReadable,
-        deliverableSignOffStatus: initialSignOffReadable ? "available" : "unavailable",
-      });
+  }>(() =>
+    initialSignOffReadable === undefined
+      ? { completed: false, loadFailed: false }
+      : {
+          completed: true,
+          loadFailed: !initialSignOffReadable,
+          deliverableSignOffStatus: initialSignOffReadable
+            ? "available"
+            : "unavailable",
+        },
+  );
 
   useEffect(() => {
     if (initialSignOffReadable !== undefined) return;
@@ -1662,7 +1672,12 @@ export function MovesPhaseStandaloneClient({
     initialP2RegisterRows ?? null,
   );
   useEffect(() => {
-    if (phase.phase !== 2 || !phaseStepPagesEnabled || initialP2RegisterRows !== undefined) return;
+    if (
+      phase.phase !== 2 ||
+      !phaseStepPagesEnabled ||
+      initialP2RegisterRows !== undefined
+    )
+      return;
     let live = true;
     fetch(`/api/v1/programs/${encodeURIComponent(move.id)}/assumptions`, {
       credentials: "include",
@@ -1672,7 +1687,10 @@ export function MovesPhaseStandaloneClient({
         return response.json() as Promise<{ assumptions?: AssumptionView[] }>;
       })
       .then((body) => {
-        if (live) setP2RegisterRows(Array.isArray(body.assumptions) ? body.assumptions : null);
+        if (live)
+          setP2RegisterRows(
+            Array.isArray(body.assumptions) ? body.assumptions : null,
+          );
       })
       .catch(() => {
         if (live) setP2RegisterRows(null);
@@ -1726,6 +1744,7 @@ export function MovesPhaseStandaloneClient({
     charterBasisSavePendingBySection,
     setCharterBasisSavePendingBySection,
   ] = useState<Record<string, boolean>>({});
+  const charterBasisWriteInFlight = useRef(false);
 
   const captureBasisForSection = useCallback(
     (sectionKey: string) => {
@@ -2358,6 +2377,7 @@ export function MovesPhaseStandaloneClient({
           detail?: string;
           error?: string;
           confirmedSolutionRoute?: ConfirmedSolutionRoute | null;
+          p1BasisBySection?: Record<string, CharterBasisValue>;
         };
         if (
           res.status === 409 &&
@@ -2369,6 +2389,8 @@ export function MovesPhaseStandaloneClient({
             normalizePhaseCaptureValues(body.values),
           );
           setPhaseCaptureRevision(body.revision);
+          if (phaseStepPagesEnabled && body.p1BasisBySection)
+            setCharterBasisBySection({ ...body.p1BasisBySection });
           throw new Error(
             body.detail ||
               "This page was loaded before the capture state changed. Reload and re-apply the draft.",
@@ -2388,6 +2410,8 @@ export function MovesPhaseStandaloneClient({
           [fieldKey]: savedValues[fieldKey] ?? "",
         }));
         if (body.revision) setPhaseCaptureRevision(body.revision);
+        if (phaseStepPagesEnabled && body.p1BasisBySection)
+          setCharterBasisBySection({ ...body.p1BasisBySection });
         setConfirmedSolutionRoute(body.confirmedSolutionRoute ?? null);
         setAvaDraftValues((prev) => {
           const next = { ...prev };
@@ -2407,7 +2431,13 @@ export function MovesPhaseStandaloneClient({
         setAvaDraftSaveErrors((prev) => ({ ...prev, [fieldKey]: message }));
       }
     },
-    [avaDraftValues, move.id, phase.phase, phaseCaptureRevision],
+    [
+      avaDraftValues,
+      move.id,
+      phase.phase,
+      phaseCaptureRevision,
+      phaseStepPagesEnabled,
+    ],
   );
   const visibleAvaQuestions =
     phase.phase === 1 ? phase.avaQuestions.slice(0, 2) : phase.avaQuestions;
@@ -2483,6 +2513,7 @@ export function MovesPhaseStandaloneClient({
           detail?: string;
           error?: string;
           confirmedSolutionRoute?: ConfirmedSolutionRoute | null;
+          p1BasisBySection?: Record<string, CharterBasisValue>;
         };
         if (
           res.status === 409 &&
@@ -2495,6 +2526,8 @@ export function MovesPhaseStandaloneClient({
             normalizePhaseCaptureValues(body.values),
           );
           setPhaseCaptureRevision(body.revision);
+          if (phaseStepPagesEnabled && body.p1BasisBySection)
+            setCharterBasisBySection({ ...body.p1BasisBySection });
           setPhaseCaptureSaveStatus((prev) => {
             const next = { ...prev };
             for (const key of keysToSave) next[key] = "editing";
@@ -2535,6 +2568,8 @@ export function MovesPhaseStandaloneClient({
           ),
         );
         if (body.revision) setPhaseCaptureRevision(body.revision);
+        if (phaseStepPagesEnabled && body.p1BasisBySection)
+          setCharterBasisBySection({ ...body.p1BasisBySection });
         setConfirmedSolutionRoute(body.confirmedSolutionRoute ?? null);
         setPhaseCaptureSaveStatus((prev) => {
           const next = { ...prev };
@@ -2574,6 +2609,7 @@ export function MovesPhaseStandaloneClient({
     phaseCaptureRevision,
     phaseCaptureValues,
     phaseStepCaptureAutosave,
+    phaseStepPagesEnabled,
   ]);
   const phaseCaptureHasUnsavedWork =
     phaseCaptureDirtyCount > 0 ||
@@ -3214,6 +3250,19 @@ export function MovesPhaseStandaloneClient({
 
   const saveCharterBasis = useCallback(
     async (sectionKey: string, next: CharterBasisValue | null) => {
+      if (
+        phaseStepPagesEnabled &&
+        (phaseCaptureDirtyCount > 0 ||
+          phaseCaptureSavingCount > 0 ||
+          charterBasisWriteInFlight.current)
+      ) {
+        setCharterBasisSaveError((prev) => ({
+          ...prev,
+          [sectionKey]:
+            "Wait for the saved answers and basis readback before recording how you know this.",
+        }));
+        return;
+      }
       // An assumption is only a recordable basis once it names an owner AND how
       // Discover validates it. Until both are typed we keep the choice in local
       // state (so the inputs stay usable) and send nothing — the server would
@@ -3232,6 +3281,7 @@ export function MovesPhaseStandaloneClient({
         ...prev,
         [sectionKey]: true,
       }));
+      if (phaseStepPagesEnabled) charterBasisWriteInFlight.current = true;
       try {
         const res = await fetch(`/api/v1/programs/${move.id}/phase-capture`, {
           method: "POST",
@@ -3281,13 +3331,22 @@ export function MovesPhaseStandaloneClient({
               : "Could not record how you know this. Try again.",
         }));
       } finally {
+        charterBasisWriteInFlight.current = false;
         setCharterBasisSavePendingBySection((prev) => ({
           ...prev,
           [sectionKey]: false,
         }));
       }
     },
-    [move.id, phase.phase, persistedPhaseCaptureValues, phaseCaptureRevision],
+    [
+      move.id,
+      phase.phase,
+      persistedPhaseCaptureValues,
+      phaseCaptureRevision,
+      phaseStepPagesEnabled,
+      phaseCaptureDirtyCount,
+      phaseCaptureSavingCount,
+    ],
   );
 
   const captureSectionBasis = (section: PhaseCaptureSection): ReactNode => {
@@ -3410,14 +3469,16 @@ export function MovesPhaseStandaloneClient({
     ).complete;
   };
   const captureSavedBySection: Record<string, boolean> = Object.fromEntries(
-    [...phaseCaptureSections, ...phaseStepRecordSections(phase.phase)].map((section) => [
-      section.key,
-      resolvePhaseCaptureStatus({
-        draft: String(phaseCaptureValues[section.key] ?? ""),
-        persisted: String(persistedPhaseCaptureValues[section.key] ?? ""),
-        saveStatus: phaseCaptureSaveStatus[section.key],
-      }).complete,
-    ]),
+    [...phaseCaptureSections, ...phaseStepRecordSections(phase.phase)].map(
+      (section) => [
+        section.key,
+        resolvePhaseCaptureStatus({
+          draft: String(phaseCaptureValues[section.key] ?? ""),
+          persisted: String(persistedPhaseCaptureValues[section.key] ?? ""),
+          saveStatus: phaseCaptureSaveStatus[section.key],
+        }).complete,
+      ],
+    ),
   );
   const p4ValueReadback = useP4ValueReadback({
     moveId: move.id,
@@ -3571,7 +3632,7 @@ export function MovesPhaseStandaloneClient({
   const offerReadinessWorkbook = shouldOfferStageReadinessWorkbook({
     phase: phase.phase,
     substepKey: substep.key,
-    captureFlowMounted,
+    captureFlowMounted: captureFlowMounted || gateStepPageActive,
     hasWorkbookTransition: readinessWorkbookHref !== null,
   });
 
@@ -3917,7 +3978,8 @@ export function MovesPhaseStandaloneClient({
     requestedView: initialStepView,
   });
   useEffect(() => {
-    if (defaultStepTarget) router.replace(defaultStepTarget);
+    if (defaultStepTarget && !phaseLinkNavigationPending.current)
+      router.replace(defaultStepTarget);
   }, [defaultStepTarget, router]);
   const phaseStepsHref = resolvePhaseStepPageLanding({
     moveId: move.id,
@@ -3932,7 +3994,11 @@ export function MovesPhaseStandaloneClient({
   const surfaceTabRow: ReactNode = (
     <WorkspaceSurfaceTabs
       activeView={workspaceView}
-      onSelect={setWorkspaceView}
+      onSelect={(view) => {
+        if (view === "phase" && phaseStepsHref)
+          phaseLinkNavigationPending.current = true;
+        setWorkspaceView(view);
+      }}
       phaseHref={phaseStepsHref}
       tabs={workspaceTabs}
       // v2 makes the slim phase rail the primary navigator, so the
@@ -4106,13 +4172,21 @@ export function MovesPhaseStandaloneClient({
       approverIsRole: true,
       changeProfile: resolveChangeProfile(confirmedSolutionRoute),
       buildHeldReason: phaseBuildArtifactsAvailable
-        ? buildHold?.statusLine ?? null
+        ? (buildHold?.statusLine ?? null)
         : "Gate documents could not be read. Refresh this step before continuing.",
       originationReady:
         phase.phase === 0
           ? phaseCaptureSections.every((section) =>
               isCaptureSectionComplete(section.key),
             ) && topLevelEvidenceReady
+          : undefined,
+      originationApproval:
+        phase.phase === 0 && (move.currentPhase ?? 0) > 0
+          ? initialOriginationApproval
+          : undefined,
+      readinessWorkbookActions:
+        phase.phase >= 1 && phase.phase <= 4
+          ? readinessWorkbookActions
           : undefined,
       originationRecommendation:
         phase.phase === 0
@@ -4228,6 +4302,10 @@ export function MovesPhaseStandaloneClient({
       gateProps: gateStepProps(),
       charterBasis: {
         active: charterBasisActive,
+        busy:
+          phaseCaptureDirtyCount > 0 ||
+          phaseCaptureSavingCount > 0 ||
+          Object.values(charterBasisSavePendingBySection).some(Boolean),
         values: charterBasisBySection,
         approvedSources: Object.fromEntries(
           phaseCaptureSections.map((section) => [
@@ -4608,6 +4686,7 @@ export function MovesPhaseStandaloneClient({
                     moveId={move.id}
                     phase={phase.phase}
                     canApproveGates={canApproveGates}
+                    discloseReviewerAttribution={phaseStepPagesEnabled}
                     onEvidenceChanged={refreshPhase}
                     evidenceFamilies={declarableEvidenceFamilies}
                   />
@@ -5646,31 +5725,45 @@ function WorkspaceSurfaceTabs({
       role="tablist"
       aria-label="Move workspace views"
     >
-      {tabs.map((tab) => tab.view === "phase" && phaseHref ? (
-        <Link
-          aria-selected={activeView === tab.view}
-          className={activeView === tab.view ? "active" : ""}
-          href={phaseHref}
-          key={tab.view}
-          role="tab"
-        >
-          {tab.label}
-        </Link>
-      ) : (
-        <button
-          aria-selected={activeView === tab.view}
-          className={activeView === tab.view ? "active" : ""}
-          key={tab.view}
-          onClick={() => {
-            onSelect(tab.view);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }}
-          role="tab"
-          type="button"
-        >
-          {tab.label}
-        </button>
-      ))}
+      {tabs.map((tab) =>
+        tab.view === "phase" && phaseHref ? (
+          <Link
+            aria-selected={activeView === tab.view}
+            className={activeView === tab.view ? "active" : ""}
+            href={phaseHref}
+            key={tab.view}
+            role="tab"
+            onClick={(event) => {
+              if (
+                event.button !== 0 ||
+                event.metaKey ||
+                event.ctrlKey ||
+                event.shiftKey ||
+                event.altKey
+              )
+                return;
+              onSelect(tab.view);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          >
+            {tab.label}
+          </Link>
+        ) : (
+          <button
+            aria-selected={activeView === tab.view}
+            className={activeView === tab.view ? "active" : ""}
+            key={tab.view}
+            onClick={() => {
+              onSelect(tab.view);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            role="tab"
+            type="button"
+          >
+            {tab.label}
+          </button>
+        ),
+      )}
     </div>
   );
 }
@@ -5818,37 +5911,39 @@ function MobileMovesRailControls({
         </select>
       </label>
       <div role="tablist" aria-label="Compact workspace views">
-        {tabs.map((view) => view.view === "phase" && phaseHref ? (
-          <Link
-            aria-selected={workspaceView === view.view}
-            className={workspaceView === view.view ? "viewing" : ""}
-            href={phaseHref}
-            key={view.view}
-            role="tab"
-          >
-            Stage
-          </Link>
-        ) : (
-          <button
-            aria-selected={workspaceView === view.view}
-            className={workspaceView === view.view ? "viewing" : ""}
-            key={view.view}
-            onClick={() => {
-              onSelectWorkspaceView(view.view);
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-            role="tab"
-            type="button"
-          >
-            {view.view === "phase"
-              ? "Stage"
-              : view.view === "files"
-                ? "Files"
-                : view.view === "intelligence"
-                  ? "Intel"
-                  : view.label}
-          </button>
-        ))}
+        {tabs.map((view) =>
+          view.view === "phase" && phaseHref ? (
+            <Link
+              aria-selected={workspaceView === view.view}
+              className={workspaceView === view.view ? "viewing" : ""}
+              href={phaseHref}
+              key={view.view}
+              role="tab"
+            >
+              Stage
+            </Link>
+          ) : (
+            <button
+              aria-selected={workspaceView === view.view}
+              className={workspaceView === view.view ? "viewing" : ""}
+              key={view.view}
+              onClick={() => {
+                onSelectWorkspaceView(view.view);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              role="tab"
+              type="button"
+            >
+              {view.view === "phase"
+                ? "Stage"
+                : view.view === "files"
+                  ? "Files"
+                  : view.view === "intelligence"
+                    ? "Intel"
+                    : view.label}
+            </button>
+          ),
+        )}
       </div>
     </div>
   );

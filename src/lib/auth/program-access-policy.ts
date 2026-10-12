@@ -3,6 +3,7 @@ import "server-only";
 import { AGENT_CLIENT_LOGINS } from "@/lib/auth/agent-client-logins";
 import { CANONICAL_CLIENT_ADMIN_EMAILS } from "@/lib/auth/canonical-auth-roster";
 import type { TenancyCtx } from "@/lib/programs/types.db";
+import type { PhasePageReadSet } from "@/lib/programs/phase-page-gate-reads";
 
 export type ClientAccessLevel =
   | "client_admin"
@@ -320,8 +321,15 @@ function inferAccessLevel(
 
 export async function loadUserProgramAccessPolicy(
   ctx: TenancyCtx,
-  opts: { programId?: string | null } = {},
+  opts: { programId?: string | null; readSet?: PhasePageReadSet } = {},
 ): Promise<UserProgramAccessPolicy> {
+  if (opts.readSet) {
+    if (!opts.programId)
+      throw new Error("A shared policy requires its Move scope");
+    return opts.readSet(ctx, opts.programId, "programAccessPolicy", () =>
+      loadUserProgramAccessPolicy(ctx, { programId: opts.programId }),
+    );
+  }
   const agentClientKey = agentLoginClientKeyForEmail(ctx.email);
   if (ctx.syntheticE2eOperator !== true &&
       agentClientKey && ctx.clientKey === agentClientKey) {
@@ -451,8 +459,12 @@ export async function allowedProgramIdsForUser(
 export async function canReadProgram(
   ctx: TenancyCtx,
   programId: string,
+  opts: { readSet?: PhasePageReadSet } = {},
 ): Promise<boolean> {
-  const policy = await loadUserProgramAccessPolicy(ctx, { programId });
+  const policy = await loadUserProgramAccessPolicy(ctx, {
+    programId,
+    ...(opts.readSet ? { readSet: opts.readSet } : {}),
+  });
   return (
     policy.programIdsAllowed === null ||
     policy.programIdsAllowed.includes(programId)

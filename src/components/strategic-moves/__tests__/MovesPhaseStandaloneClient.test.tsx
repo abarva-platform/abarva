@@ -47,7 +47,11 @@ import { unexpectedWalkStepFailureBody } from "@/lib/programs/walk-step-unexpect
 import { describeMoveUploadRefusal } from "@/lib/programs/move-upload-refusal";
 import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import type { StrategicMove } from "@/lib/programs/types.ui";
-import { emptyP4RoadmapPlan, newP4RoadmapMilestone, serializeP4RoadmapPlan } from "@/lib/programs/p4-roadmap-plan";
+import {
+  emptyP4RoadmapPlan,
+  newP4RoadmapMilestone,
+  serializeP4RoadmapPlan,
+} from "@/lib/programs/p4-roadmap-plan";
 import { readValueModel } from "@/lib/programs/value-model-capture";
 import { evaluateValueCase } from "@/lib/programs/value-engine";
 import {
@@ -4968,6 +4972,356 @@ describe("MovesPhaseStandaloneClient", () => {
     });
   });
 
+  describe("native Charter and origination readback repairs", () => {
+    const saved = {
+      sponsor_commitment: "Recorded sponsor contact",
+      scope_boundary: "Recorded bounded scope",
+    };
+    const renderCharter = () =>
+      render(
+        <MovesPhaseStandaloneClient
+          captureV2Enabled
+          stepPagesV3Enabled
+          phaseStepPagesEnabled
+          charterBasisEnabled
+          initialStepView="p1-sponsor-scope"
+          initialPhaseCaptureValues={saved}
+          initialPhaseCaptureRevision="revision-a"
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+    it("waits for one basis response before allowing the next and retains the complete readback", async () => {
+      const fallback = global.fetch;
+      const writes: Array<Record<string, unknown>> = [];
+      let finish!: (response: Response) => void;
+      global.fetch = jest.fn((input, init) => {
+        if (
+          String(input).includes("/phase-capture") &&
+          init?.method === "POST"
+        ) {
+          writes.push(JSON.parse(String(init.body)));
+          if (writes.length === 1)
+            return new Promise<Response>((resolve) => {
+              finish = resolve;
+            });
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              ok: true,
+              values: saved,
+              revision: "revision-c",
+              p1BasisBySection: {
+                sponsor_commitment: { kind: "workspace_assertion" },
+                scope_boundary: { kind: "workspace_assertion" },
+              },
+            }),
+          } as Response);
+        }
+        if (String(input).includes("/artifacts"))
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              artifacts: [],
+              reviewedEvidence: [],
+              rejectedEvidence: [],
+              pendingEvidenceReviews: [],
+              evidenceReviewStatus: "available",
+            }),
+          } as Response);
+        return fallback(input, init);
+      });
+      renderCharter();
+      const sponsor = () =>
+        screen.getByTestId("charter-basis-sponsor_commitment");
+      const scope = () => screen.getByTestId("charter-basis-scope_boundary");
+      fireEvent.click(
+        within(sponsor()).getByRole("radio", { name: "I'm asserting this" }),
+      );
+      expect(
+        within(scope()).getByRole("radio", { name: "I'm asserting this" }),
+      ).toBeDisabled();
+      fireEvent.click(
+        within(scope()).getByRole("radio", { name: "I'm asserting this" }),
+      );
+      expect(writes).toHaveLength(1);
+      await act(async () =>
+        finish({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            ok: true,
+            values: saved,
+            revision: "revision-b",
+            p1BasisBySection: {
+              sponsor_commitment: { kind: "workspace_assertion" },
+            },
+          }),
+        } as Response),
+      );
+      await waitFor(() =>
+        expect(
+          within(scope()).getByRole("radio", { name: "I'm asserting this" }),
+        ).not.toBeDisabled(),
+      );
+      fireEvent.click(
+        within(scope()).getByRole("radio", { name: "I'm asserting this" }),
+      );
+      await waitFor(() =>
+        expect(
+          within(scope()).getByRole("radio", { name: "I'm asserting this" }),
+        ).toHaveAttribute("aria-checked", "true"),
+      );
+      expect(
+        within(sponsor()).getByRole("radio", { name: "I'm asserting this" }),
+      ).toHaveAttribute("aria-checked", "true");
+      expect(writes).toHaveLength(2);
+      expect(writes[1].expectedRevision).toBe("revision-b");
+      expect(writes.map((row) => row.sections)).toEqual([
+        { sponsor_commitment: saved.sponsor_commitment },
+        { scope_boundary: saved.scope_boundary },
+      ]);
+    });
+
+    it.each(["success", "conflict"])(
+      "adopts the authoritative basis map after an answer edit invalidates its old basis: %s",
+      async (mode) => {
+        const fallback = global.fetch;
+        const changed = "The scope has a newly saved boundary.";
+        global.fetch = jest.fn((input, init) => {
+          if (
+            String(input).includes("/phase-capture") &&
+            init?.method === "POST"
+          )
+            return Promise.resolve({
+              ok: mode === "success",
+              status: mode === "success" ? 200 : 409,
+              json: async () => ({
+                ok: mode === "success",
+                error: mode === "conflict" ? "stale_revision" : undefined,
+                values: { ...saved, scope_boundary: changed },
+                revision: "revision-new",
+                p1BasisBySection: {
+                  sponsor_commitment: { kind: "workspace_assertion" },
+                },
+              }),
+            } as Response);
+          if (String(input).includes("/artifacts"))
+            return Promise.resolve({
+              ok: true,
+              status: 200,
+              json: async () => ({
+                artifacts: [],
+                reviewedEvidence: [],
+                rejectedEvidence: [],
+                pendingEvidenceReviews: [],
+                evidenceReviewStatus: "available",
+              }),
+            } as Response);
+          return fallback(input, init);
+        });
+        render(
+          <MovesPhaseStandaloneClient
+            captureV2Enabled
+            stepPagesV3Enabled
+            phaseStepPagesEnabled
+            charterBasisEnabled
+            initialStepView="p1-sponsor-scope"
+            initialPhaseCaptureValues={saved}
+            initialP1CharterBasisBySection={{
+              sponsor_commitment: { kind: "workspace_assertion" },
+              scope_boundary: { kind: "workspace_assertion" },
+            }}
+            initialPhaseCaptureRevision="revision-a"
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+            phaseNum={1}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+        const row = document.getElementById("row-scope_boundary")!;
+        const edit = within(row).getByRole("button", {
+          name: "Edit",
+          hidden: true,
+        });
+        fireEvent.click(edit);
+        fireEvent.change(
+          screen.getByRole("textbox", { name: "Scope boundary" }),
+          { target: { value: changed } },
+        );
+        fireEvent.click(
+          within(document.getElementById("row-scope_boundary")!).getByRole(
+            "button",
+            { name: "Save changes" },
+          ),
+        );
+        await waitFor(() =>
+          expect(
+            screen.getByTestId("charter-basis-scope_boundary"),
+          ).toHaveAttribute("data-basis", "none"),
+        );
+        expect(
+          screen.getByTestId("charter-basis-sponsor_commitment"),
+        ).toHaveAttribute("data-basis", "workspace_assertion");
+      },
+    );
+
+    it("refuses two same-tick basis writes through the host callback", async () => {
+      const original = PHASE_STEP_PAGES["p1-sponsor-scope"];
+      PHASE_STEP_PAGES["p1-sponsor-scope"] = (props) => (
+        <>
+          <button
+            onClick={() => {
+              props.charterBasis?.setValue("scope_boundary", {
+                kind: "workspace_assertion",
+              });
+              props.charterBasis?.setValue("sponsor_commitment", {
+                kind: "workspace_assertion",
+              });
+            }}
+          >
+            Two basis changes
+          </button>
+          <p>{props.charterBasis?.errors.sponsor_commitment}</p>
+        </>
+      );
+      const fallback = global.fetch;
+      let writes = 0;
+      global.fetch = jest.fn((input, init) => {
+        if (
+          String(input).includes("/phase-capture") &&
+          init?.method === "POST"
+        ) {
+          writes += 1;
+          return new Promise<Response>(() => {});
+        }
+        if (String(input).includes("/artifacts"))
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              artifacts: [],
+              reviewedEvidence: [],
+              rejectedEvidence: [],
+              pendingEvidenceReviews: [],
+              evidenceReviewStatus: "available",
+            }),
+          } as Response);
+        return fallback(input, init);
+      });
+      try {
+        renderCharter();
+        fireEvent.click(
+          screen.getByRole("button", { name: "Two basis changes" }),
+        );
+        expect(writes).toBe(1);
+        expect(
+          screen.getByText(/Wait for the saved answers and basis readback/),
+        ).toBeInTheDocument();
+      } finally {
+        PHASE_STEP_PAGES["p1-sponsor-scope"] = original;
+      }
+    });
+
+    it("selects Steps during its normal route navigation without retaining the Files view on the reused client", () => {
+      mockRouterReplace.mockClear();
+      const input = {
+        captureV2Enabled: true,
+        stepPagesV3Enabled: true,
+        phaseStepPagesEnabled: true,
+        initialPhaseCaptureValues: saved,
+        carriesForwardContent: [],
+        evidenceNeedPackets: [],
+        move: makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" }),
+        phaseNum: 1,
+        phaseTallies: [...phaseTallies],
+      };
+      const mounted = render(
+        <MovesPhaseStandaloneClient {...input} initialWorkspaceView="files" />,
+      );
+      expect(
+        screen.getByRole("heading", { name: "Files & Evidence" }),
+      ).toBeInTheDocument();
+      const steps = workspaceTab("Steps");
+      expect(steps.tagName).toBe("A");
+      expect(steps.getAttribute("href")).toContain("?step=p1-sponsor-scope");
+      fireEvent.click(steps, { ctrlKey: true });
+      expect(
+        screen.getByRole("heading", { name: "Files & Evidence" }),
+      ).toBeInTheDocument();
+      fireEvent.click(steps);
+      expect(
+        screen.queryByRole("heading", { name: "Files & Evidence" }),
+      ).not.toBeInTheDocument();
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Opening Sponsor & scope",
+      );
+      expect(mockRouterReplace).not.toHaveBeenCalled();
+      mounted.rerender(
+        <MovesPhaseStandaloneClient
+          {...input}
+          initialWorkspaceView="phase"
+          initialStepView="p1-sponsor-scope"
+        />,
+      );
+      expect(
+        screen.queryByRole("heading", { name: "Files & Evidence" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Name sponsor and scope" }),
+      ).toBeInTheDocument();
+      expect(screen.getByText(saved.scope_boundary)).toBeInTheDocument();
+      expect(
+        (global.fetch as jest.Mock).mock.calls.some(
+          ([, init]) => init?.method === "POST",
+        ),
+      ).toBe(false);
+    });
+
+    it("passes the stored P0 approval into the historical step without another approval action", () => {
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      render(
+        <MovesPhaseStandaloneClient
+          captureV2Enabled
+          stepPagesV3Enabled
+          phaseStepPagesEnabled
+          initialStepView="p0-approve"
+          initialOriginationApproval={{
+            state: "recorded",
+            moveId: move.id,
+            snapshotId: "snapshot-a",
+            approvedAt: "2026-10-12T12:00:00Z",
+            rationale: "Stored approval rationale",
+          }}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={move}
+          phaseNum={0}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        screen.getAllByText("Phase gate approval recorded").length,
+      ).toBeGreaterThan(0);
+      expect(screen.getByText("Stored approval rationale")).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Approve origination" }),
+      ).not.toBeInTheDocument();
+      expect(
+        (global.fetch as jest.Mock).mock.calls.some(
+          ([, init]) => init?.method === "POST",
+        ),
+      ).toBe(false);
+    });
+  });
+
   describe("phase-generic step page mount", () => {
     const valueRef = (value: number) => ({
       kind: "literal",
@@ -5527,18 +5881,38 @@ describe("MovesPhaseStandaloneClient", () => {
       },
     );
 
-    it.each([true, false])("mounts P5 publication controls only with their flag: %s", async enabled => {
-      render(<MovesPhaseStandaloneClient
-        canApproveGates captureV2Enabled stepPagesV3Enabled phaseStepPagesEnabled
-        p5TowerHandoffEnabled={enabled} initialStepView="p5-measurement"
-        carriesForwardContent={[]} evidenceNeedPackets={[]}
-        move={makeMove({ name: "Synthetic Move", currentPhase: 5, phaseLabel: "P5 Mobilize" })}
-        phaseNum={5} phaseTallies={[...phaseTallies]} />);
-      const action = screen.queryByRole("button", { name: "Review saved handoff" });
-      if (enabled) expect(action).toBeInTheDocument();
-      else expect(action).not.toBeInTheDocument();
-      expect(screen.getByRole("heading", { name: "Define Tower measurement" })).toBeInTheDocument();
-    });
+    it.each([true, false])(
+      "mounts P5 publication controls only with their flag: %s",
+      async (enabled) => {
+        render(
+          <MovesPhaseStandaloneClient
+            canApproveGates
+            captureV2Enabled
+            stepPagesV3Enabled
+            phaseStepPagesEnabled
+            p5TowerHandoffEnabled={enabled}
+            initialStepView="p5-measurement"
+            carriesForwardContent={[]}
+            evidenceNeedPackets={[]}
+            move={makeMove({
+              name: "Synthetic Move",
+              currentPhase: 5,
+              phaseLabel: "P5 Mobilize",
+            })}
+            phaseNum={5}
+            phaseTallies={[...phaseTallies]}
+          />,
+        );
+        const action = screen.queryByRole("button", {
+          name: "Review saved handoff",
+        });
+        if (enabled) expect(action).toBeInTheDocument();
+        else expect(action).not.toBeInTheDocument();
+        expect(
+          screen.getByRole("heading", { name: "Define Tower measurement" }),
+        ).toBeInTheDocument();
+      },
+    );
 
     it("mounts the governed gate in a later phase under the phase flag", () => {
       render(
@@ -6197,15 +6571,20 @@ describe("MovesPhaseStandaloneClient", () => {
         expect(mockRouterReplace).not.toHaveBeenCalled();
         expect(
           within(screen.getByRole("tablist", { name: "Move workspace views" }))
-            .getByRole("tab", { name: "Steps" }).getAttribute("href"),
+            .getByRole("tab", { name: "Steps" })
+            .getAttribute("href"),
         ).toMatch(
           new RegExp(`/strategic-moves/${p2Move().id}/phase/2\\?step=`),
         );
         expect(
-          within(screen.getByRole("tablist", {
-            name: "Compact workspace views",
-            hidden: true,
-          })).getByRole("tab", { name: "Stage", hidden: true }).getAttribute("href"),
+          within(
+            screen.getByRole("tablist", {
+              name: "Compact workspace views",
+              hidden: true,
+            }),
+          )
+            .getByRole("tab", { name: "Stage", hidden: true })
+            .getAttribute("href"),
         ).toMatch(
           new RegExp(`/strategic-moves/${p2Move().id}/phase/2\\?step=`),
         );
@@ -13783,4 +14162,55 @@ describe("the gate panel accounts for every open caveat", () => {
     expect(soft).toHaveTextContent("Caveat: 4 more");
     expect(hard.textContent).not.toBe(soft.textContent);
   });
+});
+
+describe("normal step gate transition evidence producer", () => {
+  beforeEach(() => {
+    global.fetch = jest.fn(
+      async () => ({ ok: true, json: async () => ({ rows: [] }) }) as Response,
+    );
+  });
+  it.each([
+    { phase: 1, view: "p1-charter-gate", next: 2 },
+    { phase: 2, view: "p2-gate", next: 3 },
+    { phase: 3, view: "gate", next: 4 },
+    { phase: 4, view: "p4-gate", next: 5 },
+  ] as const)(
+    "P$phase gate exposes its actual download and parse/review control",
+    ({ phase, view, next }) => {
+      const move = makeMove({ currentPhase: phase });
+      render(
+        <MovesPhaseStandaloneClient
+          move={move}
+          phaseNum={phase}
+          phaseTallies={[...phaseTallies]}
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          phaseStepPagesEnabled
+          initialStepView={view}
+          initialSubstepKey="prepare"
+          carriesForwardContent={[]}
+          evidenceNeedPackets={coveredEvidencePacketsForPhase(phase)}
+        />,
+      );
+      const region = screen.getByRole("region", {
+        name: "Transition readiness workbook",
+      });
+      expect(
+        within(region).getByRole("link", {
+          name: `Download P${next} readiness workbook`,
+        }),
+      ).toHaveAttribute(
+        "href",
+        `/api/v1/programs/${move.id}/stage-readiness-workbook?phase=${phase}`,
+      );
+      expect(
+        within(region).getByLabelText("Upload completed readiness workbook"),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("moves-phase-standalone"),
+      ).not.toBeInTheDocument();
+    },
+  );
 });

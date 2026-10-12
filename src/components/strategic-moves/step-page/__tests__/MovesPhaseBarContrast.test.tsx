@@ -2,6 +2,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { parse } from "postcss";
 import { render, screen, within } from "@testing-library/react";
 import { resolveStepNextAction } from "@/lib/programs/step-page-model";
 import { MovesStepPage } from "../MovesStepPage";
@@ -12,8 +13,15 @@ const css = fs.readFileSync(
 );
 
 function rule(selector: string): string {
-  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const body = css.match(new RegExp(`^${escaped} \\{([^}]+)\\}`, "m"))?.[1];
+  let body: string | undefined;
+  parse(css).walkRules((entry) => {
+    if (body || !entry.selectors.includes(selector)) return;
+    const declarations: string[] = [];
+    entry.walkDecls((declaration) => {
+      declarations.push(`${declaration.prop}: ${declaration.value};`);
+    });
+    body = declarations.join("\n");
+  });
   if (!body) throw new Error(`Missing CSS rule: ${selector}`);
   return body;
 }

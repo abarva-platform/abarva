@@ -402,7 +402,9 @@ export interface MovesStepPageProps {
 export function useStepPageTheme() {
   const [theme, setTheme] = useState<"light" | "dark" | null>(null);
   const [systemDark, setSystemDark] = useState(false);
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
+    setMounted(true);
     try {
       const stored = window.localStorage.getItem("mv-theme");
       if (stored === "light" || stored === "dark") setTheme(stored);
@@ -410,12 +412,19 @@ export function useStepPageTheme() {
       // Storage can be unavailable; the system preference still applies.
     }
     const query = window.matchMedia?.("(prefers-color-scheme: dark)");
-    if (!query) return;
-    setSystemDark(query.matches);
+    if (query) setSystemDark(query.matches);
     const onChange = (event: MediaQueryListEvent) =>
       setSystemDark(event.matches);
-    query.addEventListener?.("change", onChange);
-    return () => query.removeEventListener?.("change", onChange);
+    const onSharedTheme = (event: Event) => {
+      const value = (event as CustomEvent<unknown>).detail;
+      if (value === "light" || value === "dark") setTheme(value);
+    };
+    query?.addEventListener?.("change", onChange);
+    window.addEventListener("moves-step-theme", onSharedTheme);
+    return () => {
+      query?.removeEventListener?.("change", onChange);
+      window.removeEventListener("moves-step-theme", onSharedTheme);
+    };
   }, []);
   const effective = theme ?? (systemDark ? "dark" : "light");
   const toggle = () => {
@@ -426,14 +435,29 @@ export function useStepPageTheme() {
     } catch {
       // Not persisted; the toggle still applies for this view.
     }
+    window.dispatchEvent(new CustomEvent("moves-step-theme", { detail: next }));
   };
-  return { theme, effective, toggle };
+  return { theme, effective, toggle, mounted };
+}
+
+/** The existing notes slot shares the step's tokens and current theme. */
+export function StepNotesPanel({ children }: { children: ReactNode }) {
+  const { theme } = useStepPageTheme();
+  return (
+    <section
+      className={cx("notes-panel")}
+      data-theme={theme ?? undefined}
+      aria-label="Session notes"
+    >
+      {children}
+    </section>
+  );
 }
 
 export function MovesStepPage(props: MovesStepPageProps) {
   const inheritedCatchUp = useContext(PhaseCatchUpContext);
   const catchUp = props.catchUp ?? inheritedCatchUp;
-  const { theme, effective, toggle } = useStepPageTheme();
+  const { theme, effective, toggle, mounted } = useStepPageTheme();
   const { nextAction, stepIndex, steps } = props;
   const state = nextAction.state;
   const groups = groupStepRows(props.rows);
@@ -483,7 +507,12 @@ export function MovesStepPage(props: MovesStepPageProps) {
             {props.syntheticNote ? (
               <span className={cx("demo-note")}>{props.syntheticNote}</span>
             ) : null}
-            <button type="button" className={cx("link-btn")} onClick={toggle}>
+            <button
+              type="button"
+              className={cx("link-btn")}
+              onClick={toggle}
+              disabled={!mounted}
+            >
               {effective === "dark" ? "Light" : "Dark"} mode
             </button>
           </div>

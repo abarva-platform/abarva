@@ -27,6 +27,72 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+describe("stored P0 approval projection", () => {
+  it("shows the stored approval and rationale without a new approval form or submission", () => {
+    const onSubmit = jest.fn(async () => undefined);
+    const { container } = render(
+      <GateReadinessStep
+        {...props({
+          phaseNum: 0,
+          phaseCode: "P0",
+          phaseName: "Originate",
+          routeDocumentKeys: [],
+          initialArtifacts: [],
+          onSubmit,
+          originationApproval: {
+            state: "recorded",
+            moveId: "move-1",
+            snapshotId: "snapshot-a",
+            approvedAt: "2026-10-12T12:00:00Z",
+            rationale: "Approved after reviewing the captured source.",
+          },
+        })}
+      />,
+    );
+    expect(container.textContent).toContain("Phase gate approval recorded");
+    expect(container.textContent).toContain(
+      "Approved after reviewing the captured source.",
+    );
+    expect(container.textContent).not.toContain("Approval not yet recorded");
+    expect(container.querySelector("textarea")).toBeNull();
+    expect(
+      Array.from(container.querySelectorAll("button")).some(
+        (b) => b.textContent === "Approve origination",
+      ),
+    ).toBe(false);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+  it.each(["unavailable", "foreign", "not-recorded"])(
+    "refuses a %s readback without offering a second approval",
+    (mode) => {
+      const { container } = render(
+        <GateReadinessStep
+          {...props({
+            phaseNum: 0,
+            originationApproval:
+              mode === "unavailable"
+                ? { state: "unavailable", moveId: "move-1" }
+                : mode === "not-recorded"
+                  ? { state: "not_recorded", moveId: "move-1" }
+                  : {
+                      state: "recorded",
+                      moveId: "other-move",
+                      snapshotId: "snapshot-a",
+                      approvedAt: null,
+                      rationale: "Other source",
+                    },
+          })}
+        />,
+      );
+      expect(container.textContent).toContain(
+        "Wait for the stored origination approval to be read.",
+      );
+      expect(container.textContent).not.toContain("Other source");
+      expect(container.querySelector("textarea")).toBeNull();
+    },
+  );
+});
+
 const KEYS = [
   "target_state_architecture",
   "process_change_estimate_brief",
@@ -806,5 +872,246 @@ describe("GateReadinessStep", () => {
     expect(docsRow(container).textContent).toContain(
       "Solution Design Specification",
     );
+  });
+});
+
+describe("a phase approval does not decide the origination request", () => {
+  it("displays a pending request and submitted lifecycle beside the stored phase approval without a decision form", () => {
+    const onSubmit = jest.fn(async () => undefined);
+    const { container } = render(
+      <GateReadinessStep
+        {...props({
+          phaseNum: 0,
+          originationApproval: {
+            state: "recorded",
+            moveId: "move-1",
+            snapshotId: "phase-a",
+            approvedAt: null,
+            rationale: "Stored rationale",
+            requestLifecycle: { readable: true, status: "pending" },
+            moveLifecycle: "submitted_for_approval",
+          },
+          onSubmit,
+        })}
+      />,
+    );
+    expect(container.textContent).toContain("Phase gate approval recorded");
+    expect(container.textContent).toContain("Origination request: pending.");
+    expect(container.textContent).toContain(
+      "Move lifecycle: submitted for approval.",
+    );
+    expect(container.querySelector("textarea")).toBeNull();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+});
+
+describe("retained capture correction in the normal P0 product page", () => {
+  beforeEach(() => {
+    global.fetch = jest.fn(
+      async () =>
+        ({ ok: true, json: async () => ({ deliverables: [] }) }) as Response,
+    );
+  });
+  const captureCorrection = {
+    state: "available" as const,
+    snapshotId: "snapshot-a",
+    captureRevision: "capture-a",
+    sourceRevision: "a".repeat(64),
+    snapshotRevision: "b".repeat(64),
+    signatureRevision: "c".repeat(64),
+    fields: [
+      {
+        key: "business_trigger",
+        label: "Business trigger",
+        moduleId: "module-a",
+        current: "Current stored text",
+        retained: "Retained reviewed text",
+      },
+    ],
+  };
+  const approval = {
+    state: "recorded" as const,
+    moveId: "move-1",
+    snapshotId: "snapshot-a",
+    approvedAt: "2026-10-12T11:00:00Z",
+    rationale: "Original approval words",
+    captureCorrection,
+  };
+  const successful = {
+    ok: true,
+    persisted: true,
+    programId: "move-1",
+    phase: 0,
+    snapshotId: "snapshot-a",
+    signedOffVersion: 1,
+    preservedBindings: true,
+    correctionAuditId: "audit-a",
+    values: { business_trigger: "Retained reviewed text" },
+  };
+  it("reviews the exact before and retained values, then submits once without another approval", async () => {
+    const onRecordChanged = jest.fn();
+    const onSubmit = jest.fn();
+    let resolveResponse!: (response: Response) => void;
+    const fetchMock = jest.spyOn(global, "fetch").mockImplementation((url) =>
+      String(url).endsWith("/phase-capture")
+        ? new Promise((resolve) => {
+            resolveResponse = resolve;
+          })
+        : Promise.resolve({
+            ok: true,
+            json: async () => ({ deliverables: [] }),
+          } as Response),
+    );
+    const ui = render(
+      <GateReadinessStep
+        {...props({
+          routeDocumentKeys: [],
+          initialArtifacts: [],
+          phaseNum: 0,
+          originationApproval: approval,
+          onRecordChanged,
+          onSubmit,
+        })}
+      />,
+    );
+    expect(ui.getByText("Current stored text")).toBeTruthy();
+    expect(ui.getByText("Retained reviewed text")).toBeTruthy();
+    const button = ui.getByRole("button", { name: "Restore reviewed input" });
+    expect(button.hasAttribute("disabled")).toBe(true);
+    fireEvent.change(ui.getByLabelText("Correction rationale"), {
+      target: { value: "Restore the retained source." },
+    });
+    act(() => {
+      fireEvent.click(button);
+      fireEvent.click(button);
+    });
+    const writes = fetchMock.mock.calls.filter(([url]) =>
+      String(url).endsWith("/phase-capture"),
+    );
+    expect(writes).toHaveLength(1);
+    expect(writes[0][0]).toBe("/api/v1/programs/move-1/phase-capture");
+    const body = JSON.parse(String(writes[0][1]?.body));
+    expect(body).toEqual({
+      phase: 0,
+      expectedRevision: "capture-a",
+      restoreReviewedP0: {
+        snapshotId: "snapshot-a",
+        sourceRevision: "a".repeat(64),
+        snapshotRevision: "b".repeat(64),
+        signatureRevision: "c".repeat(64),
+        rationale: "Restore the retained source.",
+      },
+    });
+    await act(async () => {
+      resolveResponse({ ok: true, json: async () => successful } as Response);
+    });
+    expect(onRecordChanged).toHaveBeenCalledTimes(1);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+  it.each(["audit", "values", "snapshot", "version", "preserved", "refusal"])(
+    "keeps the gate held when correction %s proof fails",
+    async (failure) => {
+      const onRecordChanged = jest.fn();
+      const response = { ...successful, values: { ...successful.values } };
+      if (failure === "audit") response.correctionAuditId = "";
+      if (failure === "values") response.values.business_trigger = "Other text";
+      if (failure === "snapshot") response.snapshotId = "Other snapshot";
+      if (failure === "version") response.signedOffVersion = 2;
+      if (failure === "preserved") response.preservedBindings = false;
+      jest.spyOn(global, "fetch").mockResolvedValue({
+        ok: failure !== "refusal",
+        json: async () =>
+          failure === "refusal"
+            ? { detail: "Reload the correction preview." }
+            : response,
+      } as Response);
+      const ui = render(
+        <GateReadinessStep
+          {...props({
+            routeDocumentKeys: [],
+            initialArtifacts: [],
+            phaseNum: 0,
+            originationApproval: approval,
+            onRecordChanged,
+          })}
+        />,
+      );
+      fireEvent.change(ui.getByLabelText("Correction rationale"), {
+        target: { value: "Restore source." },
+      });
+      await act(async () => {
+        fireEvent.click(
+          ui.getByRole("button", { name: "Restore reviewed input" }),
+        );
+      });
+      expect(ui.getByRole("alert").textContent).toContain(
+        failure === "refusal"
+          ? "Reload the correction preview."
+          : "readback could not be confirmed",
+      );
+      expect(onRecordChanged).not.toHaveBeenCalled();
+    },
+  );
+  it("offers no correction write to a reader without approval permission", () => {
+    const ui = render(
+      <GateReadinessStep
+        {...props({
+          routeDocumentKeys: [],
+          initialArtifacts: [],
+          phaseNum: 0,
+          canApprove: false,
+          originationApproval: approval,
+        })}
+      />,
+    );
+    expect(ui.queryByLabelText("Correction rationale")).toBeNull();
+    expect(
+      ui
+        .getByRole("button", { name: "Restore reviewed input" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+  });
+  it("holds continuation while the retained source cannot be verified", () => {
+    const ui = render(
+      <GateReadinessStep
+        {...props({
+          routeDocumentKeys: [],
+          initialArtifacts: [],
+          phaseNum: 0,
+          originationApproval: {
+            ...approval,
+            captureCorrection: {
+              state: "unavailable",
+              reason: "Source unavailable.",
+            },
+          },
+        })}
+      />,
+    );
+    expect(
+      ui
+        .getByRole("button", { name: "Open P1 Charter" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+  });
+  it("renders the existing transition workbook producer alongside a held gate build", () => {
+    const ui = render(
+      <GateReadinessStep
+        {...props({
+          buildHeldReason:
+            "1 required evidence item must be covered before final build.",
+          readinessWorkbookActions: (
+            <button type="button">Parse existing readiness workbook</button>
+          ),
+        })}
+      />,
+    );
+    expect(
+      ui.getByRole("region", { name: "Transition readiness workbook" }),
+    ).toBeTruthy();
+    expect(
+      ui.getByRole("button", { name: "Parse existing readiness workbook" }),
+    ).toBeTruthy();
+    expect(ui.container.textContent).toContain("Required transition evidence");
   });
 });

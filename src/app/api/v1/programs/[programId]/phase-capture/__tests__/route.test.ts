@@ -42,6 +42,14 @@ const mockListApprovedPhaseEvidence = jest.fn();
 const mockWriteProgramAuditLogBestEffort = jest.fn();
 const mockIsFeatureEnabled = jest.fn();
 const mockSbFrom = jest.fn();
+const mockRestoreReviewedP0 = jest.fn();
+jest.mock(
+  "@/lib/data-plane/write-adapters/p0ReviewedCaptureCorrectionAdapter",
+  () => ({
+    restoreP0ReviewedCapture: (...args: unknown[]) =>
+      mockRestoreReviewedP0(...args),
+  }),
+);
 
 jest.mock("@/app/api/v1/programs/_auth", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -52,6 +60,9 @@ jest.mock("@/app/api/v1/programs/_auth", () => ({
 
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureWriteFluentClient: () => ({ from: mockSbFrom }),
+  writeTransactionOutcome: (err: unknown) =>
+    (err as { transactionOutcome?: string })?.transactionOutcome ??
+    "not_entered",
 }));
 
 jest.mock("@/lib/programs/queries", () => ({
@@ -962,5 +973,156 @@ describe("POST .../phase-capture · P4 value plan behind moves_value_engine_v1",
       key === "moves_value_engine_v1" ? Promise.resolve(false) : false,
     );
     expect(await valuePlanComplete()).toBe(true);
+  });
+});
+
+describe("Charter basis readback preserves another saved answer", () => {
+  it("returns both bases after recording the sponsor basis beside an unchanged saved scope", async () => {
+    const { createP1CharterBasisRecord } =
+      await import("@/lib/programs/p1-charter-evidence");
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      currentPhase: 1,
+      charter: {},
+    });
+    const scope = "The scope answer is already saved.";
+    const sponsor = "The sponsor contact answer is already saved.";
+    const basis = createP1CharterBasisRecord({
+      input: { kind: "workspace_assertion" },
+      sectionKey: "scope_boundary",
+      value: scope,
+      userId: "user-1",
+      recordedAt: "2026-10-12T12:00:00Z",
+    });
+    mockGetModuleState.mockResolvedValue([
+      {
+        moduleKey: phaseCaptureModuleKey(1, "scope_boundary"),
+        status: "in_progress",
+        state: { value: scope, p1_charter_basis: basis },
+      },
+      {
+        moduleKey: phaseCaptureModuleKey(1, "sponsor_commitment"),
+        status: "in_progress",
+        state: { value: sponsor },
+      },
+    ]);
+    const response = await POST(
+      req({
+        phase: 1,
+        sections: { sponsor_commitment: sponsor },
+        p1BasisBySection: {
+          sponsor_commitment: { kind: "workspace_assertion" },
+        },
+      }) as never,
+      { params },
+    );
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.p1BasisBySection).toEqual({
+      scope_boundary: { kind: "workspace_assertion" },
+      sponsor_commitment: { kind: "workspace_assertion" },
+    });
+    expect(body.values.scope_boundary).toBe(scope);
+    expect(body.values.sponsor_commitment).toBe(sponsor);
+    expect(body.changedFields).toEqual([]);
+    expect(body.revision).toBe(
+      computeCaptureRevision(body.values, body.p1BasisBySection),
+    );
+  });
+});
+
+describe("reviewed P0 correction command on the existing capture route", () => {
+  const command = {
+    phase: 0,
+    expectedRevision: "capture-revision",
+    restoreReviewedP0: {
+      sourceRevision: "a".repeat(64),
+      snapshotId: "snapshot-1",
+      snapshotRevision: "b".repeat(64),
+      signatureRevision: "c".repeat(64),
+      rationale: "Restore the reviewed source.",
+    },
+  };
+  beforeEach(() => {
+    mockRequireTenancy.mockResolvedValue({
+      clientId: "tenant-1",
+      clientKey: "tenant-1",
+      userId: "user-1",
+    });
+    mockGetProgramById.mockResolvedValue({ id: "prog-1", currentPhase: 1 });
+    mockRestoreReviewedP0.mockReset();
+    mockRestoreReviewedP0.mockResolvedValue({
+      ok: true,
+      persisted: true,
+      correctionAuditId: "audit-1",
+    });
+    mockSbFrom.mockClear();
+  });
+  it("routes a bound correction without the broad normal save writes", async () => {
+    const response = await POST(req(command) as NextRequest, { params });
+    expect(response.status).toBe(200);
+    expect(mockRestoreReviewedP0).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "user-1" }),
+      "prog-1",
+      {
+        ...command.restoreReviewedP0,
+        expectedRevision: command.expectedRevision,
+      },
+    );
+    expect(mockSbFrom).not.toHaveBeenCalled();
+  });
+  it.each([
+    { phase: 1 },
+    { complete: true },
+    { sections: {} },
+    { items: [] },
+    { p1Basis: {} },
+    { restoreReviewedP0: [] },
+    { restoreReviewedP0: null },
+  ])("refuses a mixed or malformed correction: %j", async (extra) => {
+    const response = await POST(req({ ...command, ...extra }) as NextRequest, {
+      params,
+    });
+    expect(response.status).toBe(400);
+    expect(mockRestoreReviewedP0).not.toHaveBeenCalled();
+  });
+  it("returns a typed refusal and its actual rollback outcome", async () => {
+    const { P0CaptureCorrectionRefusal } =
+      await import("@/lib/programs/p0-reviewed-capture-correction");
+    mockRestoreReviewedP0.mockRejectedValue(
+      Object.assign(
+        new P0CaptureCorrectionRefusal(
+          "correction_stale_binding",
+          "Reload the correction preview.",
+        ),
+        { transactionOutcome: "rolled_back" },
+      ),
+    );
+    const response = await POST(req(command) as NextRequest, { params });
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({
+      transactionOutcome: "rolled_back",
+      detail: "Reload the correction preview.",
+    });
+  });
+  it("reports commit uncertainty as a read-before-retry refusal", async () => {
+    mockRestoreReviewedP0.mockRejectedValue(
+      Object.assign(new Error("unconfirmed_commit"), {
+        transactionOutcome: "unknown",
+      }),
+    );
+    const response = await POST(req(command) as NextRequest, { params });
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({
+      transactionOutcome: "unknown",
+      detail:
+        "The correction outcome could not be confirmed. Read the stored input and audit before retrying.",
+    });
+  });
+  it("does not enter correction for an inaccessible Move", async () => {
+    mockGetProgramById.mockResolvedValue(null);
+    const response = await POST(req(command) as NextRequest, { params });
+    expect(response.status).toBe(404);
+    expect(mockRestoreReviewedP0).not.toHaveBeenCalled();
   });
 });
