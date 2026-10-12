@@ -18,6 +18,7 @@ jest.mock("../audit-log", () => ({
 
 import { signOffDeliverable } from "../mutations";
 import { stampApprovedEvidenceLineage } from "@/lib/programs/deliverables/approved-evidence-lineage";
+import { createHash } from "node:crypto";
 
 function selectDeliverable(result: unknown) {
   return {
@@ -60,6 +61,115 @@ describe("signOffDeliverable", () => {
     getProgramByIdMock.mockResolvedValue({ id: "move-1" });
   });
 
+  it.each(["before_mutation_read", "before_final_write"])(
+    "the real mutation refuses a reviewed-version race %s without approving later bytes",
+    async (stage) => {
+      const pointer = {
+        current_version: stage === "before_mutation_read" ? 2 : 1,
+        signed_off_version: null,
+        status: "draft",
+        structured_data: {},
+      };
+      const versions = [
+        {
+          id: "version-1",
+          version: 1,
+          content: "Reviewed version A",
+          structured_data: {},
+        },
+        {
+          id: "version-2",
+          version: 2,
+          content: "Unreviewed version B",
+          structured_data: {},
+        },
+      ];
+      const originalVersions = structuredClone(versions);
+      const applied: unknown[] = [];
+      const lifecycle: unknown[] = [];
+      const filters: Array<[string, unknown]> = [];
+      fromMock.mockImplementation((table: string) => {
+        let update: Record<string, unknown> | null = null;
+        const eqs: Array<[string, unknown]> = [];
+        const query = {
+          select: () => query,
+          eq: (key: string, value: unknown) => {
+            eqs.push([key, value]);
+            filters.push([key, value]);
+            return query;
+          },
+          in: () => query,
+          update: (value: Record<string, unknown>) => {
+            update = value;
+            return query;
+          },
+          insert: (value: unknown) => {
+            lifecycle.push(value);
+            return { error: null };
+          },
+          maybeSingle: async () => {
+            if (table === "deliverable_versions")
+              return {
+                data: versions.find(
+                  (row) =>
+                    row.version === eqs.find(([key]) => key === "version")?.[1],
+                ),
+                error: null,
+              };
+            if (!update) return { data: { ...pointer }, error: null };
+            if (stage === "before_final_write") pointer.current_version = 2;
+            const expected = eqs.find(
+              ([key]) => key === "current_version",
+            )?.[1];
+            if (expected !== undefined && expected !== pointer.current_version)
+              return { data: null, error: null };
+            applied.push(update);
+            Object.assign(pointer, update);
+            return { data: { id: "deliverable-1" }, error: null };
+          },
+        };
+        return query;
+      });
+      await expect(
+        signOffDeliverable(
+          { clientId: "client-1", userId: "synthetic-operator" },
+          "move-1",
+          "deliverable-1",
+          {
+            reviewedVersion: {
+              version: 1,
+              versionId: "version-1",
+              contentHash: createHash("sha256")
+                .update("Reviewed version A")
+                .digest("hex"),
+              planBindingHash: null,
+              planHash: null,
+            },
+            approvedArtifactId: "reviewed-version-1-artifact",
+            approvalLineage: {
+              source: "moves_program_generate",
+              generatedArtifactId: "reviewed-version-1-generation",
+              approvalMode: "approve_generated_deliverable_as_is",
+              ...stampApprovedEvidenceLineage({
+                evidenceSnapshotHash: "reviewed-v1",
+                phaseEvidenceSnapshotHash: "reviewed-v1",
+                at: "2026-10-11T00:00:00Z",
+              }),
+            },
+          } as never,
+        ),
+      ).rejects.toMatchObject({ code: "deliverable_review_changed" });
+      expect(pointer.current_version).toBe(2);
+      expect(pointer.signed_off_version).toBeNull();
+      expect(pointer.status).toBe("draft");
+      expect(applied).toHaveLength(0);
+      expect(lifecycle).toHaveLength(0);
+      expect(versions).toEqual(originalVersions);
+      if (stage === "before_final_write")
+        expect(filters).toContainEqual(["current_version", 1]);
+    },
+  );
+
   it("turns an uploaded client-approved replacement into the signed-off authoritative version", async () => {
     const versionPayloads: unknown[] = [];
     const updatePayloads: unknown[] = [];
@@ -67,7 +177,9 @@ describe("signOffDeliverable", () => {
 
     fromMock.mockImplementation((table: string) => {
       if (table === "deliverables_v2") {
-        const deliverableCalls = fromMock.mock.calls.filter(([t]) => t === "deliverables_v2").length;
+        const deliverableCalls = fromMock.mock.calls.filter(
+          ([t]) => t === "deliverables_v2",
+        ).length;
         if (deliverableCalls === 1) {
           return selectDeliverable({
             data: {
@@ -85,8 +197,10 @@ describe("signOffDeliverable", () => {
         }
         return updateDeliverable(updatePayloads);
       }
-      if (table === "deliverable_versions") return insertVersion(versionPayloads);
-      if (table === "deliverable_lifecycle_events") return insertVersion(lifecycleEvents);
+      if (table === "deliverable_versions")
+        return insertVersion(versionPayloads);
+      if (table === "deliverable_lifecycle_events")
+        return insertVersion(lifecycleEvents);
       throw new Error(`Unexpected table ${table}`);
     });
 
@@ -103,7 +217,8 @@ describe("signOffDeliverable", () => {
         approvedContent: {
           content: "Client-approved charter text after human edits.",
           fileName: "charter-client-approved.docx",
-          mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          mimeType:
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
           parseMethod: "docx-mammoth",
           warnings: [],
           generationLineage: {
@@ -122,7 +237,8 @@ describe("signOffDeliverable", () => {
           }),
           approvalMode: "client_approved_replacement",
         },
-        approvalRationale: "Synthetic review accepted the current evidence-bound version.",
+        approvalRationale:
+          "Synthetic review accepted the current evidence-bound version.",
       },
     );
 
@@ -168,15 +284,27 @@ describe("signOffDeliverable", () => {
     );
     expect(lifecycleEvents).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ event_type: "version_created", origin: "client_uploaded", version: 3 }),
-        expect.objectContaining({ event_type: "submitted_for_review", version: 3 }),
+        expect.objectContaining({
+          event_type: "version_created",
+          origin: "client_uploaded",
+          version: 3,
+        }),
+        expect.objectContaining({
+          event_type: "submitted_for_review",
+          version: 3,
+        }),
         expect.objectContaining({
           event_type: "approval_granted",
           decision: "approved",
           version: 3,
-          comments: "Synthetic review accepted the current evidence-bound version.",
+          comments:
+            "Synthetic review accepted the current evidence-bound version.",
         }),
-        expect.objectContaining({ event_type: "superseded", version: 1, related_version: 3 }),
+        expect.objectContaining({
+          event_type: "superseded",
+          version: 1,
+          related_version: 3,
+        }),
       ]),
     );
   });
@@ -194,7 +322,9 @@ describe("signOffDeliverable", () => {
 
     fromMock.mockImplementation((table: string) => {
       if (table === "deliverables_v2") {
-        const deliverableCalls = fromMock.mock.calls.filter(([t]) => t === "deliverables_v2").length;
+        const deliverableCalls = fromMock.mock.calls.filter(
+          ([t]) => t === "deliverables_v2",
+        ).length;
         // Odd calls (1st, 3rd) are the read-current_version select; even calls
         // (2nd, 4th) are the update.
         if (deliverableCalls % 2 === 1) {
@@ -209,19 +339,26 @@ describe("signOffDeliverable", () => {
         }
         return updateDeliverable(updatePayloads);
       }
-      if (table === "deliverable_versions") return insertVersion(versionPayloads);
-      if (table === "deliverable_lifecycle_events") return insertVersion(lifecycleEvents);
+      if (table === "deliverable_versions")
+        return insertVersion(versionPayloads);
+      if (table === "deliverable_lifecycle_events")
+        return insertVersion(lifecycleEvents);
       throw new Error(`Unexpected table ${table}`);
     });
 
-    const ctx = { clientId: "client-1", userId: "person-1", email: "approver@example.com" };
+    const ctx = {
+      clientId: "client-1",
+      userId: "person-1",
+      email: "approver@example.com",
+    };
 
     await signOffDeliverable(ctx, "move-1", "deliverable-1", {
       approvedArtifactId: "artifact-approved-1",
       approvedContent: {
         content: "First client-approved replacement.",
         fileName: "v1.docx",
-        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        mimeType:
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         parseMethod: "docx-mammoth",
         warnings: [],
       },
@@ -232,7 +369,8 @@ describe("signOffDeliverable", () => {
       approvedContent: {
         content: "Second, superseding client-approved replacement.",
         fileName: "v2.docx",
-        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        mimeType:
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         parseMethod: "docx-mammoth",
         warnings: [],
       },
@@ -242,10 +380,16 @@ describe("signOffDeliverable", () => {
     // (version history, not overwritten)...
     expect(versionPayloads).toHaveLength(2);
     expect(versionPayloads[0]).toEqual(
-      expect.objectContaining({ version: 3, content: "First client-approved replacement." }),
+      expect.objectContaining({
+        version: 3,
+        content: "First client-approved replacement.",
+      }),
     );
     expect(versionPayloads[1]).toEqual(
-      expect.objectContaining({ version: 4, content: "Second, superseding client-approved replacement." }),
+      expect.objectContaining({
+        version: 4,
+        content: "Second, superseding client-approved replacement.",
+      }),
     );
 
     // ...but deliverables_v2's authoritative pointer moves forward to the

@@ -51,6 +51,12 @@ import {
   loadCurrentP5MeasurementPlan,
 } from "@/lib/programs/p5-measurement-contract";
 import { P5HandoffRefusal } from "@/lib/data-plane/write-adapters/p5OutcomeHandoffAdapter";
+import {
+  captureReviewedDeliverableVersion,
+  DeliverableReviewChanged,
+  DeliverableReviewUnavailable,
+  type ReviewedDeliverableVersion,
+} from "@/lib/programs/deliverable-review-receipt";
 import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
 import {
   downloadArtifactBytes,
@@ -424,6 +430,7 @@ export async function POST(
         } & ApprovedEvidenceLineageStamp)
       | undefined;
     let generatedApprovalArtifactId: string | undefined;
+    let reviewedVersion: ReviewedDeliverableVersion | undefined;
 
     if (!isFileUploadApproval && currentVersion) {
       const { data: versionRow, error: versionError } = await supabase
@@ -444,6 +451,12 @@ export async function POST(
             structured_data?: Record<string, unknown> | null;
           } | null
         )?.structured_data ?? {};
+      if (!versionRow) throw new DeliverableReviewUnavailable();
+      reviewedVersion = captureReviewedDeliverableVersion(
+        currentVersion,
+        versionRow,
+        measurementPlanBindingRequired,
+      );
       if (measurementPlanBindingRequired) {
         try {
           const plan = await loadCurrentP5MeasurementPlan(ctx, programId);
@@ -882,6 +895,8 @@ export async function POST(
 
     const signedOff = await signOffDeliverable(ctx, programId, deliverableId, {
       supabase,
+      expectedCurrentVersion: currentVersion ?? 0,
+      ...(reviewedVersion ? { reviewedVersion } : {}),
       approvedArtifactId,
       approvedContent,
       approvalLineage: generatedApprovalLineage,
@@ -929,6 +944,14 @@ export async function POST(
         : null,
     });
   } catch (err) {
+    if (
+      err instanceof DeliverableReviewChanged ||
+      err instanceof DeliverableReviewUnavailable
+    )
+      return Response.json(
+        { error: err.code, detail: err.message },
+        { status: err.status },
+      );
     try {
       return tenancyErrorResponse(err);
     } catch {}

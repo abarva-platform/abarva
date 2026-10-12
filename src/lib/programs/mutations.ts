@@ -274,7 +274,8 @@ export async function originateProgram(
   if (error) throw error;
 
   const programId = (data as { id: string }).id;
-  const { assignSyntheticE2eOperatorToCreatedMove } = await import("@/lib/auth/synthetic-e2e-operator-participant");
+  const { assignSyntheticE2eOperatorToCreatedMove } =
+    await import("@/lib/auth/synthetic-e2e-operator-participant");
   await assignSyntheticE2eOperatorToCreatedMove(ctx, programId);
   await writeProgramAuditLogBestEffort(ctx, {
     programId,
@@ -358,7 +359,10 @@ export async function advancePhase(
       ? input.discoveryPlan
       : null;
 
-  const written = await programsWriteAdapter(ctx, opts.supabase).runAdvancePhase({
+  const written = await programsWriteAdapter(
+    ctx,
+    opts.supabase,
+  ).runAdvancePhase({
     programId: input.programId,
     clientId: ctx.clientId,
     userId: ctx.userId,
@@ -662,6 +666,8 @@ export async function signOffDeliverable(
   deliverableId: string,
   opts: {
     supabase?: SupabaseClient;
+    expectedCurrentVersion?: number;
+    reviewedVersion?: import("./deliverable-review-receipt").ReviewedDeliverableVersion;
     /**
      * Validated lineage for a generated artifact accepted as this deliverable.
      *
@@ -719,6 +725,59 @@ export async function signOffDeliverable(
     structured_data?: Record<string, unknown> | null;
   };
   const currentVersion = existingPointer.current_version ?? 0;
+  const expectedVersion =
+    opts.reviewedVersion?.version ??
+    opts.expectedCurrentVersion ??
+    currentVersion;
+  const {
+    captureReviewedDeliverableVersion,
+    DeliverableReviewChanged,
+    DeliverableReviewUnavailable,
+  } = await import("./deliverable-review-receipt");
+  if (currentVersion !== expectedVersion) throw new DeliverableReviewChanged();
+  if (opts.reviewedVersion) {
+    const { data: version, error: versionError } = await sb
+      .from("deliverable_versions")
+      .select("id, content, structured_data")
+      .eq("deliverable_id", deliverableId)
+      .eq("version", expectedVersion)
+      .maybeSingle();
+    if (versionError) throw new DeliverableReviewUnavailable();
+    if (!version) throw new DeliverableReviewChanged();
+    const currentReceipt = captureReviewedDeliverableVersion(
+      expectedVersion,
+      version,
+      opts.reviewedVersion.planHash !== null,
+    );
+    if (
+      (
+        [
+          "version",
+          "versionId",
+          "contentHash",
+          "planBindingHash",
+          "planHash",
+        ] as const
+      ).some((key) => currentReceipt[key] !== opts.reviewedVersion![key])
+    )
+      throw new DeliverableReviewChanged();
+    if (opts.reviewedVersion.planHash) {
+      const { loadCurrentP5MeasurementPlan } =
+        await import("./p5-measurement-contract");
+      const { p5Hash } =
+        await import("@/lib/data-plane/write-adapters/p5OutcomeHandoffAdapter");
+      let plan;
+      try {
+        plan = await loadCurrentP5MeasurementPlan(ctx, programId);
+      } catch (error) {
+        if ((error as { status?: number }).status === 409)
+          throw new DeliverableReviewChanged();
+        throw new DeliverableReviewUnavailable();
+      }
+      if (p5Hash(plan) !== opts.reviewedVersion.planHash)
+        throw new DeliverableReviewChanged();
+    }
+  }
   const priorAuthoritativeVersion = existingPointer.signed_off_version ?? null;
   let approvedVersion = currentVersion;
   const approvedContent = opts.approvedContent?.content.trim();
@@ -768,11 +827,14 @@ export async function signOffDeliverable(
       authoritative_lifecycle_state: "human_approved",
       authoritative_flag_source: "normal_flow",
       requires_revalidation: false,
-      ...(opts.approvalLineage
+      ...(opts.approvalLineage || opts.reviewedVersion
         ? {
             structured_data: {
               ...(existingPointer.structured_data ?? {}),
-              ...opts.approvalLineage,
+              ...(opts.approvalLineage ?? {}),
+              ...(opts.reviewedVersion
+                ? { approvedReviewReceipt: opts.reviewedVersion }
+                : {}),
             },
           }
         : {}),
@@ -780,6 +842,7 @@ export async function signOffDeliverable(
     })
     .eq("id", deliverableId)
     .eq("engagement_id", programId)
+    .eq("current_version", expectedVersion)
     // Accept `draft` as well as `in_review`. The phase "Build and approve" flow
     // generates the board-grade deliverable (which lands in `draft`) and then
     // signs it off in the same action, so sign-off must act on a fresh draft
@@ -790,6 +853,11 @@ export async function signOffDeliverable(
     .maybeSingle();
   if (error) throw error;
   const signed = Boolean(data);
+  if (
+    !signed &&
+    (opts.reviewedVersion || opts.expectedCurrentVersion !== undefined)
+  )
+    throw new DeliverableReviewChanged();
   if (!signed) return false;
 
   if (approvedContent) {

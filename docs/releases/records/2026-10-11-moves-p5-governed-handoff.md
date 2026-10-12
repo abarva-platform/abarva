@@ -14,6 +14,8 @@ P5.2 can save receiving participants and measurement definitions for every curre
 
 Generation captures a copy of the saved measurement plan before authoring starts. Deterministic rendering carries those definitions into the contract and Office companion; the immutable version records the tenant/Move, exact plan snapshot and hash, plus the generated HTML content hash. Sign-off, review and acceptance compare that version with the current saved plan. Editing a source, comparator, participant or cadence after signing refuses the handoff while preserving the signed bytes. Hashes and participant IDs stay in operational metadata rather than client-facing prose.
 
+The shared document sign-off route carries the reviewed version ID, content hash and applicable plan receipt into the real mutation. The mutation verifies that receipt and compares the current-version pointer in the final update. Concurrent generation refuses approval instead of signing a newer version with an older review or restoring an older pointer. The durable approval records the verified receipt.
+
 P5 completion requires current publication readback when the new flag is enabled. The acceptance and decision-trace links open a scoped Programs page at `/strategic-moves/[moveId]/tower-handoff`, which reads only the already-authorized exact-Move ledger projection. Tower also exposes the same planned readback through `?moveId=` under its existing module permission. The decision trace distinguishes unavailable state from an absent publication, and the baseline projection withholds prior Move rows while another Move loads or fails.
 
 ## Layer Impact
@@ -26,7 +28,7 @@ P5 completion requires current publication readback when the new flag is enabled
 
 ## Client Applicability
 
-- All clients: existing behavior remains with the new flag off.
+- All clients: the shared reviewed-version sign-off fence prevents approval of a changed version. The new P5 surfaces and measurement-plan checks remain restricted by the tenant feature flag.
 - Specific clients: approved synthetic demo scope only.
 - Internal only: no.
 - Public/demo only: synthetic validation; no real-client rollout is authorized.
@@ -39,7 +41,8 @@ P5 completion requires current publication readback when the new flag is enabled
 - Deterministic physical UUIDs, real commit timestamps, original actor provenance and repeat idempotence. The write and basis reads share a transaction; post-commit readback uses the independent reader.
 - The adapter uses the existing physical `value_category` and `measurement_unit` columns. Readback verifies the projected amount, unknown baseline and realized amounts, source references, document claims, ownership and governed metadata against the current basis. Published rows also recheck current P4/P5 hard prerequisites.
 - The scoped browser page requires Programs module access, authenticated tenancy, exact-Move access, assigned-Move grants and financial visibility. It reads only the existing handoff API projection; general Tower permissions and user metadata are unchanged.
-- A flagged measurement contract must have a verifiable immutable plan binding and the exact definition block in its signed content. Missing, stale or cross-scope bindings refuse sign-off/review/acceptance. An edited upload cannot inherit this proof; the flagged path currently requires review and sign-off of a generated bound version. Flag-off generation and sign-off retain their prior behavior.
+- A flagged measurement contract must have a verifiable immutable plan binding and the exact definition block in its signed content. Missing, stale or cross-scope bindings refuse sign-off/review/acceptance. An edited upload cannot inherit this proof; the flagged path currently requires review and sign-off of a generated bound version. Flag-off generation and P5 plan handling retain their prior behavior; the shared version fence applies to all document approvals through this route.
+- The final sign-off update compares the reviewed current version. The real mutation rereads and verifies the version/content/plan receipt, rechecks an applicable saved plan and refuses changed or unavailable state without sign-off or approval lifecycle events.
 - Dataset declaration `moves_p5_outcome_handoff_v1`. Each row carries a policy-validated `GovernedObject` with `committed_not_indexed` readiness, no applicable agents and no indexing, retrieval, citation or agent-ready claim.
 - Product labels describe a planned handoff. Execution, baseline confirmation and realized-value verification remain future governed work.
 
@@ -47,8 +50,9 @@ P5 completion requires current publication readback when the new flag is enabled
 
 - PASS: baseline identity regressions fail before the fix and pass afterward; removing the identity key kills both regressions.
 - PASS: four isolated stale-plan regressions fail before the currency check and pass afterward. Source, comparator, participant and cadence edits retain the signed version unchanged and refuse review/acceptance.
-- PASS: 157 focused generation, persistence, sign-off and handoff tests, followed by additional content and receiver-provenance negative cases. This is local proof only; actual saved files remain pending.
-- PENDING: current full combined suite, new invariant mutation probes and complete local QA after the signed-plan change. The earlier 936/18 and 40/41 runs are historical and do not establish the new invariant.
+- PASS: signed-plan repair run, 1046 tests across 23 suites and 54 of 55 mutation probes killed. The redundant passive-clear survivor remains protected by the render-time Move guard. This is historical local proof before the final sign-off version fence; actual saved files remain pending.
+- PASS: both actual-mutation version-race regressions fail before the guard and pass afterward. The route-to-real-mutation fixture covers both interleavings, changed content, changed saved plan, changed plan receipt and unavailable reads. The focused sign-off run passes 47 tests across two suites without database or runtime writes.
+- PENDING: current full combined suite, final invariant mutation probes and complete local QA after the reviewed-version fence and current-main reconciliation.
 - PASS: real component renders at 1440 and 390 pixels, light and dark, with saved control selections and no horizontal overflow. Local synthetic fixtures do not establish runtime acceptance.
 - PENDING: final changed-file lint, orphan/reachability checks, coverage and tenancy censuses, manual/check, all six context/corpus validators, Node 24 typecheck and release check. There is still exactly one new persistent test file.
 - PENDING: controlled PR, exact-head CI, fetched-ref collision scan, merge, repo-owned deployment and signed-in acceptance.
@@ -74,3 +78,5 @@ Release record, dataset manifest, explicit step-record registry, tests and gener
 Fresh Move identity, approved input binding, P4/P5 documents, terminal gate readback, deployment and signed-in Tower proof are pending. These rows are planned cash projections; they do not validate a baseline, prove execution or establish realized value. Changed publication inputs fail closed and require a future governed rebaseline; this release does not silently supersede a prior handoff.
 
 Previously signed contracts without the immutable saved-plan proof cannot publish through the new flagged handoff. A governed new unsigned version is required; this release does not update or re-sign existing signed bytes. Edited replacements need a future explicit binding contract before this flagged path can accept them. Actual signed text, Office bytes and current plan still require operator acceptance and final read-only cross-review.
+
+The version fence depends on the existing immutable-version contract; verified content and plan receipts are checked before the guarded pointer update. Later capture changes require fresh review and the existing acceptance currency checks. Other internal sign-off callers retain their current-version semantics while also gaining the final pointer comparison; this release does not claim a reviewed-content receipt for callers that do not provide one. Disabling the P5 flag does not undo the shared version fence; reverting that guard requires the approved code/digest rollback lane.
