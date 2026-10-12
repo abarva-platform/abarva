@@ -31,6 +31,7 @@ import {
 } from "@/lib/agent/response-shape";
 import { AgentDock, type ChatMessage } from "@/components/agent/AgentDock";
 import styles from "./StrategicMoves.module.css";
+import stepPageStyles from "./step-page/MovesStepPage.module.css";
 import { strategicMoveBriefToDiscoveryShape } from "./strategicMoveBriefToDiscoveryShape";
 import { resolveStrategicMoveOriginationRedirect } from "./resolveOriginationRedirect";
 import {
@@ -47,6 +48,7 @@ import { MOVE_TIER_OPTIONS } from "@/lib/programs/p0-extended-intake-fields";
 import { getPhaseLabel } from "@/lib/programs/phase-labels";
 import type { DiscoveryArchetypeOption } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
 import type { ConfiguredBlueprintOrigin } from "@/lib/deliverables/orchestrator/briefs/archetype-config-source";
+import type { OriginationDraftState } from "@/lib/programs/origination-drafts";
 
 /**
  * An archetype the picker may offer. `origin` says who authored the entry, so a
@@ -116,6 +118,37 @@ const INITIAL_FIELDS: Record<ScaffoldFieldId, string> = {
 };
 const MOVE_NAME_MAX_WORDS = 6;
 const MOVE_NAME_MAX_CHARS = 48;
+
+function restoreIntakeBrief(draft: OriginationDraftState | null): BriefState {
+  const saved = draft?.brief;
+  const fields = { ...INITIAL_FIELDS };
+  const legacy: Partial<Record<ScaffoldFieldId, unknown>> = {
+    "problem-statement": saved?.problemStatement,
+    archetype: saved?.classification,
+    "sponsor-candidate": saved?.sponsor,
+    "scope-in": saved?.scopeIn,
+    "scope-out": saved?.scopeOut,
+    "value-hypothesis": saved?.targetOutcome,
+    "outcomes-success": saved?.outcomesSuccess,
+    "discovery-questions": saved?.discoveryQuestions,
+    "evidence-family": saved?.evidenceFamily,
+    "foundation-readiness": saved?.foundationReadiness,
+  };
+  for (const id of Object.keys(fields) as ScaffoldFieldId[]) {
+    const value = saved?.intakeFields?.[id] ?? legacy[id];
+    if (typeof value === "string") fields[id] = value;
+  }
+  return { programName: typeof saved?.programName === "string" ? saved.programName : "", fields };
+}
+
+function restoreIntakeTurns(draft: OriginationDraftState | null): ChatTurn[] | undefined {
+  const turns = Array.isArray(draft?.turns) ? draft.turns
+    .filter((turn) => turn && typeof turn.id === "string" && typeof turn.text === "string"
+      && (turn.role === "user" || turn.role === "assistant"))
+    .map((turn) => ({ id: turn.id, role: turn.role, text: turn.text,
+      ...(turn.agentName === "Nexus" ? { agentName: "Nexus" as const } : {}) })) : [];
+  return turns.length ? turns : undefined;
+}
 
 type P0StepId = ScaffoldFieldId | "approve-build";
 type P0WorkspaceTab = "steps" | "files" | "intelligence";
@@ -629,6 +662,8 @@ interface Props {
   businessSegmentOptions?: string[];
   discoveryArchetypeOptions?: DeclarableDiscoveryArchetypeOption[];
   initialDiscoveryArchetypeId?: string | null;
+  initialDraftState?: OriginationDraftState | null;
+  initialDraftUnavailable?: boolean;
 }
 
 export function StrategicMoveOriginateClient({
@@ -640,8 +675,12 @@ export function StrategicMoveOriginateClient({
   businessSegmentOptions = [],
   discoveryArchetypeOptions = [],
   initialDiscoveryArchetypeId = null,
+  initialDraftState = null,
+  initialDraftUnavailable = false,
 }: Props) {
   const router = useRouter();
+  const resumedDraft = extendedIntakeFieldsEnabled ? initialDraftState : null;
+  const draftReadUnavailable = extendedIntakeFieldsEnabled && initialDraftUnavailable;
   // Tenant-conditional field set: off = these three are identical to the
   // base module constants (same reference-equal-in-spirit arrays), so a
   // tenant without the flag sees exactly today's 10-step P0, unchanged.
@@ -664,7 +703,7 @@ export function StrategicMoveOriginateClient({
     : P0_STAGE_GROUPS;
   const activeRequiredFieldCount = activeScaffoldDefs.length;
   const [turns, setTurns] = useState<ChatTurn[]>(
-    initialTurns ?? [
+    restoreIntakeTurns(resumedDraft) ?? initialTurns ?? [
       {
         id: "nexus-open-2a",
         role: "assistant",
@@ -673,10 +712,7 @@ export function StrategicMoveOriginateClient({
       },
     ],
   );
-  const [brief, setBrief] = useState<BriefState>({
-    programName: "",
-    fields: { ...INITIAL_FIELDS },
-  });
+  const [brief, setBrief] = useState<BriefState>(() => restoreIntakeBrief(resumedDraft));
   const [discoveryArchetypeId, setDiscoveryArchetypeId] = useState(
     initialDiscoveryArchetypeId ?? "",
   );
@@ -684,11 +720,13 @@ export function StrategicMoveOriginateClient({
     useState<Array<{ blueprintId: string; archetypeLabel: string }>>([]);
   const [loadingDiscoverySuggestions, setLoadingDiscoverySuggestions] =
     useState(false);
-  const [sponsorProgressEmails, setSponsorProgressEmails] = useState(false);
+  const [sponsorProgressEmails, setSponsorProgressEmails] = useState(
+    resumedDraft?.brief?.sponsorProgressEmails === true,
+  );
   const [draftFields, setDraftFields] = useState<
     Record<ScaffoldFieldId, string>
   >({
-    ...INITIAL_FIELDS,
+    ...brief.fields,
   });
   const [activeP0Step, setActiveP0Step] =
     useState<P0StepId>("problem-statement");
@@ -747,6 +785,7 @@ export function StrategicMoveOriginateClient({
 
   // Debounced draft persistence
   useEffect(() => {
+    if (draftReadUnavailable) return;
     const handle = setTimeout(() => {
       void fetch("/api/programs/origination-draft", {
         method: "POST",
@@ -779,6 +818,10 @@ export function StrategicMoveOriginateClient({
               discoveryQuestions: brief.fields["discovery-questions"] || null,
               evidenceFamily: brief.fields["evidence-family"] || null,
               foundationReadiness: brief.fields["foundation-readiness"] || null,
+              ...(extendedIntakeFieldsEnabled ? {
+                intakeFields: brief.fields,
+                sponsorProgressEmails,
+              } : {}),
             },
             patternMatch: null,
           },
@@ -786,7 +829,7 @@ export function StrategicMoveOriginateClient({
       });
     }, 500);
     return () => clearTimeout(handle);
-  }, [turns, brief, sponsorProgressEmails, discoveryArchetypeId]);
+  }, [turns, brief, sponsorProgressEmails, discoveryArchetypeId, draftReadUnavailable, extendedIntakeFieldsEnabled]);
 
   const updateTurns = useCallback(
     (updater: ChatTurn[] | ((prev: ChatTurn[]) => ChatTurn[])) => {
@@ -1067,7 +1110,7 @@ export function StrategicMoveOriginateClient({
     ({ id }) => brief.fields[id].trim().length > 0,
   ).length;
   const canPromote =
-    requiredFilled >= activeRequiredFieldCount && !isPending && !streaming;
+    requiredFilled >= activeRequiredFieldCount && !isPending && !streaming && !draftReadUnavailable;
   const suggestedName = suggestedStrategicMoveName(brief.fields);
   const completionPercent = Math.round(
     (requiredFilled / activeRequiredFieldCount) * 100,
@@ -1147,6 +1190,7 @@ export function StrategicMoveOriginateClient({
   }
 
   async function promote() {
+    if (draftReadUnavailable) return;
     setSubmitError(null);
     const finalName = deriveStrategicMoveName(brief.programName, brief.fields);
     startTransition(() => {
@@ -1231,6 +1275,14 @@ export function StrategicMoveOriginateClient({
     });
   }
 
+  if (draftReadUnavailable) return (
+    <div id="orig-page" className={styles.page}>
+      <div role="alert" className={styles.submitError}>
+        Saved intake unavailable. Reload this page to recover your answers before editing. No draft changes have been saved.
+      </div>
+    </div>
+  );
+
   return (
     <div id="orig-page" className={styles.page}>
       <section id="orig-grid" className={styles.phaseBody}>
@@ -1287,6 +1339,7 @@ export function StrategicMoveOriginateClient({
                 sponsorProgressEmails={sponsorProgressEmails}
                 stageGroups={activeStageGroups}
                 setActiveP0Step={setActiveP0Step}
+                extendedIntakeFieldsEnabled={extendedIntakeFieldsEnabled}
                 setBrief={setBrief}
                 setCanvasTab={setCanvasTab}
                 setDraftFields={setDraftFields}
@@ -1480,6 +1533,7 @@ function P0OriginationRail({
 
 function P0OriginationContractCanvas({
   activeP0Def,
+  extendedIntakeFieldsEnabled,
   activeP0Step,
   brief,
   canPromote,
@@ -1511,6 +1565,7 @@ function P0OriginationContractCanvas({
   cancelFlow,
 }: {
   activeP0Def: ScaffoldDef | null;
+  extendedIntakeFieldsEnabled: boolean;
   activeP0Step: P0StepId;
   brief: BriefState;
   canPromote: boolean;
@@ -1575,7 +1630,8 @@ function P0OriginationContractCanvas({
   const moveName = deriveStrategicMoveName(brief.programName, brief.fields);
 
   return (
-    <article id="orig-canvas" className={styles.p0Workspace}>
+    <article id="orig-canvas" className={extendedIntakeFieldsEnabled
+      ? `${styles.p0Workspace} ${stepPageStyles.intakeResponsive}` : styles.p0Workspace}>
       <div className={styles.p0Header}>
         <div className={styles.detailBreadcrumb}>
           <button
@@ -1778,6 +1834,7 @@ function P0OriginationContractCanvas({
                   {activeP0Def.fieldType === "select" ? (
                     <select
                       id={`orig-canvas-brief-section-${activeP0Def.step}-input`}
+                      aria-label={extendedIntakeFieldsEnabled ? activeP0Def.label : undefined}
                       className={styles.p0AnswerInput}
                       value={activeDraft}
                       onChange={(e) =>
@@ -1797,6 +1854,7 @@ function P0OriginationContractCanvas({
                   ) : (
                     <textarea
                       id={`orig-canvas-brief-section-${activeP0Def.step}-input`}
+                      aria-label={extendedIntakeFieldsEnabled ? activeP0Def.label : undefined}
                       className={styles.p0AnswerInput}
                       value={activeDraft}
                       placeholder={activeP0Def.placeholder}

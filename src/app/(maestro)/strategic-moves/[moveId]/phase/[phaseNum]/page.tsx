@@ -108,6 +108,7 @@ import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { capturePhaseSavedAnswerCounts } from "@/lib/programs/capture-phase-saved-answers";
 import { loadP0MinimumEvidenceStatus } from "@/lib/programs/p0-source-evidence";
 import { resolveEffectiveMovePhase } from "@/lib/programs/effective-move-phase";
+import { createPhasePageGateReads } from "@/lib/programs/phase-page-gate-reads";
 import { loadApprovedMoveEvidenceSnapshot } from "@/lib/programs/approved-move-evidence-snapshot";
 import { parseUploadedSolutionOptions } from "@/lib/programs/phase-templates/uploaded-solution-options";
 import { loadApprovedSolutionApproach } from "@/lib/programs/approved-solution-approach";
@@ -447,62 +448,6 @@ export default async function StrategicMovePhaseWorkspacePage({
     notFound();
   }
 
-  const dataTenancyPromise = timed("dataTenancy", requireTenancy).catch(
-    () => null,
-  );
-  const readTenancy = async () => {
-    const value = await dataTenancyPromise;
-    if (!value) throw new Error("Move data tenancy unavailable");
-    return value;
-  };
-  const captureModulesPromise = timed("stepRecords", () =>
-    getModuleState(ctx, moveId).then(
-      (modules) => ({ modules, unavailable: false }),
-      () => ({ modules: [], unavailable: true }),
-    ),
-  );
-
-  const [loadedMove, approvalPolicy] = await Promise.all([
-    timed("move", () => getStrategicMoveById(ctx, moveId)),
-    timed("accessPolicy", () =>
-      loadUserProgramAccessPolicy(ctx, { programId: moveId }).catch(() => null),
-    ),
-  ]);
-  if (!loadedMove) notFound();
-  const canApproveGates = approvalPolicy?.canApproveGates === true;
-  const {
-    effectivePhase: effectiveCurrentPhase,
-    reopenedForEvidenceReview,
-    reopenedForGateReview,
-  } = await timed("effectivePhase", () =>
-    resolveEffectiveMovePhase(ctx, loadedMove),
-  );
-  const effectiveMove =
-    effectiveCurrentPhase === loadedMove.currentPhase
-      ? loadedMove
-      : {
-          ...loadedMove,
-          currentPhase: effectiveCurrentPhase,
-          phaseLabel: getPhaseLabel(effectiveCurrentPhase),
-          gateCriteria: await buildGateCriteria(
-            ctx,
-            moveId,
-            effectiveCurrentPhase,
-            { allowHistoricalPhase: reopenedForGateReview },
-          ),
-        };
-  const pricingEngineEnabled = isFeatureEnabled(
-    { clientKey: ctx.clientKey, clientId: ctx.clientId },
-    "moves_pricing_engine",
-  );
-  const riskAssessmentEnabled = isFeatureEnabled(
-    { clientKey: ctx.clientKey, clientId: ctx.clientId },
-    "moves_risk_tier_scoring_v1",
-  );
-  const solutionPatternGateEnabled = isFeatureEnabled(
-    { clientKey: ctx.clientKey, clientId: ctx.clientId },
-    "moves_solution_pattern_gate_v1",
-  );
   const captureV2Enabled = isFeatureEnabled(
     { clientKey: ctx.clientKey, clientId: ctx.clientId },
     "moves_capture_v2",
@@ -523,6 +468,118 @@ export default async function StrategicMovePhaseWorkspacePage({
       "moves_step_pages_p4p5_v1",
     ),
   });
+  const flaggedStepView =
+    phaseStepPagesEnabled &&
+    resolvedSearchParams.legacy !== "1" &&
+    parseStepPageView(resolvedSearchParams.step) !== null;
+  const selectedStepView = parseStepPageView(resolvedSearchParams.step);
+  const readGate = flaggedStepView
+    ? createPhasePageGateReads(ctx, moveId)
+    : undefined;
+  const stepGateCriteriaPromise = flaggedStepView
+    ? timed("gateCriteria", () =>
+        buildGateCriteria(ctx, moveId, parsedPhase, {
+          allowHistoricalPhase: true,
+          evaluateGate: readGate,
+        }),
+      )
+    : null;
+  const dataTenancyPromise = flaggedStepView
+    ? Promise.resolve(ctx)
+    : timed("dataTenancy", requireTenancy).catch(() => null);
+  const readTenancy = async () => {
+    const value = await dataTenancyPromise;
+    if (!value) throw new Error("Move data tenancy unavailable");
+    return value;
+  };
+  const loadCurrentStateReadiness = async () => {
+    try {
+      const tctx = await readTenancy();
+      const [archetype, profile] = await Promise.all([
+        resolveMoveArchetypeForProgram(tctx, moveId),
+        inferMoveProfile(tctx),
+      ]);
+      return await resolveCurrentStateReadiness(
+        tctx,
+        archetype,
+        profile,
+        parsedPhase,
+        moveId,
+      );
+    } catch {
+      return null;
+    }
+  };
+  const captureModulesPromise = timed("stepRecords", () =>
+    getModuleState(ctx, moveId).then(
+      (modules) => ({ modules, unavailable: false }),
+      () => ({ modules: [], unavailable: true }),
+    ),
+  );
+
+  const [loadedMove, approvalPolicy] = await Promise.all([
+    timed("move", () =>
+      getStrategicMoveById(
+        ctx,
+        moveId,
+        flaggedStepView ? { evaluateGateCriteria: false } : undefined,
+      ),
+    ),
+    timed("accessPolicy", () =>
+      loadUserProgramAccessPolicy(ctx, { programId: moveId }).catch(() => null),
+    ),
+  ]);
+  if (!loadedMove) notFound();
+  const currentStateReadinessPrefetch = flaggedStepView
+    ? timed("currentStateReadiness", loadCurrentStateReadiness)
+    : null;
+  const canApproveGates = approvalPolicy?.canApproveGates === true;
+  const {
+    effectivePhase: effectiveCurrentPhase,
+    reopenedForEvidenceReview,
+    reopenedForGateReview,
+  } = await timed("effectivePhase", () =>
+    resolveEffectiveMovePhase(
+      ctx,
+      loadedMove,
+      readGate
+        ? {
+            getPhaseSnapshots,
+            loadApprovedMoveEvidenceSnapshot,
+            evaluateGate: readGate,
+          }
+        : undefined,
+    ),
+  );
+  const effectiveMove =
+    effectiveCurrentPhase === loadedMove.currentPhase
+      ? loadedMove
+      : {
+          ...loadedMove,
+          currentPhase: effectiveCurrentPhase,
+          phaseLabel: getPhaseLabel(effectiveCurrentPhase),
+          gateCriteria: await buildGateCriteria(
+            ctx,
+            moveId,
+            effectiveCurrentPhase,
+            {
+              allowHistoricalPhase: flaggedStepView || reopenedForGateReview,
+              evaluateGate: readGate,
+            },
+          ),
+        };
+  const pricingEngineEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_pricing_engine",
+  );
+  const riskAssessmentEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_risk_tier_scoring_v1",
+  );
+  const solutionPatternGateEnabled = isFeatureEnabled(
+    { clientKey: ctx.clientKey, clientId: ctx.clientId },
+    "moves_solution_pattern_gate_v1",
+  );
   const catchUpEnabled =
     phaseStepPagesEnabled &&
     isFeatureEnabled(
@@ -639,19 +696,16 @@ export default async function StrategicMovePhaseWorkspacePage({
     earlyTarget: earlyStepTarget,
   });
   if (earlyStepTarget && !deferCatchUpLanding) redirect(earlyStepTarget);
-  const gateCriteriaPromise = timed("gateCriteria", () =>
-    gateCriteriaForViewedPhase(ctx, effectiveMove, parsedPhase),
-  );
+  const gateCriteriaPromise =
+    stepGateCriteriaPromise ??
+    timed("gateCriteria", () =>
+      gateCriteriaForViewedPhase(ctx, effectiveMove, parsedPhase),
+    );
   const p2GateSnapshotsPromise = timed("catchUpGate", () =>
     catchUpEnabled && (effectiveMove.currentPhase ?? 0) > 2
       ? getPhaseSnapshots(ctx, moveId, 2).catch(() => null)
       : Promise.resolve(null),
   );
-  const flaggedStepView =
-    phaseStepPagesEnabled &&
-    resolvedSearchParams.legacy !== "1" &&
-    parseStepPageView(resolvedSearchParams.step) !== null;
-  const selectedStepView = parseStepPageView(resolvedSearchParams.step);
   const includeGateDocuments = needsGateDocumentRead({
     view: selectedStepView,
     enabled: phaseStepPagesEnabled,
@@ -681,27 +735,9 @@ export default async function StrategicMovePhaseWorkspacePage({
         : Promise.resolve([]),
     ]),
   );
-  const currentStateReadinessPromise = timed(
-    "currentStateReadiness",
-    async () => {
-      try {
-        const tctx = await readTenancy();
-        const [archetype, profile] = await Promise.all([
-          resolveMoveArchetypeForProgram(tctx, moveId),
-          inferMoveProfile(tctx),
-        ]);
-        return await resolveCurrentStateReadiness(
-          tctx,
-          archetype,
-          profile,
-          parsedPhase,
-          moveId,
-        );
-      } catch {
-        return null;
-      }
-    },
-  );
+  const currentStateReadinessPromise =
+    currentStateReadinessPrefetch ??
+    timed("currentStateReadiness", loadCurrentStateReadiness);
   const carriesForwardContentPromise = timed("carryForward", () =>
     readPhaseGateContentSignals(moveId, parsedPhase).catch(
       () => [] as DeliverableContentSignal[],

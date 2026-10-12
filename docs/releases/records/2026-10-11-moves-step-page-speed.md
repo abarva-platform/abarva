@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed`
 
 ## Plain-English Summary
 
@@ -44,17 +44,19 @@ Moves step pages waited for several independent server reads in sequence before 
 - PASS: release check after adding the required release lane. It will be repeated on the final branch head.
 - PASS: six temporary behavior mutations each made its focused test fail; all source files were restored. The performance ordering itself is verified by the post-deploy timing walk rather than a unit mutation.
 - PASS: the Source stage layout smoke passes locally; complete CI on the final head remains required after the screenshot-capture retry.
-- PENDING: current-head CI and post-deploy signed-in timing walk.
+- PASS: complete CI on final PR head `3f1865f8`: 38 successful checks and 6 skips.
+- PASS: repo-owned ACA deployment 38192347770 and read-only runtime invariant on serving SHA `0b7cee8c4b58ec87b5a3582f577c9f2b95f41656`.
+- FAIL: valid signed-in walk 38194353988 reaches and passes 20 of 29 views with UX 95 and no lower non-speed dimension, but only 7 views earn full speed points. The remaining 13 settle in 2,551–6,319 ms. Speed acceptance requires a follow-up.
 
 The pre-change signed-in walk reported the following five slowest reachable views. A separate fresh browser sample measured document response waits on those same views; these are distinct observations and are not paired trials.
 
 | View                 | Existing settled head | Fresh document response wait | After deploy |
 | -------------------- | --------------------: | ---------------------------: | ------------ |
-| P2 gate              |              9,134 ms |                     3,849 ms | Pending      |
-| P2 validate          |              9,049 ms |                     5,653 ms | Pending      |
-| P2 evidence plan     |              7,611 ms |                     8,244 ms | Pending      |
-| P1 sponsor scope     |              7,427 ms |                     8,179 ms | Pending      |
-| P3 root cause design |              7,412 ms |                     8,228 ms | Pending      |
+| P2 gate              |              9,134 ms |                     3,849 ms | 4,439 ms     |
+| P2 validate          |              9,049 ms |                     5,653 ms | 6,319 ms     |
+| P2 evidence plan     |              7,611 ms |                     8,244 ms | 4,919 ms     |
+| P1 sponsor scope     |              7,427 ms |                     8,179 ms | 4,557 ms     |
+| P3 root cause design |              7,412 ms |                     8,228 ms | 4,410 ms     |
 
 ## Rollout Plan
 
@@ -77,11 +79,14 @@ Revert this PR on `main` and allow the repository-owned ACA main deploy workflow
 ## Audit Evidence
 
 - Baseline signed-in walk: Actions run `38171682273`, embedded serving SHA `52a1b501073984c83d34986d394162700b185103`.
-- PR URL, current-head CI, deploy run, digest proof, and post-deploy walk: pending.
+- PR: https://github.com/abarva-platform/abarva/pull/9414; squash commit `085b513af55f0ede43effa47ac91c791dd6f2e8d`.
+- Deployment: https://github.com/abarva-platform/abarva/actions/runs/38192347770; descendant `0b7cee8c` contains the squash commit.
+- Runtime invariant: web template, 100% traffic revision `ca-abarva-web-lab-eastus--m0b7cee8c`, and both required workers match `sha256:434973b9464f14f345919f4d529fdc040c8b15c19ab06c2512fd93d66946a808`; a fresh read-only check passed at 2026-10-12 02:09:55 UTC.
+- Signed-in timing proof: https://github.com/abarva-platform/abarva/actions/runs/38194353988, embedded serving SHA `0b7cee8c`; speed acceptance failed as recorded above.
 
 ## Known Gaps
 
 - Server stage durations are unavailable in the baseline walk; the new proof records them after deployment.
-- The response-time target and non-speed UX comparison require a post-deploy signed-in walk. Local tests do not establish live performance.
+- The valid walk has no lower non-speed dimension, but the response-time target remains unmet on 13 reachable views. Exact settled milliseconds for the 7 full-speed rows were not retained by the original proof schema; a follow-up will preserve them.
 - A later walk of a changing runtime encountered a missing static chunk and is a separate reliability failure, not a valid speed sample.
 - The screenshot retry addresses one observed browser protocol error; a repeated capture failure still fails the smoke job.

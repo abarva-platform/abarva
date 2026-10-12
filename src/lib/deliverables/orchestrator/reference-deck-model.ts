@@ -26,7 +26,7 @@ export type ReferenceCell = string | ReferenceFigure;
 export type ReferenceBlock =
   | { kind: "table"; columns: string[]; rows: ReferenceCell[][]; decisiveRows?: number[] }
   | { kind: "metrics"; items: { label: string; value: ReferenceCell; meaning: string }[] }
-  | { kind: "flow"; nodes: string[]; annotation?: string }
+  | { kind: "flow"; nodes: string[]; fullNodes?: string[]; annotation?: string }
   | { kind: "architecture"; layers: { name: string; items: string[] }[]; governance: string }
   | { kind: "bars"; items: { label: string; value: ReferenceFigure; magnitude: number }[] }
   | { kind: "timeline"; quarters: string[]; rows: { label: string; from: number; to: number; cost?: ReferenceFigure }[]; today: number; commit: number }
@@ -80,19 +80,41 @@ export function referenceSourceLine(slide: ReferenceSlide): string {
   const registerMetrics = ids.filter((id) => id.startsWith("evidence:register_"));
   const publicMetrics = ids.filter((id) => id.startsWith("evidence:approved_public_"));
   const missing = ids.filter((id) => id.startsWith("gap:"));
-  if (engine.length) groups.push("Move value engine (case and three-year bases)");
-  if (rom.length) groups.push("Approved ROM snapshot");
-  if (assumptions.length) groups.push(`Assumptions register ${assumptions.join(", ")}`);
-  if (publicSources.length) groups.push(`Approved public sources ${publicSources.join(", ")}`);
-  if (capture.length) groups.push("Signed-in phase capture");
-  if (registerMetrics.length) groups.push("Signed-in assumptions register");
-  if (publicMetrics.length) groups.push("Approved public-source feed");
-  if (missing.length) groups.push(`Governed input gaps ${missing.map((id) => id.slice(4).replaceAll("_", " ")).join(", ")}`);
+  if (engine.length) groups.push("Calculated value figures");
+  if (rom.length) groups.push("Approved delivery estimate");
+  if (assumptions.length || registerMetrics.length) groups.push("Working assumptions");
+  if (publicSources.length || publicMetrics.length) groups.push("Published sources");
+  if (capture.length) groups.push("Workshop evidence");
+  if (missing.length) groups.push("Inputs to confirm");
   const known = new Set([...engine, ...rom, ...assumptions, ...publicSources, ...capture, ...registerMetrics, ...publicMetrics, ...missing]);
-  groups.push(...ids.filter((id) => !known.has(id)));
-  const narrative = slide.narrativeSourceLabels?.length
-    ? ` · Narrative figure sources: ${slide.narrativeSourceLabels.join(", ")}` : "";
-  return `Sources: ${groups.join(" · ")}${narrative}. Exact figure IDs and cells: companion workbook.`;
+  if (ids.some((id) => !known.has(id))) groups.push("Supporting evidence");
+  return `Sources: ${[...new Set(groups)].join(" · ")}.`;
+}
+
+const CLIENT_INTERNAL_TERMS: Array<[string, RegExp]> = [
+  ["slot", /\bslots?\b/i], ["readback", /\breadbacks?\b/i],
+  ["capture", /\bcaptur(?:e[ds]?|ing)\b/i], ["governed gap", /\bgoverned\s+gaps?\b/i],
+  ["register row", /\bregister\s+rows?\b/i], ["step reference", /\bP[0-5](?:\s+Step\s+\d+)?\b/i],
+  ["Move", /\bMove\b/i], ["flag", /\bflags?\b/i],
+  ["preview", /\bpreviews?\b/i], ["snapshot ID", /\bsnapshot\s+id\b/i],
+  ["ROM", /\bROM\b/i], ["value engine", /\bvalue[ -]engine\b/i],
+  ["layout label", /\b(?:cover|divider|one page|big number context|plain english table|flow today|one step value)\s*:/i],
+];
+
+export function clientCopyIssue(value: string): string | null {
+  const prose = value.replace(/\s+/g, " ");
+  return CLIENT_INTERNAL_TERMS.find(([, pattern]) => pattern.test(prose))?.[0] ?? null;
+}
+
+export function coverUsesEditionRule(title: string): boolean {
+  return /\bvalidate\s+the\s+need\s*;/i.test(title)
+    || (/\b(?:no|exclude[sd]?|omit(?:s|ted)?|without)\b/i.test(title)
+      && ["solution", "plan", "cost"].every((term) => new RegExp(`\\b${term}\\b`, "i").test(title)));
+}
+
+export function answerIsCountDump(answer: string): boolean {
+  return /\b(?:number|total)\s+(?:\d|[$€£¥₹])/i.test(answer)
+    || /\b(?:rows?|citations?|owners?|sources?)\s+(?:number|total)\b/i.test(answer);
 }
 
 const REQUIRED_BLOCK: Partial<Record<ReferenceArchetype, ReferenceBlock["kind"]>> = {
@@ -116,6 +138,7 @@ const SOURCE_REF = /^(?:\[A:(?:DL|V|D|A)[1-9]\d*\]|\[S:[1-9]\d*\]|(?:engine|rom|
 /** Exhibit completeness checks. A generic table must not score as every archetype. */
 export function referenceArchetypeGaps(slide: ReferenceSlide, edition: ReferenceEdition): string[] {
   const blocks = slide.blocks;
+  if (blocks.some((block) => block.kind === "gap")) return [];
   const table = blocks.find((block) => block.kind === "table");
   const metrics = blocks.find((block) => block.kind === "metrics");
   const text = blocks.find((block) => block.kind === "text");
@@ -131,10 +154,17 @@ export function referenceArchetypeGaps(slide: ReferenceSlide, edition: Reference
   };
   switch (slide.archetype) {
     case "one_page": tiles(edition === "validation" ? 3 : 4); if (!text || text.lines.length < 3) gaps.push("needs validation conditions and the ask"); break;
-    case "contents": rows(2, 5); break;
+    case "contents":
+      rows(3, 5);
+      if (table?.rows.some((row, index) => !new RegExp(`^0?${index + 1}\\s`).test(String(row[0] ?? ""))))
+        gaps.push("needs five numbered sections");
+      if (table?.rows.some((row) => typeof row[1] !== "string" || row[1].trim().split(/\s+/).length < 5 || row[1].includes("\n") || !String(row[2] ?? "").trim()))
+        gaps.push("needs a one-line answer and slide numbers for every section");
+      break;
     case "big_number_context": tiles(3); if (!text) gaps.push("needs a narrative panel"); break;
     case "plain_english_table": rows(4, 1); break;
-    case "flow_today": if (!blocks.some((block) => block.kind === "flow" && block.nodes.length >= 3)) gaps.push("needs a source-to-decision flow"); break;
+    case "flow_today": if (!blocks.some((block) => block.kind === "flow" && block.nodes.length >= 3 && block.fullNodes?.length === block.nodes.length)
+      || !slide.sourceIds?.some((id) => id.startsWith("evidence:"))) gaps.push("needs source-linked current handoffs"); break;
     case "one_step_value": rows(4, 1); if (!blocks.some((block) => block.kind === "bars")) gaps.push("needs the threshold band"); break;
     case "three_year_value": rows(edition === "validation" ? 4 : 5, 4); if (!blocks.some((block) => block.kind === "bars")) gaps.push("needs a year-by-year value chart"); break;
     case "assumptions": rows(5, 1); if (!table?.decisiveRows?.length) gaps.push("needs at least one decisive shaded row"); break;
@@ -194,15 +224,17 @@ export function validateReferenceDeck(spec: ReferenceDeckSpec): ReferenceDeckFin
   if (count < band[0] || count > band[1])
     add(0, "edition_count", `${spec.edition} edition has ${count} slides; expected ${band[0]}–${band[1]}.`);
   if (spec.slides[0]?.archetype !== "cover") add(1, "cover", "The first slide must be a cover.");
-  if (spec.edition === "validation" && !/no solution, plan or cost/i.test(spec.slides[0]?.actionTitle ?? ""))
-    add(1, "validation_disclosure", "The validation cover must say no solution, plan or cost.", true);
+  if (spec.slides[0]?.actionTitle !== spec.useCase)
+    add(1, "cover_use_case", "The cover title must be the use-case name.", true);
+  if (coverUsesEditionRule(spec.slides[0]?.actionTitle ?? ""))
+    add(1, "cover_edition_rule", "The edition rule cannot appear in the cover title.", true);
 
   spec.slides.forEach((slide, index) => {
     const n = index + 1;
     const content = slide.archetype !== "cover" && slide.archetype !== "divider";
     const figures = figuresOnSlide(slide);
     const required = REQUIRED_BLOCK[slide.archetype];
-    if (required && !slide.blocks.some((block) => block.kind === required))
+    if (required && !slide.blocks.some((block) => block.kind === required || block.kind === "gap"))
       add(n, "archetype_body", `${slide.archetype} needs an editable ${required} block.`);
     for (const gap of referenceArchetypeGaps(slide, spec.edition))
       add(n, "archetype_completeness", `${slide.archetype} ${gap}.`);
@@ -211,6 +243,8 @@ export function validateReferenceDeck(spec: ReferenceDeckSpec): ReferenceDeckFin
       add(n, "section", "Validation edition uses CONFIRM, not VALIDATE.");
     if (content && (!slide.answerLabel?.trim() || !slide.answer?.trim()))
       add(n, "answer_bar", "Content slide needs a labelled answer bar.");
+    if (content && answerIsCountDump(slide.answer ?? ""))
+      add(n, "answer_count_dump", "The answer bar lists a count without interpreting it.");
     if (!slide.speakerNotes?.startsWith("The point:") || !/(How to read:|Method:)/.test(slide.speakerNotes))
       add(n, "notes", "Business-case slide needs The point and a reading method.");
     if (content && (slide.actionTitle.trim().split(/\s+/).length < 5 || /[.!?]\s+\S/.test(slide.actionTitle)))
@@ -233,7 +267,8 @@ export function validateReferenceDeck(spec: ReferenceDeckSpec): ReferenceDeckFin
     // A plain string in any exhibit must not introduce a new working figure.
     const blockProse = slide.blocks.flatMap((block) => {
       switch (block.kind) {
-        case "table": return [...block.columns, ...block.rows.flat().filter((cell): cell is string => typeof cell === "string")];
+        case "table": return [...block.columns, ...block.rows.flatMap((row) => row.filter((cell, column): cell is string =>
+          typeof cell === "string" && !(slide.archetype === "contents" && (column === 0 || column === 2))))];
         case "metrics": return block.items.flatMap((item) => [item.label, item.meaning, ...(typeof item.value === "string" ? [item.value] : [])]);
         case "flow": return [...block.nodes, block.annotation ?? ""];
         case "architecture": return [...block.layers.flatMap((layer) => [layer.name, ...layer.items]), block.governance];
@@ -243,6 +278,21 @@ export function validateReferenceDeck(spec: ReferenceDeckSpec): ReferenceDeckFin
         case "text": return block.lines;
       }
     });
+    const clientText = [slide.actionTitle, slide.answer ?? "", ...blockProse, referenceSourceLine(slide)].join(" ");
+    const internalTerm = clientCopyIssue(clientText);
+    if (internalTerm) add(n, "client_copy_term", `Client-facing text contains internal term: ${internalTerm}.`, true);
+    if (coverUsesEditionRule(clientText))
+      add(n, "edition_rule_visible", "The edition rule cannot appear in client-facing text.", true);
+    for (const block of slide.blocks) {
+      if (block.kind !== "flow" || !block.fullNodes) continue;
+      block.nodes.forEach((label, nodeIndex) => {
+        if (!label.endsWith("…")) return;
+        const prefix = label.slice(0, -1);
+        const full = block.fullNodes?.[nodeIndex] ?? "";
+        if (!full.startsWith(prefix) || !/^\s/.test(full.slice(prefix.length)))
+          add(n, "flow_midword", "A flow label was cut inside a word.");
+      });
+    }
     // Every visible amount or date must match a typed figure on this slide.
     const figureTokens = new Set(figures.flatMap((figure) => factTokens(figure.display)));
     for (const token of factTokens([slide.actionTitle, slide.answer ?? "", slide.speakerNotes ?? "", ...blockProse].join(" "))) {
