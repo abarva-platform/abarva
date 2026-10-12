@@ -50,6 +50,50 @@ function fixture(edition: EditionInputs["edition"]): EditionInputs {
 }
 
 describe("live-input reference edition", () => {
+  it("renders an investment summary with working assumptions and an unavailable financial basis", async () => {
+    const inputs = fixture("investment");
+    inputs.valueCase = { status: "empty", detail: "The value basis still needs confirmation." };
+    const spec = buildReferenceEdition(inputs, words(INVESTMENT_SEQUENCE.length));
+    const summary = spec.slides[1]!;
+    expect(summary.blocks.filter((block) => block.kind === "gap")).toHaveLength(1);
+    expect(summary.blocks.some((block) => block.kind === "text")).toBe(true);
+    expect(spec.figureLedger.some((figure) => figure.sourceId.startsWith("engine:") || figure.sourceId.startsWith("rom:"))).toBe(false);
+    const rendered = await inspectDeck(await renderReferenceDeck(spec));
+    expect(rendered.slideCount).toBe(INVESTMENT_SEQUENCE.length);
+    expect(rendered.slides[1]!.textRuns.join(" ")).toContain("figures for this exhibit still need confirmation");
+    expect(rendered.slides[1]!.textRuns.join(" ")).toContain("Problem: Fragmented reporting");
+    expect(rendered.slides.every((slide) => slide.offCanvas.length === 0)).toBe(true);
+    const overflowing = structuredClone(spec);
+    overflowing.slides[1]!.blocks = overflowing.slides[1]!.blocks.map((block) =>
+      block.kind === "gap" ? { ...block, compact: false } : block);
+    await expect(renderReferenceDeck(overflowing)).rejects.toThrow("reference_deck_body_overflow: slide 2");
+    if (process.env.REFERENCE_DECK_VISUAL_OUTPUT) {
+      fs.writeFileSync(`${process.env.REFERENCE_DECK_VISUAL_OUTPUT}-missing-value-investment.pptx`, await renderReferenceDeck(spec));
+      fs.writeFileSync(`${process.env.REFERENCE_DECK_VISUAL_OUTPUT}-missing-value-investment-spec.json`, JSON.stringify(spec));
+    }
+  });
+
+  it.each(["validation", "investment"] as const)("renders %s partial context without hiding the known value or its confirmation gap", async (edition) => {
+    const inputs = fixture(edition);
+    inputs.capture[1] = { status: "gap", detail: "Sponsor evidence still needs confirmation." };
+    inputs.capture[2] = { status: "gap", detail: "Discovery evidence still needs confirmation." };
+    const sequence = edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
+    const spec = buildReferenceEdition(inputs, words(sequence.length));
+    const context = spec.slides.find((slide) => slide.archetype === "big_number_context")!;
+    expect(context.blocks.filter((block) => block.kind === "gap")).toHaveLength(1);
+    expect(context.blocks.some((block) => block.kind === "metrics")).toBe(true);
+    const rendered = await inspectDeck(await renderReferenceDeck(spec));
+    expect(rendered.slides[4]!.textRuns.join(" ")).toContain("$1.20M");
+    expect(rendered.slides[4]!.textRuns.join(" ")).toContain("still needs confirmation");
+    expect(rendered.slides[4]!.offCanvas).toEqual([]);
+    expect(judgeRenderedDeck(rendered, { referenceDeck: spec }).findings.filter((finding) =>
+      ["reference_source", "reference_client_copy", "reference_edition", "off_canvas"].includes(finding.kind))).toEqual([]);
+    if (process.env.REFERENCE_DECK_VISUAL_OUTPUT) {
+      fs.writeFileSync(`${process.env.REFERENCE_DECK_VISUAL_OUTPUT}-partial-${edition}.pptx`, await renderReferenceDeck(spec));
+      fs.writeFileSync(`${process.env.REFERENCE_DECK_VISUAL_OUTPUT}-partial-${edition}-spec.json`, JSON.stringify(spec));
+    }
+  });
+
   it.each(["validation", "investment"] as const)("uses a real %s cover and section-answer contents", async (edition) => {
     const sequence = edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
     const spec = buildReferenceEdition(fixture(edition), words(sequence.length));

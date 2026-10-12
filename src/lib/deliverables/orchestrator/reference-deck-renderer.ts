@@ -277,18 +277,19 @@ function addBlock(slide: Slide, block: ReferenceBlock, y: number): number {
       return y + 4.17;
     }
     case "gap": {
-      slide.addShape("rect", { x, y, w, h: 3.55,
+      const height = block.compact ? 1.8 : 3.55;
+      slide.addShape("rect", { x, y, w, h: height,
         line: { color: C.rule, width: 0.8 }, fill: { color: C.panel },
         objectName: "ref:body:governed-gap" });
-      slide.addShape("rect", { x, y, w: 0.1, h: 3.55,
+      slide.addShape("rect", { x, y, w: 0.1, h: height,
         line: { color: C.accent, transparency: 100 }, fill: { color: C.accent } });
-      slide.addText(block.title, { x: x + 0.36, y: y + 0.43, w: w - 0.8, h: 0.55,
-        fontFace: SERIF, fontSize: 25, color: C.ink, fit: "shrink", objectName: "ref:body:gap-title" });
-      slide.addText(block.detail, { x: x + 0.36, y: y + 1.24, w: w - 0.8, h: 0.66,
-        fontFace: BODY, fontSize: 16, color: C.ink, fit: "shrink", objectName: "ref:body:gap-detail" });
-      slide.addText(`TO CONFIRM  ${block.nextAction}`, { x: x + 0.36, y: y + 2.58, w: w - 0.8, h: 0.45,
-        fontFace: BODY, fontSize: 12, bold: true, color: C.accent, fit: "shrink", objectName: "ref:body:gap-action" });
-      return y + 3.67;
+      slide.addText(block.title, { x: x + 0.36, y: y + (block.compact ? 0.18 : 0.43), w: w - 0.8, h: block.compact ? 0.36 : 0.55,
+        fontFace: SERIF, fontSize: block.compact ? 18 : 25, color: C.ink, fit: "shrink", objectName: "ref:body:gap-title" });
+      slide.addText(block.detail, { x: x + 0.36, y: y + (block.compact ? 0.68 : 1.24), w: w - 0.8, h: block.compact ? 0.38 : 0.66,
+        fontFace: BODY, fontSize: block.compact ? 11.5 : 16, color: C.ink, fit: "shrink", objectName: "ref:body:gap-detail" });
+      slide.addText(`TO CONFIRM  ${block.nextAction}`, { x: x + 0.36, y: y + (block.compact ? 1.31 : 2.58), w: w - 0.8, h: block.compact ? 0.36 : 0.45,
+        fontFace: BODY, fontSize: block.compact ? 9.5 : 12, bold: true, color: C.accent, fit: "shrink", objectName: "ref:body:gap-action" });
+      return y + height + 0.12;
     }
     case "text": {
       slide.addText(block.lines.join("\n"), { x, y, w, h: Math.min(3.7, Math.max(0.52, block.lines.length * 0.47)),
