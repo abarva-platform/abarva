@@ -91,7 +91,7 @@ function monthLabel(row: SourceContractSpendMonthlyRow): string {
   const raw = row.period_start ?? row.month;
   const date = raw ? new Date(raw) : null;
   if (!date || Number.isNaN(date.getTime())) return String(raw ?? "");
-  return date.toLocaleDateString("en-GB", { month: "short" });
+  return date.toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" });
 }
 
 /* -------------------------------------------------------------------------- */
