@@ -250,7 +250,7 @@ export function buildSubscriptionEvidencePackage(config) {
       period_start: `${month}-01`,
       period_end: endOfMonth(month),
       metric_name: "platform_availability_pct",
-      service_id: config.application_id,
+      service_id: "",
       target: 99.9,
       actual: 99.95,
       unit: "%",

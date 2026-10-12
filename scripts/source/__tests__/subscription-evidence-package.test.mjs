@@ -1,6 +1,45 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import Papa from "papaparse";
 import { buildSubscriptionEvidencePackage } from "../build-subscription-evidence-package.mjs";
+
+test("the unapplied candidate uses its declared canonical application scope", () => {
+  const fixture = JSON.parse(
+    fs.readFileSync(
+      new URL(
+        "../fixtures/demo-subscription-evidence-input.json",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  assert.equal(fixture.application_id, "APP-d339369a58");
+  const pack = buildSubscriptionEvidencePackage(fixture);
+  assert.equal(
+    pack.tables.cmdb_applications[0].application_id,
+    fixture.application_id,
+  );
+  assert.equal(
+    pack.tables.cmdb_application_scope[0].application_id,
+    fixture.application_id,
+  );
+  assert.ok(pack.tables.sla_performance.every((row) => row.service_id === ""));
+  for (const table of [
+    "cmdb_applications",
+    "cmdb_application_scope",
+    "sla_performance",
+  ]) {
+    const committed = fs.readFileSync(
+      new URL(
+        `../../../datasets/source/contract-depth/demo-subscription-contract-evidence-20261012/source-files/${table}.csv`,
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    assert.equal(committed, `${Papa.unparse(pack.tables[table])}\n`);
+  }
+});
 
 const config = () => ({
   tenant_key: "tenant-test",
