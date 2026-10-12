@@ -153,6 +153,24 @@ function assertScript(script) {
 }
 
 function assertTowerStageJobBinding(options) {
+  if (["tower:registered-intake:preflight-job", "tower:registered-intake:promote-job"].includes(options.script)) {
+    const entries = options.env.map((value) => splitKeyValue(value, "--env"));
+    const overrides = new Map(entries);
+    for (const key of ["TOWER_PROMOTION_IMAGE_DIGEST", "TOWER_PROMOTION_JOB_NAME",
+      "TOWER_PROMOTION_TIMEOUT_SECONDS", "TOWER_PROMOTION_EXECUTION_LANE"]) {
+      if (entries.filter(([name]) => name === key).length !== 1) {
+        throw new Error(`Tower promotion job requires exactly one ${key} override`);
+      }
+    }
+    const imageDigest = options.image.match(/@((?:sha256:)[0-9a-f]{64})$/)?.[1];
+    if (!imageDigest || overrides.get("TOWER_PROMOTION_IMAGE_DIGEST") !== imageDigest ||
+        overrides.get("TOWER_PROMOTION_JOB_NAME") !== options.job ||
+        overrides.get("TOWER_PROMOTION_TIMEOUT_SECONDS") !== String(options.timeout) ||
+        overrides.get("TOWER_PROMOTION_EXECUTION_LANE") !== "aca_operator_job") {
+      throw new Error("Tower promotion job identity, image digest, timeout, and execution lane must match the ACA wrapper request");
+    }
+    return;
+  }
   if (!["tower:registered-intake:stage-job", "tower:registered-intake:stage-reattest-job"].includes(options.script)) return;
   const entries = options.env.map((value) => splitKeyValue(value, "--env"));
   const overrides = new Map(entries);

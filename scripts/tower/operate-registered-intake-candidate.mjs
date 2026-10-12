@@ -235,9 +235,16 @@ export function validatePhysicalPage(rows, page, candidate, expectedCount) {
     for (const ref of refs) {
       const expected = candidate.source_manifest?.[ref.source_file]?.sha256;
       const coverageOnly = page === "evidence" && row.row_key === "evidence_approval_gap"
-        && ref.scope === "register_coverage_only" && ref.source_row === null
-        && ref.source_file === "13_evidence_sources.csv";
-      if (!expected || ref.source_sha256 !== expected || (!coverageOnly && !Number.isInteger(ref.source_row))) gaps.push(`page_source_ref_mismatch:${page}`);
+        && ref.source_row === null && (
+          (ref.scope === "register_coverage_only" && ref.source_file === "13_evidence_sources.csv") ||
+          (ref.scope === "claim_evidence_id_coverage_only" && [
+            "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+            "SA09_AI_Tool_Usage_Feed.csv",
+            "SA11_AI_KPI_Operational_Outcome_Feed.csv",
+          ].includes(ref.source_file))
+        );
+      const coverageScope = ref.scope === "register_coverage_only" || ref.scope === "claim_evidence_id_coverage_only";
+      if (!expected || ref.source_sha256 !== expected || !(coverageOnly || (!coverageScope && Number.isInteger(ref.source_row)))) gaps.push(`page_source_ref_mismatch:${page}`);
     }
     if (page === "evidence" && row.row_key === "evidence_approval_gap"
       && (rows.length !== 1 || row.display_payload_json?.value !== null

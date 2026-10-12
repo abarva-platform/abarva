@@ -21,6 +21,13 @@
     "source_set_hash": "11d0f3f92b0c1da9cd4ca2bf369d0a90587b2deac15f4108262b1d154f829c40",
     "release_record": "docs/releases/records/2026-10-11-tower-category-measure-basis.md"
   },
-  "serving_approval": null,
+  "serving_approval": {
+    "approved_by": "Anand Sundaram",
+    "approved_at": "2026-10-11",
+    "assessment_id": "tower-registry-candidate-11d0f3f92b0c1da9",
+    "source_set_hash": "11d0f3f92b0c1da9cd4ca2bf369d0a90587b2deac15f4108262b1d154f829c40",
+    "release_record": "docs/releases/records/2026-10-11-tower-registered-intake-serving-promotion.md",
+    "surface": "tower"
+  },
   "notes": "The load approval is bound to this exact assessment and source-set hash. It authorizes staging only and does not assert independent Finance review, evidence approval, value realization, serving promotion, or signed-in product proof."
 }

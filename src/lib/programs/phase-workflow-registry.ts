@@ -184,6 +184,7 @@ const P4_STEPS: readonly PhaseWorkflowStep[] = [
     title: "Workstreams & milestones",
     depth: allFull,
     sectionKeys: same(["roadmap_sequencing"]),
+    recordKeys: same(["p4_roadmap_plan"]),
   },
   {
     id: "P4.2",
@@ -531,6 +532,15 @@ export const PHASE_STEP_RECORD_SECTIONS: Readonly<
       label: "Bottom-up estimate (ROM)",
       description:
         "The inputs of the bottom-up estimate, each with its source and status: counts per use case, a register or benchmark reference for each component's unit hours, the delivery pod, the delivery factors and the release grouping, plus the snapshot a person approved.",
+    },
+  ],
+  4: [
+    {
+      key: "p4_roadmap_plan",
+      stepId: "P4.1",
+      label: "Reviewed milestone and dependency plan",
+      description:
+        "Milestone IDs, workstreams, owner roles, planned windows, timing sources and explicitly reviewed dependencies. This planning record does not approve a gate or sign a document.",
     },
   ],
 };
