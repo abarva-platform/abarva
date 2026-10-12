@@ -26,6 +26,7 @@ import {
   matrixPlot,
 } from "@/lib/intelligence/answer/model-exhibit-layout";
 import { measureExecutiveAnswer } from "@/lib/intelligence/answer/model-authored-answer";
+import { sourceDisplayLabel } from "@/lib/intelligence/answer/source-display-label";
 
 const fontDirectory = join(process.cwd(), "public", "fonts", "dejavu");
 Font.register({
@@ -72,6 +73,13 @@ const styles = StyleSheet.create({
     color: "#78716c",
   },
   raw: { fontSize: 7, lineHeight: 1.4, fontFamily: "IntelligenceMono" },
+  referenceHeading: { fontSize: 10, fontWeight: 700, marginBottom: 6 },
+  referenceLine: {
+    fontSize: 8,
+    lineHeight: 1.35,
+    color: "#57534e",
+    marginBottom: 4,
+  },
 });
 
 /** Formatting only; no public-language cleaner or content fallback. */
@@ -515,26 +523,32 @@ export function buildModelAuthoredSessionPdf(
               ))}
             </View>
           )}
-          {t.answer?.citations.length ? (
-            <View wrap={false}>
-              <Text style={styles.heading}>Sources</Text>
-              {t.answer.citations.map((c) => (
-                <Text key={c.id} style={styles.meta}>
-                  {c.url ? <Link src={c.url}>{c.label}</Link> : c.label}
-                </Text>
-              ))}
-            </View>
-          ) : null}
-          {t.answer?.nextSteps.length ? (
-            <View wrap={false}>
-              <Text style={styles.heading}>Follow-up questions</Text>
-              {t.answer.nextSteps.map((s) => (
-                <Text key={s.id} style={styles.meta}>
-                  {s.label}
-                </Text>
-              ))}
-            </View>
-          ) : null}
+          <View style={{ flexDirection: "row", gap: 16 }} wrap={false}>
+            {t.answer?.citations.length ? (
+              <View style={{ flex: 1 }}>
+                <Text style={styles.referenceHeading}>Sources</Text>
+                {t.answer.citations.map((c) => (
+                  <Text key={c.id} style={styles.referenceLine}>
+                    {c.url ? (
+                      <Link src={c.url}>{sourceDisplayLabel(c.label)}</Link>
+                    ) : (
+                      sourceDisplayLabel(c.label)
+                    )}
+                  </Text>
+                ))}
+              </View>
+            ) : null}
+            {t.answer?.nextSteps.length ? (
+              <View style={{ flex: 1 }}>
+                <Text style={styles.referenceHeading}>Follow-up questions</Text>
+                {t.answer.nextSteps.map((s) => (
+                  <Text key={s.id} style={styles.referenceLine}>
+                    {s.label}
+                  </Text>
+                ))}
+              </View>
+            ) : null}
+          </View>
           {footer}
         </Page>
       ))}

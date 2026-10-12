@@ -35,7 +35,7 @@ function sha256(bytes) {
   return crypto.createHash("sha256").update(bytes).digest("hex");
 }
 
-function csvRows(text) {
+export function csvRows(text) {
   const records = [];
   let cells = [];
   let cell = "";
@@ -237,6 +237,7 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
       return {
         id,
         name: b.program_name,
+        tool_name: u?.tool_name || b.tool_name,
         planning_promise_usd: amount(b.promised_value_usd),
         source_conflict: conflicts.some((item) => item.use_case_id === id),
         usage_active_users: amount(u?.active_users),

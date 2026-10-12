@@ -70,4 +70,5 @@ it("retains the legacy answer-only model and generation configuration", async ()
   expect(request.thinking).toBeUndefined();
   expect(request.output_config).toBeUndefined();
   expect(request.max_tokens).toBe(5000);
+  expect(request.system).not.toContain("EVIDENCE RULE FOR THIS ANSWER");
 });

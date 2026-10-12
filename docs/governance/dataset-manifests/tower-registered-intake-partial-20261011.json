@@ -1,0 +1,20 @@
+{
+  "dataset_id": "tower-registered-intake-partial-20261011",
+  "title": "Registered intake Tower partial reload",
+  "client_key": "meridian-health",
+  "tenant_scope": "canonical_tenant",
+  "source_layer": "tenant_context",
+  "classification": "internal",
+  "owner": "AbarVa Data Governance",
+  "source_basis": "Active tenant-input registry packet, source files and hashes declared by the candidate build; synthetic planning data",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "not_retrievable",
+  "retrieval_proof_required": false,
+  "pii_phi_handling": "The detailed user-level export is hashed for audit and excluded from staged source records and projection payloads. Source content remains synthetic; no patient or provider records are included.",
+  "expected_object_count": 237,
+  "approved_by": "Anand Sundaram",
+  "approved_at": "2026-10-11",
+  "load_approval": null,
+  "serving_approval": null,
+  "notes": "The user directed the agent to choose the current registered source. Source selection does not yet approve a load of the exact assessment and hash. The load approval remains null until a person reviews the final candidate. This manifest does not assert independent Finance review, evidence approval, value realization, serving promotion, or signed-in product proof."
+}
