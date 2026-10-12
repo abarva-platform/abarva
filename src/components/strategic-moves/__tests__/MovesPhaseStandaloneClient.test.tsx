@@ -47,6 +47,7 @@ import { unexpectedWalkStepFailureBody } from "@/lib/programs/walk-step-unexpect
 import { describeMoveUploadRefusal } from "@/lib/programs/move-upload-refusal";
 import type { ConfirmedSolutionRoute } from "@/lib/programs/solution-route-assessment";
 import type { StrategicMove } from "@/lib/programs/types.ui";
+import { emptyP4RoadmapPlan, newP4RoadmapMilestone, serializeP4RoadmapPlan } from "@/lib/programs/p4-roadmap-plan";
 import {
   emptyRomEstimate,
   romInputsFingerprint,
@@ -5166,6 +5167,65 @@ describe("MovesPhaseStandaloneClient", () => {
         PHASE_STEP_PAGES["p4-milestones"] = original;
       }
     });
+
+    it.each(["missing", "unreviewed", "reviewed"] as const)(
+      "P4.1 host readiness uses the saved structured plan: %s",
+      (state) => {
+        const original = PHASE_STEP_PAGES["p4-milestones"];
+        const milestone = {
+          ...newP4RoadmapMilestone("m1"),
+          name: "Agree scope",
+          workstream: "Data readiness",
+          ownerRole: "Data owner",
+          plannedWindow: "R1 opening week",
+          timingBasis: "Approved ROM R1 [A:T1]",
+          dependencyNotes: "First decision, no predecessor",
+          dependenciesReviewed: true,
+          reviewed: state === "reviewed",
+        };
+        const plan =
+          state === "missing"
+            ? ""
+            : serializeP4RoadmapPlan({
+                ...emptyP4RoadmapPlan(),
+                milestones: [milestone],
+              });
+        PHASE_STEP_PAGES["p4-milestones"] = (props) => (
+          <div data-testid="p4-plan-host">
+            {String(props.stepDone["P4.1"])}:
+            {String(props.captureSaved?.p4_roadmap_plan)}
+          </div>
+        );
+        try {
+          render(
+            <MovesPhaseStandaloneClient
+              captureV2Enabled
+              stepPagesV3Enabled
+              phaseStepPagesEnabled
+              initialStepView="p4-milestones"
+              carriesForwardContent={[]}
+              evidenceNeedPackets={[]}
+              initialPhaseCaptureValues={{
+                roadmap_sequencing: "The team's reviewed sequence",
+                p4_roadmap_plan: plan,
+              }}
+              move={makeMove({ currentPhase: 4, phaseLabel: "P4 Roadmap" })}
+              phaseNum={4}
+              phaseTallies={[...phaseTallies]}
+            />,
+          );
+          expect(screen.getByTestId("p4-plan-host")).toHaveTextContent(
+            state === "reviewed"
+              ? "true:true"
+              : state === "missing"
+                ? "false:false"
+                : "false:true",
+          );
+        } finally {
+          PHASE_STEP_PAGES["p4-milestones"] = original;
+        }
+      },
+    );
 
     it("does not mount a registered page when the phase flag is off", () => {
       const original = PHASE_STEP_PAGES["p4-milestones"];

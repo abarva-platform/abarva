@@ -45,6 +45,7 @@ export interface StepPageHostProps {
   chrome: StepPageChrome;
   stepDone: Readonly<Record<string, boolean>>;
   captureSaved?: Readonly<Record<string, boolean>>;
+  captureSaveErrors?: Readonly<Record<string, string>>;
   sectionReady?: Readonly<Record<string, boolean>>;
   p0SourceEvidenceReady?: boolean;
   p2Evidence?: {

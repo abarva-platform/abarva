@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  P4_ROADMAP_PLAN_KEY,
+  isP4RoadmapPlanComplete,
+  parseP4RoadmapPlan,
+} from "@/lib/programs/p4-roadmap-plan";
+
 import { BusinessChangeAssessmentForm } from "@/components/strategic-moves/BusinessChangeAssessmentForm";
 import {
   GateReadinessStep,
@@ -3381,7 +3387,7 @@ export function MovesPhaseStandaloneClient({
     ).complete;
   };
   const captureSavedBySection: Record<string, boolean> = Object.fromEntries(
-    phaseCaptureSections.map((section) => [
+    [...phaseCaptureSections, ...phaseStepRecordSections(phase.phase)].map((section) => [
       section.key,
       resolvePhaseCaptureStatus({
         draft: String(phaseCaptureValues[section.key] ?? ""),
@@ -3800,6 +3806,14 @@ export function MovesPhaseStandaloneClient({
       confirmedSolutionRoute !== null &&
       p2CheckState(p2Criteria, "solution_route_validated") === "met";
   }
+  if (phase.phase === 4 && phaseStepPagesEnabled && !legacyCaptureRequested) {
+    recordStepDone["P4.1"] =
+      Boolean(captureSavedBySection.roadmap_sequencing) &&
+      Boolean(captureSavedBySection[P4_ROADMAP_PLAN_KEY]) &&
+      isP4RoadmapPlanComplete(
+        parseP4RoadmapPlan(phaseCaptureValues[P4_ROADMAP_PLAN_KEY]),
+      );
+  }
   if (phase.phase === 0) {
     recordStepDone["P0.4"] =
       Boolean(recordStepDone["P0.4"]) &&
@@ -4099,6 +4113,7 @@ export function MovesPhaseStandaloneClient({
       chrome: stepPageChrome(phase.phase, stepId),
       stepDone: recordStepDone,
       captureSaved: captureSavedBySection,
+      captureSaveErrors: phaseCaptureSaveErrors,
       sectionReady: Object.fromEntries(
         phaseCaptureSections.map((section) => [
           section.key,
