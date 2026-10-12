@@ -970,7 +970,7 @@ describe("readTowerCommandCenter", () => {
       tower_command_center: [servingRow({ row_key: "executive_summary", page_key: "command_center" })],
       tower_decision_lanes: [servingRow({
         row_key: "program-1",
-        owner_role: "Program sponsor",
+        owner_role: null,
         display_payload_json: {
           title: "Program",
           business_sponsor_role: "Program sponsor",

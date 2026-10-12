@@ -18,8 +18,8 @@ Release lane: `client-data-lane`.
 
 - Layer 1: no files or source-set membership change.
 - Layer 2: the candidate adapter retains selected fields from the program and AI use-case tabs. It joins program-to-function relationships only by declared program ID and relationship type.
-- Layer 3: typed program and AI use-case objects retain these source fields. The affected-function edge keeps its own source-row reference. Primary funding domain and unsupported money remain unknown.
-- Layer 4: an inactive version 5 Tower projection carries the same fields in program and AI-case rows. The existing active projection remains selected.
+- Layer 3: typed program and AI use-case objects retain these source fields. Program metadata holds source-linked affected-function information; this candidate does not materialize canonical function objects or relationship edges. Primary funding domain and unsupported money remain unknown.
+- Layer 4: an inactive version 5 Tower projection carries the same fields and source-linked affected-function information in program and AI-case rows. The existing active projection remains selected.
 
 ## Client Applicability
 
@@ -70,4 +70,4 @@ The PR diff, focused test output, dry-stage `candidate.json`, `stage-preflight.j
 
 ## Known Gaps
 
-Ten programs have no declared affected-function edge; no program has an explicit primary funding domain or approved fiscal-year funding in this source set. The AI intake has no declared crosswalk to the separate benefit and usage feeds, so Finance status, funded amount, and vendor cannot be attached to those AI cases. A tool rollout registry, reconciled Finance values, approved evidence, and normalized quarterly results remain separate source and governance work. The new field projection is not loaded or visible in the product.
+Ten programs have no declared affected-function relationship; no program has an explicit primary funding domain or approved fiscal-year funding in this source set. The 28 declared relationships remain informational until canonical function objects and governed relationship edges are materialized and read back. The AI intake has no declared crosswalk to the separate benefit and usage feeds, so Finance status, funded amount, and vendor cannot be attached to those AI cases. A tool rollout registry, reconciled Finance values, approved evidence, and normalized quarterly results remain separate source and governance work. The new field projection is not loaded or visible in the product.

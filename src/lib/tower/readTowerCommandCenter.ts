@@ -753,7 +753,8 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
       payloadText(row, "claim_id") ?? nullableText(display.program_id),
     programName: title,
     ownerRole:
-      payloadText(row, "owner_role") ?? nullableText(display.owner_role),
+      payloadText(row, "owner_role") ??
+      nullableText(display.business_sponsor_role),
     // The business domain the program sits in. Distinct from who sponsors it: a domain groups
     // work by where it happens, an owner groups it by who answers for it.
     domainName: nullableText(display.domain_name),
