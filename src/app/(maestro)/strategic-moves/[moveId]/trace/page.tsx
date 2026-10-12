@@ -32,6 +32,11 @@ import {
 import { selectSourceEventsReadAdapter } from '@/lib/data-plane/read-adapters/sourceEventsReadAdapter';
 import { selectOutcomeLedgerReadAdapter } from '@/lib/data-plane/read-adapters/outcomeLedgerReadAdapter';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
+import { isFeatureEnabled } from '@/lib/features/is-feature-enabled';
+import { readP5Handoff } from '@/lib/programs/p5-tower-handoff';
+import { P5_TOWER_HANDOFF_FLAG } from '@/lib/programs/p5-measurement-plan';
+import { P5HandoffRefusal } from '@/lib/data-plane/write-adapters/p5OutcomeHandoffAdapter';
+import type { CrossModuleTraceInput } from '@/lib/programs/cross-module-trace-view';
 import { CrossModuleTraceView } from '@/components/strategic-moves/CrossModuleTraceView';
 import { AppShell } from '@/components/shell/AppShell';
 import type { SourceEventDbRow } from '@/lib/data-plane/read-adapters/sourceEventsReadAdapter';
@@ -120,12 +125,35 @@ export default async function StrategicMoveTracePage({ params }: Props) {
       )
     : undefined;
 
+  let towerHandoffRead: CrossModuleTraceInput["towerHandoffRead"];
+  if (
+    isFeatureEnabled(ctx, P5_TOWER_HANDOFF_FLAG) &&
+    (move.currentPhase === 5 || move.currentPhase === 6)
+  ) {
+    try {
+      const handoff = await readP5Handoff(ctx, moveId, true);
+      towerHandoffRead = {
+        state: handoff.view.publication.state,
+        detail: handoff.view.detail,
+        rowId: handoff.view.publication.rowIds[0],
+      };
+    } catch (error) {
+      towerHandoffRead = {
+        state: "read_unavailable",
+        detail:
+          error instanceof P5HandoffRefusal
+            ? error.message
+            : "Tower handoff could not be read. Its publication state is unknown.",
+      };
+    }
+  }
   const trace = buildCrossModuleTrace({
     move,
     effectivePhase,
     sourceEvents,
     outcomeEntries,
     controlMatrix,
+    ...(towerHandoffRead ? { towerHandoffRead } : {}),
   });
 
   return (

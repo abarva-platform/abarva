@@ -21,6 +21,16 @@ import type { OutcomeLedgerRow } from "@/lib/tower/outcome-ledger/types";
 import { buildControlEvalMatrix } from "../controls/control-eval-matrix";
 import { getSolutionArchetype } from "../taxonomy/solution-archetype-taxonomy";
 
+test.each(["published", "not_yet_linked", "read_unavailable"] as const)("governed Tower trace preserves the independent %s state", state => {
+  const move = makeMove({ name: "Synthetic Move", tenant: { id: "t1", name: "Synthetic tenant", industryCode: "healthcare" } });
+  const trace = buildCrossModuleTrace({ move, effectivePhase: 5, sourceEvents: [], outcomeEntries: [],
+    towerHandoffRead: { state, detail: state === "read_unavailable" ? "Read failed; publication unknown" : "Independent ledger state", rowId: state === "published" ? "persisted-row" : undefined } });
+  const tower = trace.steps.find(step => step.module === "tower")!;
+  expect(tower.linkState).toBe(state === "published" ? "linked" : state);
+  expect(tower.href).toBe(state === "published" ? `/strategic-moves/${move.id}/tower-handoff` : null);
+  if (state === "read_unavailable") expect(tower.title).toBe("Tower handoff state unavailable");
+});
+
 function makeMove(overrides: Partial<StrategicMove> = {}): StrategicMove {
   return {
     id: "move-1",

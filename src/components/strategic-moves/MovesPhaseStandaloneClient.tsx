@@ -99,6 +99,7 @@ import {
 } from "@/lib/programs/phase-capture-status";
 import { resolvePhaseCaptureHold } from "@/lib/programs/phase-capture-hold";
 import { gateCriteriaVerification } from "@/lib/programs/gate-criteria-verification";
+import { readP5MeasurementPlan } from "@/lib/programs/p5-measurement-plan";
 import { CaptureEvidenceHoldNotice } from "@/components/strategic-moves/CaptureEvidenceHoldNotice";
 import {
   CaptureGateMetNotice,
@@ -444,6 +445,7 @@ interface MovesPhaseStandaloneClientProps {
   } | null;
   /** `moves_capture_p0_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true AND `captureV2Enabled` is true, P0 Originate also renders the redesigned 3-step capture flow instead of the legacy finder-columns canvas. P0's eleven canonical sections/keys, saves, structured inputs, authorization check and required-evidence gate are unchanged; only which phases render the flow differs. */
   captureP0Enabled?: boolean;
+  p5TowerHandoffEnabled?: boolean;
   /** `moves_charter_basis_v1` feature flag, resolved server-side (tenant-gated, default OFF). When true, each P1 Charter field carries a "How do you know this?" basis control (approved evidence / an assertion / an owned assumption) and an assumption is badged at the question. When false NOTHING here renders and the legacy approved-evidence lock is unchanged. */
   charterBasisEnabled?: boolean;
   /** `moves_capture_composition_v1` feature flag, already conjoined server-side with `moves_capture_v2` (tenant-gated, default OFF). When true the workspace surface tabs render inside the agent dock's workspace column instead of above it, and the legacy stage head drops the phase title, question, lede and progress card that the capture flow's own phase strip and step bar already state. Blocked-phase notice and readiness-workbook actions are unaffected, and no capture field, save, gate or evidence behaviour changes. */
@@ -1099,6 +1101,7 @@ export function MovesPhaseStandaloneClient({
   legacyCaptureRequested = false,
   initialLegacySectionKey = null,
   romEngineEnabled = false,
+  p5TowerHandoffEnabled = false,
   deliveryOptionsEnabled = false,
   initialStepView = null,
   initialWorkspaceView = "phase",
@@ -1148,6 +1151,15 @@ export function MovesPhaseStandaloneClient({
   publicSourceReviewEnabled = false,
 }: MovesPhaseStandaloneClientProps) {
   const router = useRouter();
+  const [p5Publication, setP5Publication] = useState({
+    moveId: move.id,
+    published: move.gateCriteria.some(
+      (criterion) =>
+        criterion.id === "p5_tower_publication_current" &&
+        criterion.completed &&
+        criterion.verified,
+    ),
+  });
   useEffect(() => {
     if (initialStepView && typeof performance.mark === "function") {
       performance.mark("moves-step-client-mounted");
@@ -3754,6 +3766,19 @@ export function MovesPhaseStandaloneClient({
     ]),
   );
   Object.assign(recordStepDone, {
+    ...(p5TowerHandoffEnabled && phase.phase === 5
+      ? {
+          "P5.2":
+            recordStepDone["P5.2"] &&
+            Boolean(
+              readP5MeasurementPlan(
+                displayPhaseCaptureValues.p5_measurement_handoff ?? "",
+              ),
+            ) &&
+            p5Publication.moveId === move.id &&
+            p5Publication.published,
+        }
+      : {}),
     "P3.1": isDesignTraceabilityComplete(
       priorPhaseCapture?.gapsRootCauses ?? "",
       parseDesignTraceability(displayPhaseCaptureValues.design_traceability) ??
@@ -4057,7 +4082,19 @@ export function MovesPhaseStandaloneClient({
       phases: chrome.phases,
       steps: chrome.steps,
       stepIndex: chrome.stepIndex,
-      criteria: move.gateCriteria,
+      criteria:
+        p5TowerHandoffEnabled && phase.phase === 5
+          ? move.gateCriteria.map((criterion) =>
+              criterion.id === "p5_tower_publication_current"
+                ? {
+                    ...criterion,
+                    completed:
+                      p5Publication.moveId === move.id &&
+                      p5Publication.published,
+                  }
+                : criterion,
+            )
+          : move.gateCriteria,
       routeDocumentKeys: routeKeys,
       notBuilt,
       initialArtifacts: visiblePhaseBuildArtifacts,
@@ -4138,6 +4175,9 @@ export function MovesPhaseStandaloneClient({
         phase.phase <= 1 ? setPhaseCaptureValue : setVisiblePhaseCaptureValue,
       priorPhaseCapture: priorPhaseCaptureValues,
       canApproveGates,
+      p5TowerHandoffEnabled,
+      onP5HandoffState: (published) =>
+        setP5Publication({ moveId: move.id, published }),
       currentUser,
       chrome: stepPageChrome(phase.phase, stepId),
       stepDone: recordStepDone,

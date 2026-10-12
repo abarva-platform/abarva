@@ -1,8 +1,10 @@
 import {
+  getAzureReadFluentClient,
   getAzureWriteFluentClient,
   withAzureWriteTransaction,
   writeTransactionOutcome,
 } from '../postgresCompat';
+import { azureRead, createAzureReadClient } from '../azureRead';
 
 type Connection = Pick<import('pg').PoolClient, 'query' | 'release'>;
 
@@ -54,6 +56,64 @@ function transactionConnection(options: {
 }
 
 describe('Postgres compat write transaction', () => {
+  it('ordinary Azure reads do not initialize the compatibility writer', () => {
+    try {
+      jest.isolateModules(() => {
+        jest.doMock('../postgresCompat', () => {
+          throw new Error('compatibility_writer_loaded_by_independent_reader');
+        });
+        const readModule = jest.requireActual<typeof import('../azureRead')>('../azureRead');
+        expect(typeof readModule.createAzureReadClient().query).toBe('function');
+      });
+    } finally {
+      jest.dontMock('../postgresCompat');
+    }
+  });
+
+  it.each([false, true])('restores ordinary raw reads after an opted-in transaction (aborted=%s)', async (aborted) => {
+    const db = transactionConnection();
+    const session = jest.fn();
+    const read = createAzureReadClient(async (work) => {
+      session();
+      return work(async <R>() => [{ id: 'independent-row' }] as R[]);
+    });
+    const sql = 'SELECT id FROM phase_snapshots WHERE engagement_id = $1';
+    const outcome = withAzureWriteTransaction('unused', async () => {
+      expect(await read.query(sql, ['move-1'])).toEqual([{ id: 'seed-row' }]);
+      expect(session).not.toHaveBeenCalled();
+      if (aborted) throw new Error('review_basis_refused');
+    }, { connect: db.connect, includeReads: true });
+    if (aborted) await expect(outcome).rejects.toThrow('review_basis_refused');
+    else await outcome;
+    expect(await read.query(sql, ['move-1'])).toEqual([{ id: 'independent-row' }]);
+    expect(session).toHaveBeenCalledTimes(1);
+    expect(db.statements).toContain(aborted ? 'ROLLBACK' : 'COMMIT');
+    expect(db.release).toHaveBeenCalledTimes(1);
+  });
+
+  it('opt-in policy and evidence reads share the transaction and restore the independent reader afterward', async () => {
+    const db = transactionConnection();
+    const independent = getAzureReadFluentClient();
+    await withAzureWriteTransaction('unused', async () => {
+      expect(getAzureReadFluentClient()).toBe(getAzureWriteFluentClient());
+      const result = await getAzureReadFluentClient().from('program_modules').select('id').eq('engagement_id', 'move-1');
+      expect(result.error).toBeNull();
+      expect(await azureRead.query('SELECT id FROM phase_snapshots WHERE engagement_id = $1', ['move-1'])).toEqual([{ id: 'seed-row' }]);
+    }, { connect: db.connect, includeReads: true });
+    expect(db.statements.some(sql => sql.includes('FROM "program_modules"'))).toBe(true);
+    expect(db.statements).toContain('SELECT id FROM phase_snapshots WHERE engagement_id = $1');
+    expect(getAzureReadFluentClient()).toBe(independent);
+  });
+
+  it('default transaction callers keep their independent read client', async () => {
+    const db = transactionConnection();
+    const independent = getAzureReadFluentClient();
+    await withAzureWriteTransaction('unused', async () => {
+      expect(getAzureReadFluentClient()).toBe(independent);
+      expect(getAzureReadFluentClient()).not.toBe(getAzureWriteFluentClient());
+    }, { connect: db.connect });
+  });
+
   it('keeps direct locks and every fluent write on one connection, then commits once', async () => {
     const db = transactionConnection();
     const result = await withAzureWriteTransaction('unused', async (query) => {

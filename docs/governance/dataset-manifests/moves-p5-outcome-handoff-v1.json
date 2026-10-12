@@ -1,0 +1,20 @@
+{
+  "dataset_id": "moves_p5_outcome_handoff_v1",
+  "title": "Planned Move outcome handoff",
+  "client_key": null,
+  "tenant_scope": "move_registry",
+  "source_layer": "metric",
+  "classification": "confidential",
+  "owner": "AbarVa Moves and Tower product teams",
+  "source_basis": "The current signed measurement contract, team-saved measurement definitions, and deterministic current approved P4 case; each object records their identity and hashes.",
+  "ingestion_method": "structured_promotion",
+  "retrieval_plan": "not_retrievable",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": "Owner roles are displayed; authorized participant and actor IDs remain tenant-scoped operational provenance. No personal names or source identities are added to model context.",
+  "expected_object_count": null,
+  "approved_by": "Human-authorized P5 completion assignment; implementation delegated to Codex",
+  "approved_at": "2026-10-11",
+  "load_approval": null,
+  "serving_approval": null,
+  "notes": "Declaration of a dynamic product write contract, not a bulk-load or serving approval. Publication requires an authenticated authorized product acceptance of one exact Move, tenant, contract ID/version/content hash, saved-plan hash and P4 input basis. P4/P5 existing hard gates remain enforced. Existing synthetic operator approval scope applies only through that product path; no approval is attributed to another person. Physical storage is the existing outcome_ledger table, with valid deterministic UUIDs and actual commit timestamps. Rows are projected_only with unknown baseline and realized amounts; metadata contains a policy-validated GovernedObject with committed_not_indexed readiness, no applicable agents and no agent-ready/indexed/retrieved/cited claim. Default-off outside the approved synthetic feature scope. No intake rebuild, generic loader, client-data load or model-context admission is authorized by this manifest. The signed measurement version must carry the exact build-time plan snapshot, plan hash and generated content hash; generation deterministically renders the definitions into that version before review. Current saved definitions must match at sign-off and handoff review/acceptance. Missing or stale bindings and unbound edited replacements refuse the flagged path; existing signed bytes are never retroactively bound to a later plan."
+}

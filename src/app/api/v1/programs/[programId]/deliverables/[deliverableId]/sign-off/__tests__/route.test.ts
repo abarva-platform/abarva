@@ -12,6 +12,15 @@ const mockExtractOfficeText = jest.fn();
 const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
 const mockLoadApprovedSolutionApproach = jest.fn();
 const mockLoadCurrentMoveContextExtractFreshness = jest.fn();
+const mockP5Flag = jest.fn();
+const mockP5Plan = jest.fn();
+jest.mock("@/lib/features/is-feature-enabled", () => ({
+  isFeatureEnabled: () => mockP5Flag(),
+}));
+jest.mock("@/lib/programs/p5-measurement-contract", () => ({
+  ...jest.requireActual("@/lib/programs/p5-measurement-contract"),
+  loadCurrentP5MeasurementPlan: (...args: unknown[]) => mockP5Plan(...args),
+}));
 
 jest.mock("../../../../../_auth", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -183,9 +192,286 @@ function emptyUploadReq(): Request {
 }
 
 describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-off", () => {
+  describe("flagged P5 measurement contract plan currency", () => {
+    const moveId = "11111111-1111-4111-a111-111111111111";
+    const scope = {
+      ...ctx,
+      clientId: "22222222-2222-4222-a222-222222222222",
+      clientKey: "meridian",
+      userId: "synthetic-operator",
+    };
+    const p5Params = Promise.resolve({
+      programId: moveId,
+      deliverableId: "contract-1",
+    });
+    let savedPlan: import("@/lib/programs/p5-measurement-plan").P5MeasurementPlan;
+    beforeEach(() => {
+      mockP5Flag.mockReturnValue(true);
+      mockRequireTenancy.mockResolvedValue(scope);
+      mockGetProgramById.mockResolvedValue({ id: moveId });
+      savedPlan = {
+        kind: "p5_measurement_handoff",
+        version: 1,
+        measures: [
+          {
+            leverId: "L1",
+            ownerUserId: "receiving-participant",
+            ownerRole: "Measurement owner",
+            sourceReference: "Source A",
+            comparator: "Comparator A",
+            method: "Method A",
+            cadence: "monthly",
+            firstReviewTrigger: "First mature cohort",
+            exclusionRules: "No duplicate attribution",
+            openConditions: "Source access review",
+          },
+        ],
+      };
+      mockP5Plan.mockImplementation(async () => savedPlan);
+      const {
+        captureP5MeasurementContractPlan,
+        renderP5MeasurementContractPlanHtml,
+      } = jest.requireActual("@/lib/programs/p5-measurement-contract");
+      const { p5Hash } = jest.requireActual(
+        "@/lib/data-plane/write-adapters/p5OutcomeHandoffAdapter",
+      );
+      const snapshot = captureP5MeasurementContractPlan(
+        scope,
+        moveId,
+        savedPlan,
+      );
+      const content = `<p>Measurement definitions for source review.</p>${renderP5MeasurementContractPlanHtml(snapshot)}`;
+      deliverableRow = {
+        deliverable_type_key: "value_measurement_contract",
+        title: "Measurement contract",
+        current_version: 1,
+      };
+      versionRow = {
+        id: "version-1",
+        content,
+        structured_data: {
+          source: "generated_by_orchestrator",
+          phaseEvidenceSnapshotHash: "revision-current",
+          p5MeasurementContractPlan: {
+            ...snapshot,
+            contentHash: p5Hash(content),
+          },
+        },
+      };
+    });
+    it("signs the current generated contract bound to saved plan A", async () => {
+      const { POST } = await import("../route");
+      const response = await POST(req(), { params: p5Params });
+      expect(response.status).toBe(200);
+      expect(mockP5Plan).toHaveBeenCalledWith(scope, moveId);
+      expect(mockSignOffDeliverable).toHaveBeenCalledTimes(1);
+      expect(mockSignOffDeliverable.mock.calls[0][3]).toMatchObject({
+        expectedCurrentVersion: 1,
+        reviewedVersion: {
+          version: 1,
+          versionId: "version-1",
+          planHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          planBindingHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          contentHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        },
+      });
+    });
+
+    it.each([
+      "unchanged",
+      "before_mutation_read",
+      "before_final_write",
+      "content_changed",
+      "plan_changed",
+      "plan_binding_changed",
+      "plan_unavailable",
+    ])(
+      "the route uses the actual mutation with the verified receipt (%s)",
+      async (stage) => {
+        const original = structuredClone(versionRow);
+        const pointer = {
+          current_version: 1,
+          signed_off_version: null,
+          status: "draft",
+          structured_data: {} as Record<string, unknown>,
+        };
+        const applied: unknown[] = [];
+        const lifecycle: unknown[] = [];
+        mockSignOffDeliverable.mockImplementation(
+          async (actor, programId, deliverableId, options) => {
+            const current = structuredClone(original)!;
+            if (stage === "before_mutation_read") pointer.current_version = 2;
+            if (stage === "content_changed")
+              current.content += "Changed unreviewed text.";
+            if (stage === "plan_changed")
+              savedPlan.measures[0].comparator =
+                "Changed during final sign-off";
+            if (stage === "plan_binding_changed") {
+              const binding = current.structured_data!
+                .p5MeasurementContractPlan as {
+                plan: { measures: Array<{ ownerUserId: string }> };
+              };
+              binding.plan.measures[0].ownerUserId = "unreviewed-receiver";
+            }
+            if (stage === "plan_unavailable")
+              mockP5Plan.mockRejectedValueOnce(
+                new Error("plan read unavailable"),
+              );
+            const db = {
+              from(table: string) {
+                const filters: Array<[string, unknown]> = [];
+                let patch: Record<string, unknown> | null = null;
+                const query = {
+                  select: () => query,
+                  eq: (key: string, value: unknown) => {
+                    filters.push([key, value]);
+                    return query;
+                  },
+                  in: () => query,
+                  update: (value: Record<string, unknown>) => {
+                    patch = value;
+                    return query;
+                  },
+                  insert: (value: unknown) => {
+                    lifecycle.push(value);
+                    return { error: null };
+                  },
+                  maybeSingle: async () => {
+                    if (table === "deliverable_versions")
+                      return { data: current, error: null };
+                    if (!patch) return { data: { ...pointer }, error: null };
+                    if (stage === "before_final_write")
+                      pointer.current_version = 2;
+                    if (
+                      filters.find(
+                        ([key]) => key === "current_version",
+                      )?.[1] !== pointer.current_version
+                    )
+                      return { data: null, error: null };
+                    applied.push(patch);
+                    Object.assign(pointer, patch);
+                    return { data: { id: deliverableId }, error: null };
+                  },
+                };
+                return query;
+              },
+            };
+            return jest
+              .requireActual("@/lib/programs/mutations")
+              .signOffDeliverable(actor, programId, deliverableId, {
+                ...options,
+                supabase: db,
+              });
+          },
+        );
+        const { POST } = await import("../route");
+        const response = await POST(req(), { params: p5Params });
+        expect(response.status).toBe(
+          stage === "unchanged"
+            ? 200
+            : stage === "plan_unavailable"
+              ? 503
+              : 409,
+        );
+        if (stage === "unchanged") {
+          expect(pointer.signed_off_version).toBe(1);
+          expect(applied).toHaveLength(1);
+          expect(lifecycle).toHaveLength(3);
+          expect(pointer.structured_data.approvedReviewReceipt).toEqual(
+            mockSignOffDeliverable.mock.calls[0][3].reviewedVersion,
+          );
+        } else {
+          expect(await response.json()).toMatchObject({
+            error:
+              stage === "plan_unavailable"
+                ? "deliverable_review_unavailable"
+                : "deliverable_review_changed",
+          });
+          expect(pointer.signed_off_version).toBeNull();
+          expect(pointer.status).toBe("draft");
+          expect(applied).toHaveLength(0);
+          expect(lifecycle).toHaveLength(0);
+          if (
+            stage === "before_mutation_read" ||
+            stage === "before_final_write"
+          )
+            expect(pointer.current_version).toBe(2);
+        }
+        expect(versionRow).toEqual(original);
+      },
+    );
+    it("refuses stale plan B even with readiness acknowledgment and preserves the generated bytes", async () => {
+      const original = structuredClone(versionRow);
+      savedPlan.measures[0].comparator = "Comparator B";
+      const { POST } = await import("../route");
+      const response = await POST(req({ acknowledgeReadinessBlockers: true }), {
+        params: p5Params,
+      });
+      expect(response.status).toBe(409);
+      expect(await response.json()).toMatchObject({
+        error: "contract_plan_stale",
+      });
+      expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+      expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
+      expect(versionRow).toEqual(original);
+    });
+    it("refuses an absent saved-plan binding", async () => {
+      delete versionRow!.structured_data!.p5MeasurementContractPlan;
+      const { POST } = await import("../route");
+      const response = await POST(req(), { params: p5Params });
+      expect(response.status).toBe(409);
+      expect(await response.json()).toMatchObject({
+        error: "contract_plan_binding_absent",
+      });
+      expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+    });
+    it.each([false, "true"])(
+      "keeps existing sign-off behavior without a strict true P5 flag (%s)",
+      async (enabled) => {
+        mockP5Flag.mockReturnValue(enabled);
+        delete versionRow!.structured_data!.p5MeasurementContractPlan;
+        const { POST } = await import("../route");
+        const response = await POST(req(), { params: p5Params });
+        expect(response.status).toBe(200);
+        expect(mockP5Plan).not.toHaveBeenCalled();
+      },
+    );
+    it("refuses an unbound edited replacement before artifact writes", async () => {
+      const { POST } = await import("../route");
+      const response = await POST(uploadReq("changed measurement contract"), {
+        params: p5Params,
+      });
+      expect(response.status).toBe(409);
+      expect(await response.json()).toMatchObject({
+        error: "contract_plan_upload_unbound",
+      });
+      expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
+      expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+    });
+    it("reports unavailable plan reads without claiming a stale or absent plan", async () => {
+      const { P5HandoffRefusal } = jest.requireActual(
+        "@/lib/data-plane/write-adapters/p5OutcomeHandoffAdapter",
+      );
+      mockP5Plan.mockRejectedValue(
+        new P5HandoffRefusal(
+          "measurement_plan_read_unavailable",
+          "Saved plan unavailable",
+          503,
+        ),
+      );
+      const { POST } = await import("../route");
+      const response = await POST(req(), { params: p5Params });
+      expect(response.status).toBe(503);
+      expect(await response.json()).toMatchObject({
+        error: "measurement_plan_read_unavailable",
+      });
+      expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+    });
+  });
   beforeEach(() => {
     jest.resetModules();
     jest.clearAllMocks();
+    mockP5Flag.mockReturnValue(false);
     mockRequireTenancy.mockResolvedValue(ctx);
     mockTenancyErrorResponse.mockImplementation((err: unknown) => {
       throw err;

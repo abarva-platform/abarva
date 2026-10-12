@@ -33,6 +33,7 @@ import type { ApprovalAuthority, GateCheck, TenancyCtx } from "./types.db";
 import { getProgramById } from "./queries";
 import { writeProgramAuditLogBestEffort } from "./audit-log";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { P5_TOWER_HANDOFF_FLAG } from "./p5-measurement-plan";
 import { resolveMoveTier } from "./p0-extended-intake-fields";
 import { listApprovedPhaseEvidence } from "./approved-phase-evidence";
 import { resolveConfirmedSolutionRoute } from "./solution-route-assessment";
@@ -433,10 +434,23 @@ export interface GateRuleCriterion {
  */
 export function gateCriteriaForPhase(
   fromPhase: number,
+  opts: { p5Publication?: boolean } = {},
 ): GateRuleCriterion[] | null {
   const rule = GATE_RULES.find((g) => g.fromPhase === fromPhase);
   if (!rule) return null;
-  return rule.checks.map((c) => ({
+  return [
+    ...rule.checks,
+    ...(fromPhase === 5 && opts.p5Publication
+      ? [
+          {
+            key: "p5_tower_publication_current",
+            describe:
+              "Current planned Tower handoff published and independently read back",
+            severity: "hard" as const,
+          },
+        ]
+      : []),
+  ].map((c) => ({
     key: c.key,
     describe: c.describe,
     severity: c.severity,
@@ -517,7 +531,11 @@ export async function evaluateGate(
   programId: string,
   fromPhase: number,
   toPhase: number,
-  opts: { supabase?: SupabaseClient; allowHistoricalPhase?: boolean } = {},
+  opts: {
+    supabase?: SupabaseClient;
+    allowHistoricalPhase?: boolean;
+    skipP5Publication?: boolean;
+  } = {},
 ): Promise<GateCheck> {
   assertTenancy(ctx);
   let rule = findGateRule(fromPhase, toPhase);
@@ -1768,6 +1786,32 @@ export async function evaluateGate(
       });
   }
 
+  if (
+    fromPhase === 5 &&
+    !opts.skipP5Publication &&
+    isFeatureEnabled(ctx, P5_TOWER_HANDOFF_FLAG)
+  ) {
+    try {
+      const { readP5Handoff } = await import("./p5-tower-handoff");
+      const publication = await readP5Handoff(ctx, programId, true);
+      if (publication.view.publication.state !== "published")
+        failedChecks.push({
+          check: "p5_tower_publication_current",
+          severity: "hard",
+          reason:
+            "Accept the reviewed planned Tower handoff in P5.2 and verify its current publication before completing P5.",
+        });
+    } catch (error) {
+      failedChecks.push({
+        check: "p5_tower_publication_current",
+        severity: "hard",
+        reason:
+          error instanceof Error
+            ? error.message
+            : "Tower handoff state could not be verified. No publication is claimed.",
+      });
+    }
+  }
   const hardFails = failedChecks.some((f) => f.severity === "hard");
   return {
     pass: failedChecks.length === 0,

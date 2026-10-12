@@ -27,7 +27,7 @@
       "path": "src/components/source/canvas/SimpleStageFront.tsx",
       "routeReachable": false,
       "unreachableReason": "No file outside a test imports it — verified by search, and it is in the orphans list of docs/architecture/unreachable-components.json. It stays audited because it is the surface carrying the derived canonical-critical-field exemption, and a render proof that runs is worth keeping; it is excluded from the coverage numerator because a screen no route can open is not shipped UI. Same verdict item 41 records for ProgramPressureCards.",
-      "importClosureFiles": 40
+      "importClosureFiles": 41
     },
     {
       "surfaceName": "artifact blocker list",
@@ -39,7 +39,7 @@
       "surfaceName": "source canvas · every workspace and disclosure",
       "path": "src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx",
       "routeReachable": true,
-      "importClosureFiles": 439
+      "importClosureFiles": 440
     },
     {
       "surfaceName": "step insight panel · every insight kind",

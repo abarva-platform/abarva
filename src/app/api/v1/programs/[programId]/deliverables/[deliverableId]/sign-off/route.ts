@@ -44,6 +44,19 @@ import {
   refuseSignOffNotApplied,
 } from "@/lib/programs/deliverable-sign-off-outcome";
 import { getProgramById } from "@/lib/programs/queries";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { P5_TOWER_HANDOFF_FLAG } from "@/lib/programs/p5-measurement-plan";
+import {
+  assertP5MeasurementContractPlanCurrent,
+  loadCurrentP5MeasurementPlan,
+} from "@/lib/programs/p5-measurement-contract";
+import { P5HandoffRefusal } from "@/lib/data-plane/write-adapters/p5OutcomeHandoffAdapter";
+import {
+  captureReviewedDeliverableVersion,
+  DeliverableReviewChanged,
+  DeliverableReviewUnavailable,
+  type ReviewedDeliverableVersion,
+} from "@/lib/programs/deliverable-review-receipt";
 import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
 import {
   downloadArtifactBytes,
@@ -325,6 +338,18 @@ export async function POST(
 
     const contentType = req.headers.get("content-type") ?? "";
     const isFileUploadApproval = contentType.includes("multipart/form-data");
+    const measurementPlanBindingRequired =
+      deliverableTypeKey === "value_measurement_contract" &&
+      isFeatureEnabled(ctx, P5_TOWER_HANDOFF_FLAG) === true;
+    if (measurementPlanBindingRequired && isFileUploadApproval)
+      return Response.json(
+        {
+          error: "contract_plan_upload_unbound",
+          detail:
+            "An edited replacement cannot inherit the generated contract's saved-plan binding. Review and sign a generated contract version bound to the saved definitions before accepting the planned handoff.",
+        },
+        { status: 409 },
+      );
 
     // The JSON path historically accepts no body at all, so an absent or
     // unparseable body must stay valid — it means "approve as drafted".
@@ -405,6 +430,7 @@ export async function POST(
         } & ApprovedEvidenceLineageStamp)
       | undefined;
     let generatedApprovalArtifactId: string | undefined;
+    let reviewedVersion: ReviewedDeliverableVersion | undefined;
 
     if (!isFileUploadApproval && currentVersion) {
       const { data: versionRow, error: versionError } = await supabase
@@ -425,6 +451,31 @@ export async function POST(
             structured_data?: Record<string, unknown> | null;
           } | null
         )?.structured_data ?? {};
+      if (!versionRow) throw new DeliverableReviewUnavailable();
+      reviewedVersion = captureReviewedDeliverableVersion(
+        currentVersion,
+        versionRow,
+        measurementPlanBindingRequired,
+      );
+      if (measurementPlanBindingRequired) {
+        try {
+          const plan = await loadCurrentP5MeasurementPlan(ctx, programId);
+          assertP5MeasurementContractPlanCurrent({
+            ctx,
+            moveId: programId,
+            plan,
+            content:
+              (versionRow as { content?: string | null } | null)?.content ?? "",
+            structuredData: versionStructuredData,
+          });
+        } catch (error) {
+          if (!(error instanceof P5HandoffRefusal)) throw error;
+          return Response.json(
+            { error: error.code, detail: error.message },
+            { status: error.status },
+          );
+        }
+      }
       if (source === "phase_capture") {
         return Response.json(
           {
@@ -492,10 +543,7 @@ export async function POST(
           return Response.json(
             {
               error: approvedEvidenceBasisRefusalCode(refusal),
-              detail: describeApprovedEvidenceBasisRefusal(
-                refusal,
-                "approval",
-              ),
+              detail: describeApprovedEvidenceBasisRefusal(refusal, "approval"),
             },
             { status: 409 },
           );
@@ -847,6 +895,8 @@ export async function POST(
 
     const signedOff = await signOffDeliverable(ctx, programId, deliverableId, {
       supabase,
+      expectedCurrentVersion: currentVersion ?? 0,
+      ...(reviewedVersion ? { reviewedVersion } : {}),
       approvedArtifactId,
       approvedContent,
       approvalLineage: generatedApprovalLineage,
@@ -894,6 +944,14 @@ export async function POST(
         : null,
     });
   } catch (err) {
+    if (
+      err instanceof DeliverableReviewChanged ||
+      err instanceof DeliverableReviewUnavailable
+    )
+      return Response.json(
+        { error: err.code, detail: err.message },
+        { status: err.status },
+      );
     try {
       return tenancyErrorResponse(err);
     } catch {}

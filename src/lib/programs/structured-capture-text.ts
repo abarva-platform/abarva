@@ -27,6 +27,11 @@ import {
   captureTextStepWords,
 } from "@/lib/programs/capture-text-step-record";
 import {
+  P5_MEASUREMENT_PLAN_KEY,
+  p5MeasurementPlanText,
+} from "./p5-measurement-plan";
+
+import {
   P4_ROADMAP_PLAN_KEY,
   parseP4RoadmapPlan,
   p4RoadmapPlanText,
@@ -44,6 +49,8 @@ import {
  */
 
 export function captureValueText(key: string, raw: string): string {
+  if (key === P5_MEASUREMENT_PLAN_KEY) return p5MeasurementPlanText(raw);
+
   if (key === P4_ROADMAP_PLAN_KEY) {
     const plan = parseP4RoadmapPlan(raw);
     return plan ? p4RoadmapPlanText(plan) : "";
@@ -72,6 +79,8 @@ export function captureValueText(key: string, raw: string): string {
 
 /** Only the team's own words, never a register's labels, for phrase checks. */
 export function captureValueGateText(key: string, raw: string): string {
+  if (key === P5_MEASUREMENT_PLAN_KEY) return p5MeasurementPlanText(raw);
+
   if (key === P4_ROADMAP_PLAN_KEY) {
     const plan = parseP4RoadmapPlan(raw);
     return plan ? p4RoadmapPlanGateText(plan) : "";
