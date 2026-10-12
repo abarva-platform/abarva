@@ -30,12 +30,15 @@ Release lane: `client-data-lane`.
 ## Changes Included
 
 - Record the release basis for an exact Tower serving approval. The named approval itself must be supplied by the approving person in the dataset manifest; this record does not grant it.
+- Accept the staged evidence gap's declared aggregate coverage references in the promotion validator only when their scope, source file, and source hash match the manifest. Reject other null-row references.
 - Use the existing guarded Tower promotion operator, which checks the stage receipt, private proof bytes, source hashes, all nine physical view counts and fingerprints, linked measures, prior active generation, and money-claim limits before switching the lifecycle pointer.
 - Preserve the prior assessment for a guarded rollback.
 
 ## QA / Validation
 
+- Local validation passed: the governance manifest validator, release check, ESLint on the changed operator and test, and all ten focused promotion tests.
 - The physical stage and a separate read-only re-attestation succeeded on a digest-pinned private ACA Job. An independent read-only database probe matched the expected staged table counts, nine view counts, source version, and unchanged active selector. The private proof ZIP was read back at its expected checksum.
+- The first read-only promotion preflight found the missing serving approval and a validator mismatch for declared aggregate evidence coverage. The approving person supplied the exact serving approval; the focused validator test now checks accepted coverage references and rejects wrong scope, file, source hash, or row key.
 - Before promotion, run a fresh operator preflight from the exact staged candidate and receipt. It must report `ready` with no gaps, and its SHA-256 must be pinned in the promotion request.
 - After promotion, verify the new active lifecycle and serving selector, all nine served view populations, and the signed-in Tower tabs. Record failures separately; a pointer change alone is not live product proof.
 
