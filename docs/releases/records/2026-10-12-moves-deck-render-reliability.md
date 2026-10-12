@@ -49,19 +49,25 @@ partially populated slide in PowerPoint and PDF.
 
 - Node.js 24 focused specification, wording, rendered-deck, PDF-inspection and
   preview-route suites: pass, 61 tests across five existing suites.
+- Reconciled auth, tenant/Move access, Azure read transaction context, program
+  queries and transformers: pass, 85 tests across eight existing mock-isolated
+  suites. These are local regression checks, not authenticated product proof.
 - Regression controls reproduced the delivery-token vocabulary rejection and
   partial-evidence body overflow. The uncompact summary remains rejected by the
   physical overflow guard; rejected wording after retry remains visibly unavailable.
 - Typecheck and changed-file ESLint: pass.
-- Actual synthetic PDF renders: pass; partial validation has 11 pages and both
+- Prior local synthetic PDF renders: pass; partial validation has 11 pages and both
   partial investment cases have 22 pages, with zero direct PDF inspection findings.
   PowerPoint files were also rendered through LibreOffice. The affected summary
   and context pages were inspected as images in both renderer paths; the known
   evidence, gap panel and answer bar remain readable without overlap.
 - Manual, coverage census and tenancy fence census genuinely regenerated:
-  pass after merging actual main `25961a6fe4378d0ccc58923082ced1c6fc522223`.
-  The covered-test-file count is 2841, identical to that main baseline; the new
+  pass after merging actual main `5afb6c4e5fbc6f95f604568ce0c8b8ceb0e7ef5d`.
+  The covered-test-file count is 2848, identical to that main baseline; the new
   cases extend two existing covered suites. No count or filler adjustment.
+- All seven repair product/test files match the preceding validated head after
+  reconciliation. Physical, source and edition refusals and approved-ROM fences
+  remain intact. Shared walk discovery: pass; this is not a signed-in walk.
 - Library orphan, route/export reachability, manual/census/fence checks: pass.
 - Release checks: pass; all 11 gates ran. Current-main reconciliation, genuine
   regeneration and the affected local gate rerun passed, including the focused
