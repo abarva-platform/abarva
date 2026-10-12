@@ -25,6 +25,9 @@ it("uses the policy's conservative readiness floor and does not promote source r
   expect(result.bundle.agentReadyCount).toBe(0);
   expect(result.bundle.usable[0].agent_readiness_status).toBe("not_reviewed");
   expect(result.bundle.usable[0].retrievability).toBe("committed_not_indexed");
+  expect(result.decisionGuard).toContain(
+    "Every supplied company source is provisional",
+  );
 });
 
 it("excludes every blocked source, including ungovernable session context", () => {
@@ -86,6 +89,9 @@ it("never sends blocked sources or ungated supplemental data to Claude", async (
       output += delta;
     expect(input).toBeDefined();
     expect(`${input!.system}\n${input!.user}`).not.toContain("SECRET_MARKER");
+    expect(input!.user.split("USER QUESTION:")[1]).toContain(
+      "EVIDENCE RULE FOR THIS ANSWER",
+    );
     expect(output).toBe("Validate first.\n\nKeep the original prose.");
   } finally {
     if (previous === undefined) delete process.env.ANTHROPIC_API_KEY;
