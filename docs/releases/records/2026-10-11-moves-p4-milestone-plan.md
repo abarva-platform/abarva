@@ -38,9 +38,9 @@ The P4 workstream page could save only a milestone name and count milestones fro
 
 ## QA / Validation
 
-- Pass: four model/editor/page/registry suites, 137 tests; the full host suite, 349 tests; four capture-route/generation/reader suites, 88 tests. Total: nine suites, 574 tests on local fixtures.
+- Pass: nine model/editor/page/registry, complete host, capture-route/generation and reader suites, 576 tests after merging actual main; local fixtures only.
 - Pass: Node 24 typecheck, zero diagnostics.
-- Pass: 16 mutation checks killed, sources restored after every run; targeted ESLint, library and route/export reachability; coverage and tenancy write/check; manual regeneration/check; all 11 release gates. Covered files rise from 2,829 to 2,831, exactly the two new model/editor test files.
+- Pass: 16 mutation checks killed, sources restored after every run; targeted ESLint, library and route/export reachability; coverage and tenancy write/check; manual regeneration/check; all 11 release gates. Genuine regeneration after actual-main reconciliation raises covered files from 2,831 to 2,833, exactly the two new model/editor test files.
 - Pass: actual component renders at 1440 and 390 in light/dark, with the editor expanded and no horizontal overflow. Compared with template v1.10; the temporary render test was removed. These fixtures exclude the signed-in host and agent dock.
 - Not run: exact-head CI, merge, runtime invariant or fresh signed-in P4 acceptance.
 
