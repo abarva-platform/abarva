@@ -218,7 +218,22 @@ async function run() {
         await page.setContent(renderStageMarkup(stage), { waitUntil: "load" });
 
         const screenshot = path.join(REPORT_DIR, `${stage}-${viewport}.png`);
-        await page.screenshot({ path: screenshot, fullPage: true });
+        try {
+          await page.screenshot({ path: screenshot, fullPage: true });
+        } catch (error) {
+          if (
+            !(error instanceof Error) ||
+            !error.message.includes(
+              "Page.captureScreenshot): Unable to capture screenshot",
+            )
+          ) {
+            throw error;
+          }
+          // Retry a transient browser capture failure once; keep the screenshot
+          // and all layout assertions required for a passing result.
+          await page.waitForTimeout(250);
+          await page.screenshot({ path: screenshot, fullPage: true });
+        }
 
         const metrics = await page.evaluate((stageKey) => {
           const rail = document.querySelector(

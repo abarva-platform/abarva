@@ -2159,6 +2159,46 @@ describe("AgentDock · self-measured top offset", () => {
     }
   });
 
+  it("remeasures chat height when a preceding review disclosure closes", async () => {
+    let top = 749;
+    const original = HTMLElement.prototype.getBoundingClientRect;
+    const rect = jest
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: HTMLElement) {
+        const measured = original.call(this);
+        return this.getAttribute("data-testid") === "agent-dock-chat-only-shell"
+          ? { ...measured, top, y: top, toJSON: () => ({}) }
+          : measured;
+      });
+    try {
+      render(
+        <>
+          <details open data-testid="review-disclosure">
+            <summary>Review</summary>
+            <p>Completed answers</p>
+          </details>
+          <AgentDock
+            agent={AGENT}
+            surface={SURFACE}
+            layout="chat-only"
+            thread={[]}
+            onMessage={jest.fn()}
+            workspace={null}
+          />
+        </>,
+      );
+      const shell = screen.getByTestId("agent-dock-chat-only-shell");
+      expect(shell.style.getPropertyValue("--agent-dock-self-top")).toBe("749px");
+      top = 149;
+      act(() => screen.getByTestId("review-disclosure").removeAttribute("open"));
+      await waitFor(() =>
+        expect(shell.style.getPropertyValue("--agent-dock-self-top")).toBe("149px"),
+      );
+    } finally {
+      rect.mockRestore();
+    }
+  });
+
   it("uses the measured value for height while keeping sticky top stable", () => {
     render(
       <AgentDock

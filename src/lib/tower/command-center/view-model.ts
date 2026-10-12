@@ -1690,6 +1690,7 @@ export function buildTowerCommandCenterView(
       exclusionReasons,
     },
     spendLens: buildSpendLens(ai),
+    costLens: mart.costLens ?? null,
     gaps,
     evidenceMaturity,
     pipelineGaps,

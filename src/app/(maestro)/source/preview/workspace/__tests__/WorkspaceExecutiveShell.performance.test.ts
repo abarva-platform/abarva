@@ -2308,8 +2308,13 @@ describe("WorkspaceExecutiveShell performance formatting", () => {
     expect(relationship.provenance).toBe("Relationship map");
     expect(relationship.body).toContain("vendor -> contract");
     expect(evidence.provenance).toBe("Evidence boundary");
-    expect(evidence.headline).toContain("Document pages are not attached");
-    expect(evidence.body).toContain("structured rows support");
+    expect(evidence.headline).toBe("Agreement evidence needed.");
+    expect(evidence.body).toContain("structured rows are recorded in this view");
+    expect(evidence.body).toContain(
+      "does not establish scope, contractual rights or a reproducible recommendation",
+    );
+    expect(evidence.blocker).toContain("Contract manager / Legal ops");
+    expect(evidence.blocker).toContain("executed agreement, SOW and governing terms");
   });
 
   it("turns an empty Performance tab into an explicit governed gap instead of filler counts", () => {
