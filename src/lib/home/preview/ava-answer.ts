@@ -18,12 +18,14 @@ import {
   homeSourceCoverageGapLabelForVersion,
   homeSourceDateCoverageLabelForVersion,
   homeSourceFileReviewLabelForVersion,
+  homeRecordSourceLabel,
 } from "@/lib/home/preview/record-source";
 import type {
   ChapterId,
   ChapterView,
   GroundedClaim,
   HomeReviewBundle,
+  HomeRecordRenderSource,
   TechObjectType,
 } from "@/lib/home/preview/types";
 
@@ -825,6 +827,7 @@ export async function answerHomeAvaQuestion(args: {
   question: string;
   activeChapterId?: string;
   userId?: string | null;
+  recordSource?: HomeRecordRenderSource;
 }): Promise<AvaAnswerPacket> {
   const question = args.question.trim();
   const currentContext = args.bundle.thesis?.signalPacket.homeEnterpriseContext;
@@ -899,6 +902,7 @@ export async function answerHomeAvaQuestion(args: {
     args.bundle,
     args.tenantKey,
     question,
+    args.recordSource,
   );
   if (countAnswer) return countAnswer;
 
@@ -1152,6 +1156,7 @@ function answerVisibleRecordCounts(
   bundle: AvaAnswerBundleSlice,
   tenantKey: string,
   question: string,
+  recordSource?: HomeRecordRenderSource,
 ): AvaAnswerPacket | null {
   if (
     !/\b(how many|counts?|number of)\b/i.test(question) ||
@@ -1171,7 +1176,7 @@ function answerVisibleRecordCounts(
     {
       type: "data_asset_or_integration",
       label: "Data Assets & Integrations",
-      test: /\bdata assets?(?:\s*(?:&|and)\s*integrations?)?\b/i,
+      test: /\bdata assets?(?:\s*(?:&|and|\/)\s*integrations?)?\b/i,
     },
     {
       type: "application_system",
@@ -1186,12 +1191,22 @@ function answerVisibleRecordCounts(
   ];
   const requested = families.filter((family) => family.test.test(question));
   if (requested.length === 0) return null;
-  let remainder = question.replace(/\b(?:how many|counts?|number of)\b/i, "");
+  const sourceRequest =
+    /\b(?:state|show|include|name)\s+(?:the\s+)?record source\b/i;
+  const bulletRequest =
+    /\b(?:use|give)\s+(?:one|two|three|four|[1-4])\s+(?:(?:short|concise)\s+)?bullets?\b/i;
+  const wantsSource = sourceRequest.test(question);
+  const wantsBullets = bulletRequest.test(question);
+  let remainder = question
+    .replace(/\b(?:how many|counts?|number of)\b/i, "")
+    .replace(sourceRequest, "")
+    .replace(bulletRequest, "")
+    .replace(/\bdo not substitute another assessment or version\b/i, "");
   for (const family of requested)
     remainder = remainder.replace(family.test, "");
   remainder = remainder
     .replace(
-      /\b(?:what|is|are|there|do|we|have|of|for|and|the|this|selected|current|total|in|on|record|records|rows|screen|page|rail)\b/gi,
+      /\b(?:what|is|are|there|do|we|have|of|for|and|the|this|selected|current|currently|available|total|in|on|record|records|rows|screen|page|rail)\b/gi,
       "",
     )
     .replace(/[\s?.,:;&!]/g, "");
@@ -1208,21 +1223,30 @@ function answerVisibleRecordCounts(
   });
   const available = rows.filter((row) => row.rows !== null);
   const missing = rows.filter((row) => row.rows === null);
+  const sourceLabel = recordSource ? homeRecordSourceLabel(recordSource) : null;
   const citations: AvaCitation[] = available.map((row) => ({
     id: `home-record-count-${row.type}`,
     label: `Record on screen: ${row.family}`,
     excerpt: `${row.family}: ${row.rows} rows in the selected Home record.`,
     sourceClass: "tenant-fact",
-    recordId: bundle.provenance?.canonical_snapshot_hash,
+    recordId:
+      recordSource?.canonicalSnapshotHash ?? bundle.provenance?.canonical_snapshot_hash,
     confidence: "high",
   }));
-  const directAnswer =
-    rows
+  const countSummary = rows
       .map(
         (row) =>
           `${row.family}: ${row.rows === null ? "not supplied" : row.rows}`,
       )
       .join("; ") + ".";
+  const directAnswer = wantsBullets
+    ? sourceLabel
+      ? `Record on screen: ${sourceLabel}.`
+      : wantsSource
+        ? "Record source not supplied."
+        : "Rows in the selected Home record."
+    : countSummary +
+      (wantsSource ? ` Record source: ${sourceLabel ?? "not supplied"}.` : "");
   const basis =
     "These are rows in the selected Home record, not unique vendors, enterprise completeness or independently verified outcomes.";
   const packet = buildFallbackPacket(
@@ -1235,12 +1259,17 @@ function answerVisibleRecordCounts(
   const status =
     available.length === 0
       ? "no_data"
-      : missing.length > 0
+      : missing.length > 0 || (wantsSource && !sourceLabel)
         ? "partial"
         : "answered";
   return {
     ...packet,
     status,
+    ...(wantsBullets
+      ? { prose: rows.map((row) =>
+          `- ${row.family}: ${row.rows === null ? "not supplied" : row.rows} rows.`,
+        ).join("\n") }
+      : {}),
     artifacts:
       available.length > 0
         ? [
@@ -1261,13 +1290,23 @@ function answerVisibleRecordCounts(
             },
           ]
         : [],
-    gaps: missing.map((row) => ({
-      id: `home-count-gap-${row.type}`,
-      label: `${row.family} not supplied`,
-      detail:
-        "This family is absent from the selected record; its count is unknown, not zero.",
-      severity: "medium",
-    })),
+    gaps: [
+      ...missing.map((row) => ({
+        id: `home-count-gap-${row.type}`,
+        label: `${row.family} not supplied`,
+        detail:
+          "This family is absent from the selected record; its count is unknown, not zero.",
+        severity: "medium" as const,
+      })),
+      ...(wantsSource && !sourceLabel
+        ? [{
+            id: "home-count-source-gap",
+            label: "Record source not supplied",
+            detail: "Counts describe this bundle, but its live or reviewed source state is unknown.",
+            severity: "medium" as const,
+          }]
+        : []),
+    ],
     caveats: [
       { id: "home-count-basis", label: "Counting basis", detail: basis },
     ],

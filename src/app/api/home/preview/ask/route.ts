@@ -85,6 +85,7 @@ export async function POST(req: NextRequest) {
     tenantKey,
     question,
     activeChapterId: body.activeChapterId,
+    recordSource,
   });
 
   return NextResponse.json({ answer, recordSource });
