@@ -1,0 +1,25 @@
+{
+  "contract_version": "delegation-authority-roots/v1",
+  "roots": [
+    {
+      "authority_id": "integrated-manager-anand-20261012",
+      "status": "active",
+      "authorizer": "Anand Sundaram",
+      "actor": {
+        "kind": "delegated_agent",
+        "identity": "Codex integrated manager",
+        "session_id": "01a11323-f628-7870-95b6-d8c00b50bd27"
+      },
+      "human_authorization_reference": {
+        "thread_id": "01a11323-f628-7870-95b6-d8c00b50bd27",
+        "message_id": "01a12ff3-843c-7cc2-9558-469efd03a191",
+        "text_sha256": "f903f7c80edf662f7b27fac96f1a41a85aaa6641157f183a0a3cb025c8194162"
+      },
+      "authority_sha256": "e4fefd276e57c09d8742084005793b37ace90dc9167e17a46e2ae5f3076b5136",
+      "allowed_operations": ["load", "serve", "review"],
+      "allowed_serving_surfaces": ["home", "tower"],
+      "tenant_scope": "declared_synthetic",
+      "expires_at": null
+    }
+  ]
+}

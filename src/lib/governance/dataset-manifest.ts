@@ -11,6 +11,14 @@
 // =============================================================================
 
 import { z } from "zod";
+import { namesAPerson, NON_PERSON_APPROVER } from "./approval-actor";
+import {
+  DelegatedApprovalSchema,
+  validateDelegatedApproval,
+  type ApprovalEvidenceContext,
+  type DelegatedDecisionScope,
+} from "./delegated-approval";
+export { namesAPerson } from "./approval-actor";
 import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
 import {
   CLASSIFICATIONS,
@@ -19,7 +27,11 @@ import {
 } from "./context-corpus-policy";
 
 const SCOPE_VALUES = [CORPUS_GLOBAL_SCOPE, ...CANONICAL_TENANT_KEYS] as const;
-const TENANT_SCOPE_MODES = ["canonical_tenant", "corpus_global", "move_registry"] as const;
+const TENANT_SCOPE_MODES = [
+  "canonical_tenant",
+  "corpus_global",
+  "move_registry",
+] as const;
 
 export const INGESTION_METHODS = [
   "admin_bulk_loader",
@@ -41,7 +53,8 @@ export const RETRIEVAL_PLANS = [
  * Approval to load ONE exact version of a dataset through the data plane.
  *
  * The manifest's own `approved_by` approves declaring the dataset; it does not
- * approve loading it. A load is approved separately, by a named person, and the
+ * approve loading it. A load is approved separately, by a named person or the
+ * explicit verified delegated branch, and the
  * approval names the assessment and the source-set hash it was given for, so it
  * cannot carry over to data that changed afterwards.
  */
@@ -69,6 +82,8 @@ export const LoadApprovalSchema = z
      * `resolveLoadApproval`). Absent for tenant-pinned loads.
      */
     move_id: z.string().min(1).nullable().optional(),
+    /** Actual delegated actor and separately retained human authority, never a human attestation. */
+    delegated_decision: DelegatedApprovalSchema.optional(),
   })
   .strict();
 export type LoadApproval = z.infer<typeof LoadApprovalSchema>;
@@ -80,7 +95,8 @@ export const SERVING_SURFACES = ["home", "tower"] as const;
  * Approval to serve ONE exact, already-loaded version on a product surface.
  *
  * Loading a version does not approve showing it to anyone. Selecting it for a
- * product surface is approved separately, by a named person, for the same
+ * product surface is approved separately, by a named person or the explicit
+ * verified delegated branch, for the same
  * assessment and source-set hash the load approval covers.
  */
 export const ServingApprovalSchema = LoadApprovalSchema.extend({
@@ -114,27 +130,14 @@ export const DatasetManifestSchema = z
     approved_at: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, "approved_at must be YYYY-MM-DD"),
-    /** Absent until a named person approves loading one exact version. */
+    /** Absent until a human or verified explicit delegate approves one exact version. */
     load_approval: LoadApprovalSchema.nullable().optional(),
-    /** Absent until a named person approves serving that loaded version on a surface. */
+    /** Separate exact-version product approval; delegation is never human attestation. */
     serving_approval: ServingApprovalSchema.nullable().optional(),
     notes: z.string().nullable().optional(),
   })
   .strict();
 export type DatasetManifest = z.infer<typeof DatasetManifestSchema>;
-
-// A load or serving approver must be a person. This cannot prove that a person
-// typed the name. It refuses a string that plainly names an agent, a team, a
-// role or a delegation; what makes the approval reviewable is that it is a
-// committed line, bound to one source-set hash, that a pull request has to show.
-const PERSON_NAME =
-  /^\p{Lu}[\p{L}'’.-]*(?: [\p{L}'’.-]+)* \p{Lu}[\p{L}'’.-]*$/u;
-const NON_PERSON_APPROVER =
-  /\b(?:codex|claude|cursor|copilot|gpt|gemini|agent|assistant|bot|automation|automated|operator|reviewer|owner|team|engineering|delegat\w*|authori[sz]\w*|approval)\b/i;
-
-export function namesAPerson(value: string): boolean {
-  return PERSON_NAME.test(value) && !NON_PERSON_APPROVER.test(value);
-}
 
 export interface ManifestValidation {
   ok: boolean;
@@ -160,8 +163,11 @@ export function validateManifest(raw: unknown): ManifestValidation {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  const scopeMode = m.tenant_scope ??
-    (m.client_key === CORPUS_GLOBAL_SCOPE ? "corpus_global" : "canonical_tenant");
+  const scopeMode =
+    m.tenant_scope ??
+    (m.client_key === CORPUS_GLOBAL_SCOPE
+      ? "corpus_global"
+      : "canonical_tenant");
   if (scopeMode === "move_registry" && m.client_key !== null) {
     errors.push("move_registry scope must not pin a client_key");
   }
@@ -171,11 +177,21 @@ export function validateManifest(raw: unknown): ManifestValidation {
   if (scopeMode === "corpus_global" && m.client_key !== CORPUS_GLOBAL_SCOPE) {
     errors.push('corpus_global scope requires client_key "corpus_global"');
   }
-  if (m.tenant_scope === "corpus_global" && m.client_key !== CORPUS_GLOBAL_SCOPE) {
-    errors.push('tenant_scope "corpus_global" requires client_key "corpus_global"');
+  if (
+    m.tenant_scope === "corpus_global" &&
+    m.client_key !== CORPUS_GLOBAL_SCOPE
+  ) {
+    errors.push(
+      'tenant_scope "corpus_global" requires client_key "corpus_global"',
+    );
   }
-  if (m.tenant_scope === "canonical_tenant" && (!m.client_key || m.client_key === CORPUS_GLOBAL_SCOPE)) {
-    errors.push("canonical_tenant scope requires a canonical tenant client_key");
+  if (
+    m.tenant_scope === "canonical_tenant" &&
+    (!m.client_key || m.client_key === CORPUS_GLOBAL_SCOPE)
+  ) {
+    errors.push(
+      "canonical_tenant scope requires a canonical tenant client_key",
+    );
   }
 
   // Public-web research is stored per tenant and Move, never as shared corpus.
@@ -204,8 +220,7 @@ export function validateManifest(raw: unknown): ManifestValidation {
     );
   }
   // The dataset's own sign-off is free text today, so an agent, team, role or
-  // delegation in it is reported, not refused. In a load or serving approval it
-  // is refused.
+  // delegation in it is reported. Load/serving require a human or the explicit verified branch.
   if (NON_PERSON_APPROVER.test(m.approved_by)) {
     warnings.push(
       "approved_by names an agent, team, role or delegation, not a person",
@@ -213,20 +228,49 @@ export function validateManifest(raw: unknown): ManifestValidation {
   }
   for (const field of ["load_approval", "serving_approval"] as const) {
     const approval = m[field];
-    if (approval && !namesAPerson(approval.approved_by)) {
+    const delegated = approval?.delegated_decision;
+    if (approval && !delegated && !namesAPerson(approval.approved_by)) {
       errors.push(
         `${field}.approved_by must be a named person, not an agent, team, role or delegation`,
       );
     }
+    if (approval && delegated) {
+      const scope = delegated.scope;
+      if (
+        scopeMode !== "canonical_tenant" ||
+        approval.move_id ||
+        approval.approved_by !== delegated.actor.identity ||
+        approval.approved_at !== delegated.decided_at.slice(0, 10) ||
+        scope.operation !== (field === "load_approval" ? "load" : "serve") ||
+        scope.dataset_id !== m.dataset_id ||
+        scope.tenant_key !== m.client_key ||
+        scope.assessment_id !== approval.assessment_id ||
+        scope.source_set_hash !== approval.source_set_hash ||
+        scope.object_count !== m.expected_object_count ||
+        scope.ingestion_method !== m.ingestion_method ||
+        scope.release_record !== approval.release_record ||
+        (field === "serving_approval" &&
+          scope.surface !== m.serving_approval?.surface) ||
+        (field === "load_approval" && scope.surface !== undefined)
+      ) {
+        errors.push(
+          `${field}.delegated_decision must bind the actual actor and exact declared operation/version`,
+        );
+      }
+    }
   }
   if (m.serving_approval) {
     if (!m.load_approval) {
-      errors.push("serving_approval requires a load_approval for the same version");
+      errors.push(
+        "serving_approval requires a load_approval for the same version",
+      );
     } else if (
       m.serving_approval.assessment_id !== m.load_approval.assessment_id ||
       m.serving_approval.source_set_hash !== m.load_approval.source_set_hash
     ) {
-      errors.push("serving_approval and load_approval are for different versions");
+      errors.push(
+        "serving_approval and load_approval are for different versions",
+      );
     }
   }
   return { ok: errors.length === 0, errors, warnings };
@@ -258,7 +302,9 @@ export function validateManifestRegistry(
     for (const field of ["load_approval", "serving_approval"] as const) {
       const record = m[field]?.release_record;
       if (record && !recordExists(record)) {
-        errors.push(`${file}: ${field}.release_record ${record} does not exist`);
+        errors.push(
+          `${file}: ${field}.release_record ${record} does not exist`,
+        );
       }
     }
   }
@@ -288,6 +334,10 @@ export interface LoadBinding {
    * Move. Absent for tenant-pinned loads (behavior unchanged).
    */
   move_id?: string;
+  /** Independently derived operator observations, not copied from approval JSON. */
+  extra_bindings?: DelegatedDecisionScope["extra_bindings"];
+  /** Required for delegated execution: the native run's independently supplied release record. */
+  release_record?: string;
 }
 
 export type LoadApprovalDecision =
@@ -305,6 +355,7 @@ export type LoadApprovalDecision =
 export function resolveLoadApproval(
   manifests: unknown[],
   binding: LoadBinding,
+  evidence?: ApprovalEvidenceContext,
 ): LoadApprovalDecision {
   const declared = manifests.filter(
     (raw) =>
@@ -331,7 +382,9 @@ export function resolveLoadApproval(
   const reasons: string[] = [];
   const scopeMode =
     m.tenant_scope ??
-    (m.client_key === CORPUS_GLOBAL_SCOPE ? "corpus_global" : "canonical_tenant");
+    (m.client_key === CORPUS_GLOBAL_SCOPE
+      ? "corpus_global"
+      : "canonical_tenant");
   const moveScopedRequested =
     typeof binding.move_id === "string" && binding.move_id.length > 0;
   if (moveScopedRequested) {
@@ -374,6 +427,32 @@ export function resolveLoadApproval(
   if (approval.source_set_hash !== binding.source_set_hash) {
     reasons.push("load_approval is for a different source-set hash");
   }
+  if (approval.delegated_decision) {
+    reasons.push(
+      ...validateDelegatedApproval(
+        approval.delegated_decision,
+        approval.approved_by,
+        {
+          operation: "load",
+          dataset_id: binding.dataset_id,
+          tenant_key:
+            binding.tenant_key as DelegatedDecisionScope["tenant_key"],
+          assessment_id: binding.assessment_id,
+          source_set_hash: binding.source_set_hash,
+          object_count: binding.object_count,
+          ingestion_method: binding.ingestion_method,
+          release_record: binding.release_record ?? approval.release_record,
+          extra_bindings: binding.extra_bindings ?? {},
+        },
+        evidence ? { ...evidence, purpose: "execution" } : undefined,
+      ),
+    );
+    if (!binding.release_record) {
+      reasons.push(
+        "Delegated execution requires the native run release_record",
+      );
+    }
+  }
   return reasons.length > 0
     ? { approved: false, reasons }
     : { approved: true, approval };
@@ -382,6 +461,9 @@ export function resolveLoadApproval(
 /** What a promotion is about to serve: a load binding, and where it will be shown. */
 export interface ServingBinding extends LoadBinding {
   surface: (typeof SERVING_SURFACES)[number];
+  /** Load observations and serving observations are separate exact operations. */
+  load_extra_bindings?: DelegatedDecisionScope["extra_bindings"];
+  load_release_record?: string;
 }
 
 export type ServingApprovalDecision =
@@ -398,8 +480,17 @@ export type ServingApprovalDecision =
 export function resolveServingApproval(
   manifests: unknown[],
   binding: ServingBinding,
+  evidence?: ApprovalEvidenceContext,
 ): ServingApprovalDecision {
-  const load = resolveLoadApproval(manifests, binding);
+  const load = resolveLoadApproval(
+    manifests,
+    {
+      ...binding,
+      extra_bindings: binding.load_extra_bindings ?? {},
+      release_record: binding.load_release_record ?? binding.release_record,
+    },
+    evidence,
+  );
   if (!load.approved) return load;
   // resolveLoadApproval approved, so exactly one valid manifest declares the dataset.
   const m = DatasetManifestSchema.parse(
@@ -412,15 +503,45 @@ export function resolveServingApproval(
   );
   const approval = m.serving_approval;
   if (!approval) {
-    return { approved: false, reasons: ["manifest carries no serving_approval"] };
+    return {
+      approved: false,
+      reasons: ["manifest carries no serving_approval"],
+    };
   }
   // A valid manifest's serving approval is for the same version as its load
   // approval, which resolveLoadApproval has just matched to this binding.
   if (approval.surface !== binding.surface) {
     return {
       approved: false,
-      reasons: [`serving_approval is for ${approval.surface}, not ${binding.surface}`],
+      reasons: [
+        `serving_approval is for ${approval.surface}, not ${binding.surface}`,
+      ],
     };
+  }
+  if (approval.delegated_decision) {
+    const reasons = validateDelegatedApproval(
+      approval.delegated_decision,
+      approval.approved_by,
+      {
+        operation: "serve",
+        dataset_id: binding.dataset_id,
+        tenant_key: binding.tenant_key as DelegatedDecisionScope["tenant_key"],
+        assessment_id: binding.assessment_id,
+        source_set_hash: binding.source_set_hash,
+        object_count: binding.object_count,
+        ingestion_method: binding.ingestion_method,
+        release_record: binding.release_record ?? approval.release_record,
+        surface: binding.surface,
+        extra_bindings: binding.extra_bindings ?? {},
+      },
+      evidence ? { ...evidence, purpose: "execution" } : undefined,
+    );
+    if (!binding.release_record) {
+      reasons.push(
+        "Delegated execution requires the native run release_record",
+      );
+    }
+    if (reasons.length) return { approved: false, reasons };
   }
   return { approved: true, approval };
 }

@@ -1,0 +1,11 @@
+{
+  "contract_version": "delegation-trusted-decisions/v1",
+  "decisions": [
+    {
+      "authority_id": "integrated-manager-anand-20261012",
+      "decision_id": "delegated-tower-source-fields-serving-20261012-001",
+      "decision_sha256": "ebb0891e9fd0f118425c8c9e401c0124aee19d4d0cdffb0f3834ca666a7b9f16",
+      "status": "active"
+    }
+  ]
+}
