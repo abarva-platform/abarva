@@ -31,10 +31,12 @@ Adds an operator workflow that can inspect and apply exactly two approved Tower 
 - `scripts/tower/tower-only-schema-lane.ts` and its redacted proof verifier.
 - `.github/workflows/tower-only-schema-lab.yml` and the early reconciliation guard in `.github/workflows/db-migration-lab.yml`.
 - Three npm operator script entries and focused tests.
+- The private operator idle guard now treats a historical `Stopped` execution as terminal while still blocking running, pending, and unknown statuses.
+- The unknown-amount prerequisite now checks the named constraint and its fields while accepting the approved migration's intentional `NOT VALID` state for older rows.
 
 ## QA / Validation
 
-- **Pass:** Local focused Node tests, ESLint, and YAML parsing.
+- **Pass:** Local focused Node tests, including terminal versus active operator status and the intentional `NOT VALID` constraint, ESLint, and YAML parsing.
 - **Pass:** Release validation after this record is finalized.
 - **Not run:** Live status/apply/readback dispatch; a merged PR is not a migration apply.
 - The live read-only run must separately confirm the exact ledger state, prerequisites, and private proof readback before any apply. A merged PR is not a migration apply.
@@ -66,3 +68,5 @@ Inspect the PR, focused test output, the workflow's redacted receipt and idle ev
 ## Known Gaps
 
 The shared database has historical ledger/schema findings outside these two Tower files. This lane does not repair them or authorize unrelated pending schema. Source approvals, Tower data staging, serving promotion, and signed-in page proof remain separate gates.
+
+The unknown-amount check was introduced `NOT VALID` to govern new and changed rows. This prerequisite does not attest that every older value-chain row satisfies that check.

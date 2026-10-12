@@ -155,6 +155,16 @@ export function classifyLedger(ledger: ReadonlyMap<string, string | null>): "rea
   return present.length === 0 ? "ready" : "applied";
 }
 
+export function assertUnknownAmountCheck(rows: ReadonlyArray<{ definition: string; convalidated: boolean }>): void {
+  // The approved migration creates this constraint NOT VALID so it governs
+  // new and changed rows without retroactively rewriting older rows.
+  assert(rows.length === 1, "Tower unknown-amount check is absent or ambiguous");
+  const definition = rows[0].definition.toLowerCase();
+  for (const term of ["value_state", "unknown", "not_applicable", "claimable_value_usd", "blocked_value_usd"]) {
+    assert(definition.includes(term), `Tower unknown-amount check lacks ${term}`);
+  }
+}
+
 async function prerequisite(client: Client): Promise<Record<string, boolean>> {
   const result = await client.query<{
     lifecycle: boolean; command_center: boolean; object_type_catalog: boolean; object_table: boolean; selector: boolean;
@@ -177,8 +187,7 @@ async function prerequisite(client: Client): Promise<Record<string, boolean>> {
     select pg_get_constraintdef(oid) as definition, convalidated from pg_constraint
      where conrelid = 'ecl_projection.tower_value_chain'::regclass
        and conname = 'tower_value_chain_unknown_amounts_check'`);
-  assert(unknownCheck.rows.length === 1 && unknownCheck.rows[0].convalidated,
-    "Tower unknown-amount check is absent or unvalidated");
+  assertUnknownAmountCheck(unknownCheck.rows);
   return result.rows[0];
 }
 
