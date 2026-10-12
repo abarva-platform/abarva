@@ -59,9 +59,18 @@ private-only; an export failure does not undo a completed database commit or pri
    `ECL_INSIGHT_AS_OF=YYYY-MM-DD` and `ECL_INSIGHT_DATASET_ID`. It writes no database rows.
 3. Inspect the candidate findings, exclusions and `not_assessable` rule outcomes. A clear rule
    result is bounded to its declared predicate, not whole-enterprise clearance.
-4. Obtain a human-recorded manifest approval for the exact assessment, finding count and
-   `plan.loadVersionHash`. That hash includes canonical inputs, rules and resulting findings.
-   The agent must not populate a person's approval on their behalf.
+4. Obtain a named-human or explicitly verified delegated manifest load approval for the exact
+   assessment, finding count and `plan.loadVersionHash`. The hash includes canonical inputs,
+   rules and resulting findings. A delegated load additionally binds `release_id`, `as_of`,
+   `canonical_source_set_hash`, `rule_set_hash`, `result_hash`, `load_version_hash`,
+   `build_version` and candidate-only state (`target_state=candidate`,
+   `target_review_state=not_reviewed`, `target_agent_ready=0`) in `extra_bindings`. The job
+   computes them from its own canonical replan, not from the approval declaration. The actual
+   actor is recorded separately from the human authorizer; no independent human or Finance
+   attestation is implied. Review and Home serving remain separate operations.
+   Private authority/decision documents are fetched through managed identity from the configured
+   proof store under `operator-proof/delegated-approvals/`, capped at one megabyte and a bounded
+   deadline. Use immutable URI/hash references; never put private document bytes in plain env.
 5. Run `ecl:integrated-insights:apply-job` with all the same bindings and
    `ECL_INSIGHT_EXPECTED_VERSION_HASH=<approved loadVersionHash>`. It re-reads inputs within a
    serializable transaction, refuses drift, verifies content and every FK-backed lineage set,

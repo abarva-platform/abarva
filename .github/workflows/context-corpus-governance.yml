@@ -12,6 +12,10 @@ on:
       - main
     paths:
       - src/lib/governance/**
+      - src/lib/ecl/insights/**
+      - scripts/ecl/integrated_insights_job.ts
+      - scripts/ecl/synthetic_enterprise_home_job.ts
+      - scripts/ecl/__tests__/integrated-insights.test.ts
       - src/scripts/governance/**
       - src/config/tenants/CANONICAL_TENANTS.ts
       - src/lib/tenant/synthetic-tenant-declaration.ts
@@ -52,3 +56,11 @@ jobs:
 
       - name: Exact delegated and legacy approval tests
         run: npx jest --runInBand src/lib/governance/__tests__/dataset-manifest.test.ts src/lib/governance/__tests__/delegated-approval.test.ts
+
+      - name: Native insight load approval tests
+        run: npx jest --runInBand src/lib/ecl/insights/__tests__/load-approval.test.ts
+
+      - name: Native candidate load regressions
+        env:
+          NODE_OPTIONS: --conditions=react-server
+        run: npm run test:ecl-integrated-insights
