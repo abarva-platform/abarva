@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { CANONICAL_TENANT_KEYS } from "../../../src/config/tenants/CANONICAL_TENANTS";
 import { evaluateGovernedObject } from "../../../src/lib/governance/context-corpus-policy";
@@ -47,6 +48,17 @@ export function input(): InsightInput {
   };
 }
 const finding = (data: InsightInput, rule: string) => buildIntegratedInsightPlan(data).findings.filter((row) => row.ruleKey === rule);
+
+test("operator image carries the release binding and migration commands select only the named schema", () => {
+  const releaseRecord = "docs/releases/records/2026-10-11-enterprise-integrated-insight-candidates.md";
+  const dockerfile = readFileSync(new URL("../../../Dockerfile", import.meta.url), "utf8");
+  assert.ok(dockerfile.split("\n").includes(`COPY --from=build --chown=node:node /app/${releaseRecord} ./${releaseRecord}`));
+  const scripts = JSON.parse(readFileSync(new URL("../../../package.json", import.meta.url), "utf8")).scripts;
+  const migration = "20261011210000_enterprise_integrated_insight_candidates.sql";
+  for (const [mode, flag] of [["dry", "--dry"], ["apply", "--ci"]]) {
+    assert.equal(scripts[`ecl:integrated-insights:migrate:${mode}`], `npx tsx src/scripts/run-migrations.ts ${flag} --force ${migration}`);
+  }
+});
 
 test("five supported rule classes fire with stable evidence and candidate-only governance", () => {
   const plan = buildIntegratedInsightPlan(input());

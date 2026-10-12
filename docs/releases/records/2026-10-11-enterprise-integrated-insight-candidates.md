@@ -39,11 +39,12 @@ is separately scoped and does not change any product's serving state.
 - `scripts/ecl/integrated_insights_job.ts` operator job.
 - `20261011210000_enterprise_integrated_insight_candidates.sql` additive schema.
 - Dataset declaration and operator runbook.
+- Named migration commands and the operator image's required release-record binding.
 
 ## QA / Validation
 
-- PASS: 44 deterministic rule, source-boundary and approval tests.
-- PASS: 52-test combined rule and disposable Postgres run, including real migration,
+- PASS: 45 deterministic rule, source-boundary, image-contract and approval tests.
+- PASS: 53-test combined rule and disposable Postgres run, including real migration,
   persistence, independent readback, idempotency, composite FKs and RLS.
 - PASS: six Jest foundation tests, TypeScript, lint and dataset manifest validation;
   declaration remains visibly unapproved.

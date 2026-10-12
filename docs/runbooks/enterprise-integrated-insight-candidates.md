@@ -25,6 +25,10 @@ the private ACA job lane. Schema deployment and loading candidate data are separ
 Do not use local SQL, web requests or ad-hoc shared web updates.
 
 Migration: `20261011210000_enterprise_integrated_insight_candidates.sql`.
+Run `ecl:integrated-insights:migrate:dry` through the wrapper first, inspect its named-migration
+plan, then use `ecl:integrated-insights:migrate:apply`. Neither command applies unrelated pending
+migrations. The runtime packages this release's record so the candidate jobs can verify their
+release binding before opening the database.
 
 ## Job Bindings
 

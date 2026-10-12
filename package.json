@@ -855,6 +855,8 @@
     "ecl:integrated-insights:inventory-job": "tsx scripts/ecl/integrated_insights_job.ts --inventory",
     "ecl:integrated-insights:plan-job": "tsx scripts/ecl/integrated_insights_job.ts --plan",
     "ecl:integrated-insights:apply-job": "tsx scripts/ecl/integrated_insights_job.ts --apply",
+    "ecl:integrated-insights:migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry --force 20261011210000_enterprise_integrated_insight_candidates.sql",
+    "ecl:integrated-insights:migrate:apply": "npx tsx src/scripts/run-migrations.ts --ci --force 20261011210000_enterprise_integrated_insight_candidates.sql",
     "test:ecl-integrated-insights": "tsx --test scripts/ecl/__tests__/integrated-insights.test.ts",
     "test:ecl-integrated-insights:postgres": "tsx --test scripts/ecl/__tests__/integrated-insights-postgres.test.ts",
     "test:ecl:synthetic-enterprise-v2:promote-home": "tsx scripts/ecl/__tests__/test_synthetic_enterprise_home_promotion.ts",
