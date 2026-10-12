@@ -245,6 +245,14 @@ describe("mechanical Tower Command Center panels", () => {
     expect(screen.getByText("Portfolio row 12")).toBeInTheDocument();
   });
 
+  it("separates the unclassified count from the following word in the case table", () => {
+    render(<InitiativesTablePanel view={viewWith({ allInitiatives: [initiative()] })} />);
+
+    const text = document.body.textContent ?? "";
+    expect(text).toContain("0 rows lack that identity");
+    expect(text).not.toContain("0rows");
+  });
+
   it("keeps the initiatives table sortable and filterable", () => {
     render(
       <InitiativesTablePanel
@@ -682,6 +690,37 @@ describe("mechanical Tower Command Center panels", () => {
     expect(screen.getByRole("tab", { name: /Adoption lens 1 tool rollout/i })).toBeInTheDocument();
     expect(text).toContain("ServiceNow rollout");
     expect(text).not.toContain("Service case automation");
+    expect(text).toContain("Tool rollouts with usage metrics; recorded adoption rates first");
+  });
+
+  it("names separate case usage counts without implying a tool rollout", () => {
+    const view = {
+      ...viewWith({ allInitiatives: [initiative()], actions: [], gaps: [], pipelineGaps: [] }),
+      usageObservations: [initiative({
+        id: "OBS-ONE",
+        name: "Usage observation one",
+        populationKind: "usage_observation",
+        usageHeadline: "Active users · 42",
+      })],
+    };
+    render(<AiPortfolioContractView view={view} onOpenAi={jest.fn()} onOpenAction={jest.fn()} onOpenGap={jest.fn()} />);
+
+    fireEvent.click(screen.getByRole("tab", { name: /Adoption lens 0 tool rollouts · 1 adoption-source row/i }));
+    expect(screen.getByText("No tool rollout usage rows; separate source usage counts are shown below")).toBeInTheDocument();
+    expect(screen.getByText("Active users · 42")).toBeInTheDocument();
+    expect(screen.queryByText("Tool rollouts with usage metrics; recorded adoption rates first")).not.toBeInTheDocument();
+  });
+
+  it("labels fallback funding items as proof tasks when no spend categories are loaded", () => {
+    const view = {
+      ...viewWith({ actions: base().actions.slice(0, 1), gaps: [], pipelineGaps: [], summary: { aiUnallocatedSpendUsd: 0 } }),
+      costLens: null,
+    };
+    render(<AiPortfolioContractView view={view} onOpenAi={jest.fn()} onOpenAction={jest.fn()} onOpenGap={jest.fn()} />);
+
+    fireEvent.click(screen.getByRole("tab", { name: /Funding and proof 1 proof item/i }));
+    expect(screen.getByText("Evidence tasks to review")).toBeInTheDocument();
+    expect(screen.queryByText("Funding and evidence gaps")).not.toBeInTheDocument();
   });
 
   it("withdraws cost findings when no actions or gaps support them", () => {
@@ -699,10 +738,10 @@ describe("mechanical Tower Command Center panels", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: /Funding and cost/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Funding and proof 0 proof items/i }));
 
     const text = document.body.textContent ?? "";
-    expect(text).toContain("No cost findings are loaded for this portfolio.");
+    expect(text).toContain("No evidence tasks are loaded for this portfolio.");
     expect(text).not.toContain("Three suppliers deliver the same capability");
     expect(text).not.toContain("A cohort of contracts protects the vendor");
   });
@@ -721,7 +760,7 @@ describe("mechanical Tower Command Center panels", () => {
       ],
     };
     render(<AiPortfolioContractView view={view} onOpenAi={jest.fn()} onOpenAction={jest.fn()} onOpenGap={jest.fn()} />);
-    fireEvent.click(screen.getByRole("tab", { name: /Funding and cost/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Funding and cost 2 spend categories/i }));
     expect(screen.getByText("$10,000,000")).toBeInTheDocument();
     expect(screen.getByText(/Approved FY budget:/).closest("p")?.textContent).toContain("Unknown");
     expect(screen.getByText(/One-source planning estimate/)).toBeInTheDocument();

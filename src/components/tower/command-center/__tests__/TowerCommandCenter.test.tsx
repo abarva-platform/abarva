@@ -292,18 +292,18 @@ describe("TowerCommandCenter", () => {
     expect(
       screen.getByRole("tab", { name: /All initiatives\/tools/ }),
     ).toHaveAttribute("aria-selected", "true");
-    fireEvent.click(screen.getByRole("tab", { name: /Funding and cost/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /Funding and proof/ }));
     expect(
       screen.getByText("Approved AI funding by recorded type"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Funding and evidence gaps")).toBeInTheDocument();
+    expect(screen.getByText("Evidence tasks to review")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: /Risk lens/ }));
     expect(
       screen.getByText(/evidence gaps by priority/),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: /Adoption lens/ }));
     expect(
-      screen.getByText("Tool rollouts with usage metrics; recorded adoption rates first"),
+      screen.getByText("No tool rollout or separate usage rows are loaded"),
     ).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("tab", { name: /All initiatives\/tools/ }),

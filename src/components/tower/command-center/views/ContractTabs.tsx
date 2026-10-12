@@ -872,10 +872,10 @@ export function AiPortfolioContractView({
     },
     {
       key: "cost" as const,
-      label: "Funding and cost",
+      label: view.costLens ? "Funding and cost" : "Funding and proof",
       detail: view.costLens
         ? `${formatCount(view.costLens.categories.length)} spend categories`
-        : `${formatCount(costLensFindings.length)} findings`,
+        : `${formatCount(costLensFindings.length)} proof item${costLensFindings.length === 1 ? "" : "s"}`,
     },
     {
       key: "risk" as const,
@@ -1010,7 +1010,7 @@ export function AiPortfolioContractView({
 
           <div className={styles.aiPortfolioRight}>
             <div className={styles.contractMiniKicker}>
-              Funding and evidence gaps
+              Evidence tasks to review
             </div>
             <div className={styles.findingStack}>
               {costLensFindings.length > 0 ? (
@@ -1036,7 +1036,7 @@ export function AiPortfolioContractView({
                 ))
               ) : (
                 <div className={styles.contractEmpty}>
-                  No cost findings are loaded for this portfolio.
+                  No evidence tasks are loaded for this portfolio.
                 </div>
               )}
             </div>
@@ -1091,7 +1091,11 @@ export function AiPortfolioContractView({
         <article className={cx(styles.contractCard, styles.contractFullCard)}>
           {cardTitle(
             "Adoption lens",
-            "Tool rollouts with usage metrics; recorded adoption rates first",
+            adoptionLensRows.length > 0
+              ? "Tool rollouts with usage metrics; recorded adoption rates first"
+              : view.usageObservations.length > 0
+                ? "No tool rollout usage rows; separate source usage counts are shown below"
+                : "No tool rollout or separate usage rows are loaded",
           )}
           <p>{formatCount(view.usageObservations.length)} separate adoption-source rows are loaded; {formatCount(view.usageObservations.filter((item) => item.usageHeadline || item.usageBars.length > 0).length)} carry a displayable usage metric. These rows do not establish tool rollout targets or vendor exposure.</p>
           <div className={styles.decisionLaneTableWrap}>
