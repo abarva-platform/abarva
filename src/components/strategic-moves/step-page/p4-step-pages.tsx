@@ -28,6 +28,12 @@ import { useStepEvidence } from "./StepEvidence";
 import type { PhaseStepPageMap, StepPageHostProps } from "./phase-step-pages";
 import { useP4ValueReadback, type P4ValueReadback } from "./useP4ValueReadback";
 import styles from "./MovesStepPage.module.css";
+import { P4MilestonePlanEditor } from "./P4MilestonePlanEditor";
+import {
+  P4_ROADMAP_PLAN_KEY,
+  isP4RoadmapPlanComplete,
+  parseP4RoadmapPlan,
+} from "@/lib/programs/p4-roadmap-plan";
 
 const cx = (...names: string[]) =>
   names.map((name) => styles[name] ?? name).join(" ");
@@ -290,113 +296,6 @@ export function CaptureStepPage({
     actions: [],
     notesPanel,
   });
-}
-
-function Milestones({
-  moveId,
-  onCountChange,
-}: {
-  moveId: string;
-  onCountChange: (count: number | null) => void;
-}) {
-  const [items, setItems] = useState<Array<{ id: string; name: string }>>([]);
-  const [status, setStatus] = useState("Reading milestones…");
-  const [name, setName] = useState("");
-  const [busy, setBusy] = useState(false);
-  useEffect(() => {
-    let live = true;
-    fetch(`/api/v1/programs/${encodeURIComponent(moveId)}/milestones`, {
-      credentials: "include",
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error();
-        return response.json() as Promise<{
-          milestones?: Array<{ id: string; name: string }>;
-        }>;
-      })
-      .then((body) => {
-        if (live) {
-          const next = body.milestones ?? [];
-          setItems(next);
-          onCountChange(next.length);
-          setStatus("");
-        }
-      })
-      .catch(() => {
-        if (live) {
-          onCountChange(null);
-          setStatus(
-            "Milestones could not be read. The gate will re-evaluate them.",
-          );
-        }
-      });
-    return () => {
-      live = false;
-    };
-  }, [moveId, onCountChange]);
-  const add = async () => {
-    setBusy(true);
-    try {
-      const response = await fetch(
-        `/api/v1/programs/${encodeURIComponent(moveId)}/milestones`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: name.trim(), phaseNumber: 4 }),
-        },
-      );
-      const body = (await response.json()) as {
-        milestoneId?: string;
-        detail?: string;
-      };
-      if (!response.ok || !body.milestoneId)
-        throw new Error(body.detail ?? "The milestone was not saved.");
-      const next = [...items, { id: body.milestoneId, name: name.trim() }];
-      setItems(next);
-      onCountChange(next.length);
-      setName("");
-      setStatus("");
-    } catch (error) {
-      setStatus(
-        error instanceof Error ? error.message : "The milestone was not saved.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <div className={cx("field")}>
-      <p className={cx("proposal")} role="status">
-        {status ||
-          `${items.length} milestone${items.length === 1 ? "" : "s"} recorded for this Move.`}
-      </p>
-      {items.length ? (
-        <ul className={cx("items")}>
-          {items.map((item) => (
-            <li key={item.id}>{item.name}</li>
-          ))}
-        </ul>
-      ) : null}
-      <label className={cx("q-label")} htmlFor="p4-milestone-name">
-        Milestone name
-      </label>
-      <input
-        id="p4-milestone-name"
-        className={cx("q-input")}
-        value={name}
-        onChange={(event) => setName(event.target.value)}
-      />
-      <button
-        type="button"
-        className={cx("btn-ink")}
-        disabled={!name.trim() || busy}
-        onClick={() => void add()}
-      >
-        {busy ? "Saving…" : "Add milestone"}
-      </button>
-    </div>
-  );
 }
 
 function EstimateBasis({
@@ -874,13 +773,27 @@ function ValueReferences({
 }
 
 function P4MilestonesPage({ host }: { host: StepPageHostProps }) {
-  const [milestoneCount, setMilestoneCount] = useState<number | null>(null);
+  const raw = host.values[P4_ROADMAP_PLAN_KEY] ?? "";
+  const [draft, setDraft] = useState(raw);
+  useEffect(() => setDraft(raw), [raw]);
+  const plan = parseP4RoadmapPlan(raw);
+  const ready =
+    draft === raw &&
+    isP4RoadmapPlanComplete(plan) &&
+    host.captureSaved?.[P4_ROADMAP_PLAN_KEY] !== false;
   return (
     <CaptureStepPage
       host={host}
       view="p4-milestones"
       title="Sequence workstreams and milestones"
       intro="Record the delivery sequence and critical milestones for the roadmap."
+      blockedBy={
+        host.values.roadmap_sequencing?.trim() &&
+        host.captureSaved?.roadmap_sequencing === false
+          ? (host.captureSaveErrors?.roadmap_sequencing ??
+            "The workstream sequence is still saving. Wait for its saved readback.")
+          : undefined
+      }
       checkIds={["execution_roadmap_drafted", "execution_milestones_defined"]}
       fields={[
         field(
@@ -897,21 +810,30 @@ function P4MilestonesPage({ host }: { host: StepPageHostProps }) {
           rank: 5,
           shortName: "milestones",
           subject: "Critical milestones",
-          state:
-            milestoneCount !== null && milestoneCount > 0
-              ? "settled"
-              : "decision",
-          clause: "add a critical milestone",
+          state: ready ? "settled" : "decision",
+          clause: "review and save the milestone plan",
+          wide: true,
           middle: (
-            <Milestones
-              moveId={host.move.id}
-              onCountChange={setMilestoneCount}
-            />
+            <>
+              <p className={cx("proposal")} role="status">
+                {ready
+                  ? `${plan?.milestones.length} reviewed milestone${plan?.milestones.length === 1 ? "" : "s"} saved for this roadmap.`
+                  : "The milestone plan needs a reviewed, saved record."}
+              </p>
+              <P4MilestonePlanEditor
+                value={draft}
+                storedValue={raw}
+                onChange={setDraft}
+                onSave={(value) => host.setValue(P4_ROADMAP_PLAN_KEY, value)}
+                saved={host.captureSaved?.[P4_ROADMAP_PLAN_KEY]}
+                saveError={host.captureSaveErrors?.[P4_ROADMAP_PLAN_KEY]}
+              />
+            </>
           ),
           facts: [
             {
               kind: "team",
-              text: "Read from the Move's milestones route; gate status comes from the evaluator.",
+              text: "Reviewed roadmap plan in the phase capture record; gate status comes from the evaluator.",
             },
           ],
         },
@@ -1166,7 +1088,7 @@ export const P4_STEP_PAGES: PhaseStepPageMap = {
           "Tower handoff plan",
           "handoff plan",
           "record the Tower handoff plan",
-          "Name the measurement owner role, baseline, cadence and handoff conditions.",
+          "Name the measurement owner role, baseline and comparator, source lineage, review cadence and Tower handoff conditions.",
         ),
       ]}
       carry="The Tower measurement plan for P5 handoff."

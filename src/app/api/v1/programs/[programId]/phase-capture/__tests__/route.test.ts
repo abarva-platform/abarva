@@ -24,6 +24,7 @@ import {
   PHASE_CAPTURE_SNAPSHOT_UNREADABLE_STATUS,
 } from "@/lib/programs/phase-capture-snapshot-refusal";
 import { NextRequest } from "next/server";
+import { emptyP4RoadmapPlan, newP4RoadmapMilestone, serializeP4RoadmapPlan } from "@/lib/programs/p4-roadmap-plan";
 import { computeCaptureRevision } from "@/lib/programs/phase-capture-integrity";
 import {
   getPhaseCaptureSections,
@@ -505,6 +506,104 @@ describe("POST .../phase-capture · step-page records", () => {
       expect(body.values).not.toHaveProperty("p5_measurement_handoff");
       expect(row).toBeUndefined();
     }
+  });
+
+  it("stores and reads the reviewed P4 plan as a tenant-fenced versioned step record", async () => {
+    const plan = serializeP4RoadmapPlan({
+      ...emptyP4RoadmapPlan(),
+      milestones: [
+        {
+          ...newP4RoadmapMilestone("m1"),
+          name: "Input scope",
+          workstream: "Readiness",
+          ownerRole: "Data owner",
+          plannedWindow: "R1 first week",
+          timingBasis: "Approved ROM R1 [A:T1]",
+          dependencyNotes: "First decision, no predecessor",
+          dependenciesReviewed: true,
+          reviewed: true,
+        },
+      ],
+    });
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      currentPhase: 4,
+      charter: {},
+    });
+    const inserts = recordingClient();
+    const res = await POST(
+      req({
+        phase: 4,
+        sections: { p4_roadmap_plan: plan },
+        expectedRevision: computeCaptureRevision(
+          Object.fromEntries(
+            getPhaseCaptureSections(4).map((section) => [section.key, ""]),
+          ),
+        ),
+      }) as never,
+      { params },
+    );
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(body.changedFields).toEqual(["p4_roadmap_plan"]);
+    expect(body.values.p4_roadmap_plan).toBe(plan);
+    expect(
+      body.capture.sections.map((section: { key: string }) => section.key),
+    ).not.toContain("p4_roadmap_plan");
+    expect(
+      inserts.find((row) => row.module_key === "phase_4_p4_roadmap_plan"),
+    ).toMatchObject({
+      engagement_id: "prog-1",
+      phase_number: 4,
+      status: "in_progress",
+      state_jsonb: expect.objectContaining({ value: plan, step_record: true }),
+    });
+    mockGetModuleState.mockResolvedValue([
+      {
+        moduleKey: "phase_4_p4_roadmap_plan",
+        status: "in_progress",
+        state: { value: plan, step_record: true },
+      },
+    ]);
+    const read = await GET(
+      new NextRequest("http://test/api/v1/programs/prog-1/phase-capture?phase=4"),
+      { params },
+    );
+    expect((await read.json()).values.p4_roadmap_plan).toBe(plan);
+    expect(mockGetModuleState).toHaveBeenLastCalledWith(
+      expect.objectContaining({ clientId: "client-1", userId: "user-1" }),
+      "prog-1",
+    );
+  });
+
+  it("includes the P4 plan in the revision fence without overwriting a stale record", async () => {
+    const inserts = recordingClient();
+    mockGetProgramById.mockResolvedValue({
+      id: "prog-1",
+      currentPhase: 4,
+      charter: {},
+    });
+    const plan = serializeP4RoadmapPlan(emptyP4RoadmapPlan());
+    mockGetModuleState.mockResolvedValue([
+      {
+        moduleKey: "phase_4_p4_roadmap_plan",
+        status: "in_progress",
+        state: { value: plan },
+      },
+    ]);
+    const res = await POST(
+      req({
+        phase: 4,
+        sections: { p4_roadmap_plan: plan },
+        expectedRevision: "older-revision",
+      }) as never,
+      { params },
+    );
+    const body = await res.json();
+    expect(res.status).toBe(409);
+    expect(body.error).toBe("stale_revision");
+    expect(body.values.p4_roadmap_plan).toBe(plan);
+    expect(inserts).toEqual([]);
   });
 
   it("stores P3's traceability record beside the answers, as a record, not a question", async () => {

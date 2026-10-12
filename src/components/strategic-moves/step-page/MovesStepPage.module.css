@@ -1182,6 +1182,16 @@
 .field + .field {
   margin-top: 12px;
 }
+.milestone-fields {
+  min-width: 0;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--mv-line);
+  border-radius: var(--mv-radius);
+}
+.milestone-fields input[type="checkbox"] {
+  accent-color: var(--mv-accent);
+}
 .q-label {
   font-size: 14px;
   font-weight: 600;
