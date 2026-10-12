@@ -475,6 +475,13 @@ jobs:
       - name: Exercise the Programs unit suites
         run: npx jest src/lib/programs/__tests__ --runInBand
 
+      - name: Exercise operator origination and native access contracts
+        run: >-
+          npx jest --runTestsByPath
+          src/lib/data-plane/__tests__/moves-operator-program-policy-sql.test.ts
+          src/lib/programs/__tests__/moves-operator-origination-participant.test.ts
+          --runInBand --no-coverage --ci
+
       # Not a catalog control either. Wiring `src/lib/programs/__tests__` above
       # left 38 directories under `src/lib/programs` — 168 test files — that a
       # workflow reaches for none of their suites, because a jest path argument

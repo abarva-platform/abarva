@@ -957,8 +957,9 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     itemKind:
       payloadTextFrom(row, ["item_kind", "itemKind"]) ?? "unknown",
     populationKind,
-    vendorName: payloadText(row, "tool_name", row.summary),
-    systemName: payloadText(row, "tool_name", row.summary),
+    vendorName: payloadTextFrom(row, ["vendor_name"]),
+    systemName: payloadTextFrom(row, ["system_name"]) ??
+      (populationKind === "tool_rollout" ? payloadTextFrom(row, ["tool_name"]) : null),
     aiSpendType: payloadTextFrom(row, ["ai_spend_type"]),
     aiSpendCategory:
       payloadTextFrom(row, ["ai_spend_category", "business_value_type"]),
@@ -1247,6 +1248,21 @@ function isTrajectoryOnlyRow(row: TowerServingRow): boolean {
   );
 }
 
+/** The shared value-chain serving view can also return cost-lens rows. */
+function isValueProofRow(row: TowerServingRow): boolean {
+  return row.page_key === "value_proof" && row.row_type !== "cost_exposure";
+}
+
+/** Registered outcome measures use a declared metric row key, not a benefit claim identity. */
+function isOutcomeMeasureRow(row: TowerServingRow): boolean {
+  return isValueProofRow(row) && row.row_key.startsWith("metric:") &&
+    !isSourceOpportunityValueRow(row);
+}
+
+function isBenefitClaimRow(row: TowerServingRow): boolean {
+  return isValueProofRow(row) && !isOutcomeMeasureRow(row) && !isTrajectoryOnlyRow(row);
+}
+
 function gapsFromRows(
   rows: readonly TowerServingRow[],
 ): TowerMartRequiredFieldGap[] {
@@ -1390,9 +1406,8 @@ export async function readTowerCommandCenter(args: {
       const projectionVersion = Math.max(
         ...allRows.map((row) => Number(row.projection_version ?? 0)),
       );
-      const valueRowsForTotals = activeValueRows.filter(
-        (row) => !isTrajectoryOnlyRow(row),
-      );
+      const valueRowsForTotals = activeValueRows.filter(isBenefitClaimRow);
+      const outcomeMeasureRows = activeValueRows.filter(isOutcomeMeasureRow);
       const summaryRow =
         activeCommandRows.find((row) => row.row_key === "executive_summary") ??
         activeCommandRows.find((row) => row.page_key === "command_center");
@@ -1518,6 +1533,7 @@ export async function readTowerCommandCenter(args: {
           boardScopeProgramCount: activeDecisionRows.length,
           economicReviewQueueCount: gatedRows,
           valueClaimCount: claimRows.length,
+          valueProofOutcomeRecordCount: outcomeMeasureRows.length,
           knownValueClaimCount: knownValueClaimRows.length,
           unknownValueClaimCount: unknownValueClaimRows.length,
           knownZeroValueClaimCount: knownValueClaimRows.filter((row) => {
@@ -1587,7 +1603,9 @@ export async function readTowerCommandCenter(args: {
           sourceFiles,
         },
         valueFunnel: buildFunnel(valueRowsForTotals),
-        valueTrajectory: mapValueTrajectory(activeValueRows),
+        valueTrajectory: mapValueTrajectory(activeValueRows.filter(
+          (row) => isValueProofRow(row) && !isOutcomeMeasureRow(row),
+        )),
         programLanes: activeDecisionRows.map(mapProgramLane),
         aiPortfolio,
         aiPortfolioCounts: {

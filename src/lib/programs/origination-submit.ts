@@ -6,7 +6,8 @@ import "server-only";
 
 import { requireTenancy, TenancyError } from "@/app/api/v1/programs/_auth";
 import { getActiveClientRow } from "@/lib/active-client";
-import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
+import { loadUserProgramAccessPolicy, ProgramAccessPolicyUnavailableError } from "@/lib/auth/program-access-policy";
+import { isAutomaticOperatorParticipant } from "@/lib/auth/synthetic-e2e-operator-participant";
 import { CLIENT_KEY_TO_INDUSTRY_CODE } from "@/lib/client-config";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { submitForApproval } from "@/lib/programs/approval";
@@ -744,15 +745,22 @@ export async function submitOriginationBrief(
       throw new OriginationSubmitError(
         err.code,
         originationSubmitAccessSentence(err.code),
-        err.code === "unauthenticated" ? 401 : 403,
+        err.code === "unauthenticated" ? 401 : err.code === "tenant_lookup_unavailable" ? 503 : 403,
       );
     }
     throw err;
   }
 
-  const accessPolicy = await loadUserProgramAccessPolicy(tenancy).catch(
-    () => null,
-  );
+  const accessPolicy = await loadUserProgramAccessPolicy(tenancy).catch((error) => {
+    if (error instanceof ProgramAccessPolicyUnavailableError) {
+      throw new OriginationSubmitError(
+        "program_access_policy_unavailable",
+        "Programs access could not be read. No permission decision was made.",
+        503,
+      );
+    }
+    return null;
+  });
   if (!accessPolicy?.canCreatePrograms) {
     throw new OriginationSubmitError(
       "forbidden",
@@ -1108,7 +1116,8 @@ export async function submitOriginationBrief(
       briefSnapshot,
     });
 
-    await insertParticipant({
+    const operatorAlreadyAssigned = (personId: string) => isAutomaticOperatorParticipant(tenancy, personId);
+    if (!operatorAlreadyAssigned(sponsor.id)) await insertParticipant({
       programId,
       person: sponsor,
       role: "Sponsor",
@@ -1116,7 +1125,7 @@ export async function submitOriginationBrief(
       progressContact: true,
       sendProgressEmails: input.sponsorProgressEmails,
     });
-    if (coSponsor && coSponsor.id !== sponsor.id) {
+    if (coSponsor && coSponsor.id !== sponsor.id && !operatorAlreadyAssigned(coSponsor.id)) {
       await insertParticipant({
         programId,
         person: coSponsor,
@@ -1126,7 +1135,7 @@ export async function submitOriginationBrief(
         sendProgressEmails: input.sponsorProgressEmails,
       });
     }
-    if (lead.id !== sponsor.id) {
+    if (lead.id !== sponsor.id && !operatorAlreadyAssigned(lead.id)) {
       await insertParticipant({
         programId,
         person: lead,

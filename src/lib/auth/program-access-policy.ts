@@ -10,6 +10,13 @@ export type ClientAccessLevel =
   | "program_viewer"
   | "no_program_access";
 
+export class ProgramAccessPolicyUnavailableError extends Error {
+  readonly code = "program_access_policy_unavailable";
+  constructor(public readonly read: "person" | "membership" | "programs" | "participants") {
+    super("Programs access could not be read. No permission decision was made.");
+  }
+}
+
 export type DataAccessClass =
   | "public"
   | "internal"
@@ -233,7 +240,7 @@ async function loadClientMembership(
   personId: string,
 ): Promise<ClientMembershipRow | null> {
   const sb = getAzureReadFluentClient();
-  const { data } = await sb
+  const { data, error } = await sb
     .from("person_client_memberships")
     .select(
       "role, access_level, financial_visibility, can_admin_users, can_create_programs, can_approve_gates",
@@ -241,6 +248,7 @@ async function loadClientMembership(
     .eq("person_id", personId)
     .eq("client_id", ctx.clientId)
     .maybeSingle();
+  if (error) throw new ProgramAccessPolicyUnavailableError("membership");
   return (data as ClientMembershipRow | null) ?? null;
 }
 
@@ -249,15 +257,20 @@ async function loadProgramParticipants(
   personId: string,
 ): Promise<ParticipantRow[]> {
   const sb = getAzureReadFluentClient();
-  const { data } = await sb
+  const { data: programs, error: programsError } = await sb.from("engagements")
+    .select("id").eq("client_id", ctx.clientId)
+    .is("archived_at", null).is("deleted_at", null);
+  if (programsError || !Array.isArray(programs)) throw new ProgramAccessPolicyUnavailableError("programs");
+  const programIds = programs.map((row) => row.id as string);
+  if (!programIds.length) return [];
+  const { data, error } = await sb
     .from("engagement_participants")
     .select(
-      "engagement_id, role, approval_authority, program_access_level, can_view_financial, can_upload, can_generate_deliverables, can_publish_deliverables, can_approve_phase_gates, engagement:engagements!inner(client_id, archived_at, deleted_at)",
+      "engagement_id, role, approval_authority, program_access_level, can_view_financial, can_upload, can_generate_deliverables, can_publish_deliverables, can_approve_phase_gates",
     )
     .eq("user_id", personId)
-    .eq("engagement.client_id", ctx.clientId)
-    .is("engagement.archived_at", null)
-    .is("engagement.deleted_at", null);
+    .in("engagement_id", programIds);
+  if (error || !Array.isArray(data)) throw new ProgramAccessPolicyUnavailableError("participants");
   return ((data as ParticipantRow[] | null) ?? []).filter((row) =>
     Boolean(row.engagement_id),
   );
@@ -271,11 +284,12 @@ async function resolvePolicyPersonId(ctx: TenancyCtx): Promise<string | null> {
   if (!inferredClientKey || inferredClientKey !== ctx.clientKey) return null;
 
   const sb = getAzureReadFluentClient();
-  const { data } = await sb
+  const { data, error } = await sb
     .from("persons")
     .select("id")
     .eq("email", normalizedEmail)
     .maybeSingle();
+  if (error) throw new ProgramAccessPolicyUnavailableError("person");
 
   const personId = (data as { id?: string | null } | null)?.id ?? null;
   return personId && isUuidLike(personId) ? personId : null;

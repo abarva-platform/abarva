@@ -1436,6 +1436,20 @@ describe("AgentDock · thread render", () => {
     expect(turn).not.toHaveTextContent("internal-row-1");
   });
 
+  it("keeps Home points separate at the markdown renderer boundary", () => {
+    render(<AgentDock agent={{ ...AGENT, name: "aVa" }} surface="home-preview" thread={[{
+      id: "home-points", role: "agent", body: "Summary",
+      agentAnswer: {
+        directAnswer: "Review dependencies and proof before expanding.",
+        prose: "- Confirm the critical dependencies.\n\n- Validate the claimed outcomes.\n\n- Assign the next evidence owner.",
+        citations: [], artifacts: [],
+      } as never,
+    }]} onMessage={jest.fn()} workspace={<div>workspace</div>} />);
+    const turn = screen.getByTestId("agent-dock-turn-agent");
+    expect(within(turn).getByTestId("agent-markdown").textContent?.match(/^- /gm)).toHaveLength(3);
+    expect(turn).toHaveTextContent("Review dependencies and proof before expanding.");
+  });
+
   it("exports the current chat session without making a model call", async () => {
     const submitSpy = jest
       .spyOn(HTMLFormElement.prototype, "submit")

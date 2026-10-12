@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The deployed step walk still exceeds 2.5 seconds on seven reachable views. Its slowest readiness read takes 6878 ms. Current-state requirements were queried one family at a time, while historical gate checks repeated the same program, module, evidence and document-version reads. This candidate shares those canonical reads within one authenticated page request and batches independent readiness requirements. It starts readiness, snapshots, gate readback and register visibility with the Move load. Gate rules, approvals and evidence content keep their existing authority.
+Valid deployed step walks still exceed 2.5 seconds on reachable views. The earlier measured readiness read took 6878 ms. Current-state requirements were queried one family at a time, while historical gate checks repeated the same program, module, evidence and document-version reads. This candidate shares those canonical reads within one authenticated page request and batches independent readiness requirements. It starts readiness, snapshots, gate readback and register visibility with the Move load. Gate rules, approvals and evidence content keep their existing authority.
 
 The existing Foundation inset editor also receives its visible prompt as an accessible name under the existing extended-intake flag. It remains a second editor of the same saved answer, with the normal handler and autosave.
 
@@ -45,10 +45,11 @@ The existing Foundation inset editor also receives its visible prompt as an acce
 ## QA / Validation
 
 - PASS: 959 focused tests across 34 suites on the final source, including canonical verdict equivalence, shared failures, tenant/Move fencing, document content, readiness concurrency, access-check reuse, declared blueprint reuse, snapshot projection and the existing intake handlers.
+- PASS: after merging actual main `64f59af8`, 1007 focused tests across 38 suites, including the changed canonical access-policy and tenancy behavior, with zero failures.
 - PASS: 16 meaningful mutations detected one at a time; every source restored. These cover request cache/fence, gate sharing, module failure, readiness concurrency, both document fences and failures, strict count failure, program/module/snapshot reuse the inset name, canonical access sharing and discovery-program reuse.
 - PASS: clean typecheck and ESLint on all changed code; library orphan audit, route/export reachability, manual/coverage/tenancy checks, all six context-corpus validators, five discovered live-walk tests, and all 11 release gates.
 - PENDING: complete exact-current-head remote CI, the immediate merge guard, deployment and a valid after walk.
-- Census: regenerated main and candidate both report 2841 covered test files, a zero delta with no new test files. Behavior cases extend existing CI-covered suites. Counts were not edited by hand.
+- Census: after merging the actual main predecessor `64f59af8`, independently regenerated actual main and candidate both report 2847 covered test files, a zero delta with no new test files. Behavior cases extend existing CI-covered suites. Main’s carried census was one existing upstream suite stale; this regeneration repairs that drift. Counts were not edited by hand.
 - PASS: current real-component/CSS fixtures at 1440 and 390 with both color-scheme settings. The named inset stays within the viewport (mobile x71, width270); normal save behavior and flag-off markup are tested. Temporary render probe removed. These fixtures are local proof.
 - FAIL: the preceding deployed speed acceptance. Local tests do not establish runtime latency.
 
@@ -66,7 +67,18 @@ These are exact settled-head observations on the existing read-only walk. The ca
 | Root-cause design | 4580 ms | 4408 ms | Pending |
 | P3 gate | 2577 ms | 2579 ms | Pending |
 
-The five largest latest server contributors were P2 gate readiness (6878 ms), P2 validate readiness (3129 ms), P2 gate effective phase (2957 ms), P2 evidence-plan readiness (2938 ms), and P0 signal effective phase (2605 ms). These overlap; they are not added together.
+The five largest server contributors in the 061c0368 benchmark were P2 gate readiness (6878 ms), P2 validate readiness (3129 ms), P2 gate effective phase (2957 ms), P2 evidence-plan readiness (2938 ms), and P0 signal effective phase (2605 ms). These overlap; they are not added together.
+
+A later valid serving benchmark is walk 38211625754 on `65c5764107fec53f0c703bee33123844222af35b`, after main deployment 38210769900 completed. It reaches 20/29, UX 97, with 14 full-speed views and six failures at 3917–5833 ms. No non-speed dimension is lower than baseline 38171682273. This is a before sample for the unmerged candidate.
+
+| View | Stable serving 65c57641 before | Candidate after |
+| --- | ---: | --- |
+| P0 signal | 4493 ms | Pending |
+| P1 sponsor and scope | 3917 ms | Pending |
+| P2 evidence plan | 4604 ms | Pending |
+| P2 validate | 5286 ms | Pending |
+| P2 gate | 5833 ms | Pending |
+| Root-cause design | 4580 ms | Pending |
 
 ## Rollout Plan
 
@@ -90,8 +102,10 @@ Revert through a squash PR and let the repo-owned main deployment promote the re
 
 - Prior release: PR #9434, squash `5f63421baadd8d45207aa29a523ec8db33fca759`.
 - Prior valid failed speed walk: https://github.com/abarva-platform/abarva/actions/runs/38204300162.
-- Latest stable failed speed walk: https://github.com/abarva-platform/abarva/actions/runs/38207362621.
-- Latest verified descendant main deploy: https://github.com/abarva-platform/abarva/actions/runs/38206506901, serving `061c036865c42165e03b4c534f097c1cee5d1afe`, digest `sha256:548b7b2cb4989f1edb25cb9609df280becdc4e5d511fcf3fb088c895ba0b8462`.
+- Earlier stable failed speed walk: https://github.com/abarva-platform/abarva/actions/runs/38207362621.
+- Later independently verified before speed walk: https://github.com/abarva-platform/abarva/actions/runs/38211625754, serving `65c5764107fec53f0c703bee33123844222af35b`.
+- Its successful main deployment: https://github.com/abarva-platform/abarva/actions/runs/38210769900.
+- Earlier verified descendant main deploy: https://github.com/abarva-platform/abarva/actions/runs/38206506901, serving `061c036865c42165e03b4c534f097c1cee5d1afe`, digest `sha256:548b7b2cb4989f1edb25cb9609df280becdc4e5d511fcf3fb088c895ba0b8462`.
 - Candidate PR, exact-head CI, merge, deployment and after timings remain pending.
 
 ## Known Gaps

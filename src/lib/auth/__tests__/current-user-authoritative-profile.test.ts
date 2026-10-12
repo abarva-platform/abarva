@@ -3,6 +3,8 @@ const clerkCurrentUserMock = jest.fn();
 const cookiesMock = jest.fn();
 const getCurrentPersonMock = jest.fn();
 const getAzureReadFluentClientMock = jest.fn();
+const mockOperatorFlag = { enabled: true };
+jest.mock("@/lib/features/is-feature-enabled", () => ({ isFeatureEnabled: () => mockOperatorFlag.enabled }));
 
 jest.mock("@clerk/nextjs/server", () => ({
   auth: (...args: unknown[]) => authMock(...args),
@@ -30,6 +32,7 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
 import { getCurrentUser } from "@/lib/auth/current-user";
 
 beforeEach(() => {
+  mockOperatorFlag.enabled = true;
   authMock.mockReset();
   clerkCurrentUserMock.mockReset();
   cookiesMock.mockReset().mockResolvedValue({
@@ -42,6 +45,110 @@ beforeEach(() => {
 });
 
 describe("getCurrentUser authoritative Clerk profile", () => {
+  const operatorProfile = {
+    accountType: "synthetic_e2e_operator", automated: true,
+    approvalRef: "private-approval-reference", role: "client",
+    clientId: "meridian", defaultClientId: "meridian", clientLocked: true,
+    moduleAccess: ["programs"], programScope: "assigned_programs_only",
+    programCapabilities: {
+      accessLevel: "program_member", canAdminUsers: false,
+      canApproveGates: true, canCreatePrograms: true,
+      canGenerateDeliverables: true, canPublishDeliverables: true,
+      canUploadArtifacts: true, financialVisibility: true,
+    }, tenantRoles: { meridian: "viewer" },
+  };
+
+  it.each([undefined, { clientId: "meridian", role: "client" }])(
+    "recognizes the exact server operator profile with incomplete session metadata %p",
+    async (publicMetadata) => {
+      authMock.mockResolvedValue({ userId: "user_fixture_operator", sessionClaims: { publicMetadata } });
+      clerkCurrentUserMock.mockResolvedValue({
+        id: "user_fixture_operator", fullName: "Automated Proof",
+        primaryEmailAddress: { emailAddress: "proof@synthetic.invalid" },
+        publicMetadata: operatorProfile,
+      });
+      const user = await getCurrentUser();
+      expect(user).toMatchObject({
+        clerkUserId: "user_fixture_operator", syntheticE2eOperator: true,
+        syntheticE2eApprovalRef: "private-approval-reference",
+        primaryRole: "client_viewer", metadataClientKey: "meridian",
+        syntheticE2eAuthority: {
+          source: "authenticated_clerk_profile", clerkUserId: "user_fixture_operator",
+          email: "proof@synthetic.invalid", approvalRef: "private-approval-reference",
+        },
+      });
+      expect(clerkCurrentUserMock).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.each([
+    { ...operatorProfile, programScope: "all_client_programs" },
+    { ...operatorProfile, moduleAccess: ["programs", "source"] },
+    { ...operatorProfile, programCapabilities: { ...operatorProfile.programCapabilities, canAdminUsers: true } },
+  ])("refuses a malformed authoritative dedicated profile %p", async (publicMetadata) => {
+    authMock.mockResolvedValue({ userId: "user_fixture_operator", sessionClaims: {} });
+    clerkCurrentUserMock.mockResolvedValue({
+      id: "user_fixture_operator", fullName: "Automated Proof",
+      primaryEmailAddress: { emailAddress: "proof@synthetic.invalid" }, publicMetadata,
+    });
+    await expect(getCurrentUser()).rejects.toMatchObject({ code: "synthetic_profile_refused" });
+    expect(getCurrentPersonMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses a different authoritative actor instead of adopting its profile", async () => {
+    authMock.mockResolvedValue({ userId: "user_fixture_operator", sessionClaims: {} });
+    clerkCurrentUserMock.mockResolvedValue({
+      id: "user_other_actor", fullName: "Automated Proof",
+      primaryEmailAddress: { emailAddress: "proof@synthetic.invalid" }, publicMetadata: operatorProfile,
+    });
+    await expect(getCurrentUser()).rejects.toMatchObject({ code: "synthetic_profile_refused" });
+  });
+
+  it("does not use claims email as the dedicated actor's identity authority", async () => {
+    authMock.mockResolvedValue({ userId: "user_fixture_operator", sessionClaims: {
+      email: "other@synthetic.invalid", firstName: "Other", publicMetadata: operatorProfile,
+    } });
+    clerkCurrentUserMock.mockResolvedValue({
+      id: "user_fixture_operator", fullName: "Automated Proof",
+      primaryEmailAddress: { emailAddress: "proof@synthetic.invalid" }, publicMetadata: operatorProfile,
+    });
+    expect((await getCurrentUser())?.email).toBe("proof@synthetic.invalid");
+  });
+
+  it("keeps an unreadable authoritative profile unavailable", async () => {
+    authMock.mockResolvedValue({ userId: "user_fixture_operator", sessionClaims: {} });
+    clerkCurrentUserMock.mockRejectedValue(new Error("profile service unavailable"));
+    await expect(getCurrentUser()).rejects.toMatchObject({ code: "profile_unavailable" });
+  });
+
+  it("keeps a claimed or email-resolved person outside dedicated identity authority", async () => {
+    authMock.mockResolvedValue({ userId: "user_fixture_operator", sessionClaims: {
+      publicMetadata: { person_id: "00000000-0000-4000-8000-000000000999" },
+    } });
+    clerkCurrentUserMock.mockResolvedValue({ id: "user_fixture_operator", fullName: "Automated Proof",
+      primaryEmailAddress: { emailAddress: "proof@synthetic.invalid" }, publicMetadata: operatorProfile });
+    getCurrentPersonMock.mockResolvedValue({ id: "00000000-0000-4000-8000-000000000999", role: "maestro" });
+    expect(await getCurrentUser()).toMatchObject({ personId: null, accessibleClients: [], primaryRole: "client_viewer" });
+    expect(getCurrentPersonMock).not.toHaveBeenCalled();
+    expect(getAzureReadFluentClientMock).not.toHaveBeenCalled();
+  });
+
+  it("does not retain a dedicated claim after the authoritative profile withdraws it", async () => {
+    authMock.mockResolvedValue({ userId: "user_fixture_operator", sessionClaims: { publicMetadata: operatorProfile } });
+    clerkCurrentUserMock.mockResolvedValue({ id: "user_fixture_operator", publicMetadata: {},
+      primaryEmailAddress: { emailAddress: "proof@synthetic.invalid" } });
+    await expect(getCurrentUser()).rejects.toMatchObject({ code: "synthetic_profile_refused" });
+  });
+
+  it("keeps a valid dedicated profile denied when the operator flag is off", async () => {
+    mockOperatorFlag.enabled = false;
+    authMock.mockResolvedValue({ userId: "user_fixture_operator", sessionClaims: {} });
+    clerkCurrentUserMock.mockResolvedValue({ id: "user_fixture_operator", publicMetadata: operatorProfile,
+      primaryEmailAddress: { emailAddress: "proof@synthetic.invalid" } });
+    await expect(getCurrentUser()).rejects.toMatchObject({ code: "synthetic_profile_refused" });
+    expect(getCurrentPersonMock).not.toHaveBeenCalled();
+  });
+
   it("uses the authenticated Clerk profile name when JWT name claims are absent", async () => {
     authMock.mockResolvedValue({
       userId: "user_prod_qa",
