@@ -3,6 +3,9 @@
 import type { PoolConfig } from 'pg';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { resolveDatabaseUrlCandidatesForScope } from './tenantConnectionResolver';
+import { readQueryTransactionContext } from './azureTransactionReadContext';
+
+export { getAzureTransactionReadExecutor } from './azureTransactionReadContext';
 
 type JsonRecord = Record<string, unknown>;
 type FilterOp = '=' | '!=' | '>' | '>=' | '<' | '<=' | 'is' | 'in' | 'like' | 'ilike' | 'contains' | 'overlaps' | 'text_search';
@@ -31,12 +34,6 @@ let activeConnectionString: string | null = null;
 let client: PostgresCompatClient | null = null;
 const writeTransactionContext = new AsyncLocalStorage<PostgresCompatClient>();
 const readTransactionContext = new AsyncLocalStorage<PostgresCompatClient>();
-const readQueryTransactionContext = new AsyncLocalStorage<QueryExecutor>();
-
-/** Present only when a governed writer opts its basis reads into its transaction. */
-export function getAzureTransactionReadExecutor(): QueryExecutor | undefined {
-  return readQueryTransactionContext.getStore();
-}
 
 export function resolveDatabaseUrlCandidates(env: NodeJS.ProcessEnv = process.env): string[] {
   return resolveDatabaseUrlCandidatesForScope(env);

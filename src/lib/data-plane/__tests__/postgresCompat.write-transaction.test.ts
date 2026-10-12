@@ -4,7 +4,8 @@ import {
   withAzureWriteTransaction,
   writeTransactionOutcome,
 } from '../postgresCompat';
-import { azureRead } from '../azureRead';
+import { azureRead, createAzureReadClient } from '../azureRead';
+import type { SqlRunner } from '../read-adapters/azureSession';
 
 type Connection = Pick<import('pg').PoolClient, 'query' | 'release'>;
 
@@ -56,6 +57,39 @@ function transactionConnection(options: {
 }
 
 describe('Postgres compat write transaction', () => {
+  it('ordinary Azure reads do not initialize the compatibility writer', () => {
+    try {
+      jest.isolateModules(() => {
+        jest.doMock('../postgresCompat', () => {
+          throw new Error('compatibility_writer_loaded_by_independent_reader');
+        });
+        const readModule = jest.requireActual<typeof import('../azureRead')>('../azureRead');
+        expect(typeof readModule.createAzureReadClient().query).toBe('function');
+      });
+    } finally {
+      jest.dontMock('../postgresCompat');
+    }
+  });
+
+  it.each([false, true])('restores ordinary raw reads after an opted-in transaction (aborted=%s)', async (aborted) => {
+    const db = transactionConnection();
+    const session = jest.fn(async <T>(work: (run: SqlRunner) => Promise<T>) =>
+      work(async <R>() => [{ id: 'independent-row' }] as R[]));
+    const read = createAzureReadClient(session);
+    const sql = 'SELECT id FROM phase_snapshots WHERE engagement_id = $1';
+    const outcome = withAzureWriteTransaction('unused', async () => {
+      expect(await read.query(sql, ['move-1'])).toEqual([{ id: 'seed-row' }]);
+      expect(session).not.toHaveBeenCalled();
+      if (aborted) throw new Error('review_basis_refused');
+    }, { connect: db.connect, includeReads: true });
+    if (aborted) await expect(outcome).rejects.toThrow('review_basis_refused');
+    else await outcome;
+    expect(await read.query(sql, ['move-1'])).toEqual([{ id: 'independent-row' }]);
+    expect(session).toHaveBeenCalledTimes(1);
+    expect(db.statements).toContain(aborted ? 'ROLLBACK' : 'COMMIT');
+    expect(db.release).toHaveBeenCalledTimes(1);
+  });
+
   it('opt-in policy and evidence reads share the transaction and restore the independent reader afterward', async () => {
     const db = transactionConnection();
     const independent = getAzureReadFluentClient();

@@ -3,7 +3,7 @@ import {
   type SessionRunner,
   type SqlRunner,
 } from './read-adapters/azureSession';
-import { getAzureTransactionReadExecutor } from './postgresCompat';
+import { getAzureTransactionReadExecutor } from './azureTransactionReadContext';
 
 type SqlScalar = string | number | boolean | Date | null;
 type SqlValue = SqlScalar | readonly SqlScalar[];
