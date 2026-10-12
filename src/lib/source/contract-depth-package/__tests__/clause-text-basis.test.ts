@@ -38,6 +38,47 @@ const SOURCE_DIR = path.join(PACKAGE_DIR, "source-files");
 /** Total clause rows in the governed package. Pinned, not derived from itself. */
 const CLAUSE_ROW_COUNT = 56;
 
+describe("imported review and authored text", () => {
+  it("keeps substantive unreviewed extraction unreviewed", () => {
+    expect(
+      classifyContractClauseTextBasis({
+        value_text: "The supplier must provide 120 days notice.",
+        source_page: "2",
+        confidence: "0.8",
+        review_state: "not_reviewed",
+      }).qualityState,
+    ).toBe("unreviewed");
+  });
+  it("does not claim a document extraction from authored scenario terms", () => {
+    expect(
+      classifyContractClauseTextBasis(
+        {
+          value_text: "Synthetic scenario: minimum licensed quantity is 2200.",
+          source_page: "1",
+          confidence: "0.8",
+          review_state: "not_reviewed",
+          source_basis: "synthetic_modelled",
+        },
+        { extractorVersion: "parser-test" },
+      ),
+    ).toMatchObject({
+      textBasis: DERIVED_CLAUSE_TEXT_BASIS,
+      confidence: null,
+      sourcePage: null,
+      sourceExcerpt: null,
+      extractorVersion: null,
+      qualityState: "unreviewed",
+    });
+  });
+  it("does not earn review from an absent marker", () => {
+    expect(
+      classifyContractClauseTextBasis({
+        value_text: "The notice period is 120 days.",
+      }).qualityState,
+    ).toBe("unreviewed");
+  });
+});
+
 function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];

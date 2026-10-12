@@ -11,10 +11,18 @@ import {
   type ContractDepthAdapterOutput,
   type ContractDepthSourceFileInput,
 } from "../../src/lib/source/contract-depth-package/adapter";
-import { contractTermGovernance } from "../../src/lib/source/contract-depth-package/clause-text-basis";
+import {
+  contractTermGovernance,
+  contractInputQualityState,
+} from "../../src/lib/source/contract-depth-package/clause-text-basis";
 import { projectContractDepthPackage } from "../../src/lib/source/contract-depth-package/projection";
 import type { CsvRecord } from "../../src/lib/source/contract-depth-package/projection";
-import { normalizeSpendSourceRow, normalizeUsageSourceRow, normalizeBatchSourceRow, preserveSourceFile } from "../../src/lib/source/contract-depth-package/source-row-normalization";
+import {
+  normalizeSpendSourceRow,
+  normalizeUsageSourceRow,
+  normalizeBatchSourceRow,
+  preserveSourceFile,
+} from "../../src/lib/source/contract-depth-package/source-row-normalization";
 import { performanceMeasureFromSource } from "../../src/lib/source/contract-intelligence/performance-units";
 import { postgresClientOptions } from "../../src/scripts/postgres-client-options";
 import {
@@ -255,7 +263,9 @@ function parseArgs(): Args {
     applyApproved:
       process.env.SOURCE_CONTRACT_DEPTH_PACKAGE_APPLY_APPROVED === "true" ||
       process.argv.includes("--apply-approved"),
-    opportunityOwnershipManifestOverride: argValue("opportunity-ownership-manifest"),
+    opportunityOwnershipManifestOverride: argValue(
+      "opportunity-ownership-manifest",
+    ),
   };
 }
 
@@ -726,8 +736,17 @@ function readSourceFiles(
   };
 }
 
-function sourcePackageHash(sourceFiles: ContractDepthSourceFileInput, ownershipDeclaration: unknown): string {
-  return sha256(JSON.stringify(ownershipDeclaration ? { sourceFiles, ownershipDeclaration } : sourceFiles));
+function sourcePackageHash(
+  sourceFiles: ContractDepthSourceFileInput,
+  ownershipDeclaration: unknown,
+): string {
+  return sha256(
+    JSON.stringify(
+      ownershipDeclaration
+        ? { sourceFiles, ownershipDeclaration }
+        : sourceFiles,
+    ),
+  );
 }
 
 function writeJson(filePath: string, value: unknown): void {
@@ -1200,7 +1219,7 @@ async function upsertContracts(
        VALUES (
          $1, $2, $3, $4, $5, NULLIF($6, '')::date, NULLIF($7, '')::date,
          NULLIF($8, '')::date, 'review_required', $9, $10, $11, 'USD',
-         $12, $13, $14, $15, $16, $17, CURRENT_DATE, $18, 'reviewed',
+         $12, $13, $14, $15, $16, $17, CURRENT_DATE, $18, $22,
          $19, $20, $21::jsonb
        )
        ON CONFLICT (tenant_key, contract_id)
@@ -1241,7 +1260,7 @@ async function upsertContracts(
         stringValue(contract, "source_file_id"),
         SOURCE_SYSTEM,
         stringValue(contract, "source_row_id"),
-        numberValue(contract, "source_confidence") ?? 0.86,
+        numberValue(contract, "source_confidence"),
         `source_contract_depth_package:${args.datasetVersion}`,
         args.loadRunId,
         JSON.stringify({
@@ -1249,6 +1268,7 @@ async function upsertContracts(
           synthetic_policy: "synthetic_demo_only_not_client_truth",
           alternatives_available: null,
         }),
+        contractInputQualityState(contract),
       ],
     );
   }
@@ -1265,6 +1285,7 @@ async function upsertContractContextFacts(
 
     const contractId = stringValue(contract, "contract_id");
     const sourceRecordId = stringValue(contract, "source_row_id");
+    const sourceDocumentId = stringValue(contract, "source_file_id") || null;
     await client.query(
       `INSERT INTO source.canonical_fact_assertion (
          tenant_key, dataset_version, assertion_id, entity_kind, entity_id,
@@ -1275,8 +1296,8 @@ async function upsertContractContextFacts(
        VALUES (
          $1, $2, $3, 'contract', $4, $4, $5, 'contract.purpose_summary',
          NULL, NULL, NULL, $6, 'source.contract_depth_adapter_row', $7, $8,
-         'Deterministic contract purpose composed from the declared archetype, contract header, and governed document extracts.',
-         0.86, 'system_extracted_synthetic_demo', $9::jsonb, $10::jsonb
+         'Purpose imported from the declared contract header; not an independently reviewed document extraction.',
+         0, 'not_reviewed', $9::jsonb, $10::jsonb
        )
        ON CONFLICT (tenant_key, dataset_version, assertion_id)
        DO UPDATE SET
@@ -1295,12 +1316,17 @@ async function upsertContractContextFacts(
         stringValue(contract, "vendor_ref"),
         SOURCE_SYSTEM,
         sourceRecordId,
-        "EVID-01",
-        JSON.stringify([sourceRecordId, "EVID-01"]),
+        sourceDocumentId,
+        JSON.stringify(
+          sourceDocumentId
+            ? [sourceRecordId, sourceDocumentId]
+            : [sourceRecordId],
+        ),
         JSON.stringify({
           value_text: purpose,
           contract_id: contractId,
           archetype: stringValue(contract, "archetype"),
+          confidence_basis: "unassessed_import_not_extraction",
           synthetic_policy: "synthetic_demo_only_not_client_truth",
         }),
       ],
@@ -1380,7 +1406,7 @@ async function upsertContractScope(
        )
        VALUES (
          $1, $2, $3, 'application', $4, $5, $6, $7, $8, $9, $10, $2,
-         CURRENT_DATE, 'reviewed', $11, $12, $13::jsonb
+         CURRENT_DATE, $14, $11, $12, $13::jsonb
        )
        ON CONFLICT (tenant_key, contract_scope_id)
        DO UPDATE SET scope_ref = EXCLUDED.scope_ref,
@@ -1402,12 +1428,13 @@ async function upsertContractScope(
         stringValue(row, "application_name"),
         stringValue(row, "scope_role"),
         stringValue(row, "relationship_method"),
-        numberValue(row, "relationship_confidence") ?? 0.8,
+        numberValue(row, "relationship_confidence") ?? 0,
         stringValue(row, "criticality"),
         SOURCE_SYSTEM,
         `source_contract_depth_package:${args.datasetVersion}`,
         args.loadRunId,
         JSON.stringify(row),
+        contractInputQualityState(row),
       ],
     );
   }
@@ -1428,7 +1455,7 @@ async function upsertSpend(
        )
        VALUES (
          $1, $2, $3, $4, $5, $6::date, $7::date, $8, $9, $10, $11, $12,
-         $13, $2, CURRENT_DATE, 0.9, 'reviewed', $14, $15, $16::jsonb
+         $13, $2, CURRENT_DATE, $18, $17, $14, $15, $16::jsonb
        )
        ON CONFLICT (tenant_key, observation_id)
        DO UPDATE SET contract_id = EXCLUDED.contract_id,
@@ -1467,6 +1494,8 @@ async function upsertSpend(
         `source_contract_depth_package:${args.datasetVersion}`,
         args.loadRunId,
         JSON.stringify(row),
+        contractInputQualityState(row),
+        numberValue(row, "source_confidence"),
       ],
     );
   }
@@ -1497,8 +1526,8 @@ async function upsertPerformance(
        )
        VALUES (
          $1, $2, $3, $4, $5, $6::date, $7::date, $8, $9, $10, $11,
-         $12, $13, $14, $15, $16, 'USD', $17, $2, CURRENT_DATE, 0.9,
-         'reviewed', $18, $19, $20::jsonb
+         $12, $13, $14, $15, $16, 'USD', $17, $2, CURRENT_DATE, $22,
+         $21, $18, $19, $20::jsonb
        )
        ON CONFLICT (tenant_key, observation_id)
        DO UPDATE SET contracted_target = EXCLUDED.contracted_target,
@@ -1510,6 +1539,8 @@ async function upsertPerformance(
                      credit_calculated = EXCLUDED.credit_calculated,
                      credit_claimed = EXCLUDED.credit_claimed,
                      credit_recovered = EXCLUDED.credit_recovered,
+                     confidence = EXCLUDED.confidence,
+                     quality_state = EXCLUDED.quality_state,
                      evidence_reference = EXCLUDED.evidence_reference,
                      load_run_id = EXCLUDED.load_run_id,
                      raw_payload = EXCLUDED.raw_payload,
@@ -1535,6 +1566,8 @@ async function upsertPerformance(
         `source_contract_depth_package:${args.datasetVersion}`,
         args.loadRunId,
         JSON.stringify(row),
+        contractInputQualityState(row),
+        numberValue(row, "source_confidence"),
       ],
     );
 
@@ -1550,12 +1583,14 @@ async function upsertPerformance(
          VALUES (
            $1, $2, $3, $4, $5::date, $6::date, $7, $8, $9, $10, 0, 'USD',
            'identified', 'Vendor management / service owner', $11, $12,
-           CURRENT_DATE, 0.9, 'reviewed', $13, $14, $15::jsonb
+           CURRENT_DATE, $17, $16, $13, $14, $15::jsonb
          )
          ON CONFLICT (tenant_key, service_credit_id)
          DO UPDATE SET credit_earned = EXCLUDED.credit_earned,
                        credit_claimed = EXCLUDED.credit_claimed,
                        credit_recovered = EXCLUDED.credit_recovered,
+                       confidence = EXCLUDED.confidence,
+                       quality_state = EXCLUDED.quality_state,
                        evidence_reference = EXCLUDED.evidence_reference,
                        load_run_id = EXCLUDED.load_run_id,
                        raw_payload = EXCLUDED.raw_payload,
@@ -1576,6 +1611,8 @@ async function upsertPerformance(
           `source_contract_depth_package:${args.datasetVersion}`,
           args.loadRunId,
           JSON.stringify(row),
+          contractInputQualityState(row),
+          numberValue(row, "source_confidence"),
         ],
       );
     }
@@ -2850,8 +2887,12 @@ async function applyLayer3(
     const ownedContracts = new Set(ownership.canonical_contract_ids);
     await upsertOptimizationSpine(client, args, {
       ...sourceFiles,
-      contracts: sourceFiles.contracts.filter((row) => ownedContracts.has(stringValue(row, "contract_id"))),
-      optimizationOpportunities: sourceFiles.optimizationOpportunities.filter((row) => ownedContracts.has(stringValue(row, "contract_id"))),
+      contracts: sourceFiles.contracts.filter((row) =>
+        ownedContracts.has(stringValue(row, "contract_id")),
+      ),
+      optimizationOpportunities: sourceFiles.optimizationOpportunities.filter(
+        (row) => ownedContracts.has(stringValue(row, "contract_id")),
+      ),
     });
   }
 
@@ -3036,9 +3077,7 @@ function expectedLayer3(
     unowned_optimization_opportunity: 0,
     optimization_baseline: ownership.canonical_contract_ids.length,
     optimization_case: new Set(
-      ownedOpportunities.map((row) =>
-        stringValue(row, "contract_id"),
-      ),
+      ownedOpportunities.map((row) => stringValue(row, "contract_id")),
     ).size,
     case_opportunity: ownedOpportunities.length,
     opportunity_evidence: opportunityEvidenceRows,
@@ -3069,8 +3108,7 @@ function expectedLayer3(
     invoice_line_fact_assertion: invoiceLineFactCount,
     batch_operations_fact_assertion: batchOperationsFactCount,
     qbr_fact_assertion: qbrFactCount,
-    opportunities_not_finance_confirmed:
-      ownedOpportunities.length,
+    opportunities_not_finance_confirmed: ownedOpportunities.length,
     contracts_with_assessed_alternatives: 0,
   };
 }
@@ -3124,12 +3162,17 @@ async function main(): Promise<void> {
     ownershipManifest,
     args,
     sourceFiles.contracts.map((row) => stringValue(row, "contract_id")),
-    sourceFiles.optimizationOpportunities.map((row) => stringValue(row, "contract_id")),
+    sourceFiles.optimizationOpportunities.map((row) =>
+      stringValue(row, "contract_id"),
+    ),
   );
   const adapted = adaptContractDepthPackage(sourceFiles);
   const projection = projectContractDepthPackage(sourceFiles);
   const rows = adapterRows(adapted);
-  const ownershipDeclaration = selectedOpportunityOwnershipDeclaration(ownershipManifest, args);
+  const ownershipDeclaration = selectedOpportunityOwnershipDeclaration(
+    ownershipManifest,
+    args,
+  );
   const packageHash = sourcePackageHash(sourceFiles, ownershipDeclaration);
   const expectedAdapterCounts = adapterCountByName(rows);
   const plan = {

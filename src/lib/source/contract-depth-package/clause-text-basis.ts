@@ -107,6 +107,18 @@ function trimmed(row: Record<string, string>, key: string): string {
   return (row[key] ?? "").trim();
 }
 
+/** Import preserves an explicit review marker; it does not perform a review. */
+export function contractInputQualityState(row: Record<string, string>): string {
+  if (trimmed(row, "source_basis") === "synthetic_modelled")
+    return "unreviewed";
+  const state = trimmed(row, "review_state") || trimmed(row, "quality_state");
+  return state === "reviewed" ||
+    state === "human_reviewed" ||
+    state === "synthetic_demo_reviewed"
+    ? "reviewed"
+    : "unreviewed";
+}
+
 function parsedConfidence(raw: string): number | null {
   if (!raw) return null;
   const parsed = Number(raw);
@@ -134,7 +146,9 @@ export function classifyContractClauseTextBasis(
   const reviewState = trimmed(clause, "review_state");
 
   const derived =
-    describesNoClauseContent(valueText) || declaresDerivedText(reviewState);
+    describesNoClauseContent(valueText) ||
+    declaresDerivedText(reviewState) ||
+    trimmed(clause, "source_basis") === "synthetic_modelled";
 
   if (derived) {
     return {
@@ -156,7 +170,7 @@ export function classifyContractClauseTextBasis(
     sourceExcerpt: valueText || null,
     extractorVersion: options.extractorVersion ?? null,
     reviewState: reviewState || DERIVED_CLAUSE_QUALITY_STATE,
-    qualityState: EXTRACTED_CLAUSE_QUALITY_STATE,
+    qualityState: contractInputQualityState(clause),
   };
 }
 
