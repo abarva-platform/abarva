@@ -113,6 +113,105 @@ describe("readTowerCommandCenter", () => {
     delete process.env.TOWER_RUNTIME_READ_ROLE;
   });
 
+  it("reads a bounded Foundation page only when requested and keeps its rows out of financial claims", async () => {
+    const summary = servingRow({
+      row_key: "executive_summary", page_key: "command_center",
+      display_payload_json: {
+        title: "Tower summary",
+        foundations: {
+          no_declared_row_id: { row_count: 17 },
+          relationship_rows: 2302,
+          segment_source_rows_mapping_pending: 4,
+          itsm_extract_available: false,
+        },
+      },
+    });
+    const foundation = {
+      ...servingRow({
+        row_key: "foundation:application:APP-041", page_key: "foundations",
+        display_payload_json: {
+          object_type: "application", source_object_id: "APP-041", title: "Example system",
+          canonical_source_record_id: "source-record-41", source_fields: { hosting_model: "cloud" },
+          source_recorded: true, source_review_state: "not_reviewed",
+          source_quality_label: "Source-reported; not independently verified",
+          approved_fy_budget_usd: null, claimable_value_usd: null,
+        },
+      }),
+      row_type: "foundation_record",
+      primary_object_id: "canonical-object-41",
+      source_refs_json: [{ source_file: "02_applications.csv", source_row: 42, source_sha256: "file-hash" }],
+    };
+    query.mockImplementation(async (sql, params) => {
+      const text = String(sql);
+      if (!text.includes("serving.tower_command_center")) return [];
+      if (text.includes("count(*)")) return [{ count: text.includes("$3") ? 41 : 41 }];
+      if (text.includes("page_key = 'foundations'")) {
+        expect(text).toContain("limit $4 offset $5");
+        expect(params).toEqual(["example-tenant", ["application", "data_flow", "infrastructure", "process"], "example", 40, 40]);
+        return [foundation];
+      }
+      expect(text).toContain("page_key <> 'foundations'");
+      return [summary];
+    });
+
+    const defaultRead = await readTowerCommandCenter({ tenantKeyCandidates: ["example-tenant"] });
+    expect(defaultRead?.foundationInventory).toBeNull();
+    expect(query.mock.calls.some(([sql]) => String(sql).includes("page_key = 'foundations'"))).toBe(false);
+
+    query.mockClear();
+    const mart = await readTowerCommandCenter({
+      tenantKeyCandidates: ["example-tenant"], includeFoundationInventory: true,
+      foundationPage: 100, foundationFilter: "operations", foundationSearch: "example",
+    });
+    expect(mart?.foundationInventory).toEqual(expect.objectContaining({
+      totalRecords: 41, matchingRecords: 41, page: 2, pageSize: 40,
+      rawMaturityRowsWithoutId: 17, rawRelationshipRows: 2302,
+      segmentRowsMappingPending: 4,
+      itsmExtractAvailable: false,
+      records: [expect.objectContaining({
+        sourceObjectId: "APP-041", sourceRecordId: "source-record-41",
+        canonicalObjectId: "canonical-object-41", sourceRow: 42,
+      })],
+    }));
+    expect(mart?.command.valueClaimCount).toBe(defaultRead?.command.valueClaimCount);
+    expect(mart?.command.realizedValueYtdAllowed).toBe(defaultRead?.command.realizedValueYtdAllowed);
+
+    query.mockClear();
+    query.mockImplementation(async (sql, params) => {
+      const text = String(sql);
+      if (!text.includes("serving.tower_command_center")) return [];
+      if (text.includes("count(*)")) return [{ count: text.includes("$3") ? 0 : 41 }];
+      if (text.includes("page_key = 'foundations'")) throw new Error("Empty search must not fetch a page");
+      expect(params).toEqual(["example-tenant"]);
+      return [summary];
+    });
+    const empty = await readTowerCommandCenter({
+      tenantKeyCandidates: ["example-tenant"], includeFoundationInventory: true,
+      foundationPage: 99, foundationFilter: "functions", foundationSearch: "nothing matches",
+    });
+    expect(empty?.foundationInventory).toEqual(expect.objectContaining({
+      totalRecords: 41, matchingRecords: 0, page: 1, records: [],
+    }));
+
+    query.mockClear();
+    query.mockImplementation(async (sql, params) => {
+      const text = String(sql);
+      if (!text.includes("serving.tower_command_center")) return [];
+      if (text.includes("count(*)")) {
+        if (text.includes("$3")) expect(params?.[1]).toBeNull();
+        return [{ count: 0 }];
+      }
+      if (text.includes("page_key = 'foundations'")) throw new Error("No Foundation page exists yet");
+      return [summary];
+    });
+    const beforePromotion = await readTowerCommandCenter({
+      tenantKeyCandidates: ["example-tenant"], includeFoundationInventory: true,
+      foundationFilter: "__proto__",
+    });
+    expect(beforePromotion?.foundationInventory).toBeNull();
+    expect(beforePromotion?.command.valueClaimCount).toBe(defaultRead?.command.valueClaimCount);
+  });
+
   it("fails closed when ECL serving rows are not loaded for a tenant", async () => {
     query.mockResolvedValue([]);
 
@@ -978,6 +1077,9 @@ describe("readTowerCommandCenter", () => {
           source_program_status: "active",
           source_program_phase: "execution",
           planning_budget_usd: 1_250_000,
+          source_stated_expected_value_usd: 3_000_000,
+          source_pct_complete: 40,
+          source_stage_gate: "gate_two",
           affected_functions: [{ function_id: "FUNC-1", function_name: "Affected function" }],
           domain_name: null,
         },
@@ -996,6 +1098,9 @@ describe("readTowerCommandCenter", () => {
           business_sponsor_role: "Case sponsor",
           operational_owner_role: "Operations owner",
           expected_value_archetype: "time_savings",
+          source_value_hypothesis: "Shorten review time",
+          source_approval_path: "Sponsor then governance council",
+          source_risk_controls: "Human review",
         },
       })],
     });
@@ -1008,6 +1113,8 @@ describe("readTowerCommandCenter", () => {
     expect(mart?.programLanes[0]?.sourceProgramStatus).toBe("active");
     expect(mart?.programLanes[0]?.sourceProgramPhase).toBe("execution");
     expect(mart?.programLanes[0]?.planningBudgetUsd).toBe(1_250_000);
+    expect(mart?.programLanes[0]?.sourceExpectedValueUsd).toBe(3_000_000);
+    expect(mart?.programLanes[0]?.sourcePctComplete).toBe(40);
     expect(mart?.programLanes[0]?.fundingAmountLoaded).toBe(false);
     expect(mart?.programLanes[0]?.technologyOwnerRole).toBe("Technology owner");
     expect(mart?.aiPortfolio[0]?.businessFunction).toBe("Business function");
@@ -1016,6 +1123,8 @@ describe("readTowerCommandCenter", () => {
     expect(mart?.aiPortfolio[0]?.sponsorRole).toBe("Case sponsor");
     expect(mart?.aiPortfolio[0]?.operationalOwnerRole).toBe("Operations owner");
     expect(mart?.aiPortfolio[0]?.expectedValueArchetype).toBe("time_savings");
+    expect(mart?.aiPortfolio[0]?.sourceValueHypothesis).toBe("Shorten review time");
+    expect(mart?.aiPortfolio[0]?.sourceApprovalPath).toBe("Sponsor then governance council");
     expect(mart?.aiPortfolio[0]?.financeStatus).toBeNull();
     const view = buildTowerCommandCenterView(mart, { tenantName: "Example tenant" });
     expect(view?.programs[0]?.affectedFunctions).toEqual([
@@ -1023,10 +1132,68 @@ describe("readTowerCommandCenter", () => {
     ]);
     expect(view?.programs[0]?.sourceProgramStatus).toBe("active");
     expect(view?.programs[0]?.planningBudgetUsd).toBe(1_250_000);
+    expect(view?.programs[0]?.sourceExpectedValueUsd).toBe(3_000_000);
+    expect(view?.programs[0]?.sourceStageGate).toBe("gate_two");
     expect(view?.programs[0]?.fundingAmountLoaded).toBe(false);
     expect(view?.allInitiatives[0]?.businessFunction).toBe("Business function");
+    expect(view?.allInitiatives[0]?.sourceRiskControls).toBe("Human review");
     expect(view?.allInitiatives[0]?.operationalOwnerRole).toBe("Operations owner");
     expect(view?.allInitiatives[0]?.financeStatus).toBeNull();
+  });
+
+  it("keeps v6 outcome and AI feed Finance assertions outside approved and claimable money", async () => {
+    const valueRow = (key: string, display: Record<string, unknown>) => ({
+      ...servingRow({
+        row_key: key,
+        page_key: "value_proof",
+        display_payload_json: { title: key, source_assertion_caveat: "Source assertion only", ...display },
+      }),
+      row_type: "value_claim_gap",
+    });
+    mockServingRows({
+      tower_command_center: [servingRow({ row_key: "executive_summary", page_key: "command_center", funded_amount_usd: null })],
+      tower_value_proof: [
+        valueRow("metric:one", {
+          baseline: "10 days", target: "6 days", observed: "8 days",
+          source_asserted_finance_value_usd: 700_000,
+          source_value_claim_status: "claimable",
+          source_claim_readiness: "ready",
+          source_data_source: "Operations system",
+        }),
+        valueRow("ai-feed-one", {
+          source_asserted_finance_value_usd: 1_000_000,
+          benefit_feed_source_funded_spend_usd: 400_000,
+          benefit_feed_source_actual_spend_ytd_usd: 200_000,
+          usage_feed_source_promised_value_usd: 1_200_000,
+          usage_feed_source_finance_assertion_usd: 900_000,
+          outcome_feed_source_finance_assertion_usd: 800_000,
+          source_finance_validation_status: "finance_validated",
+          usage_feed_source_claim_status: "pending",
+          outcome_feed_claim_status: "claimable",
+          outcome_feed_baseline: 15, outcome_feed_target: 8, outcome_feed_actual: 0,
+        }),
+      ],
+    });
+
+    const mart = await readTowerCommandCenter({ tenantKeyCandidates: ["example-tenant"] });
+    const view = buildTowerCommandCenterView(mart, { tenantName: "Example" });
+    expect(mart?.sourceValueRows).toHaveLength(2);
+    expect(mart?.sourceValueRows?.[0]).toEqual(expect.objectContaining({
+      kind: "outcome_measure", baseline: "10 days", observed: "8 days",
+      moneyAssertions: [{ sourceField: "source_asserted_finance_value_usd", label: "Outcome source: Finance amount stated", amountUsd: 700_000 }],
+    }));
+    expect(mart?.sourceValueRows?.[1]?.moneyAssertions.map((row) => row.amountUsd)).toEqual([
+      1_000_000, 400_000, 200_000, 1_200_000, 900_000, 800_000,
+    ]);
+    expect(mart?.sourceValueRows?.[1]?.statusAssertions.map((row) => row.code)).toContain("finance_validated");
+    expect(mart?.sourceValueRows?.[1]).toEqual(expect.objectContaining({
+      baseline: "15", target: "8", observed: "0",
+    }));
+    expect(view?.sourceValueRows).toHaveLength(2);
+    expect(view?.summary.approvedInvestmentUsd).toBeNull();
+    expect(view?.summary.financeValidatedAmountLoaded).toBe(false);
+    expect(view?.summary.claimableAmountLoaded).toBe(false);
+    expect(view?.summary.claimableUsd).toBe(0);
   });
 
   it("counts only source-declared production cases as active and rows with measured usage as usage-recorded", async () => {
@@ -1199,6 +1366,10 @@ describe("readTowerCommandCenter", () => {
         source_row_identity_only: true, category_business_id: null,
         additive_to_aggregate_spend: false, additive_to_contract_spend: false,
         period_basis: "annual_unspecified_year",
+        source_prior_year_actual_usd: 5_000_000,
+        source_forecast_next_year_usd: 7_000_000,
+        source_savings_opportunity_usd: 300_000,
+        source_calculation_basis: "Supplier estimate",
       }),
       cost("spend:3", 4_000_000, "Applications", [categoryRefs[1]], {
         source_row_identity_only: true, category_business_id: null,
@@ -1249,6 +1420,10 @@ describe("readTowerCommandCenter", () => {
     expect(view?.costLens?.categories).toHaveLength(2);
     expect(view?.costLens?.contractExposure[0]?.amountUsd).toBe(9_000_000);
     expect(view?.costLens?.categories[0]?.sourceRow).toBe(2);
+    expect(view?.costLens?.categories[0]?.sourcePriorYearActualUsd).toBe(5_000_000);
+    expect(view?.costLens?.categories[0]?.sourceForecastNextYearUsd).toBe(7_000_000);
+    expect(view?.costLens?.categories[0]?.sourceSavingsOpportunityUsd).toBe(300_000);
+    expect(view?.costLens?.modeledAnnualSpendUsd).toBe(10_000_000);
 
     mockServingRows({
       tower_command_center: [{ ...servingRow({ row_key: "executive_summary", page_key: "command_center" }), projection_version: 4 }],

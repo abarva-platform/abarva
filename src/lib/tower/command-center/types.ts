@@ -1,4 +1,4 @@
-import type { TowerAiAmountBasis, TowerMartCostLens } from "../current-layer-view-model";
+import type { TowerAiAmountBasis, TowerMartCostLens, TowerMartFoundationInventory, TowerMartSourceValueRow } from "../current-layer-view-model";
 
 // Tower Command Center v2 — the shape the design consumes.
 //
@@ -237,6 +237,15 @@ export interface TowerProgramView {
   fundedUsd: number;
   /** Source-listed program plan; separate from approved fiscal-year funding. */
   planningBudgetUsd?: number | null;
+  sourceExpectedValueUsd?: number | null;
+  sourceStartDate?: string | null;
+  sourceEndDate?: string | null;
+  sourcePctComplete?: number | null;
+  sourceStageGate?: string | null;
+  sourceBenefitRealizationStart?: string | null;
+  sourceBlockedReason?: string | null;
+  sourceObjective?: string | null;
+  sourceTargetOutcomes?: string | null;
   /** False when a program has no source-approved FY26 funding amount. */
   fundingAmountLoaded?: boolean;
   promisedUsd: number;
@@ -368,6 +377,10 @@ export interface TowerAiView {
   sourceCaseStatus?: string | null;
   operationalOwnerRole?: string | null;
   expectedValueArchetype?: string | null;
+  sourceValueHypothesis?: string | null;
+  sourceApprovalPath?: string | null;
+  sourceRiskControls?: string | null;
+  sourceRequiredSystems?: string | null;
   /** 0–100, mart `risk_score`. Candidate pipeline diagnostic. */
   riskScore: number;
   /** Bubble size. */
@@ -640,6 +653,10 @@ export interface TowerCommandCenterView {
   spendLens: readonly TowerSpendLensRow[];
   /** Active governed annual spend breakdown. Contract exposure is a separate population. */
   costLens?: TowerMartCostLens | null;
+  /** Separate source assertions, never inputs to approved or claimable totals. */
+  sourceValueRows?: readonly TowerMartSourceValueRow[];
+  /** Exact-ID source inventory, separate from AI foundation funding and benefit cases. */
+  foundationInventory?: TowerMartFoundationInventory | null;
   /** Business evidence gaps — what proof is missing before value can be claimed. */
   gaps: readonly TowerEvidenceGapView[];
   /** Executive maturity diagnosis for sparse evidence states and reload work. */

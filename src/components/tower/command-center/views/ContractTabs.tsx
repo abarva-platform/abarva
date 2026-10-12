@@ -39,6 +39,7 @@ import { cx } from "../primitives";
 import { approvedAiCaseFunding, isBusinessCase } from "./portfolio-kind";
 import { byEvidencePriority, evidenceGapAmount } from "./evidence-gap-amount";
 import { expectedBenefitKindLabel } from "./expected-benefit-kind";
+import { SourceValueAssertionsPanel } from "./SourceValueAssertionsPanel";
 
 type Tone = "teal" | "amber" | "red" | "gray";
 type AiLens = "cost" | "risk" | "adoption" | "table";
@@ -452,6 +453,9 @@ export function ValueProofContractView({
   const s = view.summary;
   const recordedPAndL = trajectoryRecordedPAndLUsd(view);
   const programs = topPrograms(view, 20);
+  const hasProgramSourceExpectedValue = programs.some((program) =>
+    program.sourceExpectedValueUsd !== null && program.sourceExpectedValueUsd !== undefined,
+  );
   const hasTrajectory = view.valueTrajectory.length > 0;
   return (
     <div className={styles.contractView}>
@@ -509,7 +513,9 @@ export function ValueProofContractView({
           )}
           <p className={styles.contractCallout}>
             {!hasTrajectory
-              ? "No quarterly plan or actual-result rows are loaded, so there is no quarter-by-quarter comparison to assess."
+              ? (view.sourceValueRows?.length ?? 0) > 0
+                ? "No quarterly financial trajectory is loaded. The separate source outcome observations below are operational measures, not quarterly financial results."
+                : "No quarterly plan or actual-result rows are loaded, so there is no quarter-by-quarter comparison to assess."
               : recordedPAndL === null
                 ? "The loaded quarters have no recorded financial result. Gray bars show any plan amounts recorded for those quarters."
                 : "The red line shows actual financial results for the loaded quarters; gray bars show the plan. This is a complete eight-quarter view only when all eight quarters are loaded."}
@@ -550,6 +556,7 @@ export function ValueProofContractView({
                   <th>#</th>
                   <th>Program</th>
                   <th>Projected yearly benefit</th>
+                  {hasProgramSourceExpectedValue ? <th>Expected value in source plan</th> : null}
                   <th>Proof progress</th>
                 </tr>
               </thead>
@@ -567,8 +574,15 @@ export function ValueProofContractView({
                       <span>{program.ownerRole ?? "Unassigned owner"}</span>
                     </td>
                     <td>
-                      {program.promisedBenefitLoaded ? formatUsdM(program.promisedUsd) : "Not loaded"}
+                      {program.promisedBenefitLoaded
+                        ? formatUsdM(program.promisedUsd)
+                        : program.sourceExpectedValueUsd !== null && program.sourceExpectedValueUsd !== undefined
+                          ? "Not verified as a yearly benefit"
+                          : "Not loaded"}
                     </td>
+                    {hasProgramSourceExpectedValue ? (
+                      <td>{program.sourceExpectedValueUsd === null || program.sourceExpectedValueUsd === undefined ? "Not recorded" : formatUsdM(program.sourceExpectedValueUsd)}</td>
+                    ) : null}
                     <td>{formatPct(program.proofMaturityScore)}</td>
                   </tr>
                 ))}
@@ -576,11 +590,14 @@ export function ValueProofContractView({
             </table>
           </div>
           <p className={styles.contractCallout}>
+            {hasProgramSourceExpectedValue ? "Expected values are source-stated plans with no verified fiscal period or approval. " : ""}
             These are program-level planning amounts where recorded, not benefits already earned.
             Their relationship to the portfolio estimate is not reconciled here; do not add them to it.
           </p>
         </article>
       </section>
+
+      <SourceValueAssertionsPanel rows={view.sourceValueRows ?? []} />
 
       <footer className={styles.contractFoot}>
         {s.tenantName} · tool use, Finance review, and permission to report a benefit are separate steps
@@ -839,6 +856,12 @@ export function AiPortfolioContractView({
   const caseFunding = approvedAiCaseFunding(view.allInitiatives);
   const aiRows = topAiRows(view);
   const costLensFindings = costFindings(view);
+  const separateAiFeedCount = view.sourceValueRows?.filter((row) => row.kind === "ai_feed_claim").length ?? 0;
+  const hasSourceCategoryPlans = view.costLens?.categories.some((row) =>
+    row.sourcePriorYearActualUsd !== null && row.sourcePriorYearActualUsd !== undefined ||
+    row.sourceForecastNextYearUsd !== null && row.sourceForecastNextYearUsd !== undefined ||
+    row.sourceSavingsOpportunityUsd !== null && row.sourceSavingsOpportunityUsd !== undefined,
+  ) ?? false;
   const adoptionLensRows = adoptionRows(view);
   const [lens, setLens] = useState<AiLens>("table");
   const lensOptions = [
@@ -893,6 +916,12 @@ export function AiPortfolioContractView({
         </div>
       </div>
 
+      {separateAiFeedCount > 0 ? (
+        <p className={styles.contractCallout}>
+          {formatCount(separateAiFeedCount)} AI source {separateAiFeedCount === 1 ? "group is" : "groups are"} shown under Results and proof. A group can contain benefit, usage and KPI records. No declared link connects these groups to the cases in this table, so Tower does not attach their amounts or statuses to a case.
+        </p>
+      ) : null}
+
       {lens === "cost" ? (
         <>
         {view.costLens ? (
@@ -909,11 +938,23 @@ export function AiPortfolioContractView({
             <details className={cx(styles.contractCard, styles.costStoryDetails)}>
               <summary>See all {formatCount(view.costLens.categories.length)} spend categories</summary>
               <p>These rows make up the annual IT spend total above. Do not add them to that total again. Category business IDs are not available.</p>
+              {hasSourceCategoryPlans ? (
+                <p>These are source-reported prior-year figures, next-year forecasts and possible savings for each row. Their fiscal periods and savings have not been verified for Tower reporting, so Tower does not add them to approved budget or benefit totals.</p>
+              ) : null}
               <div className={styles.costStoryTableWrap}>
                 <table className={styles.costStoryTable}>
-                  <thead><tr><th scope="col">Spend category</th><th scope="col">Annual amount</th><th scope="col">Source row</th></tr></thead>
+                  <thead><tr><th scope="col">Spend category</th><th scope="col">Annual amount</th>{hasSourceCategoryPlans ? <><th scope="col">Prior year, source stated</th><th scope="col">Next year, source forecast</th><th scope="col">Possible savings, source estimate</th></> : null}<th scope="col">Source row</th></tr></thead>
                   <tbody>{view.costLens.categories.map((row) => (
-                    <tr key={row.id}><th scope="row">{row.label}</th><td>{usd.format(row.amountUsd)}</td><td>{row.sourceFile} · row {row.sourceRow}</td></tr>
+                    <tr key={row.id}>
+                      <th scope="row">{row.label}{row.sourceCalculationBasis ? <small> · Source calculation: {row.sourceCalculationBasis}</small> : null}</th>
+                      <td>{usd.format(row.amountUsd)}</td>
+                      {hasSourceCategoryPlans ? <>
+                        <td>{row.sourcePriorYearActualUsd === null || row.sourcePriorYearActualUsd === undefined ? "Not recorded" : usd.format(row.sourcePriorYearActualUsd)}</td>
+                        <td>{row.sourceForecastNextYearUsd === null || row.sourceForecastNextYearUsd === undefined ? "Not recorded" : usd.format(row.sourceForecastNextYearUsd)}</td>
+                        <td>{row.sourceSavingsOpportunityUsd === null || row.sourceSavingsOpportunityUsd === undefined ? "Not recorded" : usd.format(row.sourceSavingsOpportunityUsd)}</td>
+                      </> : null}
+                      <td>{row.sourceFile} · row {row.sourceRow}</td>
+                    </tr>
                   ))}</tbody>
                 </table>
               </div>

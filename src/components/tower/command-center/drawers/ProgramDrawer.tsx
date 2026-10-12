@@ -80,6 +80,12 @@ export function ProgramDrawer({
   const open = program !== null;
   const p = program;
   const tone = p ? LANE_TONE[p.lane] : "gray";
+  const hasSourcePlan = p !== null && (
+    p.sourceExpectedValueUsd !== null && p.sourceExpectedValueUsd !== undefined ||
+    p.sourcePctComplete !== null && p.sourcePctComplete !== undefined ||
+    Boolean(p.sourceStartDate || p.sourceEndDate || p.sourceStageGate || p.sourceBenefitRealizationStart ||
+      p.sourceObjective || p.sourceTargetOutcomes || p.sourceBlockedReason)
+  );
 
   const chain = p
     ? ([
@@ -200,6 +206,28 @@ export function ProgramDrawer({
               : formatUsdM(p.planningBudgetUsd)}
             sub="The source lists this planning amount. Its fiscal year and approval are not verified, so it is separate from approved FY26 funding."
           />
+
+          {hasSourcePlan ? (
+            <>
+              <DrawerSection>Plan and progress reported in the source</DrawerSection>
+              <p className={cx(styles.recBox, styles.muted)}>
+                These are source-stated plans and progress. Expected value is neither an approved return nor a result already earned.
+              </p>
+              {p.sourceExpectedValueUsd !== null && p.sourceExpectedValueUsd !== undefined ? (
+                <DrawerRow label="Expected value stated in source" value={formatUsdM(p.sourceExpectedValueUsd)} sub="The source does not establish a fiscal period or Finance approval for this estimate." />
+              ) : null}
+              {p.sourcePctComplete !== null && p.sourcePctComplete !== undefined ? (
+                <DrawerRow label="Completion reported in source" value={formatPct(p.sourcePctComplete)} sub="A reported progress percentage does not prove a delivery gate passed." />
+              ) : null}
+              {p.sourceStartDate ? <DrawerRow label="Planned start" value={p.sourceStartDate} /> : null}
+              {p.sourceEndDate ? <DrawerRow label="Planned end" value={p.sourceEndDate} /> : null}
+              {p.sourceStageGate ? <DrawerRow label="Stage reported in source" value={p.sourceStageGate.replaceAll("_", " ")} sub={`Source code: ${p.sourceStageGate}`} /> : null}
+              {p.sourceBenefitRealizationStart ? <DrawerRow label="Benefit measurement planned to start" value={p.sourceBenefitRealizationStart} /> : null}
+              {p.sourceObjective ? <DrawerRow label="What this work aims to do" value={p.sourceObjective} /> : null}
+              {p.sourceTargetOutcomes ? <DrawerRow label="Results it aims for" value={p.sourceTargetOutcomes} /> : null}
+              {p.sourceBlockedReason ? <DrawerRow label="Obstacle reported in source" value={p.sourceBlockedReason} /> : null}
+            </>
+          ) : null}
 
           <DrawerSection note={p.blockedValueComparable
             ? "— how a projected benefit moves toward an amount that can be reported"
