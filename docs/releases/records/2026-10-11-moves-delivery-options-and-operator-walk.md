@@ -65,6 +65,8 @@ Release lane: `experimental`.
   is outside that census. No coverage value was tuned to avoid a collision.
 - Reconciled ROM suites: pass, 70 tests. Targeted ESLint: pass. Library orphan,
   route reachability and export reachability checks: pass, no new findings.
+  Node 24 typecheck: pass. All 11 release gates: pass. Generated manual,
+  coverage and tenancy census checks: pass. Browser discovery: pass, one test.
   Current-head CI and the final fetched-ref collision guard remain pending
   until the reconciled candidate is pushed and checked.
 
