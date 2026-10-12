@@ -50,7 +50,10 @@ import {
 import {
   PROJECTION_READINESS_TABLE,
   SIGNAL_READINESS_TABLE,
+  narrativeReadinessOnlyMode,
+  assertNarrativeInspectionScope,
   readinessKey,
+  narrativeReadinessIssues,
   signalSourceHash,
   verifiedReadiness,
   type NarrativeReadinessProof,
@@ -3121,19 +3124,30 @@ async function writeNarrativeRows(
 
 async function main() {
   const options = parseCli();
+  const readinessOnly = narrativeReadinessOnlyMode(process.argv, process.env, WRITE, options.fromPlanPath);
+  if (readinessOnly) assertNarrativeInspectionScope(
+    cliValue("--tenant") ?? process.env.ECL_DENSE_TENANT_KEY,
+    cliValue("--assessment") ?? process.env.ECL_DENSE_ASSESSMENT_ID,
+  );
   fs.mkdirSync(options.outDir, { recursive: true });
 
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required to read ECL Home projection rows.");
   if (options.fromPlanPath && !WRITE) throw new Error("--from-plan is only valid with approved write mode.");
   if (WRITE && !options.fromPlanPath) throw new Error("Approved writes require --from-plan <plan-json>; rerun plan first and commit that artifact.");
-  if (!options.fromPlanPath && !process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is required to generate Home narrative.");
+  if (!readinessOnly && !options.fromPlanPath && !process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is required to generate Home narrative.");
 
   const db = new Client({ connectionString: process.env.DATABASE_URL });
 
   await db.connect();
   try {
+    if (readinessOnly) {
+      await db.query("begin isolation level repeatable read read only");
+      await db.query("select set_config('app.tenant_key', $1, true)", [options.tenantKey]);
+      await db.query("set local statement_timeout = '60s'");
+      await db.query("set local lock_timeout = '15s'");
+    }
     const rows = await readHomeProjectionRows(db, options.tenantKey, options.assessmentId, options.projectionVersion);
-    if (rows.length === 0) throw new Error(`No Home ECL projection rows found for ${options.tenantKey}/${options.assessmentId}.`);
+    if (!readinessOnly && rows.length === 0) throw new Error(`No Home ECL projection rows found for ${options.tenantKey}/${options.assessmentId}.`);
 
     const readinessProofs = await readNarrativeReadinessProofs(db, options.tenantKey);
     const verifiedSourceRefs = await readNarrativeSourceLinks(db, options.tenantKey, options.assessmentId);
@@ -3149,6 +3163,58 @@ async function main() {
       sourceRows,
       readinessProofs,
     );
+    if (readinessOnly) {
+      const refusal = narrativeEvidenceRefusal({ signalPacket, contextPolicyProof });
+      const result = {
+        contract_version: "home-narrative-readiness-inspection/v1",
+        tenantKey: options.tenantKey,
+        assessmentId: options.assessmentId,
+        projectionVersion: options.projectionVersion,
+        writeApplied: false,
+        modelInvoked: false,
+        source_projection_rows: rows.length,
+        projection_content_hash: hashJson(rows),
+        tenant_readiness_records: readinessProofs.size,
+        projection_readiness_issues: rows.filter(isFactCandidateRow).map((row) => ({
+          projection_entry_id: row.projection_entry_id,
+          page_key: row.page_key,
+          row_key: row.row_key,
+          issues: narrativeReadinessIssues(
+            readinessProofs.get(readinessKey(PROJECTION_READINESS_TABLE, row.projection_entry_id)),
+            options.tenantKey,
+            row.source_hash,
+            hashJson(row),
+          ),
+        })).filter((row) => row.issues.length > 0),
+        verified_source_linked_entries: rows.filter((row) => verifiedSourceRefs.get(row.projection_entry_id)?.has(row.source_hash)).length,
+        signal_count: signalPacket.signals.length,
+        context_item_count: signalPacket.contextItems.length,
+        contextPolicyProof,
+        governed_evidence_ready: refusal === null,
+        refusal,
+        scope: "Governed packet readiness only; no publication, review, serving, or activation proof.",
+      };
+      await db.query("rollback");
+      const outFile = path.join(options.outDir, `${options.tenantKey}-home-narrative-readiness.json`);
+      fs.writeFileSync(outFile, JSON.stringify(result, null, 2));
+      console.log(JSON.stringify({
+        checkpoint: "home_narrative_readiness",
+        tenantKey: result.tenantKey,
+        assessmentId: result.assessmentId,
+        projectionVersion: result.projectionVersion,
+        writeApplied: false,
+        modelInvoked: false,
+        source_projection_rows: result.source_projection_rows,
+        readiness_issue_rows: result.projection_readiness_issues.length,
+        verified_source_linked_entries: result.verified_source_linked_entries,
+        signal_count: result.signal_count,
+        governed_evidence_ready: result.governed_evidence_ready,
+        refusal: result.refusal,
+        out_file: outFile,
+      }));
+      emitHomeNarrativeProofBundle(outFile, result, options);
+      return;
+    }
     const narrativePacketArtifact = createHomeNarrativePacketArtifact({
       tenantKey: options.tenantKey,
       assessmentId: options.assessmentId,
@@ -3297,6 +3363,7 @@ async function main() {
     }));
     emitHomeNarrativeProofBundle(outFile, result, options);
   } finally {
+    if (readinessOnly) await db.query("rollback").catch(() => undefined);
     await db.end();
   }
 }
