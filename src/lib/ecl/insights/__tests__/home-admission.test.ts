@@ -226,6 +226,8 @@ it("changes the page/advisor/export equality marker and preserves inspectable so
       format: "html",
     }),
   ).toContain("A declared dependency needs review.");
+  expect(renderHomeWalkthroughHtml({ ...next, tenantLabel: "Synthetic test", format: "html" }))
+    .toContain(homeRecordSourceToken(tenantKey, next.recordSource));
 });
 it("provides the same admitted claim to aVa even with a different chapter active", async () => {
   const create = jest.fn().mockResolvedValue({

@@ -21,6 +21,7 @@ import {
   type EnterpriseContextAbsence,
 } from "./enterprise-context";
 import type { HomeEnterpriseContext } from "@/lib/home/preview/ecl-enterprise-context";
+import { homeRecordSourceToken } from "@/lib/home/preview/record-source-token";
 import {
   homeNarrativeStatusLabel,
   homePriorInterpretationLabel,
@@ -391,6 +392,7 @@ export function renderHomeWalkthroughHtml({
   <p class="meta">Narrative generated ${escapeHtml(compiled)}. Data as of ${escapeHtml(dataAsOf)}. ${signalCount.toLocaleString()} signals and ${factCount.toLocaleString()} governed facts.</p>
   <section class="scope">
     <strong>Record on screen: ${escapeHtml(sourceLabel)}</strong>
+    <p class="meta">Record binding: ${escapeHtml(homeRecordSourceToken(bundle.tenantKey, recordSource))}</p>
     <p>${escapeHtml(narrativeStatus)}</p>
     ${sourceCoverage ? `<p>${escapeHtml(sourceCoverage)}</p>` : ""}
     ${sourceFileReview ? `<p>${escapeHtml(sourceFileReview)}</p>` : ""}
@@ -775,6 +777,7 @@ export function buildHomeWalkthroughPdf({
         </Text>
         <View style={pdfStyles.scope}>
           <Text style={pdfStyles.text}>Record on screen: {sourceLabel}</Text>
+          <Text style={pdfStyles.meta}>Record binding: {homeRecordSourceToken(bundle.tenantKey, recordSource)}</Text>
           <Text style={pdfStyles.text}>{narrativeStatus}</Text>
           {sourceCoverage ? (
             <Text style={pdfStyles.text}>{sourceCoverage}</Text>
