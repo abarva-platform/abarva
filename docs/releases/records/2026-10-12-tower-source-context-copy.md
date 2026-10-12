@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The Tower program and AI use-case details now explain source status, work stage, and expected benefit type in everyday words. Each row also shows the source value, so a reader can check what the intake actually said. The program-by-function panel describes loaded row counts and clearly marks approved funding by function as unverified. Usage counts in AI details appear as text without a percentage bar when the adoption rate is missing. A source category that sounds funded is shown as a program until approved funding is verified. The wording describes a plan or reported state; it does not turn it into a verified result.
+The Tower program and AI use-case details now explain source status, work stage, and expected benefit type in everyday words. Each row also shows the source value, so a reader can check what the intake actually said. The program-by-function panel describes loaded row counts and clearly marks approved funding by function as unverified. Usage counts in AI details appear as text without a percentage bar when the adoption rate is missing. A source category that sounds funded is shown as a program until approved funding is verified. Program benefit steps show Finance and reporting amounts as unverified when their source-backed measures are absent. The wording describes a plan or reported state; it does not turn it into a verified result.
 
 ## Layer Impact
 
@@ -38,10 +38,11 @@ Release lane: `global-control-lane`.
 - Labels the program-by-function panel as loaded row counts; it does not add planning amounts or imply approved funding by function.
 - Shows count-only AI usage as text and reserves the percentage bar for recorded adoption rates.
 - Keeps a source category suggesting funded work visible as a source key, while the drawer uses a neutral program label until approved funding is recorded.
+- Keeps Finance review and reporting clearance descriptions conditional on source-backed amounts, and asks readers to check approval evidence before treating source assertions as confirmed.
 
 ## QA / Validation
 
-- Pass: 43 focused Tower tests across four suites cover source-code readback, planned-benefit language, the three registered expected-benefit types, program-by-function copy with and without rows, two count-only usage metrics without a percentage bar, and a funded-sounding source category with unverified funding.
+- Pass: 44 focused Tower tests across four suites cover source-code readback, planned-benefit language, the three registered expected-benefit types, program-by-function copy with and without rows, two count-only usage metrics without a percentage bar, a funded-sounding source category with unverified funding, and unverified Finance/reporting step wording.
 - Pass: focused ESLint, full TypeScript typecheck, `git diff --check`, and all 11 release checks.
 - Pending: protected PR CI for the updated head. It is required before merge.
 

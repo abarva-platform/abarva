@@ -56,11 +56,11 @@ export function plainProgram(p: TowerProgramView): string {
     return "This case records $0 in projected direct benefit. It may help other cases, but that link is not recorded here, so no downstream benefit is assigned to it.";
   }
   const claim =
-    p.claimableAmountLoaded === false
-      ? "A cleared amount is not verified"
+    p.claimableAmountLoaded !== true
+      ? "A reportable amount is not verified"
       : p.claimableUsd > 0
-      ? `${formatUsdM(p.claimableUsd)} has cleared reporting in the loaded months`
-      : "none has cleared reporting in the loaded months";
+        ? `The source marks ${formatUsdM(p.claimableUsd)} reportable in the loaded months; approval evidence still needs checking`
+        : "The source records no reportable amount in the loaded months";
   const because = p.blocker
     ? ` — because ${p.blocker.charAt(0).toLowerCase()}${p.blocker.slice(1).replace(/\.$/, "")}`
     : "";
@@ -100,16 +100,20 @@ export function ProgramDrawer({
             : "no independent usage value measurement recorded",
         ],
         [
-          "Checked by Finance",
-          p.financeValidatedUsd > 0 ? p.financeValidatedUsd : null,
-          p.financeValidatedUsd > 0 ? "teal" : "red",
-          "Finance has signed the measurement method",
+          "Finance review",
+          p.financeValidatedAmountLoaded === true ? p.financeValidatedUsd : null,
+          p.financeValidatedAmountLoaded === true && p.financeValidatedUsd > 0 ? "teal" : "",
+          p.financeValidatedAmountLoaded === true
+            ? "the source lists this as Finance-reviewed; check approval evidence and period"
+            : "Finance confirmation and amount are not verified here",
         ],
         [
-          "Cleared for reporting",
-          p.claimableUsd > 0 ? p.claimableUsd : null,
-          p.claimableUsd > 0 ? "teal" : "red",
-          "approved for reporting in the months loaded here",
+          "Reporting clearance",
+          p.claimableAmountLoaded === true ? p.claimableUsd : null,
+          p.claimableAmountLoaded === true && p.claimableUsd > 0 ? "teal" : "",
+          p.claimableAmountLoaded === true
+            ? "the source marks this amount reportable for loaded months; check approval evidence"
+            : "Reporting clearance and amount are not verified here",
         ],
         [
           "Amount still under review",
@@ -175,16 +179,16 @@ export function ProgramDrawer({
               }
             />
             <DrawerStat
-              label="Finance-validated"
-              value={p.financeValidatedAmountLoaded === false ? "Not verified" : p.financeValidatedAmountLoaded === true || p.financeValidatedUsd > 0 ? formatUsdM(p.financeValidatedUsd) : p.financeStatus === "validated" ? "Amount not shown" : "Not loaded"}
+              label="Finance review amount"
+              value={p.financeValidatedAmountLoaded === true ? formatUsdM(p.financeValidatedUsd) : "Not verified"}
               small
-              tone={p.financeValidatedUsd > 0 ? "vTeal" : undefined}
+              tone={p.financeValidatedAmountLoaded === true && p.financeValidatedUsd > 0 ? "vTeal" : undefined}
             />
             <DrawerStat
-              label="Cleared in loaded months"
-              value={p.claimableAmountLoaded === false ? "Not verified" : p.claimableUsd > 0 ? formatUsdM(p.claimableUsd) : "Recorded $0"}
+              label="Reportable in loaded months"
+              value={p.claimableAmountLoaded === true ? formatUsdM(p.claimableUsd) : "Not verified"}
               small
-              tone={p.claimableUsd > 0 ? "vTeal" : "vRed"}
+              tone={p.claimableAmountLoaded === true ? p.claimableUsd > 0 ? "vTeal" : "vRed" : undefined}
             />
           </div>
 
@@ -199,7 +203,11 @@ export function ProgramDrawer({
               label={label}
               sub={definition}
               value={
-                label === "Value measured from use" && !p.usageSupportedValueMeasured
+                label === "Finance review" && p.financeValidatedAmountLoaded !== true
+                  ? "Not verified"
+                  : label === "Reporting clearance" && p.claimableAmountLoaded !== true
+                    ? "Not verified"
+                  : label === "Value measured from use" && !p.usageSupportedValueMeasured
                   ? "Not measured"
                   : label === "Amount still under review" && !p.blockedValueComparable
                     ? "Not comparable"

@@ -46,6 +46,29 @@ describe("Tower detail proof states", () => {
     expect(within(drawer).getByText(/Approved FY26 funding is not verified/)).toBeInTheDocument();
   });
 
+  it("does not claim Finance sign-off or reporting clearance for unverified program amounts", () => {
+    const program: TowerProgramView = {
+      ...view.programs[0]!,
+      promisedBenefitLoaded: true,
+      promisedUsd: 20_000_000,
+      financeValidatedUsd: 13_000_000,
+      financeValidatedAmountLoaded: false,
+      claimableUsd: 8_000_000,
+      claimableAmountLoaded: false,
+    };
+    render(<ProgramDrawer program={program} onClose={() => {}} onSeeAction={() => {}} />);
+    const drawer = screen.getByRole("dialog");
+    expect(within(drawer).getByText("Finance review amount").parentElement).toHaveTextContent("Not verified");
+    expect(within(drawer).getByText("Reportable in loaded months").parentElement).toHaveTextContent("Not verified");
+    expect(within(drawer).getByText("Finance review").parentElement).toHaveTextContent("Not verified");
+    expect(within(drawer).getByText("Reporting clearance").parentElement).toHaveTextContent("Not verified");
+    expect(within(drawer).getByText("Finance confirmation and amount are not verified here")).toBeInTheDocument();
+    expect(within(drawer).getByText("Reporting clearance and amount are not verified here")).toBeInTheDocument();
+    expect(within(drawer).getByText(/A reportable amount is not verified/)).toBeInTheDocument();
+    expect(within(drawer).queryByText(/Finance has signed the measurement method/)).not.toBeInTheDocument();
+    expect(within(drawer).queryByText(/approved for reporting in the months loaded here/)).not.toBeInTheDocument();
+  });
+
   it("shows declared AI case context separately from Finance verification", () => {
     const caseRow: TowerAiView = {
       ...view.allInitiatives[0]!,
