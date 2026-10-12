@@ -1,11 +1,11 @@
 import { createHash, webcrypto } from "node:crypto";
-import registry from "../../../../datasets/tenant-inputs/tenant-input-registry.json";
+import registry from "../../../datasets/tenant-inputs/tenant-input-registry.json";
 import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
 import type {
   DelegatedApproval,
   DelegatedDecisionScope,
   ApprovalEvidenceContext,
-} from "../delegated-approval";
+} from "@/lib/governance/delegated-approval";
 
 const digest = (value: Uint8Array | string) =>
   createHash("sha256").update(value).digest("hex");
@@ -129,7 +129,7 @@ function fixture(
     },
   };
   jest.resetModules();
-  jest.doMock("../delegation-authority-roots.json", () => ({
+  jest.doMock("@/lib/governance/delegation-authority-roots.json", () => ({
     roots: [
       {
         authority_id: "test-authority",
@@ -145,7 +145,7 @@ function fixture(
       },
     ],
   }));
-  jest.doMock("../delegation-trusted-decisions.json", () => ({
+  jest.doMock("@/lib/governance/delegation-trusted-decisions.json", () => ({
     decisions: options.untrusted
       ? []
       : [
@@ -158,7 +158,7 @@ function fixture(
         ],
   }));
   if (options.dual)
-    jest.doMock("../delegation-trusted-decisions.json", () => ({
+    jest.doMock("@/lib/governance/delegation-trusted-decisions.json", () => ({
       decisions: [
         {
           authority_id: "test-authority",
@@ -174,11 +174,11 @@ function fixture(
         },
       ],
     }));
-  const api = jest.requireActual<typeof import("../delegated-approval")>(
-    "../delegated-approval",
+  const api = jest.requireActual<typeof import("@/lib/governance/delegated-approval")>(
+    "@/lib/governance/delegated-approval",
   );
-  const manifests = jest.requireActual<typeof import("../dataset-manifest")>(
-    "../dataset-manifest",
+  const manifests = jest.requireActual<typeof import("@/lib/governance/dataset-manifest")>(
+    "@/lib/governance/dataset-manifest",
   );
   return {
     api,
@@ -204,8 +204,8 @@ beforeEach(() => {
 });
 afterEach(() => {
   jest.useRealTimers();
-  jest.dontMock("../delegation-authority-roots.json");
-  jest.dontMock("../delegation-trusted-decisions.json");
+  jest.dontMock("@/lib/governance/delegation-authority-roots.json");
+  jest.dontMock("@/lib/governance/delegation-trusted-decisions.json");
 });
 
 describe("explicit delegated approvals", () => {
@@ -243,7 +243,7 @@ describe("explicit delegated approvals", () => {
         delegated_decision: f.declaration,
       },
     };
-    const binding: import("../dataset-manifest").ServingBinding = {
+    const binding: import("@/lib/governance/dataset-manifest").ServingBinding = {
       dataset_id: f.scope.dataset_id,
       tenant_key: tenant,
       assessment_id: f.scope.assessment_id,
@@ -615,7 +615,7 @@ describe("explicit delegated approvals", () => {
     expect(
       f.manifests.resolveServingApproval(
         [manifest],
-        binding as import("../dataset-manifest").ServingBinding,
+        binding as import("@/lib/governance/dataset-manifest").ServingBinding,
       ).approved,
     ).toBe(false);
     const evidence = await f.api.loadDelegationEvidence(
@@ -628,7 +628,7 @@ describe("explicit delegated approvals", () => {
     expect(
       f.manifests.resolveServingApproval(
         [manifest],
-        binding as import("../dataset-manifest").ServingBinding,
+        binding as import("@/lib/governance/dataset-manifest").ServingBinding,
         { ...evidence, now },
       ).approved,
     ).toBe(true);
@@ -638,7 +638,7 @@ describe("explicit delegated approvals", () => {
         {
           ...binding,
           extra_bindings: {},
-        } as import("../dataset-manifest").ServingBinding,
+        } as import("@/lib/governance/dataset-manifest").ServingBinding,
         { ...evidence, now },
       ).approved,
     ).toBe(false);
