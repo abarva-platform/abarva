@@ -10,14 +10,42 @@ import { describeMoveUploadRefusal } from "@/lib/programs/move-upload-refusal";
  */
 
 /** The raw artifacts read. Callers keep their own readback rules over it. */
+const inFlightEvidenceReads = new Map<
+  string,
+  Promise<Record<string, unknown>>
+>();
+
+export function hasCompleteMoveEvidenceLists(
+  body: Record<string, unknown>,
+): boolean {
+  return (
+    Array.isArray(body.pendingEvidenceReviews) &&
+    Array.isArray(body.reviewedEvidence)
+  );
+}
+
 export async function fetchMoveEvidence(
   moveId: string,
 ): Promise<Record<string, unknown>> {
-  const response = await fetch(`/api/v1/programs/${moveId}/artifacts`, {
-    credentials: "include",
-  });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return (await response.json()) as Record<string, unknown>;
+  const existing = inFlightEvidenceReads.get(moveId);
+  if (existing) return existing;
+  const result = (async () => {
+    const response = await fetch(`/api/v1/programs/${moveId}/artifacts`, {
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return (await response.json()) as Record<string, unknown>;
+  })();
+  inFlightEvidenceReads.set(moveId, result);
+  void result.then(
+    () => {
+      inFlightEvidenceReads.delete(moveId);
+    },
+    () => {
+      inFlightEvidenceReads.delete(moveId);
+    },
+  );
+  return result;
 }
 
 /**
@@ -59,6 +87,7 @@ export async function uploadMoveEvidence(input: {
       }),
     );
   }
+  inFlightEvidenceReads.delete(input.moveId);
   return body;
 }
 
@@ -103,4 +132,5 @@ export async function decideMoveEvidence(input: {
       }),
     );
   }
+  inFlightEvidenceReads.delete(input.moveId);
 }

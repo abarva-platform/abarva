@@ -70,6 +70,7 @@ import {
   resolvePhaseWorkflow,
 } from "@/lib/programs/phase-workflow-registry";
 import { describeGateSignOffReadback } from "@/lib/programs/gate-sign-off-readback";
+import { fetchMoveEvidence } from "@/lib/programs/move-evidence-client";
 import { resolvePhaseBuildBlock } from "@/lib/programs/phase-build-action-state";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -384,6 +385,9 @@ interface MovesPhaseStandaloneClientProps {
   p3PriorPhaseContent?: DeliverableContentSignal[];
   phaseBuildArtifacts?: PhaseBuildArtifact[];
   phaseNavigationStatus?: PhaseNavigationStatus;
+  /** Complete server readback for flagged step heads; undefined keeps legacy refresh. */
+  initialSignOffReadable?: boolean;
+  phaseBuildArtifactsAvailable?: boolean;
   initialStageReadinessPreview?: StageReadinessWorkbookParsePreview | null;
   syntheticEvidencePackHref?: string | null;
   currentStateReadiness?: ReadinessReport | null;
@@ -405,6 +409,8 @@ interface MovesPhaseStandaloneClientProps {
   catchUpEnabled?: boolean;
   p2RootCausesForCatchUp?: string;
   p2GateRecordConfirmed?: boolean;
+  /** Server register projection shared with the charter bridge. Null means read failed. */
+  initialP2RegisterRows?: AssumptionView[] | null;
   legacyCaptureRequested?: boolean;
   initialLegacySectionKey?: string | null;
   /**
@@ -1082,6 +1088,7 @@ export function MovesPhaseStandaloneClient({
   catchUpEnabled = false,
   p2RootCausesForCatchUp = "",
   p2GateRecordConfirmed = false,
+  initialP2RegisterRows,
   legacyCaptureRequested = false,
   initialLegacySectionKey = null,
   romEngineEnabled = false,
@@ -1108,6 +1115,8 @@ export function MovesPhaseStandaloneClient({
   carriesForwardContent,
   p3PriorPhaseContent = [],
   phaseBuildArtifacts = [],
+  phaseBuildArtifactsAvailable = true,
+  initialSignOffReadable,
   phaseNavigationStatus,
   initialStageReadinessPreview = null,
   syntheticEvidencePackHref = null,
@@ -1141,6 +1150,11 @@ export function MovesPhaseStandaloneClient({
         criterion.verified,
     ),
   });
+  useEffect(() => {
+    if (initialStepView && typeof performance.mark === "function") {
+      performance.mark("moves-step-client-mounted");
+    }
+  }, [initialStepView]);
   const approverLabel =
     currentUser?.email && currentUser?.role
       ? `${currentUser.email} · ${currentUser.role}`
@@ -1515,27 +1529,20 @@ export function MovesPhaseStandaloneClient({
     completed: boolean;
     loadFailed: boolean;
     deliverableSignOffStatus?: unknown;
-  }>({ completed: false, loadFailed: false });
+  }>(() => initialSignOffReadable === undefined
+    ? { completed: false, loadFailed: false }
+    : {
+        completed: true,
+        loadFailed: !initialSignOffReadable,
+        deliverableSignOffStatus: initialSignOffReadable ? "available" : "unavailable",
+      });
 
   useEffect(() => {
+    if (initialSignOffReadable !== undefined) return;
     let cancelled = false;
     async function loadGeneratedArtifacts() {
       try {
-        const response = await fetch(
-          `/api/v1/programs/${encodeURIComponent(move.id)}/artifacts`,
-          { credentials: "include" },
-        );
-        if (!response.ok) {
-          // The sign-off columns on these rows come only from this read, so a
-          // refused or failed read leaves the gate ledger with no sign-off
-          // state. Record that it is UNKNOWN rather than leaving the ledger to
-          // report every gate document as having none.
-          if (!cancelled) {
-            setSignOffReadback({ completed: true, loadFailed: true });
-          }
-          return;
-        }
-        const payload = (await response.json().catch(() => ({}))) as {
+        const payload = (await fetchMoveEvidence(move.id)) as {
           artifacts?: MoveArtifactApiRow[];
           deliverableSignOffStatus?: unknown;
         };
@@ -1595,7 +1602,7 @@ export function MovesPhaseStandaloneClient({
     return () => {
       cancelled = true;
     };
-  }, [move.id, phase.phase]);
+  }, [move.id, phase.phase, initialSignOffReadable]);
   // What an uploader can declare a file as covering: the evidence families
   // this Move's discovery requires, once each. Every upload surface that asks
   // for these families is handed the same list, so none of them can instruct
@@ -1642,10 +1649,10 @@ export function MovesPhaseStandaloneClient({
   const [confirmedSolutionRoute, setConfirmedSolutionRoute] =
     useState<ConfirmedSolutionRoute | null>(initialConfirmedSolutionRoute);
   const [p2RegisterRows, setP2RegisterRows] = useState<AssumptionView[] | null>(
-    null,
+    initialP2RegisterRows ?? null,
   );
   useEffect(() => {
-    if (phase.phase !== 2 || !phaseStepPagesEnabled) return;
+    if (phase.phase !== 2 || !phaseStepPagesEnabled || initialP2RegisterRows !== undefined) return;
     let live = true;
     fetch(`/api/v1/programs/${encodeURIComponent(move.id)}/assumptions`, {
       credentials: "include",
@@ -1655,7 +1662,7 @@ export function MovesPhaseStandaloneClient({
         return response.json() as Promise<{ assumptions?: AssumptionView[] }>;
       })
       .then((body) => {
-        if (live) setP2RegisterRows(body.assumptions ?? []);
+        if (live) setP2RegisterRows(Array.isArray(body.assumptions) ? body.assumptions : null);
       })
       .catch(() => {
         if (live) setP2RegisterRows(null);
@@ -1663,7 +1670,7 @@ export function MovesPhaseStandaloneClient({
     return () => {
       live = false;
     };
-  }, [phase.phase, phaseStepPagesEnabled, move.id]);
+  }, [phase.phase, phaseStepPagesEnabled, move.id, initialP2RegisterRows]);
   const p2RegisterIds = citableP2RegisterIds(p2RegisterRows);
   const businessChangeAssessment =
     phase.phase === 1
@@ -4059,12 +4066,15 @@ export function MovesPhaseStandaloneClient({
       notBuilt,
       initialArtifacts: visiblePhaseBuildArtifacts,
       signOffReadable:
+        phaseBuildArtifactsAvailable &&
         describeGateSignOffReadback(signOffReadback).state === "available",
       canApprove: canApproveGates,
       approverName: "the gate approver",
       approverIsRole: true,
       changeProfile: resolveChangeProfile(confirmedSolutionRoute),
-      buildHeldReason: buildHold?.statusLine ?? null,
+      buildHeldReason: phaseBuildArtifactsAvailable
+        ? buildHold?.statusLine ?? null
+        : "Gate documents could not be read. Refresh this step before continuing.",
       originationReady:
         phase.phase === 0
           ? phaseCaptureSections.every((section) =>
