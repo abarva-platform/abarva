@@ -30,7 +30,7 @@ Layer 4 (Products): presentation and read-only interaction in the contract Evide
 
 - `ContractAnatomy.tsx`: SVG flow connections, source examples, selected input details and scoped recorded provenance; files and observations must match both tenant and canonical contract identity.
 - `workspace.css`: existing design tokens, desktop connections and a stacked narrow layout.
-- `WorkspaceExecutiveShell.tsx`: remove the empty-document statement that other evidence lanes are loaded and optimization is established; replace it with the input owner and request.
+- `WorkspaceExecutiveShell.tsx`: remove empty-document and adjacent readout statements that row presence proves reconciliation, citations or optimization; replace them with availability labels and an input owner/request.
 - `contractAnatomy.test.tsx`: rendered disclosure, selection, missing-input and provenance negative controls.
 
 Design reference: `docs/design/source/SOURCE_OPTIMIZE_CONTRACT_CLAUDE_DESIGN_HANDOFF_2026-09-10.md`, lines 409-425. Its rule is: "Do not show a zero-heavy evidence grid if the family is not loaded." The following sentence requires what is missing, who owns it and what it unlocks. This slice advances intelligence and accountable collaboration on the page, without manufacturing records or decisions.
@@ -38,8 +38,8 @@ Design reference: `docs/design/source/SOURCE_OPTIMIZE_CONTRACT_CLAUDE_DESIGN_HAN
 ## QA / Validation
 
 - Red-first rendered cases failed on the original implementation before the relevant changes: source-flow disclosure, required input details, provenance, the empty-document overclaim and zero-heavy missing inputs.
-- Focused baseline: 20 tests pass before and after mutation proof. Twelve deliberate mutations were killed by assertion failures, including document and observation tenant/contract fences, synthetic origin labelling, internal-loader rejection, selection, count basis and empty-document overclaims.
-- Adjacent Source behavior command is taken from the existing CI workflow's exact named 18-suite step: 168 tests pass, with no pending or todo cases.
+- Focused baseline: 22 tests pass before and after mutation proof. Fifteen deliberate mutations were killed by assertion failures, including document and observation tenant/contract fences, synthetic origin labelling, internal-loader rejection, selection, count basis and surrounding readout overclaims.
+- Adjacent Source behavior command is taken from the existing CI workflow's exact named 18-suite step: 170 tests pass, with no pending or todo cases. Three focused render/browser-integration suites also pass, 37 tests.
 - TypeScript passes on Node 24 with a 12 GB heap. The initial default-runtime 4 GB run exhausted heap; it was not treated as a code verdict.
 - Focused ESLint has zero errors; one unchanged unused-parameter warning exists elsewhere in the large shell file.
 - Desktop and narrow local browser QA uses the actual edited component and synthetic fixtures. This is not authenticated product acceptance. Recorded lineage disclosure, input selection and absent-input states were exercised.
@@ -76,3 +76,4 @@ Inspect the PR diff, rendered tests, existing Source workspace CI command, relea
 - Scope rows can include reviewed or inferred associations; their presence is not an explicit scope declaration.
 - Opportunity counts remain an existing projection signal, not proof that each recommendation has run against cited evidence. The outstanding population reconciliation is not changed here.
 - View coverage is not decision readiness, verified savings, archetype evaluation or approval of a commercial action.
+- Existing Economics spend-versus-consumption terminology is outside this release and remains a separate financial-measure issue; this release must not be read as a repair of that measure.

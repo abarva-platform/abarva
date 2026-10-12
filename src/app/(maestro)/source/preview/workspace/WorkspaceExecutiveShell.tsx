@@ -4412,7 +4412,7 @@ function ContractEducationSidePanel({
   );
 }
 
-function ContractEvidenceContextStack({
+export function ContractEvidenceContextStack({
   coverage,
 }: {
   coverage: ReturnType<typeof coverageForContract>;
@@ -4427,28 +4427,23 @@ function ContractEvidenceContextStack({
   return (
     <div className="sw-v2-fact-stack">
       <Fact
-        label="Reconciled records"
+        label="Structured rows"
         value={coverage ? String(structuredRows) : "Not loaded"}
       />
       <Fact
-        label="Citable contract passages"
+        label="Document passages"
         value={coverage ? String(documentRows) : "Not loaded"}
       />
       <Fact
         label="What this means"
         value={
           documentRows > 0
-            ? "Clause text can be cited"
+            ? "Passages available; review source references"
             : structuredRows > 0
-              ? "Optimization can render; clause text stays withheld"
+              ? "Review inputs before recommending action"
               : "Header only"
         }
       />
-      <p className="sw-v2-muted">
-        Evidence is not a generic status panel. It tells the presenter which
-        claims are supported by structured rows and which claims still need raw
-        document page text.
-      </p>
     </div>
   );
 }
@@ -7805,12 +7800,11 @@ export function contractTabNarrative(
       (coverage?.opportunity_rows ?? 0);
     if ((coverage?.document_page_text_rows ?? 0) === 0 && structuredRows > 0) {
       return {
-        headline:
-          "Document pages are not attached; structured evidence is loaded.",
-        body: `${structuredRows} structured rows support this contract across spend, scope, performance, and opportunity lanes. The raw contract document remains outside this demo-safe evidence layer, so page-span citation claims stay withheld.`,
+        headline: "Agreement evidence needed.",
+        body: `${structuredRows} structured row${structuredRows === 1 ? " is" : "s are"} recorded in this view. That does not establish scope, contractual rights or a reproducible recommendation.`,
         provenance: "Evidence boundary",
         blocker:
-          "Use the structured rows for optimization and scope; do not claim exact PDF clause text until governed document pages are attached.",
+          "Contract manager / Legal ops: provide the executed agreement, SOW and governing terms with source references before recommending a commercial action.",
       };
     }
     return {

@@ -3,7 +3,11 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 
 import { ContractAnatomy } from "../ContractAnatomy";
-import { ContractEvidenceDocuments } from "../WorkspaceExecutiveShell";
+import {
+  ContractEvidenceContextStack,
+  ContractEvidenceDocuments,
+  contractTabNarrative,
+} from "../WorkspaceExecutiveShell";
 import type { SourceContractEvidenceCoverageRow } from "@/lib/source/data-model/types";
 import type { SourceWorkspaceVM } from "../buildViewModel";
 
@@ -80,6 +84,50 @@ const facet = (container: HTMLElement, name: string) =>
   );
 
 describe("ContractAnatomy", () => {
+  it("does not call row presence reconciliation, citable proof or optimization readiness", () => {
+    const { container } = render(
+      <ContractEvidenceContextStack
+        coverage={coverage({
+          spend_rows: 1,
+          scope_rows: 0,
+          document_page_text_rows: 0,
+          performance_rows: 0,
+          opportunity_rows: 0,
+        })}
+      />,
+    );
+    expect(container.textContent).not.toMatch(
+      /Reconciled records|Citable contract passages|Optimization can render/,
+    );
+    expect(
+      screen.getByText("Review inputs before recommending action"),
+    ).toBeTruthy();
+  });
+
+  it("does not recommend optimization or scope conclusions from a spend-only row", () => {
+    const narrative = contractTabNarrative(
+      "Evidence",
+      vmWith({ performanceRequired: true }),
+      { contract_id: "C1" } as never,
+      coverage({
+        spend_rows: 1,
+        scope_rows: 0,
+        document_page_text_rows: 0,
+        performance_rows: 0,
+        opportunity_rows: 0,
+      }),
+      [],
+      undefined,
+    );
+    expect(narrative.body).not.toContain(
+      "support this contract across spend, scope, performance, and opportunity",
+    );
+    expect(narrative.blocker).not.toContain(
+      "Use the structured rows for optimization and scope",
+    );
+    expect(narrative.blocker).toContain("Contract manager / Legal ops");
+  });
+
   it("does not claim other evidence lanes or optimization when no documents are attached", () => {
     const { container } = render(
       <ContractEvidenceDocuments
