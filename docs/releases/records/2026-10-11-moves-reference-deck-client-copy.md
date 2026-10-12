@@ -18,6 +18,11 @@ confirmation. Slide wording and the rendered-file judge block internal workflow
 terms and visible edition rules. The change does not calculate figures or
 write tenant data.
 
+Missing narrative inputs replace the affected sentence with a clear confirmation
+request, while the original source basis remains in the notes. Failed model calls
+remain visibly marked as unavailable. PDF downloads also pass checks on their own
+rendered pages and extracted text.
+
 ## Layer Impact
 
 - Release lane: `experimental`, behind the existing tenant-scoped reference
@@ -48,6 +53,14 @@ write tenant data.
   independently check visible copy, layout, figures, and edition boundaries.
 - The existing preview route refuses a rendered deck with client-copy findings.
   It remains read-only and returns no persisted deliverable.
+- Client-copy rules reject internal layout labels and workflow phrases while
+  preserving legitimate domain wording in the use-case name. Missing figures
+  cannot produce broken placeholder sentences in titles or answer bars.
+- Failed wording calls display "Draft words unavailable" in the affected answer
+  bars and retain their fidelity penalty.
+- The PDF uses the shared deck palette, a bottom answer bar, and readable divider
+  text. Its own page count, canvas, titles, answers, source lines and bound figures
+  are inspected before download; a PDF finding refuses that format with score zero.
 - The signed-in walk checks both editions for the configured synthetic Move
   after verifying its tenant, so a newly created demo case can be inspected.
   It retains all downloaded files in the proof bundle and fails when either
@@ -56,27 +69,31 @@ write tenant data.
 ## QA / Validation
 
 - Focused specification, wording, render, and preview-route suites: **pass**;
-  41 tests across four suites on synthetic fixtures.
-- Seven one-at-a-time mutations of the new rules: **pass**; each was caught by
-  a focused test and restored.
+  53 tests across five suites on synthetic fixtures.
+- Thirteen additional one-at-a-time mutations from artifact review: **pass**;
+  each was caught by a focused test and restored.
 - Typecheck and changed-file ESLint: **pass**.
 - Library orphan, route reachability, and export reachability checks: **pass**;
   no new findings against their baselines.
-- Test coverage census: **pass**; no new test files and no count change on the
-  branch base. Tenancy fence census: **pass**; the existing route remains
+- Test coverage census: **pass**; one new PDF inspection suite increases the
+  branch-base count from 2829 to 2830. Tenancy fence census: **pass**; the existing route remains
   tenant-fenced.
-- Manual consistency check: **pass**; no flag or manual text changed.
+- Manual regenerated and consistency check: **pass**; no flag or manual text changed.
+- Release checks: **pass**; all 11 gates ran and passed.
 - The signed-in walk suite lists all five tests and its changed file passes
   ESLint. The live walk itself is **pending** the final deployed image.
 - Synthetic PowerPoint rendered through LibreOffice for visual review. The
-  real PDF renderer produced the expected 11-page and 22-page editions, and
-  the numbered contents and six-stage workflow were inspected as page images.
+  real PDF renderer produced the expected 11-page and 22-page editions with zero
+  direct PDF inspection findings. Numbered contents, divider text, answer bars and
+  four-stage and six-stage workflows were inspected as page images.
 - Signed-in preview of the current production image: **pending**. The live
   demo data and human visual acceptance are separate release gates.
 
 ## Rollout Plan
 
-Merge after the pending deck reliability and preview changes. The repository
+The wording reliability dependency is merged. Land this candidate after the
+operator-walk dependency, with complete CI on its current head and a fresh
+fetched-ref coverage-collision scan of every open Moves PR including drafts. The repository
 owned ACA main deploy workflow builds and deploys a digest-pinned image. The
 existing flag limits use to the synthetic demo workspace. After the final
 pre-freeze deploy, run the signed-in walk, save both deck editions as PowerPoint
@@ -112,6 +129,8 @@ be reversed.
   source set, so its investment score is not an acceptance score for the demo.
 - PowerPoint and PDF preview requests draft words independently; the final
   saved files need a side-by-side copy check even when their figure hashes match.
+- PDF text and page checks do not replace visual review for overlapping objects
+  or crowded text.
 - Current production behavior, populated demo figures, actual model wording,
   and human slide-by-slide acceptance remain to be verified after merge and
   deployment.

@@ -2,23 +2,25 @@ import "server-only";
 
 import { Document, Page, Path, Svg, Text, View, type DocumentProps } from "@react-pdf/renderer";
 import { Fragment, type ReactElement } from "react";
+import { COLORS } from "@/lib/design/design-tokens";
 import { referenceSourceLine, type ReferenceBlock, type ReferenceCell, type ReferenceDeckSpec } from "./reference-deck-model";
 
-const ink = "#17202B";
-const paper = "#F8F7F3";
+const ink = COLORS.deckInk;
+const paper = COLORS.cream;
 const accent = "#9A2430";
-const muted = "#53606B";
+const muted = COLORS.deckMuted;
+const rule = COLORS.deckRule;
 const display = (value: ReferenceCell) => typeof value === "string" ? value : value.display;
 
 function PdfBlock({ block }: { block: ReferenceBlock }) {
   if (block.kind === "table") return (
-    <View style={{ marginTop: 12, borderWidth: 0.5, borderColor: "#D4D2CC" }}>
+    <View style={{ marginTop: 12, borderWidth: 0.5, borderColor: rule }}>
       {[block.columns, ...block.rows].map((row, index) => (
         <View key={index} style={{ flexDirection: "row", backgroundColor: index === 0 ? ink : block.decisiveRows?.includes(index - 1) ? "#EFEEEA" : "#FFFFFF" }}>
           {row.map((cell, column) => (
             <Text key={column} style={{ flex: 1, padding: 6, minHeight: 29, fontSize: row.length > 6 ? 8 : 10,
               borderRightWidth: column < row.length - 1 ? 0.5 : 0, borderBottomWidth: 0.5,
-              borderColor: "#D4D2CC", color: index === 0 ? "#FFFFFF" : ink }}>
+              borderColor: rule, color: index === 0 ? "#FFFFFF" : ink }}>
               {display(cell)}
             </Text>
           ))}
@@ -107,11 +109,25 @@ export function buildReferenceDeckPdf(spec: ReferenceDeckSpec): ReactElement<Doc
           <Text style={{ fontSize: 12, color: "#FFFFFF", marginTop: 48 }}>Sponsor: {spec.sponsorRole}</Text>
           <Text style={{ position: "absolute", bottom: 54, left: 45, right: 45, fontSize: 9, color: "#FFFFFF" }}>Discussion draft · {spec.monthYear}</Text>
           <Text style={{ position: "absolute", bottom: 31, left: 45, right: 45, fontSize: 9, color: "#FFFFFF" }}>Prepared by AbarVa · {spec.edition} edition</Text>
+        </> : slide.archetype === "divider" ? <>
+          <Text style={{ fontSize: 16, color: "#FFFFFF" }}>
+            {String(Math.max(1, ["CONTEXT", "WHAT", "WHY", "VALIDATE", "HOW"].indexOf(slide.section === "CONFIRM" ? "VALIDATE" : slide.section ?? "CONTEXT") + 1)).padStart(2, "0")}  {slide.section ?? "CONTEXT"}
+          </Text>
+          <Text style={{ fontSize: 34, color: "#FFFFFF", marginTop: 68, fontFamily: "Times-Roman" }}>{slide.actionTitle}</Text>
+          {slide.answer && <Text style={{ fontSize: 19, color: "#FFFFFF", marginTop: 30, fontFamily: "Times-Italic" }}>{slide.answer}</Text>}
+          <View style={{ marginTop: 55 }}>
+            <Text style={{ fontSize: 10, color: "#FFFFFF", marginBottom: 10 }}>IN THIS SECTION</Text>
+            {slide.blocks.flatMap((block) => block.kind === "text" ? block.lines : []).map((line, lineIndex) =>
+              <Text key={lineIndex} style={{ fontSize: 12, color: "#FFFFFF", marginBottom: 7 }}>{line}</Text>)}
+          </View>
+          <Text style={{ position: "absolute", bottom: 29, left: 45, right: 45, fontSize: 8, color: "#FFFFFF" }}>{spec.program} · Discussion draft · {index + 1}</Text>
         </> : <>
           <Text style={{ fontSize: 9, color: dark ? "#FFFFFF" : muted }}>{spec.useCase.toUpperCase()}  ·  {slide.section ?? spec.edition.toUpperCase()}</Text>
           <Text style={{ fontSize: dark ? 34 : 24, color: dark ? "#FFFFFF" : ink, marginTop: dark ? 75 : 26, fontFamily: "Times-Roman" }}>{slide.actionTitle}</Text>
-          {slide.archetype !== "divider" && <View style={{ marginTop: 14, padding: 8, backgroundColor: ink }}><Text style={{ fontSize: 10, color: "#FFFFFF" }}>{slide.answerLabel}: {slide.answer}</Text></View>}
           {slide.blocks.map((block, blockIndex) => <PdfBlock key={blockIndex} block={block} />)}
+          <View style={{ position: "absolute", bottom: 48, left: 45, right: 45, minHeight: 42, padding: 10, backgroundColor: ink }}>
+            <Text style={{ fontSize: 11, color: "#FFFFFF" }}>{slide.answerLabel?.toUpperCase() ?? "THE ANSWER"}: {slide.answer}</Text>
+          </View>
           <Text style={{ position: "absolute", bottom: 29, left: 45, right: 45, fontSize: 8, color: dark ? "#FFFFFF" : muted }}>
             {slide.sourceIds?.length ? referenceSourceLine(slide) : `${spec.program} · Discussion draft`}  ·  {index + 1}
           </Text>

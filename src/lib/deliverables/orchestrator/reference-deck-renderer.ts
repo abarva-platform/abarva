@@ -312,7 +312,8 @@ export async function renderReferenceDeck(spec: ReferenceDeckSpec): Promise<Buff
   spec.slides.forEach((content, index) => {
     const slide = pptx.addSlide();
     if (content.archetype === "cover") addCover(slide, spec, content);
-    else if (content.archetype === "divider") addDivider(slide, spec, content, index + 1);
+    else if (content.archetype === "divider") addDivider(slide, spec, content,
+      content.section ? Math.max(1, SECTIONS.indexOf(content.section === "CONFIRM" ? "VALIDATE" : content.section) + 1) : 1);
     else {
       addChrome(slide, spec, content, index);
       let y = 1.83;

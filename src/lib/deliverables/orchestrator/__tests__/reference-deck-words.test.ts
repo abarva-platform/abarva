@@ -247,7 +247,7 @@ describe("reference-deck words", () => {
     mockPreflight.mockResolvedValueOnce({ ok: false });
     const denied = await draftEditionWords(input);
     expect(denied).toMatchObject({ status: "unavailable", reason: "preflight_denied", fallbackSlides: [1] });
-    expect(JSON.stringify(denied)).not.toContain("draft words unavailable");
+    expect(JSON.stringify(denied).toLowerCase()).toContain("draft words unavailable");
     const create = jest.fn().mockResolvedValueOnce({ content: [{ type: "text", text: '{"words":[]}' }] })
       .mockResolvedValueOnce({ content: [{ type: "text", text: '{"words":[]}' }] })
       .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [{ ...safeWords.words[0], answer: "Review the solution plan." }] }) }] });
@@ -271,7 +271,7 @@ describe("reference-deck words", () => {
         expect(entry.title.trim().split(/\s+/).length).toBeGreaterThanOrEqual(5);
         expect(entry.notes.startsWith("The point:")).toBe(true);
         expect(entry.notes).toContain("How to read:");
-        expect(JSON.stringify(entry)).not.toContain("draft words unavailable");
+        expect(entry.answer.toLowerCase()).toContain("draft words unavailable");
       }
     }
     const investment = unavailableEditionWords("investment", [...REFERENCE_ARCHETYPES]);

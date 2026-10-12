@@ -93,15 +93,17 @@ export function referenceSourceLine(slide: ReferenceSlide): string {
 
 const CLIENT_INTERNAL_TERMS: Array<[string, RegExp]> = [
   ["slot", /\bslots?\b/i], ["readback", /\breadbacks?\b/i],
-  ["capture", /\bcaptures?\b/i], ["governed", /\bgoverned\b/i],
-  ["register", /\bregister\b/i], ["step reference", /\bP[0-5](?:\s+Step\s+\d+)?\b/i],
+  ["capture", /\bcaptur(?:e[ds]?|ing)\b/i], ["governed gap", /\bgoverned\s+gaps?\b/i],
+  ["register row", /\bregister\s+rows?\b/i], ["step reference", /\bP[0-5](?:\s+Step\s+\d+)?\b/i],
   ["Move", /\bMove\b/i], ["flag", /\bflags?\b/i],
   ["preview", /\bpreviews?\b/i], ["snapshot ID", /\bsnapshot\s+id\b/i],
   ["ROM", /\bROM\b/i], ["value engine", /\bvalue[ -]engine\b/i],
+  ["layout label", /\b(?:cover|divider|one page|big number context|plain english table|flow today|one step value)\s*:/i],
 ];
 
 export function clientCopyIssue(value: string): string | null {
-  return CLIENT_INTERNAL_TERMS.find(([, pattern]) => pattern.test(value))?.[0] ?? null;
+  const prose = value.replace(/\s+/g, " ");
+  return CLIENT_INTERNAL_TERMS.find(([, pattern]) => pattern.test(prose))?.[0] ?? null;
 }
 
 export function coverUsesEditionRule(title: string): boolean {

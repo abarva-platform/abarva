@@ -12,6 +12,7 @@ import { validateReferenceDeck, type ReferenceEdition } from "@/lib/deliverables
 import { renderReferenceDeck } from "@/lib/deliverables/orchestrator/reference-deck-renderer";
 import { inspectDeck } from "@/lib/deliverables/orchestrator/deck-inspection";
 import { judgeRenderedDeck } from "@/lib/deliverables/orchestrator/deck-quality";
+import { inspectReferenceDeckPdf } from "@/lib/deliverables/orchestrator/reference-deck-pdf-inspection";
 import { parseOperatingAdoption } from "@/lib/programs/operating-adoption";
 import { tenancyOrNamedErrorResponse } from "@/lib/programs/tenancy-catch-response";
 
@@ -123,7 +124,19 @@ export async function GET(
     const stream = await pdf(buildReferenceDeckPdf(spec)).toBuffer();
     const chunks: Buffer[] = [];
     for await (const chunk of stream as AsyncIterable<Buffer | string>) chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
-    return new Response(Uint8Array.from(Buffer.concat(chunks)), {
+    const pdfBytes = Buffer.concat(chunks);
+    const pdfFindings = await inspectReferenceDeckPdf(pdfBytes, spec);
+    if (pdfFindings.length) {
+      return Response.json({
+        error: "deck_render_refusal", detail: "The rendered PDF failed a page, source or client-text check.",
+        findings: pdfFindings.map((finding) => ({
+          kind: finding.kind,
+          ...("slide" in finding ? { slide: finding.slide } : {}),
+          ...("detailCode" in finding && finding.detailCode ? { detailCode: finding.detailCode } : {}),
+        })),
+      }, { status: 422, headers: previewHeaders(0, wordsResult, requestId, titleFigureCount) });
+    }
+    return new Response(Uint8Array.from(pdfBytes), {
       headers: {
         ...previewHeaders(score, wordsResult, requestId, titleFigureCount), "Content-Type": "application/pdf",
         "X-AbarVa-Deck-Figure-Hash": figureHash,

@@ -9,6 +9,7 @@ const mockBuild = jest.fn();
 const mockRender = jest.fn();
 const mockInspect = jest.fn();
 const mockJudge = jest.fn();
+const mockPdfInspect = jest.fn();
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -45,6 +46,7 @@ jest.mock("@react-pdf/renderer", () => ({
   pdf: () => ({ toBuffer: async () => (async function* () { yield Buffer.from("%PDF synthetic preview"); })() }),
 }));
 jest.mock("@/lib/deliverables/orchestrator/reference-deck-pdf", () => ({ buildReferenceDeckPdf: () => ({}) }));
+jest.mock("@/lib/deliverables/orchestrator/reference-deck-pdf-inspection", () => ({ inspectReferenceDeckPdf: (...args: unknown[]) => mockPdfInspect(...args) }));
 
 import { NextRequest } from "next/server";
 import { GET } from "../route";
@@ -63,9 +65,19 @@ beforeEach(() => {
   mockRender.mockResolvedValue(Buffer.from("PK synthetic preview"));
   mockInspect.mockResolvedValue({ slideCount: 1 });
   mockJudge.mockReturnValue({ fidelityScore: 85, findings: [] });
+  mockPdfInspect.mockResolvedValue([]);
 });
 
 describe("read-only reference deck preview", () => {
+  it("refuses a defective PDF after the PPTX checks pass", async () => {
+    mockPdfInspect.mockResolvedValueOnce([{ kind: "reference_source", slide: 2, detailCode: "bound_figure_missing" }]);
+    const result = await GET(request("pdf"), params());
+    expect(result.status).toBe(422);
+    expect(result.headers.get("X-AbarVa-Deck-Fidelity-Score")).toBe("0");
+    expect(await result.json()).toMatchObject({ error: "deck_render_refusal", findings: [{ kind: "reference_source", slide: 2, detailCode: "bound_figure_missing" }] });
+    expect(mockPdfInspect).toHaveBeenCalledWith(expect.any(Buffer), mockBuild.mock.results[0]!.value);
+  });
+
   it("keeps tenancy refusals and names unexpected auth failures", async () => {
     mockRequireTenancy.mockRejectedValueOnce(new Error("unauthenticated"));
     expect((await GET(request(), params())).status).toBe(401);

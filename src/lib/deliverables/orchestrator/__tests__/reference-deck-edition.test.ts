@@ -54,6 +54,7 @@ describe("live-input reference edition", () => {
     const sequence = edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
     const spec = buildReferenceEdition(fixture(edition), words(sequence.length));
     expect(spec.slides[0]?.actionTitle).toBe("Synthetic facility performance");
+    expect(spec.slides[3]?.section).toBe("CONTEXT");
     expect(spec.slides[0]?.answer).toContain(edition === "validation" ? "for your team to validate" : "value over three years");
     expect(spec.slides[0]?.actionTitle).not.toContain("no solution, plan or cost");
     const contents = spec.slides[2]?.blocks[0];
@@ -67,6 +68,37 @@ describe("live-input reference edition", () => {
     expect(contents.rows.every((row) => String(row[1]).trim().split(/\s+/).length >= 5 && String(row[2]).trim())).toBe(true);
     expect(validateReferenceDeck(spec).filter((finding) => finding.blocking)).toEqual([]);
   });
+
+  it("preserves domain wording in the use-case name while refusing internal phrases", () => {
+    const inputs = fixture("validation");
+    inputs.move.name = "Governed data foundation for AI";
+    const spec = buildReferenceEdition(inputs, words(VALIDATION_SEQUENCE.length));
+    expect(spec.slides[0]?.actionTitle).toBe(inputs.move.name);
+    expect(validateReferenceDeck(spec).filter((finding) => finding.blocking)).toEqual([]);
+    spec.slides[1]!.answer = "The governed gap depends on register rows.";
+    expect(validateReferenceDeck(spec)).toContainEqual(expect.objectContaining({ code: "client_copy_term", blocking: true, slide: 2 }));
+    spec.slides[1]!.answer = "Confirm the supporting source with your team.";
+    spec.slides[1]!.actionTitle = "Big number context: the evidence identifies the next decision.";
+    expect(validateReferenceDeck(spec)).toContainEqual(expect.objectContaining({ code: "client_copy_term", blocking: true, slide: 2 }));
+  });
+
+  it("replaces a sentence with missing figures and retains its exact basis in notes", async () => {
+    const inputs = fixture("investment");
+    const authored = words(INVESTMENT_SEQUENCE.length);
+    authored[1]!.title = "The annual basis {value.annual.base} can be compared with {rom.total.plan}";
+    authored[1]!.answer = "Compare {value.annual.base} with the estimate {rom.total.plan} before deciding.";
+    const spec = buildReferenceEdition(inputs, authored);
+    const summary = spec.slides[1]!;
+    expect(summary.actionTitle).toBe("The value case still needs a confirmed basis");
+    expect(summary.answer).toBe("Confirm the source and counting basis before relying on this value.");
+    expect(summary.actionTitle).not.toContain("unavailable");
+    expect(summary.speakerNotes).toContain("Draft title awaiting input:");
+    expect(summary.speakerNotes).toContain("$1,200,000");
+    expect(summary.visibleNarrativeFigures).toEqual([]);
+    const rendered = await inspectDeck(await renderReferenceDeck(spec));
+    expect(judgeRenderedDeck(rendered, { referenceDeck: spec }).findings.filter((finding) =>
+      finding.kind === "reference_source" && "slide" in finding && finding.slide === 2)).toEqual([]);
+  }, 60_000);
 
   it("uses one client-language panel for each empty exhibit and keeps partial rows", () => {
     const inputs = fixture("validation");
@@ -193,8 +225,10 @@ describe("live-input reference edition", () => {
     expect(workflowFlow.fullNodes?.[3]).toBe("the analyst routes corrections");
     expect(workflowFlow.nodes.every((label, index) =>
       !label.endsWith("…") || workflowFlow.fullNodes?.[index]?.startsWith(`${label.slice(0, -1)} `))).toBe(true);
-    if (process.env.REFERENCE_DECK_VISUAL_OUTPUT)
+    if (process.env.REFERENCE_DECK_VISUAL_OUTPUT) {
       fs.writeFileSync(`${process.env.REFERENCE_DECK_VISUAL_OUTPUT}-recorded-flow.pptx`, await renderReferenceDeck(workflowSpec));
+      fs.writeFileSync(`${process.env.REFERENCE_DECK_VISUAL_OUTPUT}-recorded-flow-spec.json`, JSON.stringify(workflowSpec));
+    }
   });
 
   it("keeps a longer synthetic handoff sequence readable and source-linked", async () => {
@@ -212,8 +246,10 @@ describe("live-input reference edition", () => {
     const rendered = await inspectDeck(await renderReferenceDeck(spec));
     expect(judgeRenderedDeck(rendered, { referenceDeck: spec }).findings
       .filter((finding) => finding.kind === "reference_flow_label")).toEqual([]);
-    if (process.env.REFERENCE_DECK_VISUAL_OUTPUT)
+    if (process.env.REFERENCE_DECK_VISUAL_OUTPUT) {
       fs.writeFileSync(`${process.env.REFERENCE_DECK_VISUAL_OUTPUT}-six-stage-flow.pptx`, await renderReferenceDeck(spec));
+      fs.writeFileSync(`${process.env.REFERENCE_DECK_VISUAL_OUTPUT}-six-stage-flow-spec.json`, JSON.stringify(spec));
+    }
   });
 
   it("substitutes a governed title slot, carries its ledger source and rejects a model-written digit", () => {
@@ -241,7 +277,8 @@ describe("live-input reference edition", () => {
     const authored = words(VALIDATION_SEQUENCE.length);
     authored[4]!.title = "Credited value reaches {value.three_year.credited} over three years";
     const spec = buildReferenceEdition(inputs, authored);
-    expect(spec.slides[4]?.actionTitle).toContain("not yet modelled");
+    expect(spec.slides[4]?.actionTitle).toBe("The value case still needs a confirmed basis");
+    expect(spec.slides[4]?.speakerNotes).toContain("not yet modelled");
     expect(spec.slides[4]?.speakerNotes).toContain("No value levers yet; add them in P4 Step 3.");
     expect(JSON.stringify(spec.slides[4]?.blocks)).not.toContain("P4 Step 3");
     expect(validateReferenceDeck(spec).filter((finding) => finding.blocking)).toEqual([]);
@@ -261,7 +298,7 @@ describe("live-input reference edition", () => {
     expect(spec.figureLedger.some((entry) => entry.sourceId === "[A:V1]")).toBe(false);
   });
 
-  it.each(["validation", "investment"] as const)("renders every %s fallback without the unavailable marker", async (edition) => {
+  it.each(["validation", "investment"] as const)("marks every %s wording fallback as unavailable", async (edition) => {
     const sequence = edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
     const spec = buildReferenceEdition(fixture(edition), unavailableEditionWords(edition, sequence));
     expect(validateReferenceDeck(spec).filter((finding) => finding.blocking)).toEqual([]);
@@ -269,7 +306,8 @@ describe("live-input reference edition", () => {
     if (process.env.REFERENCE_DECK_VISUAL_OUTPUT)
       fs.writeFileSync(`${process.env.REFERENCE_DECK_VISUAL_OUTPUT}-${edition}-fallback.pptx`, pptx);
     const rendered = await inspectDeck(pptx);
-    expect(rendered.slides.flatMap((slide) => slide.textRuns).join(" ")).not.toContain("draft words unavailable");
+    expect(rendered.slides.filter((_, index) => !["cover", "divider"].includes(sequence[index]!))
+      .every((slide) => slide.textRuns.join(" ").toLowerCase().includes("draft words unavailable"))).toBe(true);
     const verdict = judgeRenderedDeck(rendered, { referenceDeck: spec, fallbackWordSlides: sequence.map((_, index) => index + 1) });
     expect(verdict.findings.filter((finding) => finding.kind === "fallback_words")).toHaveLength(sequence.length);
     if (process.env.REFERENCE_DECK_VISUAL_OUTPUT)

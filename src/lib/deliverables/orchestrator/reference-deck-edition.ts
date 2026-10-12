@@ -63,6 +63,29 @@ const money = formatConsultantCents;
 const percent = formatConsultantPercent;
 const cell = (row: number): string => `Deck Figures!B${row}`;
 
+function missingNarrative(archetype: ReferenceArchetype): { title: string; answer: string } {
+  if (["releases", "shared_foundation", "rom_hours"].includes(archetype)) return {
+    title: "The delivery estimate still needs an approved basis",
+    answer: "Confirm the delivery scope and estimate before comparing it with value.",
+  };
+  if (["users_decisions", "team"].includes(archetype)) return {
+    title: "Decision owners still need your team's agreement",
+    answer: "Agree who owns each decision before delivery begins.",
+  };
+  if (archetype === "flow_today") return {
+    title: "The current handoffs still need an agreed basis",
+    answer: "Confirm how the work moves between owners before relying on this account.",
+  };
+  if (["one_page", "big_number_context", "one_step_value", "three_year_value", "value_ledger"].includes(archetype)) return {
+    title: "The value case still needs a confirmed basis",
+    answer: "Confirm the source and counting basis before relying on this value.",
+  };
+  return {
+    title: "The evidence for this decision still needs confirmation",
+    answer: "Confirm the supporting source with your team before relying on this conclusion.",
+  };
+}
+
 /** All figure bindings are assembled here; Claude has no route to mint one. */
 export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords[], providedSlots?: ReferenceSlotTable): ReferenceDeckSpec {
   const sequence = inputs.edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
@@ -405,13 +428,21 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
       if (visible) visibleNarrativeFigures.set(`${figure.sourceId}\u0000${figure.display}`, figure);
       return slot.display;
     });
-    const actionTitle = archetype === "cover" ? inputs.move.name : resolveSlots(authored.title, true);
+    const withheldNarratives: string[] = [];
+    const resolveVisibleSentence = (prose: string, field: "title" | "answer"): string => {
+      const missing = [...prose.matchAll(/\{([^{}]+)\}/g)].some((match) => slots[match[1]!]?.display === null);
+      const resolved = resolveSlots(prose, !missing);
+      if (!missing) return resolved;
+      withheldNarratives.push(`Draft ${field} awaiting input: ${resolved}`);
+      return missingNarrative(archetype)[field];
+    };
+    const actionTitle = archetype === "cover" ? inputs.move.name : resolveVisibleSentence(authored.title, "title");
     const answer = archetype === "cover"
       ? inputs.edition === "validation"
         ? "First version of the value proposition, for your team to validate"
         : "The problem, the value over three years, the solution and the plan"
-      : resolveSlots(authored.answer, true);
-    const noteParts = [resolveSlots(authored.notes, false)];
+      : resolveVisibleSentence(authored.answer, "answer");
+    const noteParts = [resolveSlots(authored.notes, false), ...withheldNarratives];
     if (archetype === "cover" && inputs.edition === "validation")
       noteParts.push("Edition guidance: this discussion validates the need and excludes the solution, plan and cost.");
     if (archetype === "flow_today" && actualFlow)
@@ -427,7 +458,7 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
         : [];
     return {
       archetype,
-      ...(archetype === "cover" || archetype === "divider" ? {} : { section: sectionFor(archetype) }),
+      ...(archetype === "cover" ? {} : { section: archetype === "divider" ? "CONTEXT" : sectionFor(archetype) }),
       actionTitle,
       answerLabel: "The answer",
       answer,
