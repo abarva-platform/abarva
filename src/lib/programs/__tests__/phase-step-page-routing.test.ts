@@ -2,6 +2,7 @@ import {
   EXISTING_STEP_PAGE_VIEWS,
   availableStepPageView,
   phaseStepPageFlagEnabled,
+  needsGateDocumentRead,
   phaseStepPageHref,
   resolveBarePhaseStepPageLanding,
   resolvePhaseStepPageLanding,
@@ -32,6 +33,35 @@ const base = {
 };
 
 describe("phase step-page sunset routing", () => {
+  it("keeps document reads on gate and legacy pages, leaving other step heads independent", () => {
+    expect(
+      needsGateDocumentRead({ view: "p2-gate", enabled: true, legacy: false }),
+    ).toBe(true);
+    expect(
+      needsGateDocumentRead({
+        view: "root-causes",
+        enabled: true,
+        legacy: false,
+      }),
+    ).toBe(false);
+    expect(
+      needsGateDocumentRead({
+        view: "p5-handoff",
+        enabled: true,
+        legacy: false,
+      }),
+    ).toBe(false);
+    expect(
+      needsGateDocumentRead({
+        view: "root-causes",
+        enabled: true,
+        legacy: true,
+      }),
+    ).toBe(true);
+    expect(
+      needsGateDocumentRead({ view: null, enabled: false, legacy: false }),
+    ).toBe(true);
+  });
   it("defers only flagged bare landings that need saved completion or P2 catch-up", () => {
     const input = {
       catchUpEnabled: true,
