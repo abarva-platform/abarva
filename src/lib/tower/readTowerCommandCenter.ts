@@ -14,8 +14,11 @@ import type {
   TowerMartCostLens,
   TowerMartCxoAction,
   TowerMartEvidenceLineage,
+  TowerMartFoundationInventory,
+  TowerMartFoundationRecord,
   TowerMartProgramLane,
   TowerMartRequiredFieldGap,
+  TowerMartSourceValueRow,
   TowerMartValueTrajectoryPoint,
   TowerMartValueFunnelStage,
 } from "@/lib/tower/current-layer-view-model";
@@ -191,7 +194,14 @@ function costDetail(row: TowerServingRow, expectedFile: string): TowerMartCostDe
       payloadNullableNumber(row, "measure_value_number") !== amountUsd ||
       row.row_type !== "cost_exposure" ||
       row.value_state !== "estimated") return null;
-  return { id: row.row_key, label, amountUsd, sourceFile, sourceRow, sourceSha256 };
+  return {
+    id: row.row_key, label, amountUsd, sourceFile, sourceRow, sourceSha256,
+    sourcePriorYearActualUsd: displayNullableNumberFrom(row, ["source_prior_year_actual_usd"]),
+    sourceForecastNextYearUsd: displayNullableNumberFrom(row, ["source_forecast_next_year_usd"]),
+    sourceSavingsOpportunityUsd: displayNullableNumberFrom(row, ["source_savings_opportunity_usd"]),
+    sourceCalculationBasis: payloadTextFrom(row, ["source_calculation_basis"]),
+    sourceBudgetOwnerRole: payloadTextFrom(row, ["source_budget_owner_role"]),
+  };
 }
 
 function activeCostLens(rows: readonly TowerServingRow[]): TowerMartCostLens | null {
@@ -288,6 +298,20 @@ function displayNullableNumberFrom(
   for (const key of keys) {
     const value = nullableNum(display[key] as Numeric);
     if (value !== null) return value;
+  }
+  return null;
+}
+
+function displayScalarTextFrom(
+  row: TowerServingRow,
+  keys: readonly string[],
+): string | null {
+  const display = displayPayload(row);
+  for (const key of keys) {
+    const value = display[key];
+    if (typeof value === "number" && Number.isFinite(value)) return String(value);
+    const text = nullableText(value);
+    if (text !== null) return text;
   }
   return null;
 }
@@ -585,11 +609,68 @@ async function readServingView(
     `select *
        from serving.${viewName}
       where tenant_key = $1
+        ${viewName === "tower_command_center" ? "and page_key <> 'foundations'" : ""}
       order by page_key, row_key`,
     [tenantKey],
     { missingTable: "empty" },
   );
   return rows;
+}
+
+const FOUNDATION_PAGE_SIZE = 40;
+const FOUNDATION_FILTER_TYPES: Record<string, readonly string[]> = {
+  profile: ["enterprise_profile", "organization"],
+  functions: ["business_function"],
+  workforce: ["workforce_role"],
+  operations: ["application", "data_flow", "infrastructure", "process"],
+  services: ["managed_service_scope"],
+};
+
+interface FoundationBrowseRequest {
+  page: number;
+  filter: string;
+  search: string;
+}
+
+async function readFoundationServingRows(
+  query: TowerSqlQuery,
+  tenantKey: string,
+  request: FoundationBrowseRequest,
+): Promise<{ rows: TowerServingRow[]; totalRecords: number; matchingRecords: number; page: number }> {
+  const types = request.filter === "all" ? null : (FOUNDATION_FILTER_TYPES[request.filter] ?? null);
+  const search = request.search.trim().toLowerCase();
+  const where = `tenant_key = $1 and page_key = 'foundations' and row_type = 'foundation_record'
+    and ($2::text[] is null or payload_json->'display_payload_json'->>'object_type' = any($2::text[]))
+    and ($3 = '' or strpos(lower(coalesce(payload_json->'display_payload_json'->>'title', '') || ' ' ||
+      coalesce(payload_json->'display_payload_json'->>'source_object_id', '')), $3) > 0)`;
+  const [totalRows, matchingRows] = await Promise.all([
+    query<{ count: number | string }>(
+      `select count(*)::int as count from serving.tower_command_center
+        where tenant_key = $1 and page_key = 'foundations' and row_type = 'foundation_record'`,
+      [tenantKey], { missingTable: "empty" },
+    ),
+    query<{ count: number | string }>(
+      `select count(*)::int as count from serving.tower_command_center where ${where}`,
+      [tenantKey, types, search], { missingTable: "empty" },
+    ),
+  ]);
+  const totalRecords = Number(totalRows[0]?.count ?? 0);
+  const matchingRecords = Number(matchingRows[0]?.count ?? 0);
+  const page = Math.min(request.page, Math.max(1, Math.ceil(matchingRecords / FOUNDATION_PAGE_SIZE)));
+  const rows = matchingRecords === 0 ? [] : await query<TowerServingRow>(
+    `select *
+       from serving.tower_command_center
+      where ${where}
+      order by row_key limit $4 offset $5`,
+      [tenantKey, types, search, FOUNDATION_PAGE_SIZE, (page - 1) * FOUNDATION_PAGE_SIZE],
+      { missingTable: "empty" },
+    );
+  return {
+    rows,
+    totalRecords,
+    matchingRecords,
+    page,
+  };
 }
 
 function countByGate(rows: readonly TowerServingRow[], status: string): number {
@@ -774,6 +855,15 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
       "ECL serving row requires evidence review before the claim can advance.",
     approvedFundingUsd: approvedFunding ?? 0,
     planningBudgetUsd: payloadNullableNumberFrom(row, ["planning_budget_usd"]),
+    sourceExpectedValueUsd: displayNullableNumberFrom(row, ["source_stated_expected_value_usd"]),
+    sourceStartDate: payloadTextFrom(row, ["source_start_date"]),
+    sourceEndDate: payloadTextFrom(row, ["source_end_date"]),
+    sourcePctComplete: displayNullableNumberFrom(row, ["source_pct_complete"]),
+    sourceStageGate: payloadTextFrom(row, ["source_stage_gate"]),
+    sourceBenefitRealizationStart: payloadTextFrom(row, ["source_benefit_realization_start"]),
+    sourceBlockedReason: payloadTextFrom(row, ["source_blocked_reason"]),
+    sourceObjective: payloadTextFrom(row, ["source_objective"]),
+    sourceTargetOutcomes: payloadTextFrom(row, ["source_target_outcomes"]),
     fundedAmount: payloadNumber(row, "funded_amount_usd"),
     fundingAmountLoaded: approvedFunding !== null,
     aiTaggedSpendUsd:
@@ -1058,6 +1148,10 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     sourceCaseStatus: payloadTextFrom(row, ["source_case_status"]),
     operationalOwnerRole: payloadTextFrom(row, ["operational_owner_role"]),
     expectedValueArchetype: payloadTextFrom(row, ["expected_value_archetype"]),
+    sourceValueHypothesis: payloadTextFrom(row, ["source_value_hypothesis"]),
+    sourceApprovalPath: payloadTextFrom(row, ["source_approval_path"]),
+    sourceRiskControls: payloadTextFrom(row, ["source_risk_controls"]),
+    sourceRequiredSystems: payloadTextFrom(row, ["source_required_systems"]),
     duplicateRisk: null,
     valueClaimStatus: usageRecorded ? "usage_recorded" : "usage_not_recorded",
     towerClaimAllowed: "blocked",
@@ -1289,6 +1383,136 @@ function isBenefitClaimRow(row: TowerServingRow): boolean {
   return isValueProofRow(row) && !isOutcomeMeasureRow(row) && !isTrajectoryOnlyRow(row);
 }
 
+function mapSourceValueRow(row: TowerServingRow): TowerMartSourceValueRow | null {
+  if (!isOutcomeMeasureRow(row) && !isBenefitClaimRow(row)) return null;
+  const display = displayPayload(row);
+  // v6 marks these as source assertions. Older serving rows have no marker and
+  // continue to use their existing proof story until this candidate is selected.
+  if (nullableText(display.source_assertion_caveat) === null) return null;
+  const outcome = isOutcomeMeasureRow(row);
+  const moneyFields = [
+    ["source_asserted_finance_value_usd", outcome ? "Outcome source: Finance amount stated" : "Benefit feed: Finance amount stated"],
+    ["benefit_feed_source_funded_spend_usd", "Benefit feed: funded spend stated"],
+    ["benefit_feed_source_actual_spend_ytd_usd", "Benefit feed: year-to-date spend stated"],
+    ["usage_feed_source_promised_value_usd", "Usage feed: promised value stated"],
+    ["usage_feed_source_finance_assertion_usd", "Usage feed: Finance amount stated"],
+    ["outcome_feed_source_finance_assertion_usd", "KPI feed: Finance amount stated"],
+  ] as const;
+  const statusFields = [
+    ["source_value_claim_status", "Source claim status"],
+    ["source_claim_readiness", "Source claim readiness"],
+    ["source_finance_validation_status", "Benefit feed Finance status"],
+    ["source_tower_claim_allowed", "Benefit feed claim flag"],
+    ["source_realized_value_allowed", "Benefit feed realized-value flag"],
+    ["source_owner_attestation_status", "Benefit feed owner attestation"],
+    ["usage_feed_source_claim_status", "Usage feed claim status"],
+    ["outcome_feed_claim_status", "KPI feed claim status"],
+    ["outcome_feed_claim_allowed", "KPI feed claim flag"],
+  ] as const;
+  return {
+    id: row.row_key,
+    kind: outcome ? "outcome_measure" : "ai_feed_claim",
+    title: nullableText(display.title) ?? row.title ?? row.row_key,
+    sourceFiles: [...new Set(sourceRefs(row).map((ref) =>
+      nullableText(ref.source_file) ?? nullableText(ref.source_family),
+    ).filter((value): value is string => value !== null))],
+    baseline: displayScalarTextFrom(row, [outcome ? "baseline" : "outcome_feed_baseline"]),
+    target: displayScalarTextFrom(row, [outcome ? "target" : "outcome_feed_target"]),
+    observed: displayScalarTextFrom(row, [outcome ? "observed" : "outcome_feed_actual"]),
+    baselinePeriod: payloadTextFrom(row, ["baseline_period"]),
+    observedPeriod: payloadTextFrom(row, ["observed_period"]),
+    kpiName: payloadTextFrom(row, ["outcome_feed_kpi_name"]),
+    kpiUnit: payloadTextFrom(row, ["outcome_feed_unit"]),
+    kpiPeriodStart: payloadTextFrom(row, ["outcome_feed_period_start"]),
+    kpiPeriodEnd: payloadTextFrom(row, ["outcome_feed_period_end"]),
+    sourceDataSource: payloadTextFrom(row, ["source_data_source"]),
+    sourceCalculationBasis: payloadTextFrom(row, ["source_calculation_basis"]),
+    moneyAssertions: moneyFields.flatMap(([sourceField, label]) => {
+      const amountUsd = displayNullableNumberFrom(row, [sourceField]);
+      return amountUsd === null ? [] : [{ sourceField, label, amountUsd }];
+    }),
+    statusAssertions: statusFields.flatMap(([sourceField, label]) => {
+      const code = payloadTextFrom(row, [sourceField]);
+      return code === null ? [] : [{ sourceField, label, code }];
+    }),
+  };
+}
+
+function mapFoundationRecord(row: TowerServingRow): TowerMartFoundationRecord | null {
+  if (row.page_key !== "foundations" || row.row_type !== "foundation_record") return null;
+  const display = displayPayload(row);
+  const objectType = nullableText(display.object_type);
+  const sourceObjectId = nullableText(display.source_object_id);
+  const sourceRecordId = nullableText(display.canonical_source_record_id);
+  const name = nullableText(display.title) ?? nullableText(row.title);
+  const qualityLabel = nullableText(display.source_quality_label);
+  const reviewState = nullableText(display.source_review_state);
+  const canonicalObjectId = nullableText(row.primary_object_id);
+  const [ref] = sourceRefs(row);
+  const sourceFile = nullableText(ref?.source_file);
+  const sourceSha256 = nullableText(ref?.source_sha256);
+  const sourceRow = nullableNum(ref?.source_row as Numeric);
+  if (!objectType || !sourceObjectId || !sourceRecordId || !name || !qualityLabel ||
+      !reviewState || !canonicalObjectId || !sourceFile || !sourceSha256 ||
+      sourceRow === null || sourceRow <= 0 || sourceRefs(row).length !== 1 ||
+      display.source_recorded !== true ||
+      row.row_key !== `foundation:${objectType}:${sourceObjectId}`) return null;
+  const sourceFields: Record<string, string | number> = {};
+  for (const [field, value] of Object.entries(asRecord(display.source_fields))) {
+    if (typeof value === "number" && Number.isFinite(value)) sourceFields[field] = value;
+    else {
+      const text = nullableText(value);
+      if (text !== null) sourceFields[field] = text;
+    }
+  }
+  return {
+    id: row.row_key,
+    objectType,
+    sourceObjectId,
+    canonicalObjectId,
+    sourceRecordId,
+    name,
+    sourceFields,
+    sourceFile,
+    sourceRow,
+    sourceSha256,
+    qualityLabel,
+    reviewState,
+    segmentIdentityStatus: nullableText(display.segment_identity_status),
+  };
+}
+
+function mapFoundationInventory(
+  foundationRows: readonly TowerServingRow[],
+  summaryRow: TowerServingRow | undefined,
+  request: FoundationBrowseRequest,
+  totalRecords: number,
+  matchingRecords: number,
+): TowerMartFoundationInventory | null {
+  if (totalRecords === 0) return null;
+  const records = foundationRows.flatMap((row) => {
+    const record = mapFoundationRecord(row);
+    return record ? [record] : [];
+  });
+  const summary = asRecord(displayPayload(summaryRow ?? foundationRows[0]).foundations);
+  const noDeclaredId = asRecord(summary.no_declared_row_id);
+  return {
+    records,
+    totalRecords,
+    matchingRecords,
+    page: request.page,
+    pageSize: FOUNDATION_PAGE_SIZE,
+    filter: request.filter,
+    search: request.search,
+    unreadableRowCount: foundationRows.length - records.length,
+    rawMaturityRowsWithoutId: nullableNum(noDeclaredId.row_count as Numeric),
+    rawRelationshipRows: nullableNum(summary.relationship_rows as Numeric),
+    segmentRowsMappingPending: nullableNum(summary.segment_source_rows_mapping_pending as Numeric),
+    itsmExtractAvailable: typeof summary.itsm_extract_available === "boolean"
+      ? summary.itsm_extract_available : null,
+  };
+}
+
 function gapsFromRows(
   rows: readonly TowerServingRow[],
 ): TowerMartRequiredFieldGap[] {
@@ -1339,7 +1563,18 @@ function buildHeadline(
 export async function readTowerCommandCenter(args: {
   tenantKeyCandidates: readonly (string | null | undefined)[];
   tenantDisplayName?: string | null;
+  includeFoundationInventory?: boolean;
+  foundationPage?: number;
+  foundationFilter?: string;
+  foundationSearch?: string;
 }): Promise<TowerMartCommandViewModel | null> {
+  const foundationRequest: FoundationBrowseRequest = {
+    page: Number.isSafeInteger(args.foundationPage) && (args.foundationPage ?? 0) > 0
+      ? Math.min(args.foundationPage as number, 10000) : 1,
+    filter: args.foundationFilter && Object.hasOwn(FOUNDATION_FILTER_TYPES, args.foundationFilter)
+      ? args.foundationFilter : "all",
+    search: (args.foundationSearch ?? "").trim().slice(0, 100),
+  };
   for (const tenantKey of tenantCandidates(args.tenantKeyCandidates)) {
     const result = await withTowerTenantRead(tenantKey, async (query) => {
       const [
@@ -1366,6 +1601,14 @@ export async function readTowerCommandCenter(args: {
 
       const activeIdentity = activeServingIdentity(commandRows);
       if (!activeIdentity) return null;
+
+      const foundationResult = args.includeFoundationInventory
+        ? await readFoundationServingRows(query, tenantKey, foundationRequest)
+        : { rows: [], totalRecords: 0, matchingRecords: 0, page: 1 };
+      const activeFoundationRows = rowsForActiveServingIdentity(
+        foundationResult.rows,
+        activeIdentity,
+      );
 
       const activeCommandRows = rowsForActiveServingIdentity(
         commandRows,
@@ -1403,6 +1646,7 @@ export async function readTowerCommandCenter(args: {
 
       const activeRowsByView = [
         ["tower_command_center", activeCommandRows],
+        ["tower_foundations_page", activeFoundationRows],
         ["tower_value_proof", activeValueRows],
         ["tower_decision_lanes", activeDecisionRows],
         ["tower_evidence", activeEvidenceRows],
@@ -1634,6 +1878,15 @@ export async function readTowerCommandCenter(args: {
         )),
         programLanes: activeDecisionRows.map(mapProgramLane),
         aiPortfolio,
+        sourceValueRows: activeValueRows.flatMap((row) => {
+          const mapped = mapSourceValueRow(row);
+          return mapped ? [mapped] : [];
+        }),
+        foundationInventory: mapFoundationInventory(
+          activeFoundationRows, summaryRow,
+          { ...foundationRequest, page: foundationResult.page },
+          foundationResult.totalRecords, foundationResult.matchingRecords,
+        ),
         aiPortfolioCounts: {
           total: aiPortfolio.length,
           candidate: aiCandidates.length,

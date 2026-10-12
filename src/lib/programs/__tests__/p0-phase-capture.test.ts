@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   buildP0PhaseCaptureValues,
   persistP0PhaseCaptureFromSource,
@@ -665,6 +667,26 @@ describe("retained reviewed P0 capture correction", () => {
     });
     let rows = structuredClone(before);
     let audited = false;
+    let auditValues: Record<string, unknown> | undefined;
+    const auditSchema = readFileSync(
+      join(
+        process.cwd(),
+        "supabase/migrations/20260430140000_program_audit_log.sql",
+      ),
+      "utf8",
+    );
+    const identityTypes = new Map(
+      [
+        ...auditSchema.matchAll(
+          /^\s*(program_id|engagement_id)\s+(TEXT|UUID)\b/gm,
+        ),
+      ].map((match) => [match[1], match[2]]),
+    );
+    if (
+      identityTypes.get("program_id") !== "TEXT" ||
+      identityTypes.get("engagement_id") !== "UUID"
+    )
+      throw new Error("Declared audit identity schema changed");
     const statements: string[] = [];
     const connection = {
       release: jest.fn(),
@@ -678,6 +700,7 @@ describe("retained reviewed P0 capture correction", () => {
         if (sql === "ROLLBACK") {
           rows = structuredClone(before);
           audited = false;
+          auditValues = undefined;
           return { command: "ROLLBACK", rows: [], rowCount: 0 };
         }
         if (sql === "COMMIT") {
@@ -697,6 +720,36 @@ describe("retained reviewed P0 capture correction", () => {
         }
         if (sql.startsWith("INSERT INTO program_audit_log")) {
           if (failure === "audit") throw new Error("audit_insert_failed");
+          const insert = sql.match(
+            /program_audit_log\s*\(([^)]+)\)\s*VALUES\s*\(([^)]+)\)/,
+          );
+          if (!insert) throw new Error("Audit insert bindings unavailable");
+          const columns = insert[1].split(",").map((value) => value.trim());
+          const bindings = insert[2].split(",").map((value) => value.trim());
+          const programBinding = bindings[columns.indexOf("program_id")];
+          const engagementBinding = bindings[columns.indexOf("engagement_id")];
+          // The schema requires TEXT and UUID; one uncast parameter cannot infer both.
+          if (
+            /^\$\d+$/.test(programBinding) &&
+            programBinding === engagementBinding &&
+            identityTypes.get("program_id") !==
+              identityTypes.get("engagement_id")
+          )
+            throw Object.assign(
+              new Error(
+                "inconsistent types deduced for parameter " + programBinding,
+              ),
+              { code: "42P08", detail: "text versus uuid" },
+            );
+          auditValues = Object.fromEntries(
+            columns.map((column, index) => {
+              const parameter = bindings[index].match(
+                /^\$(\d+)(?:::\w+(?:\[\])?)?$/,
+              );
+              if (!parameter) throw new Error("Audit parameter unavailable");
+              return [column, params[Number(parameter[1]) - 1]];
+            }),
+          );
           audited = true;
           return {
             command: "INSERT",
@@ -761,6 +814,9 @@ describe("retained reviewed P0 capture correction", () => {
       get audited() {
         return audited;
       },
+      get auditValues() {
+        return auditValues;
+      },
     };
   }
   it("commits exact retained input and audit together, with preserved statuses, sidecars and approval bindings", async () => {
@@ -794,6 +850,32 @@ describe("retained reviewed P0 capture correction", () => {
       expect(after.state_jsonb.untouched).toBe("Keep metadata");
       expect(result.values[field.key]).toBe(field.retained);
     }
+  });
+  it("binds both schema-typed audit identities to the same Move without conflicting parameter inference", async () => {
+    const t = transactionFixture();
+    const result = await restoreP0ReviewedCapture(
+      { ...t.f.ctx, role: "admin" },
+      t.f.program.id,
+      t.f.command,
+    );
+    expect(t.auditValues).toMatchObject({
+      tenant_key: t.f.ctx.clientKey,
+      program_id: t.f.program.id,
+      engagement_id: t.f.program.id,
+      actor_id: t.f.ctx.userId,
+      actor_role: "admin",
+      action: "phase_capture_reviewed_input_corrected",
+      from_state: t.f.preview.captureRevision,
+      to_state: result.revision,
+      rationale: t.f.command.rationale,
+      evidence_refs: expect.arrayContaining([
+        t.f.snapshot.id,
+        t.f.signed.id,
+        t.f.preview.sourceRevision,
+        ...t.f.preview.fields.map((field) => field.moduleId),
+      ]),
+    });
+    expect(t.statements.at(-1)).toBe("COMMIT");
   });
   it("uses the declared synthetic shared transport through the real resolver and transaction boundary", async () => {
     const declarations =

@@ -112,6 +112,7 @@ async function readback(
       ECL_SYNTHETIC_READBACK_EXPECT_HOME_PROJECTION: projected
         ? "present"
         : "absent",
+      ECL_SYNTHETIC_READBACK_HOME_PROJECTION_VERSION: "2",
       ...options.env,
     },
     runtime,
@@ -211,6 +212,7 @@ test(
         image_digest: proof.image_digest,
         release_record: proof.release_record,
         expected_home_projection: proof.expected_home_projection,
+        home_projection_version: proof.home_projection_version,
       },
       {
         job_name: "ecl-synthetic-enterprise-v2-readback",
@@ -225,6 +227,7 @@ test(
         image_digest: image,
         release_record: "docs/releases/records/2026-01-01-fixture-load.md",
         expected_home_projection: "absent",
+        home_projection_version: 2,
       },
     );
     assert.ok(proof.started_at <= proof.finished_at);
@@ -252,8 +255,7 @@ test(
       JSON.parse(outcome.reported[0]).proof_uri,
       "https://synthetic.invalid/readback.json",
     );
-    // The whole run is one read-only snapshot: a count select and one select per
-    // loaded table, and nothing else.
+    // The whole run is one read-only snapshot; other versions remain inspectable.
     assert.deepEqual(
       outcome.statements.map((sql) => {
         const table =
@@ -261,6 +263,9 @@ test(
             sql,
           )?.[1];
         if (table) return `select ${table}`;
+        if (sql.includes("from ecl_projection.projection_manifest") && sql.includes("order by")) {
+          return "select Home version inventory";
+        }
         return sql.startsWith("select (select count(*) from ")
           ? "select counts"
           : sql;
@@ -268,6 +273,7 @@ test(
       [
         "begin transaction isolation level repeatable read read only",
         "select counts",
+        "select Home version inventory",
         "select ecl_source.source_file",
         "select ecl_source.source_record",
         "select ecl_context.object",
@@ -636,6 +642,61 @@ test("the expected Home projection state is stated, never assumed", async () => 
     assert.equal(refused.code, 1);
     assert.equal(refused.proof, undefined);
     assert.match(refused.failure, refusal);
+  }
+});
+
+test("the target version is counted independently while older versions and canonical content are preserved", async () => {
+  const snapshotId = "00000000-0000-4000-8000-000000000041";
+  const manifestId = "00000000-0000-4000-8000-000000000042";
+  const scope = [pack.manifest.tenant_key, pack.manifest.assessment_id];
+  await admin.query(
+    `insert into ecl_context.snapshot
+     (id, tenant_key, assessment_id, snapshot_key, snapshot_type, source_hash,
+      context_hash, created_by_job, quality_state, proof_uri)
+     values ($3,$1,$2,'older-readback-fixture','projection_source',$4,$4,
+       'readback-fixture','warning','https://synthetic.invalid/older-proof.json')`,
+    [...scope, snapshotId, pack.manifest.source_set_hash],
+  );
+  try {
+    await admin.query(
+      `insert into ecl_projection.projection_manifest
+       (id, tenant_key, assessment_id, snapshot_id, projection_key, projection_version,
+        rebuild_command, source_hash, projection_hash, row_count, quality_state,
+        admission_status, proof_uri)
+       values ($3,$1,$2,$4,'home_enterprise_landscape',1,'fixture',$5,$5,0,
+         'warning','not_applicable','https://synthetic.invalid/older-proof.json')`,
+      [...scope, manifestId, snapshotId, pack.manifest.source_set_hash],
+    );
+    const prior = () => admin.query(
+      "select to_jsonb(m) as manifest from ecl_projection.projection_manifest m where id = $1",
+      [manifestId],
+    );
+    const before = (await prior()).rows;
+    const target = await readback();
+    assert.equal(target.code, 0, target.failure);
+    assert.equal(target.proof?.home_projection_version, 2);
+    assert.equal(target.proof?.actual.home_projection_manifests, projected ? 1 : 0);
+    assert.ok(target.proof?.home_projection_inventory.some(row =>
+      row.id === manifestId && row.projection_version === 1));
+    assert.deepEqual(target.proof?.actual, target.proof?.expected);
+    for (const table of ["source_file", "source_record", "object", "relationship"] as const) {
+      assert.equal(target.proof?.content[table].differing_rows, 0);
+      assert.equal(target.proof?.content[table].missing_rows, 0);
+      assert.equal(target.proof?.content[table].unexpected_rows, 0);
+    }
+    const older = await readback({ env: {
+      ECL_SYNTHETIC_READBACK_HOME_PROJECTION_VERSION: "1",
+      ECL_SYNTHETIC_READBACK_EXPECT_HOME_PROJECTION: "present",
+    } });
+    assert.equal(older.code, 0, older.failure);
+    assert.equal(older.proof?.home_projection_version, 1);
+    assert.equal(older.proof?.actual.home_projection_manifests, 1);
+    assert.deepEqual((await prior()).rows, before);
+    assert.ok(target.statements.every(sql =>
+      /^select\s/.test(sql) || sql === "begin transaction isolation level repeatable read read only" || sql === "commit"));
+  } finally {
+    await admin.query("delete from ecl_projection.projection_manifest where id = $1", [manifestId]);
+    await admin.query("delete from ecl_context.snapshot where id = $1", [snapshotId]);
   }
 });
 

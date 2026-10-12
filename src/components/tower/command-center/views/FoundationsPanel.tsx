@@ -19,6 +19,7 @@ import {
   formatUsdM,
 } from "@/lib/tower/command-center/format";
 import { approvedAiCaseFunding, isBusinessCase } from "./portfolio-kind";
+import { FoundationSourceInventory } from "./FoundationSourceInventory";
 
 type FoundationRow = {
   readonly item: TowerAiView;
@@ -87,6 +88,12 @@ export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
 
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+      {view.foundationInventory ? <FoundationSourceInventory inventory={view.foundationInventory} /> : null}
+      {view.foundationInventory ? (
+        <h2 style={{ margin: "12px 0 0", fontFamily: "var(--abarva-serif)", fontSize: 25 }}>
+          AI foundation cases and funding
+        </h2>
+      ) : null}
       <h2
         style={{
           margin: 0,
@@ -98,7 +105,7 @@ export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
         }}
       >
         {noRows
-          ? "No foundation rows are loaded in the AI portfolio."
+          ? view.foundationInventory ? "No AI case is classified as a platform, governance, or foundation case in this read." : "No foundation rows are loaded in the AI portfolio."
           : missingSpendRows > 0
             ? `${formatCount(rows.length)} foundation cases are shown; ${formatCount(missingSpendRows)} ${hasHave(missingSpendRows)} no approved AI funding amount loaded.`
           : missingValueRows > 0
@@ -116,7 +123,7 @@ export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 1 }}>
         {[
-          ["Foundation rows", noRows ? "Not loaded" : formatCount(rows.length)],
+          [view.foundationInventory ? "AI foundation cases" : "Foundation rows", noRows ? "Not loaded" : formatCount(rows.length)],
           ["Approved foundation funding", noRows ? "Not loaded" : missingSpendRows > 0 ? "Partial" : formatUsdM(spendUsd)],
           ["Share of approved AI funding", share === null ? "Not loaded" : formatPct(share)],
           ["Projected direct benefit", loadedValueRows.length === 0 ? "Not loaded" : missingValueRows > 0 ? "Partial — total withheld" : formatUsdM(promisedUsd)],

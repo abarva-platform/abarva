@@ -82,9 +82,9 @@ test("staged ZIP must bind exact candidate bytes, receipt, and passing quality p
 
 test("reviewed preflight proof must be ready and bound to the exact stage", () => {
   const config = configFromEnv("promote", env());
-  const receiptBytes = Buffer.from("receipt");
   const pages = ["command_center", "decision_lanes", "recommended_actions", "value_proof", "cost_lens",
     "evidence", "risk_lens", "ai_portfolio", "adoption_lens"];
+  const receiptBytes = Buffer.from(JSON.stringify({ view_counts: Object.fromEntries(pages.map((page) => [page, 1])) }));
   const proof = { contract_version: "tower-candidate-promotion-preflight/v1", status: "ready",
     tenant_key: config.tenant, candidate_assessment_id: config.assessment,
     input_fingerprint_sha256: config.sourceSha, candidate_file_sha256: config.candidateSha,
@@ -95,6 +95,9 @@ test("reviewed preflight proof must be ready and bound to the exact stage", () =
   assert.throws(() => validateReviewedProof({ ...proof, status: "blocked" }, config, receiptBytes), /not ready/);
   assert.throws(() => validateReviewedProof({ ...proof, stage_receipt_sha256: sha("other") }, config, receiptBytes), /not ready/);
   assert.throws(() => validateReviewedProof({ ...proof, physical_view_counts: { ...proof.physical_view_counts, cost_lens: 0.5 } }, config, receiptBytes), /not ready/);
+  const foundationReceiptBytes = Buffer.from(JSON.stringify({ view_counts: { ...JSON.parse(receiptBytes).view_counts, foundations: 1 } }));
+  assert.throws(() => validateReviewedProof({ ...proof, stage_receipt_sha256: sha(foundationReceiptBytes) },
+    config, foundationReceiptBytes), /not ready/);
 });
 
 test("guarded operator receives the validated private Blob scope", () => {
@@ -168,6 +171,23 @@ test("command center serving view includes all three checked command populations
     config, receipt, reviewed), /recommended_actions population differs/);
   assert.throws(() => servingRowsForPage("command_center", [command, { ...lane, assessment_id: "old" }, action],
     config, receipt, reviewed), /unexpected generation or page/);
+});
+
+test("Foundation serving rows are checked separately within the shared command view", () => {
+  const config = { assessment };
+  const receipt = { projection_version: 6 };
+  const foundation = { assessment_id: assessment, projection_version: 6, page_key: "foundations",
+    row_key: "foundation:application:one", source_hash: sha("foundation") };
+  const command = { ...foundation, page_key: "command_center", row_key: "summary", source_hash: sha("summary") };
+  const lane = { ...foundation, page_key: "decision_lanes", row_key: "lane", source_hash: sha("lane") };
+  const action = { ...foundation, page_key: "recommended_actions", row_key: "action", source_hash: sha("action") };
+  const fingerprint = (row) => sha(JSON.stringify([{ row_key: row.row_key, source_hash: row.source_hash }]));
+  const reviewed = { physical_view_counts: { foundations: 1, command_center: 1, decision_lanes: 1, recommended_actions: 1 },
+    physical_view_fingerprints: Object.fromEntries([foundation, command, lane, action]
+      .map((row) => [row.page_key, fingerprint(row)])) };
+  assert.deepEqual(servingRowsForPage("foundations", [foundation, command, lane, action], config, receipt, reviewed), [foundation]);
+  assert.throws(() => servingRowsForPage("foundations", [foundation, { ...command, source_hash: sha("wrong") }, lane, action],
+    config, receipt, reviewed), /command_center population differs/);
 });
 
 test("post-error selector observation distinguishes a committed candidate", () => {

@@ -85,6 +85,13 @@ jobs:
           node --import tsx --test
           scripts/source/__tests__/market-candidate-research.test.mjs
 
+      - name: Validate Tower registered intake candidate and operator boundaries
+        run: >-
+          node --test
+          scripts/tower/__tests__/registered-intake-source-assertions.test.mjs
+          scripts/tower/__tests__/operate-registered-intake-candidate.test.mjs
+          scripts/tower/__tests__/run-registered-candidate-aca-job.test.mjs
+
       - name: Validate Source contract performance unit loading
         run: npx jest --runInBand --runTestsByPath scripts/source/__tests__/load-contract-depth-package.test.ts --no-coverage --ci
 

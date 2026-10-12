@@ -23,9 +23,13 @@ const PAGE_TABLE = Object.freeze({
   risk_lens: ["tower_evidence_queue", "page_key"],
   ai_portfolio: ["tower_ai_portfolio", "display_payload_json"],
   adoption_lens: ["tower_ai_portfolio", "display_payload_json"],
+  foundations: ["tower_command_center", "page_key"],
 });
+const LEGACY_PAGE_TABLE = Object.fromEntries(Object.entries(PAGE_TABLE).filter(([page]) => page !== "foundations"));
+const pageTableFor = (receipt) => Object.hasOwn(receipt.view_counts ?? {}, "foundations") ? PAGE_TABLE : LEGACY_PAGE_TABLE;
 const AGGREGATE_SERVING_PAGES = Object.freeze({
-  command_center: ["command_center", "decision_lanes", "recommended_actions"],
+  command_center: ["command_center", "decision_lanes", "recommended_actions", "foundations"],
+  foundations: ["command_center", "decision_lanes", "recommended_actions", "foundations"],
   value_proof: ["value_proof", "cost_lens"],
 });
 const sha = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
@@ -168,12 +172,14 @@ export async function stageInputs(container, config) {
 }
 
 export function validateReviewedProof(proof, config, receiptBytes) {
+  const receipt = JSON.parse(receiptBytes);
   if (proof.contract_version !== "tower-candidate-promotion-preflight/v1" || proof.status !== "ready" ||
       proof.tenant_key !== config.tenant || proof.candidate_assessment_id !== config.assessment ||
       proof.input_fingerprint_sha256 !== config.sourceSha || proof.candidate_file_sha256 !== config.candidateSha ||
       proof.stage_receipt_sha256 !== sha(receiptBytes) || proof.private_blob_proof?.status !== "verified" ||
       proof.private_blob_proof.sha256 !== config.stageSha || proof.gaps?.length !== 0 ||
-      Object.keys(PAGE_TABLE).some((page) => !Number.isInteger(proof.physical_view_counts?.[page]) ||
+      Object.keys(pageTableFor(receipt))
+        .some((page) => !Number.isInteger(proof.physical_view_counts?.[page]) ||
         !SHA256.test(proof.physical_view_fingerprints?.[page] ?? ""))) {
     throw new Error("Reviewed preflight proof is not ready for this exact staged candidate");
   }
@@ -218,7 +224,8 @@ export function validateServingPage(page, rows, served, priorRows, config, recei
       served.length !== count || servedFingerprint !== fingerprint ||
       served.some((row) => row.assessment_id !== config.assessment ||
         Number(row.projection_version) !== receipt.projection_version) ||
-      JSON.stringify(prior) !== JSON.stringify(reviewed.prior_view_fingerprints?.[page])) {
+      JSON.stringify(prior) !== JSON.stringify(reviewed.prior_view_fingerprints?.[page] ??
+        (page === "foundations" ? { rows: 0, fingerprint_sha256: sha("[]") } : undefined))) {
     throw new Error(`Serving page readback differs: ${page}`);
   }
   return { count, fingerprint, served_count: served.length, served_fingerprint: servedFingerprint, prior };
@@ -230,7 +237,7 @@ export function servingRowsForPage(page, allRows, config, receipt, reviewed) {
       Number(row.projection_version) !== receipt.projection_version)) {
     throw new Error(`Serving view has an unexpected generation or page: ${page}`);
   }
-  for (const sibling of allowed.filter((member) => member !== page)) {
+  for (const sibling of allowed.filter((member) => member !== page && Object.hasOwn(reviewed.physical_view_counts, member))) {
     const siblingRows = allRows.filter((row) => row.page_key === sibling);
     if (siblingRows.length !== reviewed.physical_view_counts[sibling] ||
         pageFingerprint(siblingRows) !== reviewed.physical_view_fingerprints[sibling]) {
@@ -261,14 +268,15 @@ export async function servingReadback(config, receipt, reviewed) {
     const servingFingerprints = {};
     const servingViewTotalCounts = {};
     const prior = {};
-    for (const [page, [table, column]] of Object.entries(PAGE_TABLE)) {
+    for (const [page, [table, column]] of Object.entries(pageTableFor(receipt))) {
       const predicate = column === "page_key" ? "page_key=$4" : "display_payload_json->>'page_key'=$4";
       const query = `select row_key, source_hash from ecl_projection.${table} where tenant_key=$1 and assessment_id=$2 and projection_version=$3 and ${predicate} order by row_key, source_hash`;
       const rows = (await client.query(query, [config.tenant, config.assessment, receipt.projection_version, page])).rows;
       const priorRows = (await client.query(query, [config.tenant, reviewed.prior_active.assessment_id,
         reviewed.prior_active.projection_version, page])).rows;
+      const servingView = page === "foundations" ? "tower_command_center" : `tower_${page}`;
       const servedAll = (await client.query(
-        `select assessment_id, projection_version, page_key, row_key, source_hash from serving.tower_${page} where tenant_key=$1 order by row_key, source_hash`,
+        `select assessment_id, projection_version, page_key, row_key, source_hash from serving.${servingView} where tenant_key=$1 order by row_key, source_hash`,
         [config.tenant],
       )).rows;
       servingViewTotalCounts[page] = servedAll.length;

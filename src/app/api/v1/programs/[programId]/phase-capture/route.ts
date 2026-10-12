@@ -272,6 +272,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ programId: string }> },
 ) {
+  let reviewedCorrectionAttempted = false;
   try {
     const ctx = await requireTenancy();
     const { programId } = await params;
@@ -318,6 +319,7 @@ export async function POST(
           },
           { status: 400 },
         );
+      reviewedCorrectionAttempted = true;
       return Response.json(
         await restoreP0ReviewedCapture(ctx, programId, {
           ...body.restoreReviewedP0,
@@ -868,6 +870,25 @@ export async function POST(
       /* not a tenancy error */
     }
     console.error("[POST /api/v1/programs/:programId/phase-capture]", err);
+    const outcome = writeTransactionOutcome(err);
+    if (
+      reviewedCorrectionAttempted &&
+      (outcome === "rolled_back" || outcome === "not_started")
+    ) {
+      const rolledBack = outcome === "rolled_back";
+      return Response.json(
+        {
+          error: rolledBack
+            ? "correction_rolled_back"
+            : "correction_not_started",
+          detail: rolledBack
+            ? "The captured-input correction was rolled back. No correction was saved. Read the stored input and audit before retrying."
+            : "The captured-input correction did not start. Read the stored input and audit before retrying.",
+          transactionOutcome: outcome,
+        },
+        { status: rolledBack ? 500 : 503 },
+      );
+    }
     return Response.json(unexpectedWalkStepFailureBody("phase_capture_save"), {
       status: 500,
     });

@@ -52,6 +52,14 @@ export function admissionIssues(
 /** Whether a Home projection of this assessment is expected to exist already. */
 export const HOME_PROJECTION_STATES = ["absent", "present"] as const;
 export type HomeProjectionState = (typeof HOME_PROJECTION_STATES)[number];
+export type HomeProjectionVersion = 1 | 2;
+
+export function homeReadbackProjectionVersion(value: unknown): HomeProjectionVersion {
+  if (value !== "1" && value !== "2" && value !== 1 && value !== 2) {
+    throw new Error("Home readback projection version must be 1 or 2");
+  }
+  return Number(value) as HomeProjectionVersion;
+}
 
 /** What a run records about itself, as the data-build job rule requires. */
 export type ReadbackBinding = {
@@ -62,6 +70,7 @@ export type ReadbackBinding = {
   releaseRecord: string;
   /** Stated by the operator: the readback never assumes either state. */
   expectHomeProjection: HomeProjectionState;
+  homeProjectionVersion: HomeProjectionVersion;
 };
 
 export type ReadbackSettings = {
@@ -79,6 +88,7 @@ const governedBindings = [
   "ECL_SYNTHETIC_IMAGE_DIGEST",
   "ECL_SYNTHETIC_RELEASE_RECORD",
   "ECL_SYNTHETIC_READBACK_EXPECT_HOME_PROJECTION",
+  "ECL_SYNTHETIC_READBACK_HOME_PROJECTION_VERSION",
 ] as const;
 
 /** Every binding a run needs, checked before anything is generated or opened. */
@@ -140,6 +150,9 @@ export function readbackSettings(
       imageDigest,
       releaseRecord,
       expectHomeProjection,
+      homeProjectionVersion: homeReadbackProjectionVersion(
+        env.ECL_SYNTHETIC_READBACK_HOME_PROJECTION_VERSION,
+      ),
     },
   };
 }
@@ -352,20 +365,35 @@ const countsSql = `
           or quality_state <> 'accepted')) as invalid_source_files,
     (select count(*) from ecl_projection.projection_manifest
       where tenant_key = $1 and assessment_id = $2
-        and projection_key = '${homeProjectionKey}') as home_projection_manifests
+        and projection_key = '${homeProjectionKey}'
+        and projection_version = $4) as home_projection_manifests
 `;
+
+export type HomeProjectionInventoryRow = {
+  id: string;
+  snapshot_id: string;
+  projection_version: number;
+  source_hash: string;
+  projection_hash: string;
+  row_count: number;
+  quality_state: string;
+  admission_status: string;
+};
 
 /**
  * Everything the readback reads, in one read-only snapshot. These are the only
- * statements it issues: `begin ... read only`, one count select, one select per
- * loaded table, and `commit` (or `rollback` when a read fails).
+ * statements it issues: `begin ... read only`, a version-scoped count select,
+ * the complete Home version inventory, one select per loaded table, and
+ * `commit` (or `rollback` when a read fails).
  */
 async function readPersisted(
   db: ReadbackDatabase,
   manifest: GeneratedPack["manifest"],
+  homeProjectionVersion: HomeProjectionVersion,
 ): Promise<{
   actual: Record<string, number>;
   rows: Record<LoadTable, Record<string, unknown>[]>;
+  homeProjectionInventory: HomeProjectionInventoryRow[];
 }> {
   const scope = [manifest.tenant_key, manifest.assessment_id];
   await db.query("begin transaction isolation level repeatable read read only");
@@ -373,7 +401,16 @@ async function readPersisted(
     const counts = await db.query<CountRow>(countsSql, [
       ...scope,
       manifest.source_set_hash,
+      homeProjectionVersion,
     ]);
+    const inventory = await db.query<HomeProjectionInventoryRow>(
+      `select id::text, snapshot_id::text, projection_version, source_hash,
+              projection_hash, row_count, quality_state, admission_status
+       from ecl_projection.projection_manifest
+       where tenant_key = $1 and assessment_id = $2 and projection_key = $3
+       order by projection_version, id`,
+      [...scope, homeProjectionKey],
+    );
     const rows = {} as Record<LoadTable, Record<string, unknown>[]>;
     for (const table of Object.keys(persistedTables) as LoadTable[]) {
       const columns = loadColumns[table]
@@ -395,6 +432,7 @@ async function readPersisted(
         ]),
       ),
       rows,
+      homeProjectionInventory: inventory.rows,
     };
   } catch (error) {
     await db.query("rollback").catch(() => undefined);
@@ -415,6 +453,8 @@ export type ReadbackProof = {
   image_digest: string;
   release_record: string;
   expected_home_projection: HomeProjectionState;
+  home_projection_version: HomeProjectionVersion;
+  home_projection_inventory: HomeProjectionInventoryRow[];
   started_at: string;
   finished_at: string;
   actual: Record<string, number>;
@@ -437,6 +477,7 @@ export async function readbackAdmission(
   deps: { db: ReadbackDatabase } & ReadbackStorage,
 ): Promise<ReadbackProof> {
   const startedAt = new Date().toISOString();
+  const homeProjectionVersion = homeReadbackProjectionVersion(binding.homeProjectionVersion);
   const { manifest, normalized } = pack;
   const expectedRows = buildLoadRows(
     pack,
@@ -448,7 +489,7 @@ export async function readbackAdmission(
       ]),
     ),
   );
-  const persisted = await readPersisted(deps.db, manifest);
+  const persisted = await readPersisted(deps.db, manifest, homeProjectionVersion);
 
   const expected: Record<string, number> = {
     source_files: expectedRows.source_file.length,
@@ -526,6 +567,8 @@ export async function readbackAdmission(
     image_digest: binding.imageDigest,
     release_record: binding.releaseRecord,
     expected_home_projection: binding.expectHomeProjection,
+    home_projection_version: homeProjectionVersion,
+    home_projection_inventory: persisted.homeProjectionInventory,
     started_at: startedAt,
     finished_at: new Date().toISOString(),
     actual: persisted.actual,

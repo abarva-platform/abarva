@@ -168,6 +168,7 @@ async function main(): Promise<void> {
         {
           ...homeJobEnv(pack, { ECL_SYNTHETIC_RUN_ID: runId }),
           ECL_SYNTHETIC_READBACK_EXPECT_HOME_PROJECTION: "absent",
+          ECL_SYNTHETIC_READBACK_HOME_PROJECTION_VERSION: "2",
         },
         {
           generate: async () => pack,
@@ -201,7 +202,7 @@ async function main(): Promise<void> {
       assert.equal(code, 0, "the readback of the untouched load passes");
       return uri;
     };
-    const readbackUri = await readback("readback-fixture-1");
+    let readbackUri = await readback("readback-fixture-1");
     const otherReadbackUri = await readback("readback-fixture-2");
 
     // Refused before the database is opened.
@@ -345,12 +346,57 @@ async function main(): Promise<void> {
     // The rows are committed, and then the proof cannot be written.
     const firstRun = "projection-fixture-1";
     const firstProofPath = `${prefix}/runs/${firstRun}/projection-proof.json`;
-    const lost = await project({
-      env: { ECL_SYNTHETIC_RUN_ID: firstRun },
-      store: fileProofStore(proofDirectory(), async (blobPath) => {
-        if (blobPath === firstProofPath) throw new Error("store unreachable");
-      }),
-    });
+    const olderSnapshotId = "00000000-0000-4000-8000-000000000051";
+    const olderManifestId = "00000000-0000-4000-8000-000000000052";
+    await admin.query(
+      `insert into ecl_context.snapshot
+       (id, tenant_key, assessment_id, snapshot_key, snapshot_type, source_hash,
+        context_hash, created_by_job, quality_state, proof_uri)
+       values ($3,$1,$2,'older-projection-fixture','projection_source',$4,$4,
+         'projection-fixture','warning','https://synthetic.invalid/older-proof.json')`,
+      [...scope, olderSnapshotId, manifest.source_set_hash],
+    );
+    let lost: Outcome;
+    try {
+      await admin.query(
+        `insert into ecl_projection.projection_manifest
+         (id, tenant_key, assessment_id, snapshot_id, projection_key, projection_version,
+          rebuild_command, source_hash, projection_hash, row_count, quality_state,
+          admission_status, proof_uri)
+         values ($3,$1,$2,$4,'home_enterprise_landscape',1,'fixture',$5,$5,0,
+           'warning','not_applicable','https://synthetic.invalid/older-proof.json')`,
+        [...scope, olderManifestId, olderSnapshotId, manifest.source_set_hash],
+      );
+      const prior = () => admin.query(
+        "select to_jsonb(m) as manifest from ecl_projection.projection_manifest m where id = $1",
+        [olderManifestId],
+      );
+      const canonical = async () => {
+        const fingerprints: Record<string, string> = {};
+        for (const table of ["ecl_source.source_file", "ecl_source.source_record", "ecl_context.object", "ecl_context.relationship"]) {
+          fingerprints[table] = (await admin.query<{ hash: string }>(
+            `select md5(string_agg(md5(to_jsonb(t)::text), '' order by id)) as hash from ${table} t where ${scoped}`,
+            scope,
+          )).rows[0].hash;
+        }
+        return fingerprints;
+      };
+      const priorBefore = (await prior()).rows;
+      const canonicalBefore = await canonical();
+      readbackUri = await readback("readback-fixture-v1-coexists");
+      lost = await project({
+        env: { ECL_SYNTHETIC_RUN_ID: firstRun },
+        store: fileProofStore(proofDirectory(), async (blobPath) => {
+          if (blobPath === firstProofPath) throw new Error("store unreachable");
+        }),
+      });
+      assert.equal(lost.report?.projection, "committed", lost.failure);
+      assert.deepEqual((await prior()).rows, priorBefore, "initial v2 projection preserves the older manifest");
+      assert.deepEqual(await canonical(), canonicalBefore, "shadow construction preserves source and canonical content");
+    } finally {
+      await admin.query("delete from ecl_projection.projection_manifest where id = $1", [olderManifestId]);
+      await admin.query("delete from ecl_context.snapshot where id = $1", [olderSnapshotId]);
+    }
     assert.equal(lost.code, 1);
     assert.match(lost.failure, /store unreachable/);
     assert.equal(lost.report?.status, "failed");
