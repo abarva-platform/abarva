@@ -19,7 +19,7 @@ For each headline metric and tenant: every in-scope file that asserts a value, a
 
 | Tenant | Status | Asserted by | Value |
 | --- | --- | --- | ---: |
-| meridian-health | `ABSENT` | — | — |
+| meridian-health | `ONE_SOURCE` | `active` SA02_IT_Finance_Budget_Spend_Extract.csv · `budget_amount_usd` | $650.0M |
 | skyharbor-air | `ABSENT` | — | — |
 
 ## Annual IT spend (not an approved budget) `annual_it_spend_usd`

@@ -1425,6 +1425,50 @@ describe("readTowerCommandCenter", () => {
     expect(view?.costLens?.categories[0]?.sourceSavingsOpportunityUsd).toBe(300_000);
     expect(view?.costLens?.modeledAnnualSpendUsd).toBe(10_000_000);
 
+    const demoBudgetRefs = Array.from({ length: 70 }, (_, index) => ref("SA02_IT_Finance_Budget_Spend_Extract.csv", index + 2));
+    const demoBudgetRow = cost("synthetic_demo_fy26_budget", 650_000_000,
+      "FY26 synthetic demo budget", demoBudgetRefs, {
+        additive_to_aggregate_spend: false, independent_finance_attestation: false,
+      });
+    const demoSummary = {
+      ...servingRow({ row_key: "executive_summary", page_key: "command_center",
+        display_payload_json: {
+          synthetic_demo_fy26_budget_usd: 650_000_000,
+          synthetic_demo_fy26_run_usd: 487_500_000,
+          synthetic_demo_fy26_change_usd: 162_500_000,
+          synthetic_demo_fy26_run_row_count: 31,
+          synthetic_demo_fy26_change_row_count: 39,
+          synthetic_demo_budget_measure_id: "budget-measure",
+          synthetic_demo_run_measure_id: "run-measure",
+          synthetic_demo_change_measure_id: "change-measure",
+          budget_fiscal_year: "FY26", budget_approval_status: "approved_for_synthetic_demo",
+          budget_approval_basis: "user_selected_synthetic_source_not_finance_attestation",
+          independent_finance_attestation: false,
+        } }), projection_version: 4, source_refs_json: demoBudgetRefs,
+    };
+    mockServingRows({ tower_command_center: [demoSummary],
+      tower_cost_lens: [...rows, demoBudgetRow] });
+    const withDemo = await readTowerCommandCenter({ tenantKeyCandidates: ["meridian-health"] });
+    expect(withDemo?.costLens?.modeledAnnualSpendUsd).toBe(10_000_000);
+    expect(withDemo?.costLens?.categories).toHaveLength(2);
+    expect(withDemo?.command.totalItBudgetFy26).toBeNull();
+    expect(withDemo?.command.syntheticDemoBudgetFy26).toBe(650_000_000);
+    expect(withDemo?.command.syntheticDemoRunBudgetFy26).toBe(487_500_000);
+    expect(withDemo?.command.syntheticDemoChangeBudgetFy26).toBe(162_500_000);
+    mockServingRows({ tower_command_center: [{ ...demoSummary, payload_json: {
+      ...demoSummary.payload_json, display_payload_json: {
+        ...demoSummary.payload_json.display_payload_json, synthetic_demo_run_measure_id: null,
+      } } }], tower_cost_lens: [...rows, demoBudgetRow] });
+    const unlinkedSplit = await readTowerCommandCenter({ tenantKeyCandidates: ["meridian-health"] });
+    expect(unlinkedSplit?.command.syntheticDemoBudgetFy26).toBe(650_000_000);
+    expect(unlinkedSplit?.command.syntheticDemoRunBudgetFy26).toBeNull();
+    mockServingRows({ tower_command_center: [demoSummary],
+      tower_cost_lens: [...rows, { ...demoBudgetRow, payload_json: {
+        ...demoBudgetRow.payload_json, measure_id: null,
+      } }] });
+    const unlinkedCost = await readTowerCommandCenter({ tenantKeyCandidates: ["meridian-health"] });
+    expect(unlinkedCost?.costLens).toBeNull();
+
     mockServingRows({
       tower_command_center: [{ ...servingRow({ row_key: "executive_summary", page_key: "command_center" }), projection_version: 4 }],
       tower_cost_lens: [rows[0], { ...rows[1], payload_json: { ...rows[1].payload_json, display_payload_json: { ...rows[1].payload_json.display_payload_json, value: 6_000_001 } } }, rows[2], rows[3]],

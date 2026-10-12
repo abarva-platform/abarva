@@ -120,10 +120,10 @@ function candidateConfig(report) {
   return {
     datasetId,
     manifestPath: path.join(ROOT, "docs/governance/dataset-manifests", `${datasetId}.json`),
-    releaseRecord: sourceAssertions ? "docs/releases/records/2026-10-12-tower-source-assertions-candidate.md" :
+    releaseRecord: sourceAssertions ? "docs/releases/records/2026-10-12-tower-synthetic-demo-budget-source.md" :
       sourceFields ? "docs/releases/records/2026-10-12-tower-registered-source-fields.md" : RELEASE_RECORD,
     projectionVersion: sourceAssertions ? 6 : sourceFields ? 5 : PROJECTION_VERSION,
-    buildVersion: sourceAssertions ? "tower-registered-intake-source-assertions/v1" :
+    buildVersion: sourceAssertions ? "tower-registered-intake-source-assertions/v2" :
       sourceFields ? "tower-registered-intake-source-fields/v1" : BUILD_VERSION,
     sourceFields,
     sourceAssertions,
@@ -131,6 +131,19 @@ function candidateConfig(report) {
 }
 const IDENTITY = JSON.parse(fs.readFileSync(IDENTITY_PATH, "utf8"));
 const SPEND_METRIC_KEY = IDENTITY.aggregate_spend_metric.object_key;
+const DEMO_BUDGET_METRIC_KEY = IDENTITY.synthetic_demo_budget_metric.object_key;
+const DEMO_BUDGET_SPLIT_METRICS = {
+  run: "synthetic_demo_fy26_run_budget_usd",
+  change: "synthetic_demo_fy26_change_budget_usd",
+};
+const DEMO_BUDGET_SOURCE_MEASURES = [
+  ["budget_amount_usd", "synthetic_demo_fy26_budget_line_usd", "planned"],
+  ["actual_spend_usd", "synthetic_demo_finance_actual_ytd_usd", "actual"],
+  ["forecast_spend_usd", "synthetic_demo_finance_forecast_usd", "forecast"],
+  ["committed_spend_usd", "synthetic_demo_finance_committed_usd", "current"],
+  ["invoice_amount_usd", "synthetic_demo_finance_invoice_usd", "actual"],
+  ["variance_usd", "synthetic_demo_finance_forecast_less_budget_usd", "forecast"],
+];
 
 function hash(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
@@ -344,6 +357,56 @@ function addCanonicalRows(plan, report) {
       money_population: "modeled_it_spend", amount_role: "aggregate",
       do_not_add_to_category_rows: true, do_not_add_to_contract_spend: true }, "planned");
   plan.measures.at(-1).basis = "calculated";
+  const demoBudget = report.canonical.synthetic_demo_fy26_budget;
+  if (demoBudget) {
+    if (demoBudget.source_refs.length !== 70 || demoBudget.line_items.length !== 70 ||
+        demoBudget.source_refs.some((ref) => ref.source_file !== IDENTITY.synthetic_demo_budget_metric.source_file)) {
+      throw new Error("Selected synthetic demo budget source identity does not match the declared contract");
+    }
+    const budgetId = addObject(plan, report, "metric", DEMO_BUDGET_METRIC_KEY,
+      "FY26 synthetic demo budget", null, {
+        source_basis: IDENTITY.synthetic_demo_budget_metric.basis,
+        fiscal_year: "FY26", extract_period: "FY26-Q2-YTD",
+        independent_finance_attestation: false, source_refs: demoBudget.source_refs,
+      });
+    const budgetObject = plan.objects.find((row) => row.id === budgetId);
+    budgetObject.basis = "calculated";
+    budgetObject.value_state = "estimated";
+    addMeasure(plan, report, budgetId, DEMO_BUDGET_METRIC_KEY, demoBudget.amount_usd,
+      "USD", null, "estimated", { source_refs: demoBudget.source_refs,
+        fiscal_year: "FY26", source_extract_period: "FY26-Q2-YTD",
+        approval_basis: "approved_for_synthetic_demo_not_finance_attested",
+        independent_finance_attestation: false, money_population: "synthetic_demo_fy26_budget",
+        amount_role: "aggregate", do_not_add_to_modeled_spend: true,
+        do_not_add_to_run_change_components: true }, "planned");
+    plan.measures.at(-1).basis = "calculated";
+    for (const [bucket, metric] of Object.entries(DEMO_BUDGET_SPLIT_METRICS)) {
+      const component = demoBudget.run_change_split[bucket];
+      addMeasure(plan, report, budgetId, metric, component.amount_usd, "USD", null,
+        "estimated", { source_refs: component.source_refs, fiscal_year: "FY26",
+          source_extract_period: "FY26-Q2-YTD", source_field: "run_change_flag",
+          run_change_flag: bucket, line_item_count: component.line_item_count,
+          source_assertion_only: true, independent_finance_attestation: false,
+          money_population: "synthetic_demo_fy26_budget", amount_role: "aggregate_component",
+          parent_metric_key: DEMO_BUDGET_METRIC_KEY, do_not_add_to_aggregate: true,
+          do_not_add_to_modeled_spend: true }, "planned");
+      plan.measures.at(-1).basis = "calculated";
+    }
+    for (const item of demoBudget.line_items) {
+      for (const [field, metric, scenario] of DEMO_BUDGET_SOURCE_MEASURES) {
+        addMeasure(plan, report, budgetId, metric, item[field], "USD", item.source_ref,
+          "estimated", { source_field: field, native_id: item.source_record_id,
+            source_file: item.source_ref.source_file, source_row: item.source_ref.source_row,
+            source_system: item.source_system, value_source: item.value_source_by_field[field],
+            run_change_flag: item.run_change_flag,
+            fiscal_year: "FY26", source_extract_period: "FY26-Q2-YTD",
+            independent_finance_attestation: false, source_assertion_only: true,
+            component_of_budget_metric: field === "budget_amount_usd" ? DEMO_BUDGET_METRIC_KEY : null,
+            do_not_add_to_aggregate: true,
+            do_not_add_to_modeled_spend: true }, scenario);
+      }
+    }
+  }
   for (const row of report.views.cost_lens.filter((item) => item.row_key.startsWith("spend:"))) {
     const ref = sourceRefsFor(row)[0];
     if (!ref || row.category_business_id !== null || row.source_row_identity_only !== true) {
@@ -658,13 +721,31 @@ function addProjectionRows(plan, report, views) {
       let canonicalMeasure = null;
       let canonicalObjectId = null;
       let canonicalMeasureRefs = [];
-      if (page === "cost_lens") {
+      if (page === "command_center" && row.row_key === "executive_summary" &&
+          report.canonical.synthetic_demo_fy26_budget) {
+        const matches = plan.measures.filter((measure) => measure.metric_key === DEMO_BUDGET_METRIC_KEY);
+        if (matches.length !== 1 || matches[0].value_number !== row.synthetic_demo_fy26_budget_usd) {
+          throw new Error("Executive synthetic demo budget lacks an exact canonical measure");
+        }
+        const components = Object.values(DEMO_BUDGET_SPLIT_METRICS).map((metric) =>
+          plan.measures.find((measure) => measure.metric_key === metric));
+        if (components.some((measure) => !measure) ||
+            components[0].value_number !== row.synthetic_demo_fy26_run_usd ||
+            components[1].value_number !== row.synthetic_demo_fy26_change_usd) {
+          throw new Error("Executive synthetic demo split lacks exact canonical measures");
+        }
+        canonicalMeasureRefs = [...matches, ...components];
+        payload.synthetic_demo_budget_measure_id = matches[0].id;
+        payload.synthetic_demo_run_measure_id = components[0].id;
+        payload.synthetic_demo_change_measure_id = components[1].id;
+      } else if (page === "cost_lens") {
         const contract = row.row_key.startsWith("contract:");
         const category = row.row_key.startsWith("spend:");
+        const demoBudget = row.row_key === "synthetic_demo_fy26_budget";
         canonicalObjectId = contract ? objectId(report, "vendor", row.row_key.slice(9)) :
-          objectId(report, "metric", SPEND_METRIC_KEY);
+          objectId(report, "metric", demoBudget ? DEMO_BUDGET_METRIC_KEY : SPEND_METRIC_KEY);
         const metricKey = contract ? "vendor_annual_contract_spend_usd" :
-          category ? "modeled_annual_spend_category_usd" : SPEND_METRIC_KEY;
+          category ? "modeled_annual_spend_category_usd" : demoBudget ? DEMO_BUDGET_METRIC_KEY : SPEND_METRIC_KEY;
         const matches = plan.measures.filter((measure) => measure.subject_object_id === canonicalObjectId &&
           measure.metric_key === metricKey && (!category ||
             measure.source_record_id === sourceRowId(report, sourceRefsFor(row)[0])));
@@ -818,13 +899,15 @@ function addProjectionRows(plan, report, views) {
           row_type: isCost ? "cost_exposure" : "value_claim_gap",
           primary_object_id: canonicalObjectId || (row.row_key.startsWith("contract:") ? objectId(report, "vendor", row.row_key.slice(9)) :
             row.row_key.startsWith("metric:") ? objectId(report, "metric", row.row_key.slice(7)) :
+            row.row_key === "synthetic_demo_fy26_budget" ? objectId(report, "metric", DEMO_BUDGET_METRIC_KEY) :
             row.row_key === "modeled_annual_spend" ? objectId(report, "metric", SPEND_METRIC_KEY) :
             objectId(report, "ai_use_case", row.row_key)),
           claim_id: row.row_key, observation_key: `${page}:${row.row_key}`,
           metric_key: isCost ? row.row_key.startsWith("contract:") ? "vendor_annual_contract_spend_usd" :
-            row.row_key.startsWith("spend:") ? "modeled_annual_spend_category_usd" : SPEND_METRIC_KEY : "unverified_value_claim",
+            row.row_key.startsWith("spend:") ? "modeled_annual_spend_category_usd" :
+              row.row_key === "synthetic_demo_fy26_budget" ? DEMO_BUDGET_METRIC_KEY : SPEND_METRIC_KEY : "unverified_value_claim",
           measure_id: canonicalMeasure?.id || null,
-          source_record_id: row.row_key === "modeled_annual_spend" ? null :
+          source_record_id: ["modeled_annual_spend", "synthetic_demo_fy26_budget"].includes(row.row_key) ? null :
             primaryRef ? sourceRowId(report, primaryRef) : null,
           review_event_id: null, evidence_state: "source_recorded",
           claim_gate_status: isCost ? "not_applicable" : "gated",
@@ -894,6 +977,19 @@ export function buildPhysicalPlan(report) {
   };
   const metricDefinitions = [
     [SPEND_METRIC_KEY, "Modeled annual IT spend", "One-source sum of annual category-spend rows; a planning estimate, not an approved budget.", "USD", "annual", "none"],
+    ...(report.canonical.synthetic_demo_fy26_budget ? [[DEMO_BUDGET_METRIC_KEY, "FY26 synthetic demo budget",
+      "User-selected synthetic Finance source aggregate; not independently Finance attested and not comparable to the revenue-derived annual spend scenario.", "USD", "annual", "none"],
+      ...Object.entries(DEMO_BUDGET_SPLIT_METRICS).map(([bucket, metric]) => [metric,
+        `FY26 synthetic demo ${bucket} budget`,
+        "Source-declared run/change component of the selected synthetic budget; included in the aggregate and not independently Finance attested.",
+        "USD", "annual", "none"]),
+      ...DEMO_BUDGET_SOURCE_MEASURES.map(([field, metric]) => [metric, `Synthetic Finance source ${field}`,
+        field === "actual_spend_usd" || field === "invoice_amount_usd" ?
+          "Exact Q2-YTD source line item; not a full-year actual or independent Finance attestation." :
+          field === "variance_usd" ?
+            "Exact source forecast less FY26 budget; not actual overspend or an independent Finance attestation." :
+            "Exact source line item; period and scenario are preserved without independent Finance attestation or cross-scenario sum.",
+        "USD", "point_in_time", "none"])] : []),
     ["modeled_annual_spend_category_usd", "Modeled annual spend category", "One source row within the modeled spend aggregate. Category business ID is unavailable; never add these rows to the aggregate or contract exposures.", "USD", "annual", "none"],
     ["program_planning_budget_usd", "Program planning budget", "Source-listed program budget with fiscal period and approval unverified.", "USD", "point_in_time", "none"],
     ["usage_feed_active_users", "AI usage feed active users", "Active users as reported by the usage source for its own denominator.", "users", "point_in_time", "none"],
@@ -934,7 +1030,8 @@ export function buildPhysicalPlan(report) {
   addProjectionRows(plan, report, views);
   const viewCounts = Object.fromEntries(pageKeys(report).map((page) => [page, views[page].length]));
   if (Object.values(viewCounts).some((count) => count < 1)) throw new Error("A physical Tower view would be empty");
-  const expectedObjects = 237 + (report.canonical.foundations.source_objects?.length || 0);
+  const expectedObjects = 237 + (report.canonical.foundations.source_objects?.length || 0) +
+    (report.canonical.synthetic_demo_fy26_budget ? 1 : 0);
   if (plan.objects.length !== expectedObjects) throw new Error(`Canonical object count changed: ${plan.objects.length}`);
   return { plan, viewCounts };
 }
@@ -963,11 +1060,13 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
       report.canonical.foundations.no_declared_row_id.row_count +
       report.canonical.foundations.segment_source_rows_mapping_pending : candidateConfig(report).sourceFields ?
       report.canonical.programs.reduce((count, program) => count + program.affected_functions.length, 0) : 0) +
-    (report.canonical.foundations.source_objects?.length || 0);
+    (report.canonical.foundations.source_objects?.length || 0) +
+    (report.canonical.synthetic_demo_fy26_budget?.line_items.length || 0);
   const expectedFiles = Object.entries(report.source_manifest).filter(([file, metadata]) =>
     !file.startsWith("extracts/") && metadata.content_disposition !== "hash_count_only").length;
   if (plan.sourceFiles.length !== expectedFiles || plan.sourceRecords.length !== expectedSourceRecords) errors.push("source rows changed");
-  if (plan.objects.length !== 237 + (report.canonical.foundations.source_objects?.length || 0)) errors.push("canonical object count changed");
+  if (plan.objects.length !== 237 + (report.canonical.foundations.source_objects?.length || 0) +
+      (report.canonical.synthetic_demo_fy26_budget ? 1 : 0)) errors.push("canonical object count changed");
   const fileById = new Map(plan.sourceFiles.map((row) => [row.id, row.file_name]));
   const userDetailRecordCount = plan.sourceRecords.filter((row) =>
     fileById.get(row.source_file_id)?.startsWith("extracts/") || row.record_type.includes("user_detail")).length;
@@ -1184,12 +1283,77 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
       errors.push(`spend category measure differs from its source row: ${measure.id}`);
     }
   }
+  if (report.canonical.synthetic_demo_fy26_budget) {
+    const budget = report.canonical.synthetic_demo_fy26_budget;
+    const budgetAggregate = plan.measures.filter((measure) => measure.metric_key === DEMO_BUDGET_METRIC_KEY);
+    const splitMeasures = Object.fromEntries(Object.entries(DEMO_BUDGET_SPLIT_METRICS).map(([bucket, metric]) =>
+      [bucket, plan.measures.filter((measure) => measure.metric_key === metric)]));
+    const budgetRows = rowsForPage(plan, "cost_lens").filter((row) => row.row_key === "synthetic_demo_fy26_budget");
+    const budgetSourceRecords = plan.sourceRecords.filter((row) =>
+      fileById.get(row.source_file_id) === IDENTITY.synthetic_demo_budget_metric.source_file);
+    if (budgetAggregate.length !== 1 || budgetAggregate[0].value_number !== budget.amount_usd ||
+        budgetAggregate[0].source_record_id !== null || budgetAggregate[0].scenario !== "planned" ||
+        budgetRows.length !== 1 || budgetRows[0].measure_id !== budgetAggregate[0].id ||
+        budgetRows[0].display_payload_json.budget_approval_status !== "approved_for_synthetic_demo" ||
+        budgetRows[0].display_payload_json.independent_finance_attestation !== false ||
+        budgetRows[0].source_refs_json.length !== 70 || budgetSourceRecords.length !== 70 ||
+        budget.line_items.reduce((sum, item) => sum + item.budget_amount_usd, 0) !== budget.amount_usd ||
+        Object.entries(splitMeasures).some(([bucket, measures]) => measures.length !== 1 ||
+          measures[0].value_number !== budget.run_change_split[bucket].amount_usd ||
+          measures[0].attributes_json.line_item_count !== budget.run_change_split[bucket].line_item_count ||
+          measures[0].attributes_json.source_refs.length !== budget.run_change_split[bucket].line_item_count ||
+          JSON.stringify(measures[0].attributes_json.source_refs) !==
+            JSON.stringify(budget.run_change_split[bucket].source_refs)) ||
+        budget.run_change_split.run.amount_usd + budget.run_change_split.change.amount_usd !== budget.amount_usd) {
+      errors.push("synthetic demo budget source, canonical aggregate, and cost projection do not reconcile");
+    }
+    const summary = rowsForPage(plan, "command_center").find((row) => row.row_key === "executive_summary");
+    const summaryMeasureRef = plan.projectionMeasureRefs.filter((row) =>
+      row.projection_entry_id === summary?.projection_entry_id &&
+      [budgetAggregate[0]?.id, splitMeasures.run[0]?.id, splitMeasures.change[0]?.id].includes(row.measure_id));
+    if (!summary || summary.display_payload_json.synthetic_demo_fy26_budget_usd !== budget.amount_usd ||
+        summary.display_payload_json.synthetic_demo_budget_measure_id !== budgetAggregate[0]?.id ||
+        summary.display_payload_json.synthetic_demo_run_measure_id !== splitMeasures.run[0]?.id ||
+        summary.display_payload_json.synthetic_demo_change_measure_id !== splitMeasures.change[0]?.id ||
+        summary.display_payload_json.synthetic_demo_fy26_run_usd !== budget.run_change_split.run.amount_usd ||
+        summary.display_payload_json.synthetic_demo_fy26_change_usd !== budget.run_change_split.change.amount_usd ||
+        summary.display_payload_json.synthetic_demo_fy26_run_row_count !== 31 ||
+        summary.display_payload_json.synthetic_demo_fy26_change_row_count !== 39 ||
+        summary.display_payload_json.independent_finance_attestation !== false ||
+        summaryMeasureRef.length !== 3 ||
+        summary.source_refs_json.filter((ref) => ref.source_file === IDENTITY.synthetic_demo_budget_metric.source_file).length !== 70) {
+      errors.push("executive synthetic demo budget is not linked to the exact canonical source and measure");
+    }
+    for (const item of budget.line_items) {
+      const sourceId = sourceRowId(report, item.source_ref);
+      const source = sourceRecordsById.get(sourceId);
+      for (const [field, metric, scenario] of DEMO_BUDGET_SOURCE_MEASURES) {
+        const matching = plan.measures.filter((measure) => measure.metric_key === metric &&
+          measure.source_record_id === sourceId);
+        if (!source || source.payload_json.source_record_id !== item.source_record_id ||
+            source.payload_json[field] === "" || Number(source.payload_json[field]) !== item[field] ||
+            matching.length !== 1 || matching[0].value_number !== item[field] ||
+            matching[0].scenario !== scenario ||
+            matching[0].attributes_json.value_source !== item.value_source_by_field[field] ||
+            matching[0].attributes_json.source_system !== item.source_system ||
+            matching[0].attributes_json.run_change_flag !== item.run_change_flag ||
+            matching[0].attributes_json.do_not_add_to_aggregate !== true ||
+            matching[0].attributes_json.independent_finance_attestation !== false) {
+          errors.push(`synthetic demo Finance line item differs from source: ${item.source_record_id}:${field}`);
+        }
+      }
+      if (item.variance_usd !== item.forecast_spend_usd - item.budget_amount_usd) {
+        errors.push(`synthetic demo Finance variance differs: ${item.source_record_id}`);
+      }
+    }
+  }
   for (const row of rowsForPage(plan, "cost_lens")) {
     const measure = measuresById.get(row.measure_id);
     if (!measure || measure.subject_object_id !== row.primary_object_id ||
         measure.metric_key !== row.metric_key || Number(measure.value_number) !== Number(row.display_payload_json.value) ||
-        (row.row_key === "modeled_annual_spend" ?
-          row.source_record_id !== null || measure.source_record_id !== null || row.source_refs_json.length !== 27 :
+        (["modeled_annual_spend", "synthetic_demo_fy26_budget"].includes(row.row_key) ?
+          row.source_record_id !== null || measure.source_record_id !== null ||
+          row.source_refs_json.length !== (row.row_key === "modeled_annual_spend" ? 27 : 70) :
           measure.source_record_id !== row.source_record_id)) {
       errors.push(`cost amount is not tied to its canonical measure: ${row.row_key}`);
     }
@@ -1435,7 +1599,9 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
       physical_rows: Object.values(viewCounts).reduce((sum, count) => sum + count, 0),
       unapproved_evidence_records_loaded: unapprovedEvidenceRecordCount,
       user_detail_records_loaded: userDetailRecordCount,
-      approved_fy_budget_known: false, claimable_value_known: false } };
+      approved_fy_budget_known: false,
+      synthetic_demo_budget_known: Boolean(report.canonical.synthetic_demo_fy26_budget),
+      claimable_value_known: false } };
 }
 
 export async function insertRows(client, table, rows) {

@@ -318,9 +318,14 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
         }}
       >
         <MetricCard
-          label="Approved FY26 IT budget"
-          value={s.budgetUsd === null ? "Not verified" : bigMoney(s.budgetUsd)}
-          caption={s.budgetUsd === null ? "A source-approved FY26 budget is not recorded" : "Approved FY26 amount; modeled annual spend is separate"}
+          label={s.budgetUsd !== null ? "Approved FY26 IT budget" :
+            s.syntheticDemoBudgetUsd !== null && s.syntheticDemoBudgetUsd !== undefined ? "FY26 synthetic demo budget" : "Approved FY26 IT budget"}
+          value={s.budgetUsd !== null ? bigMoney(s.budgetUsd) :
+            s.syntheticDemoBudgetUsd !== null && s.syntheticDemoBudgetUsd !== undefined ? bigMoney(s.syntheticDemoBudgetUsd) : "Not verified"}
+          caption={s.budgetUsd !== null ? "Approved FY26 amount; modeled annual spend is separate" :
+            s.syntheticDemoBudgetUsd !== null && s.syntheticDemoBudgetUsd !== undefined ?
+            "Selected synthetic Finance source; independent Finance sign-off is not recorded. The annual spend scenario is separate." :
+            "A source-approved FY26 budget is not recorded"}
         />
         <MetricCard
           label="Approved FY26 AI project funding"

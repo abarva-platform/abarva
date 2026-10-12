@@ -142,6 +142,17 @@ describe("TowerCommandCenter", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows the selected synthetic budget and its split without comparing it to annual modeled spend", () => {
+    renderWithSummary({ budgetUsd: null, syntheticDemoBudgetUsd: 650_000_000,
+      syntheticDemoRunUsd: 487_500_000, syntheticDemoChangeUsd: 162_500_000 });
+    expect(screen.getByText("FY26 synthetic demo budget").parentElement).toHaveTextContent("$650.0M");
+    goTo(TAB.budget);
+    expect(document.body).toHaveTextContent("existing operations and new work");
+    expect(document.body).toHaveTextContent("$487.5M");
+    expect(document.body).toHaveTextContent("$162.5M");
+    expect(document.body).toHaveTextContent("independent Finance sign-off is not recorded");
+  });
+
   it("keeps the decision rail and period-scoped value evidence reachable", () => {
     renderPage();
     goTo(TAB.decisions, /Decisions for this review/);

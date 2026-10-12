@@ -466,6 +466,12 @@ export function TowerCommandCenterAvaShell({
         },
         towerMeasures: view
           ? [
+              ...(view.summary.budgetUsd === null && view.summary.syntheticDemoBudgetUsd !== null &&
+                view.summary.syntheticDemoBudgetUsd !== undefined ? [{
+                measureKey: "synthetic_demo_fy26_it_budget_usd",
+                label: "FY26 synthetic demo budget from one selected Finance source; no independent Finance sign-off",
+                value: view.summary.syntheticDemoBudgetUsd,
+              }] : []),
               ...(caseFunding === null ? [] : [{
                 measureKey: "approved_ai_business_case_funding_usd",
                 label: "Approved AI business-case funding, not actual spend",
@@ -485,7 +491,12 @@ export function TowerCommandCenterAvaShell({
           : [],
         towerKnownGaps: view
           ? [
-              "Total IT budget is omitted from assistant measures because the Tower projection amount has no reconciled active-intake lineage status. Treat it as unverified until that status is available.",
+              ...(view.summary.budgetUsd !== null ? [] : view.summary.syntheticDemoBudgetUsd !== null &&
+                view.summary.syntheticDemoBudgetUsd !== undefined ? [
+                "A FY26 synthetic demo budget is selected from one Finance source. Independent Finance sign-off is not recorded; the separate annual spend scenario is not a budget variance.",
+              ] : [
+                "No FY26 budget with reconciled active-intake lineage is available for assistant measures.",
+              ]),
               ...(view.summary.claimableAmountLoaded === true ? [] : ["Cleared value is not verified because no approved claim amount with a valid reporting period is loaded."]),
               ...view.gaps.map((gap) => gap.missing).slice(0, 12),
             ]

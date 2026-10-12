@@ -114,7 +114,18 @@ export function validateFactLineage(candidate, rows) {
     if (matches.length !== 1) gaps.push(`lineage_metric_missing_or_duplicate:${metric}`);
     findings[metric] = matches[0]?.status ?? "UNKNOWN";
   }
-  if (findings.it_budget_usd !== "ABSENT") gaps.push("approved_budget_source_not_reconciled");
+  const demoBudget = candidate.canonical?.synthetic_demo_fy26_budget;
+  const budget = rows.find((row) => row.tenant === candidate.tenant_key && row.metric === "it_budget_usd" && row.mode === "quote");
+  if (demoBudget) {
+    if (findings.it_budget_usd !== "ONE_SOURCE" || budget?.asserted?.length !== 1 ||
+        budget.asserted[0].rel !== "SA02_IT_Finance_Budget_Spend_Extract.csv" ||
+        budget.asserted[0].col !== "budget_amount_usd" ||
+        budget.asserted[0].value !== demoBudget.amount_usd ||
+        demoBudget.independent_finance_attestation !== false ||
+        candidate.canonical.budget.approved_fy_budget_usd !== null) {
+      gaps.push("synthetic_demo_budget_lineage_not_reconciled");
+    }
+  } else if (findings.it_budget_usd !== "ABSENT") gaps.push("approved_budget_source_not_reconciled");
   const spend = rows.find((row) => row.tenant === candidate.tenant_key && row.metric === "annual_it_spend_usd" && row.mode === "quote");
   const amount = candidate.canonical?.modeled_annual_spend?.amount_usd;
   if (!Number.isFinite(amount) || findings.annual_it_spend_usd !== "ONE_SOURCE" ||

@@ -208,8 +208,22 @@ function activeCostLens(rows: readonly TowerServingRow[]): TowerMartCostLens | n
   const aggregates = rows.filter((row) => row.row_key === "modeled_annual_spend");
   const categoryRows = rows.filter((row) => row.row_key.startsWith("spend:"));
   const contractRows = rows.filter((row) => row.row_key.startsWith("contract:"));
+  const demoRows = rows.filter((row) => row.row_key === "synthetic_demo_fy26_budget");
   if (aggregates.length !== 1 || categoryRows.length === 0 || contractRows.length === 0 ||
-      rows.length !== 1 + categoryRows.length + contractRows.length) return null;
+      demoRows.length > 1 ||
+      rows.length !== 1 + categoryRows.length + contractRows.length + demoRows.length) return null;
+  if (demoRows.length === 1) {
+    const demo = demoRows[0];
+    const value = payloadNullableNumber(demo, "value");
+    if (demo.row_type !== "cost_exposure" || demo.value_state !== "estimated" ||
+        value === null || value < 0 ||
+        !payloadText(demo, "measure_id") || !payloadText(demo, "canonical_measure_id") ||
+        payloadText(demo, "measure_id") !== payloadText(demo, "canonical_measure_id") ||
+        payloadNullableNumber(demo, "measure_value_number") !== value ||
+        payloadField(demo, "additive_to_aggregate_spend") !== false ||
+        payloadField(demo, "independent_finance_attestation") !== false ||
+        sourceRefs(demo).filter((ref) => ref.source_file === "SA02_IT_Finance_Budget_Spend_Extract.csv").length !== 70) return null;
+  }
   const aggregate = aggregates[0];
   const modeledAnnualSpendUsd = payloadNullableNumber(aggregate, "value");
   const aggregateRefs = sourceRefs(aggregate);
@@ -328,6 +342,34 @@ function approvedFy26Budget(
   if (!fiscalYear || !["FY26", "FY2026", "2026"].includes(fiscalYear.toUpperCase())) return null;
   if (approval?.toLowerCase() !== "approved") return null;
   return nullableNum(displayed[amountKey] as Numeric);
+}
+
+function syntheticDemoFy26Budget(row: TowerServingRow | undefined): number | null {
+  if (!row) return null;
+  const displayed = displayPayload(row);
+  if (nullableText(displayed.budget_fiscal_year)?.toUpperCase() !== "FY26" ||
+      nullableText(displayed.budget_approval_status) !== "approved_for_synthetic_demo" ||
+      nullableText(displayed.budget_approval_basis) !== "user_selected_synthetic_source_not_finance_attestation" ||
+      displayed.independent_finance_attestation !== false ||
+      !nullableText(displayed.synthetic_demo_budget_measure_id) ||
+      sourceRefs(row).filter((ref) => ref.source_file === "SA02_IT_Finance_Budget_Spend_Extract.csv").length !== 70) {
+    return null;
+  }
+  return nullableNum(displayed.synthetic_demo_fy26_budget_usd as Numeric);
+}
+
+function syntheticDemoFy26Split(row: TowerServingRow | undefined, total: number | null):
+  { run: number; change: number } | null {
+  if (!row || total === null) return null;
+  const displayed = displayPayload(row);
+  const run = nullableNum(displayed.synthetic_demo_fy26_run_usd as Numeric);
+  const change = nullableNum(displayed.synthetic_demo_fy26_change_usd as Numeric);
+  if (run === null || change === null || run < 0 || change < 0 || run + change !== total ||
+      displayed.synthetic_demo_fy26_run_row_count !== 31 ||
+      displayed.synthetic_demo_fy26_change_row_count !== 39 ||
+      !nullableText(displayed.synthetic_demo_run_measure_id) ||
+      !nullableText(displayed.synthetic_demo_change_measure_id)) return null;
+  return { run, change };
 }
 
 function reconciledAnnualBenefit(row: TowerServingRow | undefined): number | null {
@@ -1704,6 +1746,8 @@ export async function readTowerCommandCenter(args: {
         summaryRow,
         "approved_fy_budget_usd",
       );
+      const executiveSyntheticDemoBudget = syntheticDemoFy26Budget(summaryRow);
+      const executiveSyntheticDemoSplit = syntheticDemoFy26Split(summaryRow, executiveSyntheticDemoBudget);
       const executiveReviewedProjectCount =
         summaryRow === undefined
           ? null
@@ -1777,6 +1821,9 @@ export async function readTowerCommandCenter(args: {
           asOfPeriod,
           refreshTimestamp,
           totalItBudgetFy26: executiveTotalIt,
+          syntheticDemoBudgetFy26: executiveSyntheticDemoBudget,
+          syntheticDemoRunBudgetFy26: executiveSyntheticDemoSplit?.run ?? null,
+          syntheticDemoChangeBudgetFy26: executiveSyntheticDemoSplit?.change ?? null,
           runBudgetFy26: null,
           changeBudgetFy26: null,
           approvedProgramBudgetFy26: executiveApproved,
