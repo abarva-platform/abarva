@@ -85,6 +85,9 @@ import {
   buildTenantFenceAnswer,
   shouldFenceForeignTenantQuery,
 } from "@/lib/intelligence/ask/tenant-fence-answer";
+import { parseHomeIntelligenceRequest } from "@/lib/home/preview/intelligence-handoff";
+import { resolveIntelligenceHomeHandoff } from "@/lib/intelligence/home-context-handoff";
+import type { BoundHomeRecordContext } from "@/lib/intelligence/ask/home-record-context";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -107,6 +110,7 @@ interface AskPayload {
   richText: boolean;
   answerOnlyStreaming: boolean;
   modelAuthoredOutput: boolean;
+  homeContextRequest?: unknown;
 }
 
 async function handleAsk(payload: AskPayload, req: NextRequest) {
@@ -226,6 +230,33 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
     }),
   );
 
+  let homeRecordContext: BoundHomeRecordContext | undefined;
+  if (payload.homeContextRequest != null) {
+    const request = parseHomeIntelligenceRequest(payload.homeContextRequest);
+    if (!request || !modelAuthoredOutput) {
+      return Response.json(
+        { error: "Invalid Home continuation." },
+        { status: 400 },
+      );
+    }
+    const handoff = await resolveIntelligenceHomeHandoff(
+      request,
+      tenant?.canonicalKey,
+    );
+    if (!handoff.context) {
+      return Response.json(
+        {
+          error:
+            handoff.state.status === "changed"
+              ? "Home's record changed. Return to Home and continue from the refreshed record."
+              : "The selected Home record is not available to this authorized Intelligence session.",
+        },
+        { status: handoff.state.status === "changed" ? 409 : 403 },
+      );
+    }
+    homeRecordContext = handoff.context;
+  }
+
   const memoryStartedAt = Date.now();
   const memory = await prepareAskSessionMemory({
     tenantId,
@@ -292,14 +323,20 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
       let sawStreamError = false;
       let sourceAnswerContext: AskSurfaceContext | null = null;
       const trustedSurfaceContext = (): AskSurfaceContext | null =>
-        untrustedContractContext
-          ? (sourceAnswerContext ?? {
-              module: surfaceContext?.module,
-              clientKey: tenantClientKey ?? undefined,
+        homeRecordContext
+          ? {
+              activeTab: "intelligence",
+              clientKey: tenantClientKey,
               activeClient: tenant?.displayName,
-              activeTab: surfaceContext?.activeTab,
-            })
-          : surfaceContext;
+            }
+          : untrustedContractContext
+            ? (sourceAnswerContext ?? {
+                module: surfaceContext?.module,
+                clientKey: tenantClientKey ?? undefined,
+                activeClient: tenant?.displayName,
+                activeTab: surfaceContext?.activeTab,
+              })
+            : surfaceContext;
       const structuredFenceStreamFilter = createStructuredFenceStreamFilter();
       // Agent-trace capture (aVa Intelligence path).
       let traceSources: RawAskSource[] = [];
@@ -1162,6 +1199,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           "intelligence_companion_canvas",
         );
         for await (const event of askIntelligence(query, {
+          homeRecordContext,
           userContextBlock,
           tenantId,
           tenantClientKey,
@@ -1173,9 +1211,10 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           tenantInventoryKey,
           surfaceContext: trustedSurfaceContext(),
           companionCanvasEnabled,
-          conversationContextBlock: untrustedContractContext
-            ? ""
-            : memory?.contextBlock,
+          conversationContextBlock:
+            untrustedContractContext || homeRecordContext
+              ? ""
+              : memory?.contextBlock,
           activePersonGraphNodeId,
           activePersonDisplayName,
           traceEnabled: payload.traceEnabled,
@@ -2351,6 +2390,7 @@ async function parsePostPayload(req: NextRequest): Promise<AskPayload> {
     richText: readBoolean(payload.richText),
     answerOnlyStreaming: readBoolean(payload.answerOnlyStreaming),
     modelAuthoredOutput: readBoolean(payload.modelAuthoredOutput),
+    homeContextRequest: payload.homeContextRequest,
   };
 }
 
