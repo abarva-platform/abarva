@@ -68,14 +68,15 @@ export type ReadbackProof = {
   source_set_hash: string;
   client_attestation_state: string;
   expected_home_projection?: string;
+  home_projection_version?: number;
   actual: Record<string, number>;
   content?: Record<string, unknown>;
 };
 
 /**
  * The readback proof a projection run presents must be a passed readback of
- * this exact assessment and source set, taken while no Home projection of it
- * existed, and one that compared content: a proof that only counted rows does
+ * this exact assessment, source set and target version, taken while that Home
+ * version did not exist, and one that compared content: a proof that only counted rows does
  * not carry a `content` block and is refused.
  */
 export function assertReadbackProof(
@@ -90,6 +91,7 @@ export function assertReadbackProof(
     readback.source_set_hash !== manifest.source_set_hash ||
     readback.client_attestation_state !== "not_client_attested" ||
     readback.expected_home_projection !== "absent" ||
+    readback.home_projection_version !== version ||
     typeof readback.content !== "object" ||
     readback.content === null ||
     readback.actual.applications !==
