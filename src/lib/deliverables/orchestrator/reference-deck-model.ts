@@ -243,6 +243,18 @@ export interface ReferenceDeckFinding {
   code: string;
   message: string;
   blocking: boolean;
+  detailCode?: string;
+}
+
+/** Refusal metadata excludes source values, authored prose and finding messages. */
+export class ReferenceDeckLineageRefusal extends Error {
+  readonly findings: { kind: "reference_lineage"; slide: number; code: string; detailCode: string }[];
+
+  constructor(blocked: readonly ReferenceDeckFinding[]) {
+    super(`reference_deck_lineage_refusal: ${blocked.map((item) => `${item.slide}:${item.code}`).join(",")}`);
+    this.name = "ReferenceDeckLineageRefusal";
+    this.findings = blocked.map(({ slide, code, detailCode }) => ({ kind: "reference_lineage", slide, code, detailCode: detailCode ?? code }));
+  }
 }
 
 function blockFiguresOnSlide(slide: ReferenceSlide): ReferenceFigure[] {
@@ -269,8 +281,8 @@ export function visibleFiguresOnSlide(slide: ReferenceSlide): ReferenceFigure[] 
 
 export function validateReferenceDeck(spec: ReferenceDeckSpec): ReferenceDeckFinding[] {
   const findings: ReferenceDeckFinding[] = [];
-  const add = (slide: number, code: string, message: string, blocking = false) =>
-    findings.push({ slide, code, message, blocking });
+  const add = (slide: number, code: string, message: string, blocking = false, detailCode?: string) =>
+    findings.push({ slide, code, message, blocking, ...(detailCode ? { detailCode } : {}) });
   const count = spec.slides.length;
   const ledger = new Set(spec.figureLedger.map((figure) =>
     `${figure.sourceId}\u0000${figure.workbookCell}\u0000${figure.display}`));
@@ -334,7 +346,7 @@ export function validateReferenceDeck(spec: ReferenceDeckSpec): ReferenceDeckFin
     });
     const clientText = [slide.actionTitle, slide.answer ?? "", ...blockProse, referenceSourceLine(slide)].join(" ");
     const narrativeIssue = referenceNarrativeIssue(`${slide.actionTitle}. ${slide.answer ?? ""}`, slide.narrativeEvidence);
-    if (narrativeIssue) add(n, "unsupported_narrative", `Client-facing interpretation violates its evidence basis: ${narrativeIssue}.`, true);
+    if (narrativeIssue) add(n, "unsupported_narrative", `Client-facing interpretation violates its evidence basis: ${narrativeIssue}.`, true, narrativeIssue);
     const internalTerm = clientCopyIssue(clientText);
     if (internalTerm) add(n, "client_copy_term", `Client-facing text contains internal term: ${internalTerm}.`, true);
     if (coverUsesEditionRule(clientText))

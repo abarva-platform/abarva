@@ -8,7 +8,7 @@ import { assembleEditionInputs, ReferenceMoveUnavailable } from "@/lib/deliverab
 import { VALIDATION_SEQUENCE, INVESTMENT_SEQUENCE, buildReferenceEdition } from "@/lib/deliverables/orchestrator/reference-deck-edition";
 import { draftEditionWords, type DraftEditionWordsResult, type PhasePromptStage, type UseCasePromptType } from "@/lib/deliverables/orchestrator/reference-deck-words";
 import { buildReferenceSlotTable } from "@/lib/deliverables/orchestrator/reference-deck-slots";
-import { validateReferenceDeck, type ReferenceEdition } from "@/lib/deliverables/orchestrator/reference-deck-model";
+import { validateReferenceDeck, ReferenceDeckLineageRefusal, type ReferenceEdition } from "@/lib/deliverables/orchestrator/reference-deck-model";
 import { renderReferenceDeck } from "@/lib/deliverables/orchestrator/reference-deck-renderer";
 import { inspectDeck } from "@/lib/deliverables/orchestrator/deck-inspection";
 import { judgeRenderedDeck } from "@/lib/deliverables/orchestrator/deck-quality";
@@ -56,6 +56,7 @@ export async function GET(
     return Response.json({ error: "preview_not_enabled", detail: "Reference-deck preview is not enabled for this workspace." }, { status: 404, headers: previewHeaders() });
   }
 
+  let wordsResult: DraftEditionWordsResult | undefined;
   try {
     const inputs = await assembleEditionInputs(programId, edition);
     const sequence = edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
@@ -65,7 +66,7 @@ export async function GET(
       : inputs.move.currentPhase <= 2 ? "need_validation"
         : inputs.move.currentPhase === 3 ? "design_review" : "delivery_review";
     const slots = buildReferenceSlotTable(inputs);
-    const wordsResult = await draftEditionWords({
+    wordsResult = await draftEditionWords({
       tenantId: ctx.clientKey, userId: ctx.userId, requestId, edition, archetypes: sequence,
       slots,
       useCaseType: (inputs.move.archetype ?? "unclassified") as UseCasePromptType,
@@ -85,7 +86,7 @@ export async function GET(
     const figureHash = createHash("sha256").update(JSON.stringify(spec.figureLedger)).digest("hex");
     const blocked = validateReferenceDeck(spec).filter((finding) => finding.blocking);
     if (blocked.length) {
-      return Response.json({ error: "figure_lineage_refusal", detail: "A deck figure or edition boundary failed validation.", findings: blocked }, { status: 422, headers: previewHeaders() });
+      return Response.json({ error: "figure_lineage_refusal", detail: "A deck figure or edition boundary failed validation.", findings: new ReferenceDeckLineageRefusal(blocked).findings }, { status: 422, headers: previewHeaders(undefined, wordsResult, requestId) });
     }
     const pptx = await renderReferenceDeck(spec);
     const inspected = await inspectDeck(pptx);
@@ -148,8 +149,10 @@ export async function GET(
     if (error instanceof ReferenceMoveUnavailable) {
       return Response.json({ error: "move_unavailable", detail: error.message }, { status: 404, headers: previewHeaders() });
     }
-    if (error instanceof Error && error.message.startsWith("reference_deck_lineage_refusal")) {
-      return Response.json({ error: "figure_lineage_refusal", detail: error.message }, { status: 422, headers: previewHeaders() });
+    if (error instanceof ReferenceDeckLineageRefusal || (error instanceof Error && error.message.startsWith("reference_deck_lineage_refusal"))) {
+      return Response.json({ error: "figure_lineage_refusal", detail: "A deck figure or edition boundary failed validation.",
+        findings: error instanceof ReferenceDeckLineageRefusal ? error.findings : [],
+      }, { status: 422, headers: previewHeaders(undefined, wordsResult, requestId) });
     }
     console.error("[reference-deck-preview] render failed", error);
     return Response.json({ error: "preview_render_failed", detail: "The read-only preview could not be rendered." }, { status: 500, headers: previewHeaders() });

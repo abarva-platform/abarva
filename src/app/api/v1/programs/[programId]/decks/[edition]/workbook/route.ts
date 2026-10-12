@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
@@ -9,7 +9,7 @@ import { VALIDATION_SEQUENCE, INVESTMENT_SEQUENCE, buildReferenceEdition } from 
 import { unavailableEditionWords } from "@/lib/deliverables/orchestrator/reference-deck-words";
 import { buildReferenceWorkbook } from "@/lib/deliverables/orchestrator/reference-deck-workbook";
 import { ROM_WORKBOOK_CONTENT_TYPE } from "@/lib/pricing/moves-workflow/rom-workbook";
-import type { ReferenceEdition } from "@/lib/deliverables/orchestrator/reference-deck-model";
+import { ReferenceDeckLineageRefusal, type ReferenceEdition } from "@/lib/deliverables/orchestrator/reference-deck-model";
 import { tenancyOrNamedErrorResponse } from "@/lib/programs/tenancy-catch-response";
 
 export const runtime = "nodejs";
@@ -33,6 +33,10 @@ export async function GET(
   if (isFeatureEnabled({ clientKey: ctx.clientKey, clientId: ctx.clientId }, "moves_reference_deck_v1") !== true || ctx.clientKey !== "meridian") {
     return Response.json({ error: "preview_not_enabled", detail: "Reference-deck preview is not enabled for this workspace." }, { status: 404 });
   }
+  const headers = {
+    "Cache-Control": "private, no-store, max-age=0",
+    "X-AbarVa-Deck-Request-Id": randomUUID(),
+  };
   try {
     const inputs = await assembleEditionInputs(programId, edition);
     const sequence = edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
@@ -42,15 +46,19 @@ export async function GET(
     return new Response(Uint8Array.from(workbook), { headers: {
       "Content-Type": ROM_WORKBOOK_CONTENT_TYPE,
       "Content-Disposition": `attachment; filename="move-${edition}-preview-figures.xlsx"`,
-      "Cache-Control": "private, no-store, max-age=0",
+      ...headers,
       "X-AbarVa-Preview": "not-persisted",
       "X-AbarVa-Deck-Figure-Hash": figureHash,
     } });
   } catch (error) {
-    if (error instanceof ReferenceMoveUnavailable) return Response.json({ error: "move_unavailable", detail: error.message }, { status: 404 });
+    if (error instanceof ReferenceMoveUnavailable) return Response.json({ error: "move_unavailable", detail: error.message }, { status: 404, headers });
+    if (error instanceof ReferenceDeckLineageRefusal || (error instanceof Error && error.message.startsWith("reference_deck_lineage_refusal")))
+      return Response.json({ error: "figure_lineage_refusal", detail: "A workbook figure or edition boundary failed validation.",
+        findings: error instanceof ReferenceDeckLineageRefusal ? error.findings : [],
+      }, { status: 422, headers });
     if (error instanceof Error && error.message === "reference_rom_workbook_mismatch")
-      return Response.json({ error: "rom_workbook_mismatch", detail: "The current ROM formula result does not match the approved snapshot." }, { status: 409 });
+      return Response.json({ error: "rom_workbook_mismatch", detail: "The current ROM formula result does not match the approved snapshot." }, { status: 409, headers });
     console.error("[reference-deck-workbook] build failed", error);
-    return Response.json({ error: "workbook_build_failed", detail: "The read-only companion workbook could not be rendered." }, { status: 500 });
+    return Response.json({ error: "workbook_build_failed", detail: "The read-only companion workbook could not be rendered." }, { status: 500, headers });
   }
 }
