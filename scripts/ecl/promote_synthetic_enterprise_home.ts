@@ -169,7 +169,7 @@ export function expectedReadbackCounts(
 /**
  * The readback a projection proof names is read, not trusted by its address:
  * it must be a passed readback of this tenant, assessment and source set, and
- * must have counted what the pack holds, with no Home projection yet written.
+ * must have counted what the pack holds, with the target Home version not yet written.
  */
 export function assertReadbackBinding(
   readback: {
@@ -177,6 +177,7 @@ export function assertReadbackBinding(
     tenant_scope?: unknown;
     assessment_id?: unknown;
     source_set_hash?: unknown;
+    home_projection_version?: unknown;
     actual?: unknown;
   },
   pack: Pick<GeneratedPack, "manifest" | "normalized">,
@@ -191,6 +192,7 @@ export function assertReadbackBinding(
     readback.tenant_scope !== pack.manifest.tenant_key ||
     readback.assessment_id !== pack.manifest.assessment_id ||
     readback.source_set_hash !== pack.manifest.source_set_hash ||
+    readback.home_projection_version !== version ||
     Object.entries(expected).some(([key, value]) => actual[key] !== value)
   ) {
     throw new Error(

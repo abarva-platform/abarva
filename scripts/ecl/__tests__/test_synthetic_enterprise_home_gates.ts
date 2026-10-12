@@ -184,7 +184,7 @@ test("a projection is written only for a version whose load is approved", () => 
   );
 });
 
-test("a projection is authorised only by a passed, content-compared readback taken before any projection", () => {
+test("a projection requires a version-bound, content-compared readback before that target exists", () => {
   const proof = (over: Partial<ReadbackProof> = {}): ReadbackProof => ({
     status: "passed",
     tenant_scope: TENANT,
@@ -192,6 +192,7 @@ test("a projection is authorised only by a passed, content-compared readback tak
     source_set_hash: HASH,
     client_attestation_state: "not_client_attested",
     expected_home_projection: "absent",
+    home_projection_version: 2,
     actual: {
       applications: 3,
       invalid_source_files: 0,
@@ -210,6 +211,10 @@ test("a projection is authorised only by a passed, content-compared readback tak
     // Taken after a projection already existed, or without saying which.
     proof({ expected_home_projection: "present" }),
     proof({ expected_home_projection: undefined }),
+    proof({ home_projection_version: undefined }),
+    proof({ home_projection_version: 1 }),
+    proof({ home_projection_version: 3 }),
+    proof({ home_projection_version: "2" as unknown as number }),
     // A proof that only counted rows carries no content comparison.
     proof({ content: undefined }),
     proof({ content: null as unknown as undefined }),
@@ -684,6 +689,7 @@ test("the readback a projection proof names is held to the pack, not to its addr
     tenant_scope: TENANT,
     assessment_id: ASSESSMENT,
     source_set_hash: HASH,
+    home_projection_version: 2,
     actual: { ...expectedReadbackCounts(pack), source_records: 12 },
     ...over,
   });
@@ -696,6 +702,9 @@ test("the readback a projection proof names is held to the pack, not to its addr
     readback({ tenant_scope: "another-tenant" }),
     readback({ assessment_id: "assessment-other" }),
     readback({ source_set_hash: OTHER_HASH }),
+    readback({ home_projection_version: undefined }),
+    readback({ home_projection_version: 1 }),
+    readback({ home_projection_version: "2" }),
     readback({ actual: undefined }),
     readback({ actual: null }),
     readback({ actual: "counted" }),

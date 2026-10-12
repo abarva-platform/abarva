@@ -63,6 +63,7 @@ const jobEnv = (
   ECL_SYNTHETIC_RELEASE_RECORD:
     "docs/releases/records/2026-01-01-fixture-load.md",
   ECL_SYNTHETIC_READBACK_EXPECT_HOME_PROJECTION: "absent",
+  ECL_SYNTHETIC_READBACK_HOME_PROJECTION_VERSION: "2",
   ...over,
 });
 
@@ -79,6 +80,7 @@ test("a run records who ran which build of which image under which release recor
       imageDigest: image,
       releaseRecord: "docs/releases/records/2026-01-01-fixture-load.md",
       expectHomeProjection: "absent",
+      homeProjectionVersion: 2,
     },
   });
   assert.equal(
@@ -116,6 +118,7 @@ test("each readback binding is required and checked before anything is generated
     "ECL_SYNTHETIC_IMAGE_DIGEST",
     "ECL_SYNTHETIC_RELEASE_RECORD",
     "ECL_SYNTHETIC_READBACK_EXPECT_HOME_PROJECTION",
+    "ECL_SYNTHETIC_READBACK_HOME_PROJECTION_VERSION",
   ]) {
     assert.equal(
       refused({ [key]: undefined }),
@@ -151,6 +154,17 @@ test("each readback binding is required and checked before anything is generated
   assert.equal(
     refused({ ECL_SYNTHETIC_READBACK_EXPECT_HOME_PROJECTION: "0" }),
     "Readback must be told whether a Home projection is expected: absent or present",
+  );
+  for (const value of ["0", "3", "2.0", "02", "-1", "2;delete", ""]) {
+    assert.match(
+      refused({ ECL_SYNTHETIC_READBACK_HOME_PROJECTION_VERSION: value }),
+      /Missing governed readback bindings|Home readback projection version must be 1 or 2/,
+    );
+  }
+  assert.equal(
+    readbackSettings(jobEnv({ ECL_SYNTHETIC_READBACK_HOME_PROJECTION_VERSION: "1" }))
+      .binding.homeProjectionVersion,
+    1,
   );
 
   // A refused run generates nothing, opens nothing, and exits non-zero.
