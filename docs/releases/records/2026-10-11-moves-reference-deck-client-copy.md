@@ -91,7 +91,7 @@ rendered pages and extracted text.
   direct PDF inspection findings. Numbered contents, divider text, answer bars and
   four-stage and six-stage workflows were inspected as page images.
 - Signed-in preview of the current production image: **pending**. The live
-  demo data and human visual acceptance are separate release gates.
+  demo data and visual acceptance are separate release gates.
 
 ## Rollout Plan
 
@@ -136,7 +136,7 @@ be reversed.
 - PDF text and page checks do not replace visual review for overlapping objects
   or crowded text.
 - Current production behavior, populated demo figures, actual model wording,
-  and human slide-by-slide acceptance remain to be verified after merge and
+  and slide-by-slide visual acceptance remain to be verified after merge and
   deployment.
 - Wording prompts currently contain type, phase, read-state controls and figure
   tokens. Specific case prose stays outside model egress until the approved
