@@ -20,6 +20,45 @@ Run `npm run tower:registered-intake:promotion -- preflight --candidate <candida
 
 Without a passing physical stage receipt, preflight produces `status: blocked`. Keep this proof; it explains why no load may proceed.
 
+### Reusable private ACA Job entry points
+
+`tower:registered-intake:preflight-job` and `tower:registered-intake:promote-job` run through
+`npm run ops:aca-job -- --image <approved-image@sha256:...> --script <entry-point>`.
+They use the private operator Job and do not change web traffic. Pass
+`--secret-env DATABASE_URL=<existing-job-secret>` and the user-assigned Blob identity as
+`--env AZURE_CLIENT_ID=<client-id>`. The wrapper must wait for completion and restore its idle
+template; do not use `--no-wait` or `--no-restore-idle` for these runs.
+
+Both entry points require these explicit `--env KEY=VALUE` bindings:
+
+| Key suffix after `TOWER_PROMOTION_` | Meaning |
+| --- | --- |
+| `TENANT_KEY`, `ASSESSMENT_ID` | Exact declared tenant and staged assessment. |
+| `STAGE_PROOF_URI`, `STAGE_PROOF_SHA256`, `CANDIDATE_SHA256`, `INPUT_SHA256` | Exact private stage ZIP, ZIP hash, candidate file hash, and source-set fingerprint. |
+| `PROOF_BLOB_ACCOUNT`, `PROOF_BLOB_CONTAINER` | Private proof destination and stage proof scope. |
+| `RUN_ID`, `IDEMPOTENCY_KEY` | Unique execution ID and reviewed idempotency binding. |
+| `JOB_NAME`, `IMAGE_DIGEST`, `GIT_SHA`, `TIMEOUT_SECONDS`, `RETRY_COUNT` | Actual operator job name, approved image digest, image commit, wrapper timeout, and configured retry count. |
+| `OPERATOR_IDENTITY`, `RELEASE_RECORD` | Responsible identity and reviewed release record path. |
+| `EXECUTION_LANE` | Must be `aca_operator_job`. |
+
+The wrapper checks that `JOB_NAME`, `IMAGE_DIGEST`, and `TIMEOUT_SECONDS` match its own request.
+Use `--plan-only` first to review the invocation without touching Azure. Promotion also requires
+`TOWER_PROMOTION_APPROVAL_REF`, `TOWER_PROMOTION_PREFLIGHT_PROOF_URI`, and
+`TOWER_PROMOTION_PREFLIGHT_PROOF_SHA256`. The approval reference must equal the release record
+path and must resolve to the named serving approval in the dataset manifest. An agent must not
+fill that approval on a person's behalf.
+
+Each run reads and hashes the exact candidate and receipt bytes inside the stage ZIP. Preflight
+stores `preflight.json`, `progress.json`, and `job-contract.json` under
+`operator-proof/tower-registered-promotion/<tenant>/<assessment>/<run-id>/` in private Blob.
+Promotion downloads the reviewed preflight by its exact URI and SHA-256, uses the guarded
+operator, and stores `promotion.json`, `serving-readback.json`, progress, and job-contract files.
+The serving readback checks the active selector, lifecycle, all nine physical page populations,
+all nine `serving.tower_*` views, and the saved prior-generation fingerprints. Every uploaded
+proof is downloaded and compared byte-for-byte. If promotion commits but a later proof step
+fails, the runner records the operator's pending proof if present and a fresh read-only selector
+observation; it fails the job and requires review. It never rolls back automatically.
+
 ## Promote after review
 
 Bind the exact tenant, input fingerprint, stage receipt, preflight file SHA-256, and named approval's release-record path in the job request. `promote` requires `--candidate`, `--stage-receipt`, `--preflight-proof`, `--expected-proof-sha256`, `--expected-input-sha256`, `--approval-ref`, and `--out`. It resolves the manifest's Tower serving approval, repeats the database readback in a serializable transaction, locks the tenant's lifecycle pointer, retires the old row, activates the candidate, verifies the selector, and commits. Any failed check rolls the transaction back.
