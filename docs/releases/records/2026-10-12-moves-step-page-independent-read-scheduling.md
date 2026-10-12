@@ -48,15 +48,15 @@ P1–P4 gate pages expose the existing transition workbook download, parse and a
 ## QA / Validation
 
 - PASS: eight reproduced assertions failed before the repair and pass afterward.
-- PASS: 1823 focused and affected tests in 66 unique suites on the prepared source, including the current predecessor; the route scheduling case executes the real server page with all data and authority dependencies mocked. No database was touched.
+- PASS: 1919 focused and affected tests in 73 unique suites after the actual Source predecessor landed. The route scheduling case executes the real server page with all data and authority dependencies mocked. One upstream database-dependent test was excluded under this lane's no-database constraint; no database was touched.
 - HISTORICAL PASS: ten scheduling mutations detected individually: policy sharing, canonical reader wiring, early page readiness, parallel approved/backlog reads, each failed-read path, unreadable Move refusal, early participant names, shared latest snapshot and the blocked empty state. Every source was restored.
-- PASS: final current-source typecheck and changed-code lint. 71 mutations were detected individually (68 source behaviors and three actual CSS behaviors); every source was restored.
-- PASS: final regenerated manual/coverage/tenancy checks, library/route/export reachability and all six corpus validators after reconciling actual main `9c76c564`.
+- PASS: final current-source typecheck and changed-code lint. 71 product mutations were detected individually (68 source behaviors and three actual CSS behaviors), plus two selector-reader/contrast probes; every source was restored. All 38 owned code files remain byte-identical to the validated source across this upstream reconciliation.
+- PASS: final regenerated manual/coverage/tenancy checks, library/route/export reachability and all six corpus validators after reconciling actual main `32f67d27` without rebasing.
 - PASS: 28 actual component/CSS variants covering text capture, notes, recorded approval, retained-input correction and the actual transition workbook controls pass at 390 and 1440 in both themes, with no contrast violations or horizontal overflow. Temporary render probes were removed. This is local component proof; the full signed-in shell remains to be validated.
 - HISTORICAL PASS: the real blocked component/CSS at 390 and 1440 in both themes has no contrast violations or horizontal overflow. The temporary render probe was removed; three existing local CSS browser checks also pass.
 - PASS: all 11 final local release gates on the reconciled source. Node 24.15.0 is the validation runtime.
 - PENDING: exact new-head remote CI and the immediate fresh all-open fetched guard.
-- PASS: an independent immutable `9c76c56420c65b4fd94aeeba7e6e99ab69881d7c` source export regenerates 2854 and matches every candidate count field. Zero new N test files and genuine delta zero; no count is edited by hand.
+- PASS: an independent immutable `32f67d27ea6f16af43f8407153e1d7e413caca42` source export regenerates 2855 and matches every candidate count field. The upstream release adds one genuine covered clause-text test suite. Zero new N test files and genuine delta zero; no count is edited by hand.
 - FAIL: preceding deployed acceptance on `5afb6c4e`, as shown below. No follow-up deployed timing exists yet.
 
 ## Before / After Timing
@@ -139,4 +139,8 @@ Walk [38248657090](https://github.com/abarva-platform/abarva/actions/runs/382486
 
 ## CI Reader Reconciliation
 
-Exact head `f9db933fef7879af8aad4b8071d9b34ec557f30f` failed the AI surface catalog in [run 38273719001](https://github.com/abarva-platform/abarva/actions/runs/38273719001): an existing contrast-test regex did not recognize the grouped dark token selector. The reader now uses the existing CSS parser's selector list. Every WCAG AA and real-render assertion remains enforced. Reverting grouped-selector handling fails the test; changing the palette to insufficient contrast also fails it. Both probes were restored. The affected existing step-page suites are included in the final 66-suite local run. This repair requires complete checks on a new exact head; no workflow was rerun and the earlier failure is retained.
+Exact head `f9db933fef7879af8aad4b8071d9b34ec557f30f` failed the AI surface catalog in [run 38273719001](https://github.com/abarva-platform/abarva/actions/runs/38273719001): an existing contrast-test regex did not recognize the grouped dark token selector. The reader now uses the existing CSS parser's selector list. Every WCAG AA and real-render assertion remains enforced. Reverting grouped-selector handling fails the test; changing the palette to insufficient contrast also fails it. Both probes were restored. The affected existing step-page suites are included in the final 73-suite local run. This repair requires complete checks on a new exact head; no workflow was rerun and the earlier failure is retained.
+
+## Genuine Upstream Reconciliation
+
+[Source #9465](https://github.com/abarva-platform/abarva/pull/9465) landed as `32f67d27ea6f16af43f8407153e1d7e413caca42` at 17:43:42 UTC. Its exact source head `0713d7426f18258fec805634ebb93f0567de339c` had 40 successful checks and five expected skips. This branch merged actual landed main without rebasing, took and regenerated the applicable manual/coverage/tenancy artifacts, and reran the affected Source/deck tests and required local gates. That upstream CI and guard do not clear this release: the new N head requires complete CI and its own immediate fresh all-open fetched guard. Every contender remains visible.

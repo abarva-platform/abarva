@@ -31,6 +31,30 @@ const amountFor = (measure: string) =>
   ).getAllByRole("cell")[0].textContent;
 
 describe("ContractEconomicsBriefing billing coverage", () => {
+  it("keeps a January reporting date in January west of UTC", () => {
+    const format = Date.prototype.toLocaleDateString;
+    const formatter = jest
+      .spyOn(Date.prototype, "toLocaleDateString")
+      .mockImplementation(function (this: Date, locale, options) {
+        return format.call(this, locale, {
+          timeZone: "America/Chicago",
+          ...options,
+        });
+      });
+    try {
+      render(
+        <ContractEconomicsBriefing spendMonths={[month("2027-01", 50, 50)]} />,
+      );
+      expect(
+        screen.getByText("Jan", { selector: ".sw-c3-chart-axis span" }),
+      ).toBeTruthy();
+      expect(
+        screen.queryByText("Dec", { selector: ".sw-c3-chart-axis span" }),
+      ).toBeNull();
+    } finally {
+      formatter.mockRestore();
+    }
+  });
   it("does not re-label monetary spend as measured consumption on Performance", () => {
     const vm = {
       contractEducation: {

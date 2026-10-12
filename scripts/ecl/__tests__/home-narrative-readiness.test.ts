@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { signalSourceHash, verifiedReadiness, type NarrativeReadinessProof } from "../home-narrative-readiness";
+import { CANONICAL_TENANT_KEYS } from "../../../src/config/tenants/CANONICAL_TENANTS";
+import { assertNarrativeInspectionScope, narrativeReadinessOnlyMode, narrativeReadinessIssues, signalSourceHash, verifiedReadiness, type NarrativeReadinessProof } from "../home-narrative-readiness";
 
 const proof: NarrativeReadinessProof = {
   object_table: "ecl_projection.home_enterprise_landscape",
@@ -52,4 +53,29 @@ test("a signal's source hash covers every cited row, in any order, counted once"
   assert.equal(signalSourceHash(["source-a", "source-b"]), known);
   assert.notEqual(signalSourceHash(["source-a", "source-c"]), known);
   assert.notEqual(signalSourceHash(["source-a"]), known);
+});
+
+test("readiness diagnostics preserve every admission gate and identify missing evidence", () => {
+  assert.deepEqual(narrativeReadinessIssues(proof, "tenant-a", "source-v1", "content-v1"), []);
+  assert.deepEqual(narrativeReadinessIssues(undefined, "tenant-a", "source-v1", "content-v1"), ["missing_readiness_proof"]);
+  assert.deepEqual(narrativeReadinessIssues({ ...proof, retrievability: "not_indexed", cited_render_verified_at: null }, "tenant-a", "source-v1", "content-v1"), ["not_indexed", "citation_render_unverified"]);
+  assert.deepEqual(narrativeReadinessIssues(proof, "tenant-b", "source-v2", "content-v2"), ["tenant_mismatch", "source_hash_mismatch", "content_hash_mismatch"]);
+});
+
+test("readiness inspection is explicit and rejects plan writes before database access", () => {
+  assert.equal(narrativeReadinessOnlyMode([], {}, false, null), false);
+  assert.equal(narrativeReadinessOnlyMode([], { HOME_ECL_NARRATIVE_READINESS_ONLY: "false" }, false, null), false);
+  assert.equal(narrativeReadinessOnlyMode(["--readiness-only"], {}, false, null), true);
+  assert.equal(narrativeReadinessOnlyMode([], { HOME_ECL_NARRATIVE_READINESS_ONLY: "true" }, false, null), true);
+  assert.throws(() => narrativeReadinessOnlyMode(["--readiness-only"], {}, true, null), /cannot apply/);
+  assert.throws(() => narrativeReadinessOnlyMode([], { HOME_ECL_NARRATIVE_READINESS_ONLY: "true" }, false, "plan.json"), /cannot apply/);
+  assert.throws(() => narrativeReadinessOnlyMode([], { HOME_ECL_NARRATIVE_READINESS_ONLY: "yes" }, false, null), /true or false/);
+});
+
+test("readiness inspection cannot silently use a default tenant or assessment", () => {
+  assert.doesNotThrow(() => assertNarrativeInspectionScope(CANONICAL_TENANT_KEYS[0], "inspection-test"));
+  assert.throws(() => assertNarrativeInspectionScope(undefined, "inspection-test"), /explicit canonical/);
+  assert.throws(() => assertNarrativeInspectionScope("undeclared-tenant", "inspection-test"), /explicit canonical/);
+  assert.throws(() => assertNarrativeInspectionScope(CANONICAL_TENANT_KEYS[0], undefined), /explicit canonical/);
+  assert.throws(() => assertNarrativeInspectionScope(CANONICAL_TENANT_KEYS[0], "assessment' OR true"), /explicit canonical/);
 });

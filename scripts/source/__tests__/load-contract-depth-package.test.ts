@@ -591,7 +591,7 @@ describe("Source contract depth package loader", () => {
     expect(loader).toContain("calculation_output: ownedOpportunities.length,");
   });
 
-  it("promotes the contract purpose into a governed canonical fact", () => {
+  it("imports contract purpose without claiming a document extraction or review", () => {
     const repoRoot = path.resolve(__dirname, "../../..");
     const loader = fs.readFileSync(
       path.join(repoRoot, "scripts/source/load-contract-depth-package.ts"),
@@ -606,9 +606,26 @@ describe("Source contract depth package loader", () => {
     );
 
     expect(contracts).toContain("contract_purpose_summary");
-    expect(loader).toContain("contract.purpose_summary");
-    expect(loader).toContain("system_extracted_synthetic_demo");
-    expect(loader).toContain("upsertContractContextFacts");
+    const parsed = ts.createSourceFile(
+      "loader.ts",
+      loader,
+      ts.ScriptTarget.Latest,
+      true,
+    );
+    const purposeWriter = parsed.statements
+      .find(
+        (statement) =>
+          ts.isFunctionDeclaration(statement) &&
+          statement.name?.text === "upsertContractContextFacts",
+      )
+      ?.getText(parsed);
+    expect(purposeWriter).toBeDefined();
+    expect(purposeWriter).toContain("contract.purpose_summary");
+    expect(purposeWriter).toContain(
+      "imported from the declared contract header",
+    );
+    expect(purposeWriter).toContain("not_reviewed");
+    expect(purposeWriter).not.toContain("system_extracted_synthetic_demo");
   });
 
   it("counts one canonical context fact for each populated contract purpose", () => {
