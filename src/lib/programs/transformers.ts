@@ -170,7 +170,10 @@ export async function buildGateCriteria(
   ctx: TenancyCtx,
   moveId: string,
   currentPhase: number,
-  opts: { allowHistoricalPhase?: boolean } = {},
+  opts: {
+    allowHistoricalPhase?: boolean;
+    evaluateGate?: typeof evaluateGate;
+  } = {},
 ): Promise<StrategicMove["gateCriteria"]> {
   const criteria = gateCriteriaForPhase(currentPhase);
   // Terminal phase (or unknown phase) — no outgoing gate to evaluate.
@@ -182,11 +185,12 @@ export async function buildGateCriteria(
   // say why a check is open instead of only that it is.
   const failedReasons = new Map<string, string>();
   try {
+    const readGate = opts.evaluateGate ?? evaluateGate;
     const check = opts.allowHistoricalPhase
-      ? await evaluateGate(ctx, moveId, currentPhase, currentPhase + 1, {
+      ? await readGate(ctx, moveId, currentPhase, currentPhase + 1, {
           allowHistoricalPhase: true,
         })
-      : await evaluateGate(ctx, moveId, currentPhase, currentPhase + 1);
+      : await readGate(ctx, moveId, currentPhase, currentPhase + 1);
     // A `phase_mismatch` / `program_not_found` / `no_rule` /
     // `gate_state_unreadable` failure is not a per-criterion signal — in that
     // case treat the criteria as not yet verified rather than marking every

@@ -32,7 +32,7 @@ const identityLine = (spec: ReferenceDeckSpec): string =>
 
 function addCover(slide: Slide, spec: ReferenceDeckSpec, content: ReferenceSlide): void {
   slide.background = { color: C.ink };
-  slide.addText(`${spec.client.toUpperCase()}  /  ${spec.useCase.toUpperCase()}`, {
+  slide.addText(`VALUE PROPOSITION  /  ${spec.edition.toUpperCase()} EDITION`, {
     x: 0.72, y: 0.78, w: 10.8, h: 0.3, fontFace: BODY,
     fontSize: 11, bold: true, charSpacing: 1.2, color: C.white,
     objectName: "ref:cover:eyebrow",
@@ -50,7 +50,7 @@ function addCover(slide: Slide, spec: ReferenceDeckSpec, content: ReferenceSlide
     x: 0.72, y: 5.02, w: 6, h: 0.34, fontFace: BODY,
     fontSize: 13, color: C.white,
   });
-  slide.addText(`Discussion draft · ${spec.monthYear} · sources checked to ${spec.sourcesCheckedTo}`, {
+  slide.addText(`Discussion draft · ${spec.monthYear}`, {
     x: 0.72, y: 6.42, w: 11.8, h: 0.28, fontFace: BODY,
     fontSize: 10, color: C.white,
   });
@@ -195,19 +195,36 @@ function addBlock(slide: Slide, block: ReferenceBlock, y: number): number {
     }
     case "flow": {
       const count = block.nodes.length;
-      const itemW = (w - (count - 1) * 0.48) / count;
+      const twoRows = count > 4;
+      const columns = twoRows ? Math.ceil(count / 2) : count;
+      const arrowW = 0.44;
+      const itemW = (w - (columns - 1) * arrowW) / columns;
+      const rowH = twoRows ? 1.13 : 1.35;
       block.nodes.forEach((node, i) => {
-        const xx = x + i * (itemW + 0.48);
-        slide.addShape("rect", { x: xx, y, w: itemW, h: 1.1,
+        const row = twoRows && i >= columns ? 1 : 0;
+        const column = row === 0 ? i : columns - 1 - (i - columns);
+        const xx = x + column * (itemW + arrowW);
+        const yy = y + row * 1.38;
+        slide.addShape("rect", { x: xx, y: yy, w: itemW, h: rowH,
           line: { color: C.rule, width: 0.7 }, fill: { color: C.panel }, objectName: "ref:body:flow" });
-        slide.addText(node, { x: xx + 0.12, y: y + 0.25, w: itemW - 0.24, h: 0.6,
-          fontFace: BODY, fontSize: 14, color: C.ink, align: "center", fit: "shrink" });
-        if (i < count - 1) slide.addText("→", { x: xx + itemW + 0.06, y: y + 0.39, w: 0.36, h: 0.3,
-          fontFace: BODY, fontSize: 18, color: C.accent, align: "center" });
+        if (twoRows) slide.addText(String(i + 1).padStart(2, "0"), {
+          x: xx + 0.12, y: yy + 0.1, w: 0.34, h: 0.2, fontFace: BODY,
+          fontSize: 9, bold: true, color: C.accent,
+        });
+        slide.addText(node, { x: xx + 0.12, y: yy + (twoRows ? 0.25 : 0.2), w: itemW - 0.24, h: twoRows ? 0.74 : 0.95,
+          fontFace: BODY, fontSize: twoRows ? 12.5 : 13.5, color: C.ink, align: "center", fit: "shrink",
+          objectName: `ref:body:flow-label:${i}` });
+        if (i < count - 1 && (!twoRows || (row === 0 && i < columns - 1) || (row === 1 && i < count - 1))) {
+          const left = row === 0 ? xx + itemW + 0.03 : xx - arrowW + 0.03;
+          slide.addText(row === 0 ? "→" : "←", { x: left, y: yy + 0.48, w: 0.36, h: 0.3,
+            fontFace: BODY, fontSize: 18, color: C.accent, align: "center" });
+        }
       });
-      if (block.annotation) slide.addText(block.annotation, { x, y: y + 1.25, w, h: 0.38,
+      if (twoRows) slide.addText("↓", { x: x + w - itemW / 2 - 0.18, y: y + 1.11, w: 0.36, h: 0.28,
+        fontFace: BODY, fontSize: 17, color: C.accent, align: "center" });
+      if (block.annotation) slide.addText(block.annotation, { x, y: y + (twoRows ? 2.61 : 1.47), w, h: 0.38,
         fontFace: BODY, fontSize: 12, color: C.muted });
-      return y + 1.75;
+      return y + (twoRows ? block.annotation ? 3.08 : 2.61 : block.annotation ? 2.0 : 1.5);
     }
     case "architecture": {
       const count = block.layers.length;
@@ -269,7 +286,7 @@ function addBlock(slide: Slide, block: ReferenceBlock, y: number): number {
         fontFace: SERIF, fontSize: 25, color: C.ink, fit: "shrink", objectName: "ref:body:gap-title" });
       slide.addText(block.detail, { x: x + 0.36, y: y + 1.24, w: w - 0.8, h: 0.66,
         fontFace: BODY, fontSize: 16, color: C.ink, fit: "shrink", objectName: "ref:body:gap-detail" });
-      slide.addText(`NEXT READ  ${block.nextAction}`, { x: x + 0.36, y: y + 2.58, w: w - 0.8, h: 0.45,
+      slide.addText(`TO CONFIRM  ${block.nextAction}`, { x: x + 0.36, y: y + 2.58, w: w - 0.8, h: 0.45,
         fontFace: BODY, fontSize: 12, bold: true, color: C.accent, fit: "shrink", objectName: "ref:body:gap-action" });
       return y + 3.67;
     }
@@ -280,6 +297,33 @@ function addBlock(slide: Slide, block: ReferenceBlock, y: number): number {
       return y + Math.min(3.7, Math.max(0.52, block.lines.length * 0.47)) + 0.12;
     }
   }
+}
+
+function addContents(slide: Slide, block: Extract<ReferenceBlock, { kind: "table" }>, y: number): number {
+  block.rows.forEach((row, index) => {
+    const heading = display(row[0] ?? "").match(/^0?(\d+)\s+(.+)$/);
+    const yy = y + index * 0.79;
+    slide.addText(heading?.[1] ?? String(index + 1), {
+      x: 0.72, y: yy, w: 0.52, h: 0.48, fontFace: SERIF, fontSize: 26,
+      color: C.accent, objectName: `ref:body:contents-number:${index}`,
+    });
+    slide.addText(heading?.[2] ?? display(row[0] ?? ""), {
+      x: 1.48, y: yy + 0.02, w: 3.1, h: 0.31, fontFace: BODY, fontSize: 14, bold: true,
+      color: C.ink, objectName: `ref:body:table-cell:${index + 1}:0`,
+    });
+    slide.addText(display(row[1] ?? ""), {
+      x: 4.8, y: yy + 0.02, w: 7.8, h: 0.42, fontFace: BODY, fontSize: 13,
+      color: C.ink, fit: "shrink", objectName: `ref:body:table-cell:${index + 1}:1`,
+    });
+    slide.addText(`Slides ${display(row[2] ?? "")}`, {
+      x: 1.48, y: yy + 0.38, w: 10.6, h: 0.21, fontFace: BODY, fontSize: 9, italic: true,
+      color: C.muted, objectName: `ref:body:table-cell:${index + 1}:2`,
+    });
+    if (index < block.rows.length - 1) slide.addShape("line", {
+      x: 1.48, y: yy + 0.7, w: 11.12, h: 0, line: { color: C.rule, width: 0.5 },
+    });
+  });
+  return y + block.rows.length * 0.79;
 }
 
 /** Render only validated, editable shapes and text. No raster exhibit path exists here. */
@@ -295,11 +339,13 @@ export async function renderReferenceDeck(spec: ReferenceDeckSpec): Promise<Buff
   spec.slides.forEach((content, index) => {
     const slide = pptx.addSlide();
     if (content.archetype === "cover") addCover(slide, spec, content);
-    else if (content.archetype === "divider") addDivider(slide, spec, content, index + 1);
+    else if (content.archetype === "divider") addDivider(slide, spec, content,
+      content.section ? Math.max(1, SECTIONS.indexOf(content.section === "CONFIRM" ? "VALIDATE" : content.section) + 1) : 1);
     else {
       addChrome(slide, spec, content, index);
       let y = 1.83;
-      for (const block of content.blocks) y = addBlock(slide, block, y);
+      for (const block of content.blocks) y = content.archetype === "contents" && block.kind === "table"
+        ? addContents(slide, block, y) : addBlock(slide, block, y);
       if (y > 6.16) throw new Error(`reference_deck_body_overflow: slide ${index + 1}`);
     }
     if (content.speakerNotes) {

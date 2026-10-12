@@ -9,6 +9,7 @@ const mockBuild = jest.fn();
 const mockRender = jest.fn();
 const mockInspect = jest.fn();
 const mockJudge = jest.fn();
+const mockPdfInspect = jest.fn();
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -45,6 +46,7 @@ jest.mock("@react-pdf/renderer", () => ({
   pdf: () => ({ toBuffer: async () => (async function* () { yield Buffer.from("%PDF synthetic preview"); })() }),
 }));
 jest.mock("@/lib/deliverables/orchestrator/reference-deck-pdf", () => ({ buildReferenceDeckPdf: () => ({}) }));
+jest.mock("@/lib/deliverables/orchestrator/reference-deck-pdf-inspection", () => ({ inspectReferenceDeckPdf: (...args: unknown[]) => mockPdfInspect(...args) }));
 
 import { NextRequest } from "next/server";
 import { GET } from "../route";
@@ -63,9 +65,19 @@ beforeEach(() => {
   mockRender.mockResolvedValue(Buffer.from("PK synthetic preview"));
   mockInspect.mockResolvedValue({ slideCount: 1 });
   mockJudge.mockReturnValue({ fidelityScore: 85, findings: [] });
+  mockPdfInspect.mockResolvedValue([]);
 });
 
 describe("read-only reference deck preview", () => {
+  it("refuses a defective PDF after the PPTX checks pass", async () => {
+    mockPdfInspect.mockResolvedValueOnce([{ kind: "reference_source", slide: 2, detailCode: "bound_figure_missing" }]);
+    const result = await GET(request("pdf"), params());
+    expect(result.status).toBe(422);
+    expect(result.headers.get("X-AbarVa-Deck-Fidelity-Score")).toBe("0");
+    expect(await result.json()).toMatchObject({ error: "deck_render_refusal", findings: [{ kind: "reference_source", slide: 2, detailCode: "bound_figure_missing" }] });
+    expect(mockPdfInspect).toHaveBeenCalledWith(expect.any(Buffer), mockBuild.mock.results[0]!.value);
+  });
+
   it("keeps tenancy refusals and names unexpected auth failures", async () => {
     mockRequireTenancy.mockRejectedValueOnce(new Error("unauthenticated"));
     expect((await GET(request(), params())).status).toBe(401);
@@ -132,6 +144,17 @@ describe("read-only reference deck preview", () => {
     const body = await result.json();
     expect(body).toMatchObject({ error: "deck_render_refusal", findings: [{ kind: "reference_source", slide: 9, detailCode: "notes_source_missing" }] });
     expect(JSON.stringify(body)).not.toContain("synthetic private source value");
+  });
+
+  it("refuses internal client-facing copy before returning a file", async () => {
+    mockJudge.mockReturnValueOnce({ fidelityScore: 95, findings: [{
+      kind: "reference_client_copy", slide: 2, detailCode: "internal_term", message: "private rendered wording",
+    }] });
+    const result = await GET(request(), params());
+    expect(result.status).toBe(422);
+    const body = await result.json();
+    expect(body).toMatchObject({ error: "deck_render_refusal", findings: [{ kind: "reference_client_copy", slide: 2, detailCode: "internal_term" }] });
+    expect(JSON.stringify(body)).not.toContain("private rendered wording");
   });
 
   it("serves an in-memory PDF under the same preview contract", async () => {
