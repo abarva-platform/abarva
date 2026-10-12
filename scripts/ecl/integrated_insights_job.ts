@@ -8,7 +8,7 @@ import { resolveLoadApproval } from "../../src/lib/governance/dataset-manifest";
 import { buildIntegratedInsightPlan } from "../../src/lib/ecl/insights/engine";
 import { readInsightInput } from "../../src/lib/ecl/insights/read-input";
 import { INSIGHT_LOAD_BUILD_VERSION, insightLoadBinding, readInsightLoadEvidence } from "../../src/lib/ecl/insights/load-approval";
-import { persistInsightCandidates, verifyInsightCandidates } from "../../src/lib/ecl/insights/store";
+import { persistInsightCandidates, readInsightCandidateContent } from "../../src/lib/ecl/insights/store";
 import { readDatasetManifests } from "./load_synthetic_enterprise_v1";
 import {
   applySqlLimits, blobProofStore, boundedStore, commitTransaction, connectDatabase,
@@ -46,7 +46,28 @@ export function emitInsightProofBundle(proof: unknown, report: (line: string) =>
   } finally { rmSync(directory, { recursive: true, force: true }); }
 }
 
-export async function runInsightJob(env: Env, mode: "inventory" | "plan" | "apply", runtime = defaultRuntime) {
+async function readCandidateRelease(db: JobClient, plan: ReturnType<typeof buildIntegratedInsightPlan>) {
+  const counts = await db.query<{ rows: number; ready: number }>(
+    `select count(*)::int as rows, count(*) filter (where agent_ready)::int as ready
+       from serving.enterprise_insight_candidates where tenant_key=$1 and assessment_id=$2 and release_id=$3`,
+    [plan.tenantKey, plan.assessmentId, plan.releaseId]);
+  if (counts.rows[0]?.rows !== plan.findings.length || counts.rows[0]?.ready !== 0) throw new Error("Independent serving readback failed");
+  const release = await db.query<{ first_run_id: string; result_hash: string }>(
+    `select first_run_id, result_hash from ecl_projection.enterprise_insight_release
+     where tenant_key=$1 and assessment_id=$2 and id=$3`, [plan.tenantKey, plan.assessmentId, plan.releaseId]);
+  if (release.rows.length !== 1 || release.rows[0].result_hash !== plan.resultHash) throw new Error("Independent release readback failed");
+  const content = await readInsightCandidateContent(db, plan, release.rows[0].first_run_id);
+  return {
+    contract_version: "enterprise-insight-candidate-readback/v1",
+    tenant_key: plan.tenantKey, assessment_id: plan.assessmentId, release_id: plan.releaseId,
+    original_load_run_id: release.rows[0].first_run_id,
+    expected_result_hash: plan.resultHash, actual_result_hash: release.rows[0].result_hash,
+    actual_finding_count: counts.rows[0].rows, actual_agent_ready_count: counts.rows[0].ready,
+    ...content,
+  };
+}
+
+export async function runInsightJob(env: Env, mode: "inventory" | "plan" | "apply" | "readback", runtime = defaultRuntime) {
   const tenant = env.ECL_INSIGHT_TENANT_KEY ?? "";
   if (!(CANONICAL_TENANT_KEYS as readonly string[]).includes(tenant)) throw new Error("An explicit canonical tenant is required");
   const run = jobRun({ ...env,
@@ -100,6 +121,11 @@ export async function runInsightJob(env: Env, mode: "inventory" | "plan" | "appl
     const approval = resolveLoadApproval(manifests,
       insightLoadBinding(plan, datasetId, run.releaseRecord), approvalEvidence);
     let receipt: { findings: number; idempotentReplay: boolean } | null = null;
+    let independentReadback: Awaited<ReturnType<typeof readCandidateRelease>> | null = null;
+    if ((mode === "apply" || mode === "readback") && env.ECL_INSIGHT_EXPECTED_VERSION_HASH !== plan.loadVersionHash) {
+      throw new Error("Exact planned input/rule/result version hash required; changed candidates need a new approval");
+    }
+    if (mode === "readback" && !approval.approved) throw new Error("Readback requires the exact approved candidate scope");
     const proofPath = `${tenant}/enterprise-insights/${datasetId}/${plan.loadVersionHash}/runs/${run.runId}/proof.json`;
     const inputPath = `${tenant}/enterprise-insights/${datasetId}/${plan.loadVersionHash}/runs/${run.runId}/input.json`;
     const inputBytes = proofBytes(input as unknown as Record<string, unknown>);
@@ -110,7 +136,6 @@ export async function runInsightJob(env: Env, mode: "inventory" | "plan" | "appl
     const record = jobRecord(run, { tenantScope: tenant, inputSourceVersion: plan.loadVersionHash,
       idempotencyKey: plan.releaseId, status: "succeeded", proofUri: store.uriFor(proofPath), limits });
     if (mode === "apply") {
-      if (env.ECL_INSIGHT_EXPECTED_VERSION_HASH !== plan.loadVersionHash) throw new Error("Exact planned input/rule/result version hash required; changed candidates need a new approval");
       console.log(JSON.stringify({ checkpoint: "approval_check", load_version_hash: plan.loadVersionHash }));
       receipt = await persistInsightCandidates(db, plan, { datasetId, manifests,
         recordExists: runtime.recordExists, runId: run.runId, releaseRecord: run.releaseRecord, jobRecord: record,
@@ -122,22 +147,16 @@ export async function runInsightJob(env: Env, mode: "inventory" | "plan" | "appl
         await verifier.query("begin read only");
         await applySqlLimits(verifier, limits);
         await verifier.query("select set_config('app.tenant_key', $1, true)", [tenant]);
-        const readback = await verifier.query<{ rows: number; ready: number }>(
-          `select count(*)::int as rows, count(*) filter (where agent_ready)::int as ready
-             from serving.enterprise_insight_candidates where tenant_key=$1 and assessment_id=$2 and release_id=$3`,
-          [tenant, assessment, plan.releaseId]);
-        if (readback.rows[0]?.rows !== plan.findings.length || readback.rows[0]?.ready !== 0) throw new Error("Independent serving readback failed");
-        const release = await verifier.query<{ first_run_id: string; result_hash: string }>(
-          `select first_run_id, result_hash from ecl_projection.enterprise_insight_release
-           where tenant_key=$1 and assessment_id=$2 and id=$3`, [tenant, assessment, plan.releaseId]);
-        if (release.rows.length !== 1 || release.rows[0].result_hash !== plan.resultHash) throw new Error("Independent release readback failed");
-        await verifyInsightCandidates(verifier, plan, release.rows[0].first_run_id);
+        independentReadback = await readCandidateRelease(verifier, plan);
         await verifier.query("rollback");
       } finally { await verifier.end(); }
     } else {
+      if (mode === "readback") independentReadback = await readCandidateRelease(db, plan);
       await db.query("rollback"); transaction = false;
     }
     const proof = { ...record, blob_proof_bundle: store.uriFor(proofPath), mode, mutation_applied: committed, plan, receipt, load_approval: approval,
+      independent_readback: independentReadback,
+      readback_connection: independentReadback ? mode === "apply" ? "post_commit_second_connection" : "standalone_read_only_job_connection" : null,
       input_snapshot_uri: store.uriFor(inputPath), input_snapshot_hash: plan.sourceSetHash,
       validation: { tenant_fenced: true, reproducible: true, exact_version_binding: plan.loadVersionHash },
       quality_gate: { product_serving_changed: false, candidate_only: true, agent_ready: false,
@@ -153,8 +172,8 @@ export async function runInsightJob(env: Env, mode: "inventory" | "plan" | "appl
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const arg = process.argv[2];
-  const mode = arg === "--inventory" ? "inventory" : arg === "--plan" ? "plan" : arg === "--apply" ? "apply" : null;
-  if (!mode) throw new Error("Use --inventory, --plan or --apply");
+  const mode = arg === "--inventory" ? "inventory" : arg === "--plan" ? "plan" : arg === "--apply" ? "apply" : arg === "--readback" ? "readback" : null;
+  if (!mode) throw new Error("Use --inventory, --plan, --apply or --readback");
   runInsightJob(process.env, mode).then((proof) => {
     const plan = "plan" in proof ? proof.plan : null;
     const metadata: Record<string, unknown> = proof;

@@ -5,7 +5,7 @@ import test, { before, after } from "node:test";
 import pg from "pg";
 import { input } from "./integrated-insights.test";
 import { buildIntegratedInsightPlan, insightUuid } from "../../../src/lib/ecl/insights/engine";
-import { persistInsightCandidates, candidateGovernance } from "../../../src/lib/ecl/insights/store";
+import { persistInsightCandidates, candidateGovernance, readInsightCandidateContent } from "../../../src/lib/ecl/insights/store";
 import { readInsightInput } from "../../../src/lib/ecl/insights/read-input";
 import { runInsightJob, type InsightRuntime } from "../integrated_insights_job";
 import { connectDatabase } from "../synthetic_enterprise_home_job";
@@ -352,4 +352,64 @@ test("operator plan is read-only; approved apply proves independent serving read
   const applied = await runInsightJob({ ...env,ECL_INSIGHT_RUN_ID:"local-job-apply", ECL_INSIGHT_EXPECTED_VERSION_HASH:plan.loadVersionHash },"apply",runtime);
   assert.equal(applied.mutation_applied,true);
   assert.equal(proofs.length,4);
+  assert.ok("independent_readback" in applied);
+  assert.equal(applied.readback_connection, "post_commit_second_connection");
+  assert.equal(applied.independent_readback?.actual_finding_count, 5);
+  assert.equal(applied.independent_readback?.actual_agent_ready_count, 0);
+  assert.equal(applied.independent_readback?.findingComparisons.length, 5);
+  assert.equal(applied.independent_readback?.lineageComparisons.length, 5);
+  for (const comparison of applied.independent_readback!.findingComparisons) {
+    assert.equal(comparison.actualPayloadHash, comparison.expectedFindingHash);
+    assert.equal(comparison.actualGovernanceHash, comparison.expectedGovernanceHash);
+  }
+  const before = (await db.query("select * from ecl_projection.enterprise_insight_finding order by id")).rows;
+  const verified = await runInsightJob({ ...env, ECL_INSIGHT_RUN_ID: "local-job-readback", ECL_INSIGHT_EXPECTED_VERSION_HASH: plan.loadVersionHash }, "readback", runtime);
+  assert.ok("independent_readback" in verified);
+  assert.equal(verified.mutation_applied, false);
+  assert.equal(verified.receipt, null);
+  assert.equal(verified.readback_connection, "standalone_read_only_job_connection");
+  assert.deepEqual(verified.independent_readback, applied.independent_readback);
+  assert.deepEqual((await db.query("select * from ecl_projection.enterprise_insight_finding order by id")).rows, before);
+  await db.query(`grant usage on schema ecl_source, ecl_context to ${readerRole};
+    grant select on all tables in schema ecl_source, ecl_context to ${readerRole};`);
+  const readonlyRuntime: InsightRuntime = { ...runtime, connect: async (url) => {
+    const connection = await connectDatabase(url);
+    await connection.query(`set role ${readerRole}`);
+    return connection;
+  } };
+  const readonlyResult = await runInsightJob({ ...env, ECL_INSIGHT_RUN_ID: "local-job-readback-select-role", ECL_INSIGHT_EXPECTED_VERSION_HASH: plan.loadVersionHash }, "readback", readonlyRuntime);
+  assert.ok("independent_readback" in readonlyResult);
+  assert.equal(readonlyResult.mutation_applied, false);
+  assert.deepEqual(readonlyResult.independent_readback, verified.independent_readback);
+  const proofCount = proofs.length;
+  await assert.rejects(runInsightJob({ ...env, ECL_INSIGHT_EXPECTED_VERSION_HASH: "0".repeat(64) }, "readback", runtime), /Exact planned/);
+  assert.equal(proofs.length, proofCount);
+  await assert.rejects(runInsightJob({ ...env, ECL_INSIGHT_EXPECTED_VERSION_HASH: plan.loadVersionHash }, "readback", {
+    ...runtime, manifests: async () => [],
+  }), /exact approved candidate scope/);
+  assert.equal(proofs.length, proofCount);
+});
+
+test("readback captures actual SQL hashes and rejects changed stored content or lineage", async () => {
+  const receipt = await readInsightCandidateContent(db, plan, "local-pg-first");
+  assert.equal(receipt.findings, 5);
+  for (const comparison of receipt.lineageComparisons) {
+    assert.equal(comparison.actualCount, comparison.expectedCount);
+    assert.equal(comparison.actualHash, comparison.expectedHash);
+  }
+  await db.query("begin");
+  try {
+    await db.query("update ecl_projection.enterprise_insight_finding set payload_json='{}' where id=$1", [plan.findings[0].id]);
+    await assert.rejects(readInsightCandidateContent(db, plan, "local-pg-first"), /content readback failed/);
+  } finally { await db.query("rollback"); }
+  await db.query("begin");
+  try {
+    await db.query("update ecl_projection.enterprise_insight_finding set governance_json=jsonb_set(governance_json,'{confidence_rationale}','\"tampered-test-only\"') where id=$1", [plan.findings[0].id]);
+    await assert.rejects(readInsightCandidateContent(db, plan, "local-pg-first"), /content readback failed/);
+  } finally { await db.query("rollback"); }
+  await db.query("begin");
+  try {
+    await db.query("delete from ecl_projection.enterprise_insight_object_ref where finding_id=$1", [plan.findings[0].id]);
+    await assert.rejects(readInsightCandidateContent(db, plan, "local-pg-first"), /lineage readback failed/);
+  } finally { await db.query("rollback"); }
 });
