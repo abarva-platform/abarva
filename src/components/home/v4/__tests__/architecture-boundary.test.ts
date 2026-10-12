@@ -4,8 +4,7 @@ import path from "node:path";
 const REPO_ROOT = process.cwd();
 
 const CLIENT_ARCHITECTURE_PAGES = [
-  "src/components/home/v4/ArchitecturePage.tsx",
-  "src/components/home/v4/DataFlowPage.tsx",
+  "src/components/home/canvas/ArchitectureCanvas.tsx",
 ];
 
 const FORBIDDEN_IMPORT_PATTERNS = [

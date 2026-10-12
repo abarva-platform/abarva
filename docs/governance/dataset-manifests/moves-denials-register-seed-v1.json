@@ -1,0 +1,20 @@
+{
+  "dataset_id": "moves_denials_register_seed_v1",
+  "title": "Synthetic Move register rebind proposal",
+  "client_key": null,
+  "tenant_scope": "move_registry",
+  "source_layer": "move",
+  "classification": "internal",
+  "owner": "AbarVa Moves product team",
+  "source_basis": "Exact committed synthetic source pack and register-row proposal. Unit hours and value inputs are proposed, not client-attested. Delivery rates must resolve separately from the versioned cost foundation and remain unapproved until reviewed.",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "move_scoped_prompt_context",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": "Aggregated synthetic records only; no real person, claim, or account records.",
+  "expected_object_count": 22,
+  "approved_by": "Anand Sundaram",
+  "approved_at": "2026-10-11",
+  "load_approval": null,
+  "serving_approval": null,
+  "notes": "Declaration only. Exact authenticated Move, operator identity, observed register allocation, source hash, idempotency key, and named load approval must be bound before apply. No row is loaded, served, indexed, retrieved, or agent_ready by this manifest."
+}

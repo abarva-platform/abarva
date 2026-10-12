@@ -148,8 +148,6 @@
     "src/components/home/know/HomeKnowAnswerRenderer.tsx",
     "src/components/home/know/HomeKnowAsk.tsx",
     "src/components/home/orientation/HomeOrientationPanels.tsx",
-    "src/components/home/preview/ClaimCard.tsx",
-    "src/components/home/preview/visuals/GovernedVisual.tsx",
     "src/components/home/v4/HomeRecordNotServed.tsx",
     "src/components/home/v4/architecture-tiles.ts",
     "src/components/home/v4/test-support/text-encoder-polyfill.ts",

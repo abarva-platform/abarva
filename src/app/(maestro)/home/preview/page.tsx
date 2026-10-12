@@ -4,7 +4,8 @@ import { connection } from "next/server";
 
 import { AppShell } from "@/components/shell/AppShell";
 import { EclDemoFindingsPanel } from "@/components/ecl/EclDemoFindingsPanel";
-import { HomePreviewAppRoot } from "@/components/home/preview/HomePreviewAppRoot";
+import { HomeCanvasApp } from "@/components/home/canvas/HomeCanvasApp";
+import { canonicalClientDisplayName } from "@/lib/client-config";
 import { cookies } from "next/headers";
 import { isFoundationPreviewOperatorSession } from "@/lib/auth/foundation-preview-session";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin-session";
@@ -26,16 +27,7 @@ import {
   resolveEclProductProvider,
 } from "@/lib/ecl/product-provider";
 
-/**
- * Production-faithful preview of the new eight-chapter Home experience -- not a static prototype.
- * Renders the exact ChapterView/EnterpriseThesis payload contract the data-build pipeline
- * produces (scripts/data-build/build-home-chapters.ts), against the two tenants' accepted golden
- * snapshots (src/lib/home/preview/golden-snapshots/*.json) rather than a live model call or the
- * database. This is the review surface for the acceptance question the workstream defined: would
- * a newly appointed CXO spend 20 minutes here and come away feeling Abarva understands their
- * enterprise exceptionally well? It is not wired to /home, does not write to the database, and
- * does not replace the legacy Home reader -- see docs/releases/records/2026-08-19-home-chapter-writer-foundation.md.
- */
+/** Operator review retains its authorization and explicit diagnostics gate, using the same Home presentation. */
 export const metadata: Metadata = {
   title: "Home (preview) | AbarVa",
 };
@@ -126,11 +118,14 @@ export default async function HomePreviewPage({
       {isEclProvider && showEclDiagnostics ? (
         <EclDemoFindingsPanel product="home" />
       ) : null}
-      <HomePreviewAppRoot
+      <HomeCanvasApp
         bundle={bundle}
         recordSource={recordSource}
         recordToken={homeRecordSourceToken(tenantKey, recordSource)}
         tenantKey={tenantKey}
+        tenantName={
+          canonicalClientDisplayName({ key: tenantKey }) ?? "AbarVa Client"
+        }
         requestedProvider={provider}
       />
     </AppShell>

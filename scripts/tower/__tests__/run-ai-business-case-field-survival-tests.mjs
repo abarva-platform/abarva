@@ -110,6 +110,11 @@ async function assertLayer4CubePayloadCarriesCaseDetail() {
     assert.match(sql, /gating_constraint/);
     assert.match(sql, /cost_to_build_high_usd/);
     assert.match(sql, /benefit_realization_lag_months/);
+    // Finance review remains in the case trace, while no amount is invented
+    // for the independent usage-supported stage.
+    assert.match(sql, /"finance_reviewed_value_usd":[1-9]/);
+    assert.match(sql, /"usage_supported_value_usd":null/);
+    assert.doesNotMatch(sql, /"usage_supported_value_usd":[1-9]/);
   } finally {
     await fs.rm(outDir, { recursive: true, force: true });
   }

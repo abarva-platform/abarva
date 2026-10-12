@@ -1581,6 +1581,7 @@ jobs:
           npx jest --runTestsByPath
           "src/app/(maestro)/home/__tests__/home-page-ecl-route.test.tsx"
           "src/app/(maestro)/home/__tests__/no-readmin-reexports.test.ts"
+          "src/app/(maestro)/home/__tests__/home-canvas-cutover.test.ts"
           --no-coverage --ci
 
       # T-767 (2026-09-27) wires `src/components/programs/origination/__tests__`,
@@ -1932,7 +1933,7 @@ jobs:
       # `src/components/context-broker/__tests__` whole because one suite in
       # each renders a component `docs/architecture/unreachable-components.json`
       # lists (`AvaAsk`, `FourModeDemoSurface`; retire-or-mount is T-775's
-      # decision). The other four suites are green and their subjects are
+      # decision). The other five suites are green and their subjects are
       # mounted, so they are named FILE BY FILE here and the two unreachable
       # renders stay out. Do NOT replace these paths with either directory:
       # that would count coverage over code no route reaches. Both directories
@@ -1944,6 +1945,7 @@ jobs:
           npx jest --runTestsByPath
           src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx
           src/components/agent-answer/__tests__/AvaAskMark.assets.test.ts
+          src/components/agent-answer/__tests__/ModelAuthoredExhibits.test.tsx
           src/components/context-broker/__tests__/ContextAssembledPanel.test.tsx
           src/components/context-broker/__tests__/ModeToggle.test.tsx
           --no-coverage --ci

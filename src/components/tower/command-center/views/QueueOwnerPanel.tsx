@@ -20,11 +20,13 @@ import type React from "react";
 
 import type { TowerAiView, TowerCommandCenterView } from "@/lib/tower/command-center/types";
 import { formatCount, formatUsdM } from "@/lib/tower/command-center/format";
+import { isBusinessCase } from "./portfolio-kind";
 
 type OwnerRow = {
   readonly owner: string;
   readonly count: number;
   readonly investmentUsd: number;
+  readonly fundingLoadedCount: number;
   readonly valueUsd: number;
   readonly valueLoadedCount: number;
   readonly openProofItems: number;
@@ -50,12 +52,13 @@ function hasOpenProof(item: TowerAiView): boolean {
 export function buildQueueOwnerRows(view: TowerCommandCenterView): readonly OwnerRow[] {
   const rows = new Map<string, OwnerRow>();
   for (const item of view.allInitiatives) {
-    if (item.financeStatus === null) continue;
+    if (!isBusinessCase(item)) continue;
     const owner = item.sponsorRole ?? "Sponsor not loaded";
     const current = rows.get(owner) ?? {
       owner,
       count: 0,
       investmentUsd: 0,
+      fundingLoadedCount: 0,
       valueUsd: 0,
       valueLoadedCount: 0,
       openProofItems: 0,
@@ -63,7 +66,8 @@ export function buildQueueOwnerRows(view: TowerCommandCenterView): readonly Owne
     rows.set(owner, {
       owner,
       count: current.count + 1,
-      investmentUsd: current.investmentUsd + item.aiSpendUsd,
+      investmentUsd: current.investmentUsd + (item.aiAmountBasis === "approved_funding" ? item.aiSpendUsd : 0),
+      fundingLoadedCount: current.fundingLoadedCount + (item.aiAmountBasis === "approved_funding" ? 1 : 0),
       valueUsd: current.valueUsd + (item.promisedBenefitLoaded ? item.promisedUsd : 0),
       valueLoadedCount: current.valueLoadedCount + (item.promisedBenefitLoaded ? 1 : 0),
       openProofItems: current.openProofItems + (hasOpenProof(item) ? 1 : 0),
@@ -73,7 +77,13 @@ export function buildQueueOwnerRows(view: TowerCommandCenterView): readonly Owne
 }
 
 function valueLabel(row: OwnerRow): string {
-  return row.valueLoadedCount === 0 ? "Not loaded" : formatUsdM(row.valueUsd);
+  if (row.valueLoadedCount === 0) return "Not loaded";
+  return `${formatUsdM(row.valueUsd)}${row.valueLoadedCount < row.count ? " (partial)" : ""}`;
+}
+
+function fundingLabel(row: OwnerRow): string {
+  if (row.fundingLoadedCount === 0) return "Not loaded";
+  return `${formatUsdM(row.investmentUsd)}${row.fundingLoadedCount < row.count ? " (partial)" : ""}`;
 }
 
 export function QueueOwnerPanel({ view }: { view: TowerCommandCenterView }) {
@@ -130,8 +140,8 @@ export function QueueOwnerPanel({ view }: { view: TowerCommandCenterView }) {
         >
           <span>Sponsor</span>
           <span style={{ textAlign: "right" }}>Cases</span>
-          <span style={{ textAlign: "right" }}>Investment</span>
-          <span style={{ textAlign: "right" }}>Sponsor-stated</span>
+          <span style={{ textAlign: "right" }}>Approved AI funding</span>
+          <span style={{ textAlign: "right" }}>Projected benefit</span>
           <span style={{ textAlign: "right" }}>Open proof items</span>
         </div>
         {rows.map((row) => (
@@ -150,7 +160,7 @@ export function QueueOwnerPanel({ view }: { view: TowerCommandCenterView }) {
               {formatCount(row.count)}
             </span>
             <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>
-              {formatUsdM(row.investmentUsd)}
+              {fundingLabel(row)}
             </span>
             <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>
               {valueLabel(row)}

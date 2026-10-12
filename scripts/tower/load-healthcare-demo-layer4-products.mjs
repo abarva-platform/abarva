@@ -23,6 +23,20 @@ const SOURCE_RELATIVE_PREFIX = "layer_1_client_intake/source_system_extracts";
 const PROJECTION_VERSION = 2;
 const CUBE_VERSION = 2;
 const TRUTHY = new Set(["1", "true", "yes", "on"]);
+const SERVING_SURFACES = [
+  ["tower_command_center", "tower_command_center", null],
+  ["tower_value_proof", "tower_value_chain", null],
+  ["tower_decision_lanes", "tower_command_center", "decision_lanes"],
+  ["tower_evidence", "tower_evidence_queue", "evidence"],
+  ["tower_recommended_actions", "tower_command_center", "recommended_actions"],
+  ["tower_ai_portfolio", "tower_ai_portfolio", "ai_portfolio"],
+  ["tower_cost_lens", "tower_value_chain", "cost_lens"],
+  ["tower_risk_lens", "tower_evidence_queue", "risk_lens"],
+  ["tower_adoption_lens", "tower_ai_portfolio", "adoption_lens"],
+];
+const BRIDGE_ROW_PREDICATE = "(row_key like 'source_cloud:%' or row_key like 'source_contract_depth:%')";
+const BRIDGE_ENTRY_PREDICATE =
+  "row_key ~ '^(recommended_actions|value_proof|cost_lens|evidence|risk_lens):source_(cloud|contract_depth):'";
 
 const PHYSICAL_OBJECT_TYPE_BY_CANONICAL_TYPE = new Map([
   ["budget", "metric"],
@@ -305,6 +319,87 @@ function loadPackage(options) {
   };
 }
 
+function assertPackageCanMutate(options) {
+  if (!options.write && !options.purgeOnly) return;
+  const manifestPath = path.join(options.packageDir, "package_manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  if (manifest.no_runtime_load !== false) {
+    throw new Error(
+      "Refusing runtime mutation: package_manifest.json must explicitly set no_runtime_load=false",
+    );
+  }
+  if (!options.write) return;
+
+  const budgets = readCsv(
+    path.join(options.packageDir, "20_it_budget_by_domain.csv"),
+  );
+  const projects = readCsv(
+    path.join(options.packageDir, "21_it_project_portfolio.csv"),
+  );
+  const fiscalYears = new Set(budgets.map((row) => row.fiscal_year).filter(Boolean));
+  if (
+    !budgets.length ||
+    !projects.length ||
+    fiscalYears.size !== 1 ||
+    budgets.some((row) => !row.fiscal_year || !row.domain_key) ||
+    projects.some((row) => !row.domain_key)
+  ) {
+    throw new Error(
+      "Refusing runtime load: budget and project source rows need one fiscal year",
+    );
+  }
+  const [fiscalYear] = fiscalYears;
+  if (
+    budgets.some(
+      (row) =>
+        row.tower_reviewed_project_budget_usd === "" ||
+        !Number.isFinite(Number(row.tower_reviewed_project_budget_usd)),
+    ) ||
+    projects.some(
+      (row) =>
+        row.approved_budget_usd === "" ||
+        !Number.isFinite(Number(row.approved_budget_usd)),
+    )
+  ) {
+    throw new Error("Refusing runtime load: budget and project amounts must be numeric");
+  }
+  if (projects.some((row) => row.project_budget_fiscal_year !== fiscalYear)) {
+    throw new Error(
+      "Refusing runtime load: each project approved amount needs an explicit matching project_budget_fiscal_year",
+    );
+  }
+  const reviewedByDomain = new Map();
+  const projectsByDomain = new Map();
+  for (const row of budgets) {
+    reviewedByDomain.set(
+      row.domain_key,
+      (reviewedByDomain.get(row.domain_key) ?? 0) + num(row.tower_reviewed_project_budget_usd),
+    );
+  }
+  for (const row of projects) {
+    projectsByDomain.set(
+      row.domain_key,
+      (projectsByDomain.get(row.domain_key) ?? 0) + num(row.approved_budget_usd),
+    );
+  }
+  const domains = new Set([
+    ...reviewedByDomain.keys(),
+    ...projectsByDomain.keys(),
+  ]);
+  const mismatches = [...domains].filter(
+    (domain) =>
+      Math.abs(
+        (reviewedByDomain.get(domain) ?? 0) -
+          (projectsByDomain.get(domain) ?? 0),
+      ) > 0.01,
+  );
+  if (mismatches.length) {
+    throw new Error(
+      `Refusing runtime load: FY budget and project funding differ in domain(s): ${mismatches.join(", ")}`,
+    );
+  }
+}
+
 function sumBy(rows, key) {
   return rows.reduce((sum, row) => sum + num(row[key]), 0);
 }
@@ -514,7 +609,7 @@ function buildRows(options) {
     usage_supported_value_usd: "null",
     finance_validated_value_usd: "null",
     claimable_value_usd: sqlNum(data.summary.board_claimable_ytd_usd),
-    blocked_value_usd: sqlNum(num(data.summary.projected_annual_value_low_usd) - num(data.summary.board_claimable_ytd_usd)),
+    blocked_value_usd: "null",
     proof_maturity_score: "null",
     risk_pressure_score: "null",
     usage_strength_score: "null",
@@ -667,13 +762,15 @@ function buildRows(options) {
       evidence_needed_json: sqlJson(gate.evidence),
       funded_amount_usd: sqlNum(project?.approved_budget_usd),
       promised_value_usd: sqlNum(row.projected_annual_value_low_usd),
-      usage_supported_value_usd: sqlNum(actual.financeReviewed),
+      // Finance review is a separate stage; no usage-supported dollar measure
+      // was supplied for this case.
+      usage_supported_value_usd: "null",
       finance_validated_value_usd: sqlNum(actual.financeValidated),
       claimable_value_usd: sqlNum(actual.boardClaimable),
-      blocked_value_usd: sqlNum(Math.max(0, num(row.projected_annual_value_low_usd) - actual.boardClaimable)),
+      blocked_value_usd: "null",
       proof_maturity_score: sqlNum(row.readiness_score),
       risk_pressure_score: sqlNum(100 - num(row.readiness_score)),
-      usage_strength_score: sqlNum(actual.financeReviewed > 0 ? 70 : 20),
+      usage_strength_score: "null",
       owner_role: sqlText(project?.sponsor_role ?? "program_sponsor"),
       handoff_module: sqlText("Tower"),
       value_state: sqlText(num(row.projected_annual_value_low_usd) > 0 ? "estimated" : "known"),
@@ -690,7 +787,7 @@ function buildRows(options) {
       page_key: "value_proof",
       metric_key: "use_case_promised_annual_value_low_usd",
       promised_value_usd: null,
-      usage_supported_value_usd: actual.financeReviewed,
+      usage_supported_value_usd: null,
       current_value: actual.financeValidated > 0 ? actual.financeValidated : null,
       business_case_benefit_usd: num(row.projected_annual_value_low_usd),
       realized_p_and_l_usd: null,
@@ -726,7 +823,7 @@ function buildRows(options) {
       current_value: actual.financeValidated > 0 ? sqlNum(actual.financeValidated) : "null",
       target_value: sqlNum(row.projected_annual_value_high_usd),
       claimable_value_usd: sqlNum(actual.boardClaimable),
-      blocked_value_usd: sqlNum(Math.max(0, num(row.projected_annual_value_low_usd) - actual.boardClaimable)),
+      blocked_value_usd: "null",
       value_state: sqlText(num(row.projected_annual_value_low_usd) > 0 ? "estimated" : "known"),
       quality_state: sqlText("passed"),
       source_refs_json: sqlJson(refs),
@@ -771,7 +868,7 @@ function buildRows(options) {
       current_value: "null",
       target_value: sqlNum(row.projected_annual_value_low_usd),
       claimable_value_usd: sqlNum(actual.boardClaimable),
-      blocked_value_usd: sqlNum(Math.max(0, num(row.projected_annual_value_low_usd) - actual.boardClaimable)),
+      blocked_value_usd: "null",
       value_state: sqlText("known"),
       quality_state: sqlText("passed"),
       source_refs_json: sqlJson(refs),
@@ -839,7 +936,7 @@ function buildRows(options) {
         finance_status: queueRow.finance_status,
         proof_needed: queueRow.proof_needed,
         next_action: queueRow.next_action,
-        blocked_value_usd: Math.max(0, num(queueRow.projected_annual_value_low_usd) - actual.boardClaimable),
+        blocked_value_usd: null,
         owner_role: project?.sponsor_role ?? "program_sponsor",
         layer4_build_version: options.buildVersion,
       };
@@ -879,7 +976,7 @@ function buildRows(options) {
     const actionPayload = {
       ...queueRow,
       page_key: "recommended_actions",
-      blocked_value_usd: Math.max(0, num(queueRow.projected_annual_value_low_usd) - actual.boardClaimable),
+      blocked_value_usd: null,
       owner_role: project?.sponsor_role ?? "program_sponsor",
       handoff_module: "Tower",
       title: queueRow.next_action,
@@ -909,7 +1006,7 @@ function buildRows(options) {
       usage_supported_value_usd: "null",
       finance_validated_value_usd: "null",
       claimable_value_usd: sqlNum(actual.boardClaimable),
-      blocked_value_usd: sqlNum(Math.max(0, num(queueRow.projected_annual_value_low_usd) - actual.boardClaimable)),
+      blocked_value_usd: "null",
       proof_maturity_score: sqlNum(useCase.readiness_score),
       risk_pressure_score: sqlNum(100 - num(useCase.readiness_score)),
       usage_strength_score: "null",
@@ -1329,9 +1426,6 @@ function buildCubes(options, ctx, data, observationsByCase, projectsById) {
     const useCase = casesById.get(row.business_case_id);
     if (!useCase) continue;
     const refs = [sourceRef(options, useCase, { business_case_id: row.business_case_id })];
-    const actual = {
-      boardClaimable: sumBy(observationsByCase.get(row.business_case_id) ?? [], "board_claimable_value_usd"),
-    };
     const project = projectsById.get(useCase.project_id);
     const sliceId = addCubeSlice(
       ctx,
@@ -1345,7 +1439,7 @@ function buildCubes(options, ctx, data, observationsByCase, projectsById) {
         owner_role: project?.sponsor_role ?? "program_sponsor",
       },
       {
-        blocked_value_usd: Math.max(0, num(row.projected_annual_value_low_usd) - actual.boardClaimable),
+        blocked_value_usd: null,
         projected_annual_value_low_usd: num(row.projected_annual_value_low_usd),
       },
       ["use_case_promised_annual_value_low_usd"],
@@ -1509,6 +1603,42 @@ function writeLoadSql(outPath, options, rows) {
   fs.writeFileSync(outPath, sql, "utf8");
 }
 
+function bridgePhysicalCountsSql(tenant, assessment, bridge) {
+  const entries = [
+    ["projection_entry", "projection_entry", `projection_version = ${PROJECTION_VERSION} and surface_key in ('tower_command_center','tower_value_chain','tower_evidence_queue','tower_ai_portfolio')`, BRIDGE_ENTRY_PREDICATE],
+    ["tower_command_center", "tower_command_center", `projection_version = ${PROJECTION_VERSION}`, BRIDGE_ROW_PREDICATE],
+    ["tower_value_chain", "tower_value_chain", `projection_version = ${PROJECTION_VERSION}`, BRIDGE_ROW_PREDICATE],
+    ["tower_evidence_queue", "tower_evidence_queue", `projection_version = ${PROJECTION_VERSION}`, BRIDGE_ROW_PREDICATE],
+    ["cube_slice", "cube_slice", `cube_version = ${CUBE_VERSION} and cube_key in ('tower_spend_value_cube','tower_evidence_cube','ai_portfolio_cube')`, "(slice_key like 'source_cloud:%' or slice_key like 'source_contract_depth:%')"],
+  ];
+  return entries.map(([key, table, scope, predicate]) =>
+    `'${key}', (select count(*) from ecl_projection.${table} where tenant_key = ${tenant} and assessment_id = ${assessment} and ${scope} and ${bridge ? predicate : `not (${predicate})`})`,
+  ).join(",\n    ");
+}
+
+function servingCountsSql(tenant, assessment, scope) {
+  return SERVING_SURFACES.map(([surface]) => {
+    const clauses = [`tenant_key = ${tenant}`];
+    if (scope !== "tenant") clauses.push(`assessment_id = ${assessment}`, `projection_version = ${PROJECTION_VERSION}`);
+    if (scope === "base") clauses.push(`not ${BRIDGE_ROW_PREDICATE}`);
+    if (scope === "bridge") clauses.push(BRIDGE_ROW_PREDICATE);
+    return `'${surface}', (select count(*) from serving.${surface} where ${clauses.join(" and ")})`;
+  }).join(",\n    ");
+}
+
+function bridgeSourceCountsSql(tenant, assessment) {
+  return SERVING_SURFACES.map(([surface, table, pageKey]) => {
+    // The AI physical table has row_key but stores its page key in display_payload_json.
+    // Its serving views expose both keys as columns.
+    const page = pageKey === null
+      ? ""
+      : table === "tower_ai_portfolio"
+        ? ` and coalesce(display_payload_json ->> 'page_key', 'ai_portfolio') = ${sqlText(pageKey)}`
+        : ` and page_key = ${sqlText(pageKey)}`;
+    return `'${surface}', (select count(*) from ecl_projection.${table} where tenant_key = ${tenant} and assessment_id = ${assessment} and projection_version = ${PROJECTION_VERSION}${page} and ${BRIDGE_ROW_PREDICATE})`;
+  }).join(",\n    ");
+}
+
 function readbackSql(options) {
   const tenant = sqlText(options.tenantKey);
   const assessment = sqlText(options.assessmentId);
@@ -1527,16 +1657,27 @@ select jsonb_build_object(
   'cube_slice', (select count(*) from ecl_projection.cube_slice where tenant_key = ${tenant} and assessment_id = ${assessment} and cube_version = ${CUBE_VERSION} and cube_key in ('tower_spend_value_cube','tower_evidence_cube','ai_portfolio_cube')),
   'cube_slice_metric', (select count(*) from ecl_projection.cube_slice_metric where tenant_key = ${tenant} and assessment_id = ${assessment} and cube_slice_id in (select id from ecl_projection.cube_slice where tenant_key = ${tenant} and assessment_id = ${assessment} and cube_version = ${CUBE_VERSION} and cube_key in ('tower_spend_value_cube','tower_evidence_cube','ai_portfolio_cube'))),
   'cube_slice_measure', (select count(*) from ecl_projection.cube_slice_measure where tenant_key = ${tenant} and assessment_id = ${assessment} and cube_slice_id in (select id from ecl_projection.cube_slice where tenant_key = ${tenant} and assessment_id = ${assessment} and cube_version = ${CUBE_VERSION} and cube_key in ('tower_spend_value_cube','tower_evidence_cube','ai_portfolio_cube'))),
+  'base_counts', jsonb_build_object(
+    ${bridgePhysicalCountsSql(tenant, assessment, false)}
+  ),
+  'bridge_counts', jsonb_build_object(
+    ${bridgePhysicalCountsSql(tenant, assessment, true)}
+  ),
+  'active_assessments', coalesce((select jsonb_agg(jsonb_build_object('assessment_id', active.assessment_id, 'projection_version', active.projection_version)) from serving.tower_active_assessment_keys() active where active.tenant_key = ${tenant}), '[]'::jsonb),
   'serving_counts', jsonb_build_object(
-    'tower_command_center', (select count(*) from serving.tower_command_center where tenant_key = ${tenant}),
-    'tower_value_proof', (select count(*) from serving.tower_value_proof where tenant_key = ${tenant}),
-    'tower_decision_lanes', (select count(*) from serving.tower_decision_lanes where tenant_key = ${tenant}),
-    'tower_evidence', (select count(*) from serving.tower_evidence where tenant_key = ${tenant}),
-    'tower_recommended_actions', (select count(*) from serving.tower_recommended_actions where tenant_key = ${tenant}),
-    'tower_ai_portfolio', (select count(*) from serving.tower_ai_portfolio where tenant_key = ${tenant}),
-    'tower_cost_lens', (select count(*) from serving.tower_cost_lens where tenant_key = ${tenant}),
-    'tower_risk_lens', (select count(*) from serving.tower_risk_lens where tenant_key = ${tenant}),
-    'tower_adoption_lens', (select count(*) from serving.tower_adoption_lens where tenant_key = ${tenant})
+    ${servingCountsSql(tenant, assessment, "tenant")}
+  ),
+  'serving_target_counts', jsonb_build_object(
+    ${servingCountsSql(tenant, assessment, "target")}
+  ),
+  'serving_base_counts', jsonb_build_object(
+    ${servingCountsSql(tenant, assessment, "base")}
+  ),
+  'serving_bridge_counts', jsonb_build_object(
+    ${servingCountsSql(tenant, assessment, "bridge")}
+  ),
+  'bridge_source_counts', jsonb_build_object(
+    ${bridgeSourceCountsSql(tenant, assessment)}
   ),
   'ai_case_field_survival', (
     select jsonb_build_object(
@@ -1737,8 +1878,18 @@ function writeReadbackSql(outPath, options) {
   fs.writeFileSync(outPath, `${readbackSql(options)}\n`, "utf8");
 }
 
-function validateReadback(readback, expected) {
+function validateReadback(readback, expected, options) {
   const issues = [];
+  if (readback.tenant_key !== options.tenantKey || readback.assessment_id !== options.assessmentId) {
+    issues.push("readback_identity_mismatch");
+  }
+  const active = readback.active_assessments;
+  if (!Array.isArray(active) || active.length !== 1 || active[0].assessment_id !== options.assessmentId || Number(active[0].projection_version) !== PROJECTION_VERSION) {
+    issues.push("target_assessment_not_sole_active_generation");
+  }
+  const bridgeAwareKeys = new Set([
+    "projection_entry", "tower_command_center", "tower_value_chain", "tower_evidence_queue", "cube_slice",
+  ]);
   for (const key of [
     "projection_manifest",
     "projection_entry",
@@ -1752,13 +1903,34 @@ function validateReadback(readback, expected) {
     "cube_slice_metric",
     "cube_slice_measure",
   ]) {
-    if (Number(readback[key]) !== Number(expected[key])) {
-      issues.push(`${key}_expected_${expected[key]}_got_${readback[key]}`);
+    const base = bridgeAwareKeys.has(key) ? readback.base_counts?.[key] : readback[key];
+    if (Number(base) !== Number(expected[key])) {
+      issues.push(`${key}_base_expected_${expected[key]}_got_${base}`);
+    }
+    if (bridgeAwareKeys.has(key) && Number(readback[key]) !== Number(base) + Number(readback.bridge_counts?.[key])) {
+      issues.push(`${key}_contains_unclassified_rows`);
     }
   }
+  const bridgePhysicalRows = ["tower_command_center", "tower_value_chain", "tower_evidence_queue"]
+    .reduce((sum, key) => sum + Number(readback.bridge_counts?.[key]), 0);
+  if (Number(readback.bridge_counts?.projection_entry) !== bridgePhysicalRows) {
+    issues.push("bridge_projection_entries_do_not_match_physical_rows");
+  }
   for (const [surface, count] of Object.entries(expected.serving)) {
-    if (Number(readback.serving_counts?.[surface]) !== Number(count)) {
-      issues.push(`serving_${surface}_expected_${count}_got_${readback.serving_counts?.[surface]}`);
+    const base = readback.serving_base_counts?.[surface];
+    const bridge = readback.serving_bridge_counts?.[surface];
+    const target = readback.serving_target_counts?.[surface];
+    if (Number(base) !== Number(count)) {
+      issues.push(`serving_${surface}_base_expected_${count}_got_${base}`);
+    }
+    if (Number(bridge) !== Number(readback.bridge_source_counts?.[surface])) {
+      issues.push(`serving_${surface}_bridge_source_mismatch`);
+    }
+    if (Number(target) !== Number(base) + Number(bridge)) {
+      issues.push(`serving_${surface}_target_contains_unclassified_rows`);
+    }
+    if (Number(readback.serving_counts?.[surface]) !== Number(target)) {
+      issues.push(`serving_${surface}_includes_other_assessments`);
     }
   }
   const expectedAiCases = Number(expected.serving.tower_ai_portfolio ?? 0);
@@ -1969,6 +2141,7 @@ function emitProofBundle(outDir) {
 
 function main() {
   const options = parseArgs(process.argv.slice(2));
+  assertPackageCanMutate(options);
   fs.mkdirSync(options.outDir, { recursive: true });
   const rows = buildRows(options);
   const loadSqlPath = path.join(options.outDir, "tower_layer4_product_cube_load.sql");
@@ -2041,7 +2214,7 @@ function main() {
   if (options.write || options.readbackOnly) {
     const readback = runPsqlReadback(process.env.DATABASE_URL, options, options.outDir);
     summary.readback = readback;
-    summary.issues = validateReadback(readback, rows.expected);
+    summary.issues = validateReadback(readback, rows.expected, options);
     summary.status = summary.issues.length ? "failed" : options.write ? "write_verified" : "readback_verified";
   }
   writeJson(path.join(options.outDir, "tower_layer4_product_cube_load_summary.json"), summary);
@@ -2050,4 +2223,8 @@ function main() {
   if (summary.issues.length) process.exitCode = 1;
 }
 
-main();
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main();
+}
+
+export { readbackSql, validateReadback };

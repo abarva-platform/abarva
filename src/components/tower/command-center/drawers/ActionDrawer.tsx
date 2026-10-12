@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import type { TowerActionView } from "@/lib/tower/command-center/types";
+import { formatUsdM } from "@/lib/tower/command-center/format";
 
 import { Dot, cx } from "../primitives";
 import styles from "../TowerCommandCenter.module.css";
@@ -22,9 +23,10 @@ const LANE_TONE = {
   fix: "amber",
   freeze: "red",
   stop: "red",
+  unclassified: "gray",
 } as const;
 
-const EYEBROW_TONE = { teal: "eTeal", amber: "eAmber", red: "eRed" } as const;
+const EYEBROW_TONE = { teal: "eTeal", amber: "eAmber", red: "eRed", gray: "eGray" } as const;
 
 function dueRead(due: string | null): {
   label: string;
@@ -108,7 +110,7 @@ export function ActionDrawer({
       open={open}
       onClose={onClose}
       eyebrowTone={EYEBROW_TONE[tone]}
-      eyebrow={action ? `Action · ${action.ownerRole} · ${action.lane}` : ""}
+      eyebrow={action ? `Action · ${action.ownerRole} · ${action.lane === "unclassified" ? "Evidence task" : action.lane}` : ""}
       title={action?.title ?? ""}
       footer={
         routed ? (
@@ -191,6 +193,11 @@ export function ActionDrawer({
                 small
               />
               <DrawerStat label="Owner" value={action.ownerRole} small />
+              <DrawerStat
+                label={action.moduleHandoff?.toLowerCase() === "source" ? "Potential annual saving" : "Projected yearly benefit affected"}
+                value={action.amountExposedUsd === null ? "Not loaded" : formatUsdM(action.amountExposedUsd)}
+                small
+              />
               {action.handoffEntityId ? (
                 <DrawerStat
                   label="Linked object"
@@ -201,6 +208,11 @@ export function ActionDrawer({
             </div>
 
             <DrawerSection>Why now</DrawerSection>
+            {action.moduleHandoff?.toLowerCase() === "source" ? (
+              <p className={cx(styles.recBox, styles.muted)}>
+                This is a possible yearly saving, not money already saved. Finance confirmation is still required.
+              </p>
+            ) : null}
             <p className={cx(styles.recBox, styles.muted)}>{action.why}</p>
 
             {due.gate ? (

@@ -1,3 +1,5 @@
+import type { TowerAiAmountBasis } from "../current-layer-view-model";
+
 // Tower Command Center v2 — the shape the design consumes.
 //
 // This is the *presentation* contract for
@@ -11,9 +13,9 @@
 // design's `$M` rendering is a formatting concern and lives in `format.ts`;
 // no layer below the components divides by 1e6.
 
-/** The four decision lanes the mart already carries, plus the mart-absent
- *  "watch" bucket the design renders for run-and-sustain programs. */
-export type TowerLaneKey = "fund" | "fix" | "freeze" | "stop" | "watch";
+/** Recorded decisions, the presentation-only watch bucket, and an explicit
+ *  state for programs whose investment decision has not been recorded. */
+export type TowerLaneKey = "fund" | "fix" | "freeze" | "stop" | "watch" | "unclassified";
 
 /** Usage-evidence strength. Derived — see `derive.ts`. */
 export type TowerUsageStatus = "strong" | "weak" | "none";
@@ -63,8 +65,8 @@ export interface TowerPortfolioCountReconciliation {
 /**
  * Posture-tile / week-read aggregates. One per tenant.
  *
- * `usageSupportedUsd`, `claimableUsd` and `blockedUsd` are derived (§2.8 of the
- * handoff prompt); everything else is a mart column read straight through.
+ * Usage support and claimable value are derived. Blocked dollars require a
+ * period-matched source amount and a separate comparable flag.
  */
 export interface TowerCommandSummary {
   tenantKey: string;
@@ -89,9 +91,16 @@ export interface TowerCommandSummary {
   promisedBenefitLoaded: boolean;
   promisedUsd: number;
   usageSupportedUsd: number;
+  /** At least one usage-supported dollar value has a field-level source reference. */
+  usageSupportedValueMeasured: boolean;
+  usageSupportedValueCoverage: "none" | "partial" | "complete";
   financeValidatedUsd: number;
+  financeValidatedAmountLoaded?: boolean;
   claimableUsd: number;
+  claimableAmountLoaded?: boolean;
   blockedUsd: number;
+  /** False when blocked dollars cannot be compared on one reporting period. */
+  blockedValueComparable: boolean;
   valueClaimCount: number;
   knownValueClaimCount: number;
   financeValidatedBlockedUsd: number;
@@ -159,16 +168,16 @@ export interface TowerFunnelStage {
   key: string;
   label: string;
   sequence: number;
-  valueUsd: number;
+  valueUsd: number | null;
   claimStatus: string;
   caveat: string;
   sourceFile: string | null;
   claimCount: number;
   knownValueClaimCount: number;
   unknownValueClaimCount: number;
-  knownValueAmount: number;
+  knownValueAmount: number | null;
   blockedClaimCount: number;
-  blockedKnownValueAmount: number;
+  blockedKnownValueAmount: number | null;
   primaryBlocker: string | null;
   primaryOwnerRole: string | null;
 }
@@ -219,12 +228,19 @@ export interface TowerProgramView {
   lane: TowerLaneKey;
 
   fundedUsd: number;
+  /** False when a program has no source-approved FY26 funding amount. */
+  fundingAmountLoaded?: boolean;
   promisedUsd: number;
   promisedBenefitLoaded: boolean;
   usageSupportedUsd: number;
+  usageSupportedValueMeasured: boolean;
   financeValidatedUsd: number;
+  financeValidatedAmountLoaded?: boolean;
   claimableUsd: number;
+  claimableAmountLoaded?: boolean;
   blockedUsd: number;
+  /** False when the annual plan and loaded-month actuals are the only inputs. */
+  blockedValueComparable: boolean;
   fundedAmountUsd: number;
   knownSupportedValueUsd: number;
   proofMaturityScore: number;
@@ -339,6 +355,8 @@ export interface TowerAiView {
   riskScore: number;
   /** Bubble size. */
   aiSpendUsd: number;
+  /** What the item amount represents. */
+  aiAmountBasis: TowerAiAmountBasis;
   /** False when no spend was recorded — a tool rollout carries none. $0 is a different claim. */
   aiSpendLoaded: boolean;
   /** Initiative-detail fields for the drill-down. Null where the source recorded nothing. */
@@ -362,6 +380,7 @@ export interface TowerAiView {
   promisedUsd: number;
   promisedBenefitLoaded: boolean;
   financeValidatedUsd: number;
+  financeValidatedAmountLoaded?: boolean;
   /** Recommended posture — mart-derived, never invented. */
   posture: string;
   usageHeadline: string | null;
@@ -558,7 +577,7 @@ export interface TowerActionView {
   why: string;
   evidence: string;
   due: string | null;
-  amountExposedUsd: number;
+  amountExposedUsd: number | null;
   evidenceRequirement: string | null;
   expectedSourceSystem: string | null;
   evidencePackageId: string | null;

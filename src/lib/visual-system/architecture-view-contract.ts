@@ -1,4 +1,5 @@
 import type { ArchLayer, ArchNodeStatus, CloudProvider } from "./architecture-model";
+import { ZONE_ORDER } from "./semantics/technology-semantic-taxonomy";
 
 /**
  * Architecture VIEW contract — the projection layer above `architecture-model.ts`.
@@ -86,16 +87,7 @@ export const LAYER_SCHEMES: Readonly<Record<LayerScheme, ReadonlyArray<string>>>
    * Teradata warehouse is not a SQL Server mart. Collapsing either pair is what makes a diagram
    * look plausible and read as amateur.
    */
-  current_state_zones_v1: [
-    "source_systems",
-    "middleware",
-    "data_integration",
-    "data_warehouse",
-    "data_mart",
-    "analytics_bi",
-    "governance",
-    "unzoned",
-  ],
+  current_state_zones_v1: ZONE_ORDER,
 };
 
 export const LAYER_LABELS: Readonly<Record<string, string>> = {

@@ -51,7 +51,7 @@ describe("Verdict panel", () => {
   it("states the three rules the design makes the page answer for", () => {
     render(<VerdictPanel view={viewWith()} />);
     expect(
-      screen.getByText(/Nothing is claimable until Finance validates actuals/),
+      screen.getByText(/Report a benefit only after Finance checks the result/),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/Foundations need a linked value case/),
@@ -64,14 +64,14 @@ describe("Verdict panel", () => {
   it("keeps the cadence rule that stops cross-cadence summing", () => {
     render(<VerdictPanel view={viewWith()} />);
     expect(document.body.textContent).toMatch(
-      /aggregate by month only — never across cadences/,
+      /Do not add these different amounts or divide one by another to claim a success rate/,
     );
   });
 
   it("renders an absent budget as a gap, never as zero", () => {
     render(<VerdictPanel view={viewWith({ totalItBudgetFy26: null })} />);
-    const budget = screen.getByText("Total IT budget").parentElement;
-    expect(budget?.textContent).toContain("Not loaded");
+    const budget = screen.getByText("Approved FY26 IT budget").parentElement;
+    expect(budget?.textContent).toContain("Not verified");
     expect(budget?.textContent).not.toContain("$0");
   });
 
@@ -79,13 +79,13 @@ describe("Verdict panel", () => {
     render(<VerdictPanel view={viewWith()} />);
     expect(
       screen.getByRole("heading", { level: 2 }).textContent,
-    ).toMatch(/annual benefit asserted; board-claimable value not loaded year to date/);
+    ).toMatch(/The loaded claims project \$35\.5M a year\. No benefit amount is cleared for reporting\./);
   });
 
   it("treats an absent annual assertion as unknown", () => {
     render(<VerdictPanel view={viewWith({ promisedValueFy26: null })} />);
     expect(document.body.textContent).toMatch(
-      /No annual benefit assertion is loaded, so Tower cannot calculate an assertion-to-proof share\./,
+      /No yearly benefit estimate is loaded, so there is no estimate to compare with Finance review\./,
     );
   });
 });

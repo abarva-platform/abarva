@@ -22,12 +22,19 @@ export interface TowerMartCommandCenter {
   aiTaggedSpendFy26NonAdditive: number | null;
   promisedValueFy26: number | null;
   partialFinanceValidatedValueYtd: number;
+  /** At least one approved Finance row carried an explicit amount. */
+  financeValidatedAmountLoaded?: boolean;
   realizedValueYtdAllowed: number;
+  /** At least one claim carried an explicit amount and a valid reporting period. */
+  claimableAmountLoaded?: boolean;
   valueClaimCount?: number;
   knownValueClaimCount?: number;
   claimableValue?: number;
   financeValidatedBlockedValue?: number;
   promisedValueExposure?: number | null;
+  /** True only when a blocked amount and cleared amount cover the same period. */
+  blockedValueComparable?: boolean;
+  comparableBlockedValue?: number | null;
   totalProgramSubjectCount?: number;
   activeProgramSubjectCount?: number;
   materialProgramCount?: number;
@@ -67,13 +74,13 @@ export interface TowerMartValueFunnelStage {
   sequence: number;
   stageKey: string;
   stageLabel: string;
-  valueNumeric: number;
+  valueNumeric: number | null;
   claimCount?: number;
   knownValueClaimCount?: number;
   unknownValueClaimCount?: number;
-  knownValueAmount?: number;
+  knownValueAmount?: number | null;
   blockedClaimCount?: number;
-  blockedKnownValueAmount?: number;
+  blockedKnownValueAmount?: number | null;
   primaryBlocker?: string | null;
   primaryOwnerRole?: string | null;
   denominatorStageKey: string | null;
@@ -128,15 +135,21 @@ export interface TowerMartProgramLane {
   /** The business domain, from the loader's `domain_name`. Not the sponsor. */
   domainName?: string | null;
   financeOwnerRole: string | null;
-  decisionLane: "fund" | "fix" | "freeze" | "stop";
+  decisionLane: "fund" | "fix" | "freeze" | "stop" | "unclassified";
   decisionRationale: string;
   approvedFundingUsd: number;
   fundedAmount?: number;
+  /** The source explicitly records an approved FY26 amount for this program. */
+  fundingAmountLoaded?: boolean;
   aiTaggedSpendUsd: number;
   /** Whether any spend was recorded. The value above is coerced to 0 when nothing was. */
   aiSpendLoaded?: boolean;
   promisedValueUsd: number | null;
   financeValidatedValueUsd: number;
+  /** True only when an approved Finance record carries an explicit amount. */
+  financeValidatedAmountLoaded?: boolean;
+  /** Explicit claimable amount with approved evidence and a valid reporting period. */
+  reportableClaimableValueUsd?: number | null;
   knownSupportedValue?: number | null;
   proofMaturityScore?: number | null;
   riskPressureScore?: number | null;
@@ -144,6 +157,7 @@ export interface TowerMartProgramLane {
   lineageTrustState?: string | null;
   decisionReasonCode?: string | null;
   amountBlocked?: number | null;
+  blockedAmountComparable?: boolean;
   nextGate?: string | null;
   usageMetric: string | null;
   usageActual: number | null;
@@ -188,6 +202,11 @@ export interface TowerMartValueObservationMonth {
   validationState: string | null;
 }
 
+export type TowerAiAmountBasis =
+  | "approved_funding"
+  | "annualized_tool_cost"
+  | "unknown";
+
 export interface TowerMartAiPortfolioItem {
   aiPortfolioKey: string;
   itemName: string;
@@ -197,9 +216,11 @@ export interface TowerMartAiPortfolioItem {
   aiSpendType: string | null;
   aiSpendCategory: string | null;
   fundingStatus: string | null;
-  decisionLane: "fund" | "fix" | "freeze" | "stop";
+  decisionLane: "fund" | "fix" | "freeze" | "stop" | "unclassified";
   approvedFundingUsd: number;
   aiTaggedSpendUsd: number;
+  /** Distinguishes an approved allocation from a yearly tool-cost estimate. */
+  aiAmountBasis?: TowerAiAmountBasis;
   /** Whether any spend was recorded. The value above is coerced to 0 when nothing was. */
   aiSpendLoaded?: boolean;
   /** Initiative-detail fields, each carried from its own canonical column. */
@@ -222,6 +243,8 @@ export interface TowerMartAiPortfolioItem {
   evidenceItems?: TowerMartEvidenceItem[];
   promisedValueUsd: number | null;
   financeValidatedValueUsd: number;
+  /** True only when an approved Finance record carries an explicit amount. */
+  financeValidatedAmountLoaded?: boolean;
   usageMetric: string | null;
   rolloutGoal?: string | null;
   rolloutStage?: string | null;
@@ -278,7 +301,7 @@ export interface TowerMartCxoAction {
   claimId?: string | null;
   proofStage?: string | null;
   blockedDecision?: string | null;
-  amountExposed?: number;
+  amountExposed?: number | null;
   evidenceRequirement?: string | null;
   expectedSourceSystem?: string | null;
   evidencePackageId?: string | null;

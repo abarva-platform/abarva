@@ -6,6 +6,7 @@ import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-mod
 import { CommandCenterView } from "../CommandCenterView";
 import { EvidenceActionsContractView, ValueProofContractView } from "../ContractTabs";
 import { VerdictPanel } from "../VerdictPanel";
+import { evidenceGapAmount } from "../evidence-gap-amount";
 
 function fixtureView() {
   const view = buildTowerCommandCenterView(designFixtureMart(), {
@@ -24,10 +25,15 @@ function fixtureView() {
 
 describe("Tower financial story boundaries", () => {
   it("separates annual assertions from year-to-date claims and flags unreconciled budget", () => {
-    const html = renderToStaticMarkup(<VerdictPanel view={fixtureView()} />);
-    expect(html).toContain("annual benefit asserted");
-    expect(html).toContain("claimable year to date");
-    expect(html).toContain("amount withheld until reconciled");
+    const view = fixtureView();
+    const html = renderToStaticMarkup(<VerdictPanel view={{
+      ...view,
+      summary: { ...view.summary, claimableAmountLoaded: true, claimableClaimCount: 1, claimableUsd: 1_000_000 },
+    }} />);
+    expect(html).toContain("The loaded claims project");
+    expect(html).toContain("cleared the reporting gate in the loaded months");
+    expect(html).toContain("Approved FY26 AI project funding");
+    expect(html).toContain("Not verified");
     expect(html).not.toContain("of asserted value is claimable");
     expect(html).not.toContain("Foundation rows carry no direct value");
   });
@@ -43,7 +49,7 @@ describe("Tower financial story boundaries", () => {
       />,
     );
     expect(html).toContain("Planning and adoption evidence");
-    expect(html).toContain("Finance review · year to date");
+    expect(html).toContain("Finance review · loaded months");
     expect(html).toContain("Outcome evidence gap");
     expect(html).not.toContain("No benefit|asserted");
     expect(html).not.toContain("evidence-backed ceiling");
@@ -58,9 +64,9 @@ describe("Tower financial story boundaries", () => {
         onOpenProgram={() => undefined}
       />,
     );
-    expect(html).toContain("Loaded quarterly trajectory");
+    expect(html).toContain("Quarterly plan and recorded results");
     expect(html).toContain("1 quarter loaded");
-    expect(html).toContain("not a measured financial outcome");
+    expect(html).toContain("A case can have usage evidence without a measured dollar benefit");
     expect(html).not.toContain("Eight-quarter trajectory");
     expect(html).not.toContain("Not yet proven");
   });
@@ -95,8 +101,62 @@ describe("Tower financial story boundaries", () => {
         }}
       />,
     );
-    expect(html).toContain("Annual benefit assertion is not loaded");
+    expect(html).toContain("No yearly benefit estimate is loaded");
     expect(html).toContain("its value remains unknown");
     expect(html).toContain("No value claims are loaded for this comparison");
+  });
+
+  it("keeps yearly projected benefit separate from Finance-reviewed value in loaded months", () => {
+    const gap = fixtureView().gaps[0];
+    const amount = {
+      ...gap,
+      valueAtStakeUsd: 120_000_000,
+      promisedValueExposedUsd: 120_000_000,
+      validatedValueHeldUsd: 4_000_000,
+    };
+    expect(evidenceGapAmount({ ...amount, gapStage: "usage" }).label).toBe(
+      "Projected yearly benefit affected",
+    );
+    expect(evidenceGapAmount({ ...amount, gapStage: "claim_gate" }).label).toBe(
+      "Finance-reviewed amount held in loaded months",
+    );
+    expect(evidenceGapAmount({ ...amount, gapStage: "usage" }).value).not.toBe(
+      evidenceGapAmount({ ...amount, gapStage: "claim_gate" }).value,
+    );
+  });
+
+  it("does not turn missing claims into a cleared zero", () => {
+    const view = fixtureView();
+    const html = renderToStaticMarkup(
+      <CommandCenterView
+        view={{ ...view, summary: { ...view.summary, valueClaimCount: 0, claimableUsd: 0 } }}
+        onOpenGap={() => undefined}
+        onGoToFunnel={() => undefined}
+        onGoToAi={() => undefined}
+        onGoToActions={() => undefined}
+      />,
+    );
+    expect(html).toContain("No value records are loaded, so cleared value is unknown");
+    expect(html).not.toContain("$0 has cleared reporting");
+  });
+
+  it("shows an unverified cleared amount differently from a recorded zero", () => {
+    const view = fixtureView();
+    const unknown = renderToStaticMarkup(
+      <VerdictPanel view={{
+        ...view,
+        summary: { ...view.summary, claimableUsd: 0, claimableClaimCount: 0, claimableAmountLoaded: false },
+      }} />,
+    );
+    const recordedZero = renderToStaticMarkup(
+      <VerdictPanel view={{
+        ...view,
+        summary: { ...view.summary, claimableUsd: 0, claimableClaimCount: 0, claimableAmountLoaded: true },
+      }} />,
+    );
+    expect(unknown).toContain("A cleared amount is not verified");
+    expect(unknown).toContain("Not verified");
+    expect(recordedZero).toContain("has cleared the reporting gate");
+    expect(recordedZero).not.toContain("A cleared amount is not verified");
   });
 });

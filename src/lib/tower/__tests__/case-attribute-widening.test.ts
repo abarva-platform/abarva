@@ -191,19 +191,21 @@ describe("an unrecorded number is not zero", () => {
 
   it("does not print $0 for spend that was never recorded", () => {
     // A tool rollout carries no cost at all. `$0` is a claim about price; this is a gap.
-    expect(contract).toMatch(
-      /item\.aiSpendLoaded\s*\?\s*formatUsdM\(item\.aiSpendUsd\)\s*:\s*"Not loaded"/,
-    );
+    expect(contract).toContain('if (item.aiAmountBasis === "approved_funding")');
+    expect(contract).toContain('if (item.aiAmountBasis === "annualized_tool_cost")');
+    expect(contract).toContain('return "Amount basis not verified"');
   });
 
   it("derives the spend flag from what Layer 4 asserted, not from the row's columns", () => {
     // `payload_json` is `to_jsonb(p)`, so it carries the projection table's own
     // `monthly_cost_usd` column for every row. Reading through it made every tool rollout look
     // funded and render "$0". `display_payload_json` carries only what the loader wrote: a case
-    // payload has `approved_funding_usd`, a rollout payload has no cost key at all.
+    // A case amount also needs an explicit FY26 fiscal basis and approval. A rollout payload
+    // with no monthly cost key remains unpriced rather than becoming a real zero.
     expect(READER).toContain("const aiSpendLoaded =");
-    expect(READER).toMatch(/aiSpendLoaded =\s*\n?\s*displayNullableNumberFrom\(row, \[/);
-    expect(READER).not.toContain("approvedFundingRaw !== null || monthlyCostRaw !== null");
+    expect(READER).toContain('const approvedFundingRaw = approvedFy26Budget(row, "approved_fy_budget_usd")');
+    expect(READER).toContain('const monthlyCostRaw = displayNullableNumberFrom(row, ["monthly_cost_usd"])');
+    expect(READER).toContain('const aiSpendLoaded = aiAmountBasis !== "unknown"');
   });
 
   it("keeps the display-only reader from falling back to the row body", () => {
@@ -224,7 +226,8 @@ describe("the owner queue counts cases, not rollouts", () => {
     // finance status. Under a column headed CASES it added a row contributing only the count,
     // and hasOpenProof returned true for every one because a rollout never carries a benefit
     // claim — turning 42 cases into 55 and the queue into 47.
-    expect(panel).toContain("if (item.financeStatus === null) continue;");
+    expect(panel).toContain("if (!isBusinessCase(item)) continue;");
+    expect(panel).not.toContain("if (item.financeStatus === null) continue;");
   });
 
   it("takes its denominator from the same population as its rows", () => {
@@ -580,7 +583,7 @@ describe("the finance trail and evidence reach the drill-down", () => {
   });
 
   it("says so when a case has no finance event, rather than implying none was needed", () => {
-    expect(drawer).toContain("No finance events are recorded against this case");
+    expect(drawer).toContain("No approved Finance trail is loaded for this case");
   });
 
   it("does not rename canonical event types, only spaces them", () => {

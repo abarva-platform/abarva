@@ -101,4 +101,21 @@ describe("MaestroChrome canonical shell", () => {
       within(primaryNav).getAllByRole("link", { name: "Home" })[0],
     ).not.toHaveAttribute("aria-current");
   });
+
+  it.each(["/home", "/home/preview"])(
+    "bounds the canonical Home viewport: %s",
+    (route) => {
+      const { container } = renderChrome(route);
+      expect(container.firstElementChild).toHaveStyle({
+        height: "100dvh",
+        overflow: "hidden",
+      });
+    },
+  );
+
+  it("does not change other module layouts", () => {
+    const { container } = renderChrome("/source");
+    expect(container.firstElementChild).toHaveStyle({ minHeight: "100vh" });
+    expect(container.firstElementChild).not.toHaveStyle({ overflow: "hidden" });
+  });
 });

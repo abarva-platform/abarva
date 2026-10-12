@@ -102,7 +102,12 @@ export async function requireTenancy(
       clientId: client.id,
       clientKey: client.key,
       clientName: (client as { name?: string | null }).name ?? null,
+      syntheticE2eOperator: user.syntheticE2eOperator === true,
+      syntheticE2eApprovalRef: user.syntheticE2eApprovalRef ?? null,
     });
+    if (user.syntheticE2eOperator &&
+      (!provisioned || !isUuidLike(provisioned.personId)))
+      throw new TenancyError("forbidden");
     if (provisioned && isUuidLike(provisioned.personId)) {
       resolvedUserId = provisioned.personId;
       resolvedRole = provisioned.role;
@@ -117,6 +122,7 @@ export async function requireTenancy(
     tenantRole: client.key ? (user?.tenantRoles?.[client.key] ?? null) : null,
     role: resolvedRole,
     email: user?.email ?? person?.email ?? null,
+    syntheticE2eOperator: user?.syntheticE2eOperator === true,
   };
 }
 

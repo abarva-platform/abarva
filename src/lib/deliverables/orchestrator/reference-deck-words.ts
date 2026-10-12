@@ -149,10 +149,10 @@ const WORDS_OUTPUT_CONFIG = { format: { type: "json_schema" as const, schema: {
 } } };
 const PARSE_RECOVERY_CHUNK_SIZE = 6;
 const INITIAL_BATCH_THRESHOLD = 12;
-const INITIAL_BATCH_SIZE = 11;
-const INITIAL_CALL_OPTIONS = { timeout: 60_000, maxRetries: 0 };
-const RECOVERY_CALL_OPTIONS = { timeout: 25_000, maxRetries: 0 };
-const REPAIR_CALL_OPTIONS = { timeout: 20_000, maxRetries: 0 };
+const INITIAL_BATCH_SIZE = 8;
+const INITIAL_CALL_OPTIONS = { timeout: 65_000, maxRetries: 0 };
+const RECOVERY_CALL_OPTIONS = { timeout: 30_000, maxRetries: 0 };
+const REPAIR_CALL_OPTIONS = { timeout: 15_000, maxRetries: 0 };
 
 export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, slots: ReferenceSlotTable, archetype?: ReferenceArchetype): string | null {
   const prose = `${entry.title} ${entry.answer} ${entry.notes}`;
@@ -196,7 +196,7 @@ export async function draftEditionWords(input: {
   const allSlides = input.archetypes.map((_, index) => index + 1);
   const failure = (reason: WordsUnavailableReason): DraftEditionWordsResult =>
     ({ status: "unavailable", reason, words: unavailable, fallbackSlides: allSlides });
-  const system = "Write clear slide language for an editable business-case deck as a JSON object with a words array. Each entry has exactly title, answer, notes. Use the edition, use-case lens, phase stage and read-state controls. Write a full-sentence action title for each slide. Copy every requiredTitleSlot exactly into that slide's title. Figure slots use the supplied token string with one opening and one closing brace, for example {value.annual.base} when that token is supplied; never use double braces, square-bracket wrappers, a bare slot name, or a value. You may use only supplied, edition-allowed slot tokens to express figures; never write a digit, currency symbol or magnitude word outside a slot. Do not invent a client fact. Describe a specific Move fact only if it appears in an approved model-ready context bundle; none is supplied in this request. Do not claim an input is ready from its slot name: unavailable slots become visible gaps after generation. Notes begin 'The point:' and contain 'How to read:'. The server supplies the mandatory validation-cover disclosure, so its draft title, answer and notes must not repeat that disclosure. In every validation answer and notes, and on non-cover validation titles, avoid the words cost, ROM, ROI, investment, solution, plan, roadmap and release even in a negated phrase.";
+  const system = "Write clear slide language for an editable business-case deck as a JSON object with a words array. Each entry has exactly title, answer, notes. Use the edition, use-case lens, phase stage and read-state controls. Write a full-sentence action title for each slide. Keep each entry concise: one sentence in the title, one sentence in the answer, and two short sentences in notes. Copy every requiredTitleSlot exactly into that slide's title. Figure slots use the supplied token string with one opening and one closing brace, for example {value.annual.base} when that token is supplied; never use double braces, square-bracket wrappers, a bare slot name, or a value. You may use only supplied, edition-allowed slot tokens to express figures; never write a digit, currency symbol or magnitude word outside a slot. Do not invent a client fact. Describe a specific Move fact only if it appears in an approved model-ready context bundle; none is supplied in this request. Do not claim an input is ready from its slot name: unavailable slots become visible gaps after generation. Notes begin 'The point:' and contain 'How to read:'. The server supplies the mandatory validation-cover disclosure, so its draft title, answer and notes must not repeat that disclosure. In every validation answer and notes, and on non-cover validation titles, avoid the words cost, ROM, ROI, investment, solution, plan, roadmap and release even in a negated phrase.";
   const profile = { edition: input.edition, useCaseLens: DESIGN_LENS[input.useCaseType] ?? DESIGN_LENS.unclassified, phaseStage: input.phaseStage, available: input.available };
   const promptSlides = input.archetypes.map((archetype) => ({ archetype, ...(input.edition === "validation" && archetype === "cover"
       ? { mandatoryCoverDisclosureProvidedByServer: true } : {}), ...(input.edition === "investment" && INVESTMENT_TITLE_SLOTS[archetype]

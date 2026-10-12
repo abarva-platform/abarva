@@ -57,6 +57,17 @@ Release lane: `experimental`.
 
 ## QA / Validation
 
+- Actual-main reconciliation: merged `2fd90ff0f5fbb8b8b3c4cf4c4c122e9a117f5b36`
+  into the published candidate without rebasing. Both feature-key declarations
+  survive the merge. The manual and tenancy census were regenerated, and the
+  fetched main census was regenerated from the actual tree: 2,829 covered Jest
+  files, with no new Jest test files added by this candidate. The browser suite
+  is outside that census. No coverage value was tuned to avoid a collision.
+- Reconciled ROM suites: pass, 70 tests. Targeted ESLint: pass. Library orphan,
+  route reachability and export reachability checks: pass, no new findings.
+  Current-head CI and the final fetched-ref collision guard remain pending
+  until the reconciled candidate is pushed and checked.
+
 - ROM model and P3 component suites: 70 tests passed at candidate validation.
   They cover stale previews, missing selection reasons, equal effort hours,
   persisted member terms, selected approval, changes to either option and
@@ -116,8 +127,9 @@ artifact hashes. Credentials and private approvals never enter public evidence.
 ## Known Gaps
 
 The dedicated operator was created and its exact identity/profile was read
-back in a private Clerk-only job. The scoped product identity release remains
-a separate dependency; account creation alone is not signed-in product proof. The fresh Move, seed apply, approved selected estimate, completed
+back in a private Clerk-only job. The scoped product identity and governed seed
+tooling releases are merged; account creation and code inclusion alone are not
+signed-in product proof. The fresh Move, seed apply, approved selected estimate, completed
 29-step run, final read-only walk and output visual acceptance remain unproven.
 The reference-deck workstream owns the delivery comparison slide and K3 review;
 this candidate does not supply model-ready inputs or infer deck acceptance.

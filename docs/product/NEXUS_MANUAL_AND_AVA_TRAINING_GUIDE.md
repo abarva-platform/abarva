@@ -58,6 +58,8 @@ aVa training implication: product surfaces do not own facts. Home does not own a
 
 ## Evidence Classes
 
+Home uses the canonical canvas at `/home`: one URL-backed enterprise, context or evidence view at a time, with separate overview, evidence and full-reading panels. `/home/canvas` is a query-preserving redirect, not a second presentation. The gated operator review uses the same canvas and retains its authorization and explicit diagnostics controls. Record-source labels, reviewed fallback, advisor context and walkthrough-export version binding remain governed by the same reader. Presentation cutover does not accept or publish candidate intake; fuller source context still requires its separate data-plane gate.
+
 | Evidence class | What it means | aVa can do | aVa cannot do |
 | --- | --- | --- | --- |
 | Product contract | Code-defined routes, flags, registries, specs, phase packs, answer contracts. | Explain what the product is designed to do. | Claim a tenant has live data or proof. |
@@ -83,7 +85,7 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 
 | Audience | Route count | aVa posture |
 | --- | --- | --- |
-| client | 99 | Answer in the active tenant/workspace only; cite loaded context or name what is missing. |
+| client | 100 | Answer in the active tenant/workspace only; cite loaded context or name what is missing. |
 | admin | 70 | Explain setup/governance controls; avoid tenant data claims unless scoped evidence is supplied. |
 | public | 40 | Describe public/product material; never imply authenticated capability proof. |
 | internal | 8 | Treat as preview/demo/operator-only unless release evidence says otherwise. |
@@ -92,7 +94,7 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 | --- | --- |
 | Admin | 68 |
 | Engagements | 8 |
-| Home | 7 |
+| Home | 8 |
 | Intelligence | 1 |
 | Learn | 9 |
 | Moves | 16 |
@@ -199,6 +201,7 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 | /engineering/traces | admin | Shared | src/app/(maestro)/engineering/traces/page.tsx |
 | /evidence-ledger | client | Shared | src/app/(maestro)/evidence-ledger/page.tsx |
 | /home | client | Home | src/app/(maestro)/home/page.tsx |
+| /home/canvas | client | Home | src/app/(maestro)/home/canvas/page.tsx |
 | /home/knowledge | client | Home | src/app/(maestro)/home/knowledge/page.tsx |
 | /home/learn | client | Home | src/app/(maestro)/home/learn/page.tsx |
 | /home/learn/[section] | client | Home | src/app/(maestro)/home/learn/[section]/page.tsx |
@@ -328,6 +331,7 @@ Generated from `src/lib/features/registry.ts`. aVa must use this language for av
 
 | Flag | Policy | Included tenants | Excluded tenants | Training guidance |
 | --- | --- | --- | --- | --- |
+| moves_synthetic_e2e_operator_v1 | tenant | 1 enrolled |  | Scoped automated Moves proof account for a synthetic tenant. The account must carry an exact signed Clerk profile, a bound persons identity, and an assigned-program membership. No client administration or cross-tenant access is granted. |
 | moves_governed_roadmap_downloads | tenant | 1 enrolled |  | 2026-07-25: The P4 execution roadmap emits a governed structured-output block (validated + prosestructure consistency-checked), which is turned into ONE RoadmapPresentationContract and persisted with an immutable synchronization record (content hash, contract/schema/renderer versions, lineage, run id, supersession). Editable PPTX, editable DOCX and an HTML preview are then served from the SAME persisted contract via the governed download route - never regenerated independently - with tenant-scoped, non-enumerating refusals and restricted contract/provenance access. When off, roadmap generation and existing downloads behave byte-for-byte as before. Tenant opt-in; default off; an enrolled tenant first. Env: ABARVA_FEATURE_MOVES_GOVERNED_ROADMAP_DOWNLOADS_TENANTS. |
 | tower_cxo_claude_story_blocks | tenant | 1 enrolled |  | Tower CXO story blocks: uses audited Claude to synthesize the executive story and visual-spec contract from the deterministic TowerContextPack. AbarVa still owns facts, values, claim gates, and rendering; Claude only writes validated CIO/CFO business wording and exhibit intent. Tenant opt-in; an enrolled tenant first. Env allowlist: ABARVA_FEATURE_TOWER_CXO_CLAUDE_STORY_BLOCKS_TENANTS. |
 | moves_ava_chat_hardening | tenant | 2 enrolled |  | 2026-09-05: Nexus/aVa chat inside Moves phase workspaces can use a deterministic MovesAvaChatPacket (checklist, gate criteria, evidence gaps, feed-forward, approved-inputs-pack presence, Source/Tower keyword awareness) to ground model answers and suppress generic tenant context. Status, blocker, readiness, and phase-input draft modes have deterministic response paths; explicit evidence-summary questions use only phase-scoped approved evidence and return a cited, deterministic summary even when hardening is otherwise off. Other free-form responses remain model-generated from prompt guidance and are not post-hoc quality-gated. Tenant opt-in remains in force until signed-in tenant proof supports platform promotion. Env: ABARVA_FEATURE_MOVES_AVA_CHAT_HARDENING_TENANTS. |

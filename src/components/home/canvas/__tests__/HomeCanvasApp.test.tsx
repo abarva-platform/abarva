@@ -1,0 +1,380 @@
+/** @jest-environment jsdom */
+import "@testing-library/jest-dom";
+import fs from "node:fs";
+import path from "node:path";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  HOME_PREVIEW_TENANT_KEYS,
+  getHomeReviewBundle,
+} from "@/lib/home/preview/golden-snapshot";
+import { canonicalClientDisplayName } from "@/lib/client-config";
+import type { HomeReviewBundle } from "@/lib/home/preview/types";
+import { HomeCanvasApp } from "../HomeCanvasApp";
+
+let mockParams = new URLSearchParams();
+const mockPush = jest.fn();
+const mockReplace = jest.fn();
+const mockAva = jest.fn();
+jest.mock("next/navigation", () => ({
+  useSearchParams: () => mockParams,
+  useRouter: () => ({ push: mockPush, replace: mockReplace }),
+}));
+jest.mock("next/link", () => ({
+  __esModule: true,
+  default: ({
+    children,
+    href,
+    scroll,
+    prefetch,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+    scroll?: boolean;
+    prefetch?: boolean;
+  }) => {
+    void scroll;
+    void prefetch;
+    return (
+      <a href={href} {...props}>
+        {children}
+      </a>
+    );
+  },
+}));
+jest.mock("@/components/home/preview/HomeAvaChat", () => ({
+  HomeAvaChat: (props: { children: React.ReactNode }) => {
+    mockAva(props);
+    return <>{props.children}</>;
+  },
+}));
+jest.mock("@/components/home/preview/BrowseTheData", () => ({
+  BrowseTheData: () => <div data-testid="record-context" />,
+}));
+jest.mock("../../v4/RecordBrowser", () => ({
+  RecordBrowser: (props: {
+    recordType: { rows: unknown[]; label: string };
+  }) => (
+    <div data-testid="family-browser">
+      {props.recordType.label}: {props.recordType.rows.length}
+    </div>
+  ),
+  RelationshipLens: () => <div data-testid="relationship-lens" />,
+}));
+jest.mock("../ArchitectureCanvas", () => ({
+  ArchitectureCanvas: () => <div data-testid="native-map" />,
+}));
+jest.mock("recharts", () => {
+  const Container = ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  );
+  return {
+    ResponsiveContainer: Container,
+    BarChart: Container,
+    Bar: () => null,
+    LabelList: () => null,
+    CartesianGrid: () => null,
+    Tooltip: () => null,
+    XAxis: () => null,
+    YAxis: () => null,
+  };
+});
+
+function bundle(): HomeReviewBundle {
+  return JSON.parse(
+    fs.readFileSync(
+      path.join(
+        process.cwd(),
+        "src/lib/home/preview/golden-snapshots/meridian-health.json",
+      ),
+      "utf8",
+    ),
+  );
+}
+const source = {
+  kind: "reviewed_snapshot" as const,
+  canonicalSnapshotHash: "shared-record-version",
+};
+function app(record = bundle(), recordSource = source) {
+  return (
+    <HomeCanvasApp
+      bundle={record}
+      recordSource={recordSource}
+      recordToken="same-export-binding"
+      tenantKey="meridian-health"
+      tenantName="Reference enterprise"
+      requestedProvider="ecl"
+    />
+  );
+}
+
+beforeEach(() => {
+  mockParams = new URLSearchParams();
+  mockPush.mockClear();
+  mockReplace.mockClear();
+  window.history.replaceState(null, "", "/home");
+  mockAva.mockClear();
+  HTMLDialogElement.prototype.showModal = function () {
+    this.open = true;
+  };
+  HTMLDialogElement.prototype.close = function () {
+    this.open = false;
+  };
+});
+
+describe("native Home canvas", () => {
+  it("passes the exact record and active focus to the unchanged shared aVa", () => {
+    mockParams.set("view", "technology_data");
+    render(app());
+    const props = mockAva.mock.calls.at(-1)![0];
+    expect(props.recordSource).toBe(source);
+    expect(props.activeChapterId).toBe("technology_data");
+    expect(props.requestedProvider).toBe("ecl");
+    expect(document.querySelector("[data-home-canvas]")).toHaveAttribute(
+      "data-record-version",
+      source.canonicalSnapshotHash,
+    );
+  });
+  it.each([
+    "executive_brief",
+    "our_business",
+    "strategy_value_creation",
+    "how_we_operate",
+    "technology_data",
+    "performance_value",
+    "leadership_perspective",
+    "what_needs_attention",
+  ])("mounts one overview, not a scrolling dossier: %s", (view) => {
+    mockParams.set("view", view);
+    render(app());
+    expect(document.querySelectorAll("[data-canvas-overview]")).toHaveLength(1);
+    expect(document.querySelector("[data-canvas-overview]")).toHaveAttribute(
+      "data-canvas-overview",
+      view,
+    );
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+  });
+  it("uses navigable URLs for chapters and panels without page anchor jumps", () => {
+    render(app());
+    for (const link of screen
+      .getByRole("navigation", { name: "Home explorer" })
+      .querySelectorAll("a")) {
+      expect(link.getAttribute("href")).toMatch(/^\/home\?/);
+      expect(link.getAttribute("href")).not.toContain("#");
+    }
+    expect(screen.getByRole("link", { name: "Evidence" })).toHaveAttribute(
+      "href",
+      expect.stringContaining("panel=evidence"),
+    );
+  });
+  it("binds export to this record version and labels its existing scope", () => {
+    render(app());
+    const link = screen.getByRole("link", { name: "Download PDF" });
+    expect(link).toHaveAttribute(
+      "href",
+      expect.stringContaining("context=same-export-binding"),
+    );
+    expect(link).toHaveAttribute(
+      "title",
+      "Download the existing full Home walkthrough PDF",
+    );
+    expect(
+      screen.queryByRole("link", { name: "Current Home" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Design preview")).not.toBeInTheDocument();
+  });
+  it("replaces a legacy bookmark with a tenant-bound canonical URL", () => {
+    window.history.replaceState(null, "", "/home#our_business");
+    render(app());
+    expect(mockReplace).toHaveBeenCalledWith(
+      "/home?tenant=meridian-health&provider=ecl&view=our_business&panel=overview",
+      { scroll: false },
+    );
+  });
+  it("does not let an old hash override an explicitly selected view", () => {
+    window.history.replaceState(null, "", "/home#our_business");
+    mockParams.set("view", "technology_data");
+    render(app());
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+  it("renders one selected evidence table and makes the others selectable", () => {
+    mockParams = new URLSearchParams("view=technology_data&panel=evidence");
+    render(app());
+    expect(screen.getAllByRole("table")).toHaveLength(1);
+    expect(
+      screen
+        .getByRole("navigation", { name: "Evidence exhibits" })
+        .querySelectorAll("button").length,
+    ).toBeGreaterThan(5);
+  });
+  it.each(bundle().chapters)(
+    "$title keeps additional aligned context inspectable",
+    (chapter) => {
+      mockParams = new URLSearchParams(
+        `view=${chapter.chapterId}&panel=evidence`,
+      );
+      render(app());
+      fireEvent.click(
+        screen.getByRole("button", { name: /^Additional on-topic context/ }),
+      );
+      expect(
+        screen.getByRole("heading", {
+          name: "Additional context in this record",
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getAllByRole("button", { name: "Read & verify" }).length,
+      ).toBeGreaterThan(0);
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Read & verify" })[0],
+      );
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+    },
+  );
+  it("retains full text and evidence in an accessible inspection dialog", () => {
+    render(app());
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Read & verify" })[0],
+    );
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: /^(Claim|Interpretation) and evidence$/,
+      }),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(document.querySelector("dialog")).not.toHaveAttribute("open");
+  });
+  it("clearly labels reviewed fallback", () => {
+    render(
+      <HomeCanvasApp
+        bundle={bundle()}
+        recordSource={{ ...source, kind: "reviewed_snapshot_fallback" }}
+        recordToken="fallback"
+        tenantKey="meridian-health"
+        tenantName="Reference enterprise"
+      />,
+    );
+    expect(
+      document.querySelector("[data-canvas-source-label]"),
+    ).toHaveTextContent("Reviewed stored record fallback");
+  });
+  it("keeps old interpretation off an unverified current overview", () => {
+    const record = bundle();
+    record.chapters[0].key_insights[0].statement =
+      "OLD INTERPRETATION MUST NOT LEAD";
+    render(
+      <HomeCanvasApp
+        bundle={record}
+        recordSource={{
+          kind: "ecl_serving_projection",
+          canonicalSnapshotHash: "current-rows",
+        }}
+        recordToken="current"
+        tenantKey="meridian-health"
+        tenantName="Reference enterprise"
+      />,
+    );
+    expect(
+      screen.queryByText("OLD INTERPRETATION MUST NOT LEAD"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/earlier executive interpretation is not verified/),
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector("[data-canvas-source-label]"),
+    ).toHaveTextContent("Live governed rows");
+  });
+  it("makes every supplied family available with its exact row count", () => {
+    const record = bundle();
+    mockParams.set(
+      "view",
+      `tech:${record.technologyEstate!.recordTypes[1].objectType}`,
+    );
+    mockParams.set("panel", "evidence");
+    render(app(record));
+    expect(screen.getByTestId("family-browser")).toHaveTextContent(
+      String(record.technologyEstate!.recordTypes[1].rows.length),
+    );
+    expect(
+      screen.queryByRole("navigation", { name: "Chapter views" }),
+    ).not.toBeInTheDocument();
+  });
+  it.each(HOME_PREVIEW_TENANT_KEYS)(
+    "binds identity, advisor and export to one record: %s",
+    (tenantKey) => {
+      const record = getHomeReviewBundle(tenantKey)!;
+      const tenantName = canonicalClientDisplayName({ key: tenantKey })!;
+      render(
+        <HomeCanvasApp
+          bundle={record}
+          tenantKey={tenantKey}
+          tenantName={tenantName}
+          recordSource={{
+            kind: "reviewed_snapshot",
+            canonicalSnapshotHash: record.provenance.canonical_snapshot_hash,
+          }}
+          recordToken={`binding:${tenantKey}`}
+        />,
+      );
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+        tenantName,
+      );
+      expect(mockAva).toHaveBeenLastCalledWith(
+        expect.objectContaining({ tenantKey }),
+      );
+      const exportUrl = new URL(
+        screen
+          .getByRole("link", { name: "Download PDF" })
+          .getAttribute("href")!,
+        "https://example.invalid",
+      );
+      expect(exportUrl.searchParams.get("tenant")).toBe(tenantKey);
+      expect(exportUrl.searchParams.get("context")).toBe(
+        `binding:${tenantKey}`,
+      );
+      expect(document.querySelector("[data-home-canvas]")).toHaveAttribute(
+        "data-record-version",
+        record.provenance.canonical_snapshot_hash,
+      );
+      for (const otherKey of HOME_PREVIEW_TENANT_KEYS.filter(
+        (key) => key !== tenantKey,
+      )) {
+        expect(document.querySelector("aside")?.textContent).not.toContain(
+          canonicalClientDisplayName({ key: otherKey }),
+        );
+      }
+    },
+  );
+  it.each(HOME_PREVIEW_TENANT_KEYS)(
+    "keeps raw evidence keys off chapter overviews and full reading: %s",
+    (tenantKey) => {
+      const record = getHomeReviewBundle(tenantKey)!;
+      let checked = 0;
+      for (const chapter of record.chapters) {
+        for (const panel of ["overview", "reading"]) {
+          mockParams = new URLSearchParams({ view: chapter.chapterId, panel });
+          render(
+            <HomeCanvasApp
+              bundle={record}
+              tenantKey={tenantKey}
+              tenantName="Reference enterprise"
+              recordSource={{
+                kind: "reviewed_snapshot",
+                canonicalSnapshotHash:
+                  record.provenance.canonical_snapshot_hash,
+              }}
+              recordToken="scoped-test"
+            />,
+          );
+          expect(document.querySelector("main")?.textContent).not.toMatch(
+            /\b(?:sig|ctx)_[a-z0-9_]+/i,
+          );
+          expect(document.querySelector("[data-home-canvas]")).not.toBeNull();
+          cleanup();
+          checked += 1;
+        }
+      }
+      expect(checked).toBe(record.chapters.length * 2);
+      expect(checked).toBeGreaterThan(0);
+    },
+  );
+});

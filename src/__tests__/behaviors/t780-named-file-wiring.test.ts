@@ -10,7 +10,7 @@ import {
  * Item T-780. T-779 held `src/components/agent-answer/__tests__` and
  * `src/components/context-broker/__tests__` whole, because one suite in each
  * renders a component the unreachable register lists. This item wires the
- * other four suites BY NAMED FILE and leaves those two renders out.
+ * other five suites BY NAMED FILE and leaves those two renders out.
  * `docs/architecture/t780-named-file-triage.json` is the record, and every
  * partition below is read out of it rather than copied here.
  *
@@ -33,7 +33,8 @@ import {
  *    it is allowed only while every file it reads is under `public/` and the
  *    component serves each by URL.
  * 6. **Supersedes T-779, and wins** by `recordedAt`, the rule
- *    `t770-scanner-wiring-refusal.test.ts` resolves classification by.
+ *    `t770-scanner-wiring-refusal.test.ts` resolves classification by. A later
+ *    suite added to the directory is explicitly judged and wired here.
  */
 
 const repoRoot = path.resolve(__dirname, "../../..");
@@ -252,12 +253,20 @@ describe("T-780 — agent-answer and context-broker wired by named file", () => 
     expect(record.scope.directories.filter((dir) => baseline.includes(dir))).toEqual([]);
   });
 
-  it("supersedes T-779's held rows for the four wired files with a later record", () => {
+  it("supersedes T-779's held rows and declares the newly added wired file", () => {
     expect(record.recordedAt > prior.recordedAt).toBe(true);
+    const newlyAdded: string[] = [];
     for (const row of wiredRows) {
       const older = prior.suites.find((suite) => suite.path === row.path);
+      if (!older) {
+        newlyAdded.push(row.path);
+        continue;
+      }
       expect({ path: row.path, olderWired: older?.wiredInThisItem, olderOwner: older?.ownerItem })
         .toEqual({ path: row.path, olderWired: false, olderOwner: "T-780" });
     }
+    expect(newlyAdded).toEqual([
+      "src/components/agent-answer/__tests__/ModelAuthoredExhibits.test.tsx",
+    ]);
   });
 });
