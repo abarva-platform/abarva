@@ -34,6 +34,7 @@ The approval-proof preservation is shared Tower operator behavior; it applies to
 
 - Bind the delegated serving decision `delegated-tower-source-fields-serving-20261012-001` to assessment `tower-registry-candidate-a70df3b56bffc9be` and source-set hash `11d0f3f92b0c1da9cd4ca2bf369d0a90587b2deac15f4108262b1d154f829c40`. The manager's private decision is approved with execution conditions. This record alone does not satisfy the manifest approval gate or change Tower serving.
 - Carry the resolved manifest approval record into the Tower preflight and promotion proofs. A missing or mismatched record blocks the preflight, and a changed record invalidates the reviewed proof before promotion.
+- The Tower approval verifier fetches exact authority and decision bytes from the private proof lane, checks their hashes through the shared trusted-decision resolver, and compares the decision scope with candidate and receipt bytes, the private bundle readback, and the tenant-scoped prior selector observed in the database.
 - Reuse the guarded Tower promotion operator. It checks the exact stage receipt and private proof bundle, current source and physical rows, nine page counts and fingerprints, linked measures, the prior active assessment, and financial claim limits before switching the lifecycle pointer.
 - Keep the previous assessment and its view fingerprints available for a guarded rollback.
 
@@ -44,6 +45,7 @@ The approval-proof preservation is shared Tower operator behavior; it applies to
 - A private-network Blob readback matched the re-attested ZIP checksum `c5d694f7d975d4148fe40e0eb88a295eb6b4d7070e070819e654e0ef594cff7a` and candidate checksum `bc04b5bbd56115272c41973bafea26bf5e76834467f76f934fc48272d9889c14`. Its materialized validation and quality gate passed.
 - A check-only live preflight verified the physical assessment and private bundle. The only remaining gap was `serving_approval:manifest carries no serving_approval`. No promotion has run, and no signed-in version 5 page proof exists yet.
 - The delegated manager checked the native database, Blob, and preflight outputs against their log markers. The decision file is bound by SHA-256 `8ffc3814eb4cc03b90652fd7f0b33b0b6a16d2a1a70b547fd82273f384b0e9b8` and expressly excludes independent client or Finance attestation. Tower's focused approval-proof tests passed locally; a shared manifest contract and its validation remain a release dependency.
+- The delegated manager certified a normalized Tower-only decision with SHA-256 `ebb0891e9fd0f118425c8c9e401c0124aee19d4d0cdffb0f3834ca666a7b9f16`, bound to the original decision and its conditions. Local Tower promotion tests passed 11/11 and changed-file lint passed. TypeScript validation of the integrated verifier, private proof readback, fresh ready preflight, selector change, and signed-in proof remain pending.
 
 ## Rollout Plan
 
