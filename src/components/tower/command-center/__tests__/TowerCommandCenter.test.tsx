@@ -132,7 +132,7 @@ describe("TowerCommandCenter", () => {
 
   it("opens on the designed Verdict panel", () => {
     renderPage();
-    expect(screen.getByText("Total IT budget")).toBeInTheDocument();
+    expect(screen.getByText("Approved FY26 IT budget")).toBeInTheDocument();
     expect(screen.getByText("Cleared value in loaded months")).toBeInTheDocument();
     expect(
       screen.getByText("The three rules behind every number on this page"),
@@ -150,7 +150,7 @@ describe("TowerCommandCenter", () => {
     expect(
       screen.getByText("Finance review gap"),
     ).toBeInTheDocument();
-    expect(document.body).toHaveTextContent("Value cleared for reporting is not loaded");
+    expect(document.body).toHaveTextContent("No amount cleared");
   });
 
   it("does not substitute promised benefit when approved investment is not loaded", () => {
@@ -164,8 +164,8 @@ describe("TowerCommandCenter", () => {
 
     // The guarantee is unchanged: an absent budget must never borrow the benefit figure. It is
     // now asserted on the Verdict panel's cards rather than the old headline.
-    const budget = screen.getByText("Total IT budget").parentElement;
-    expect(budget?.textContent).toContain("Not loaded");
+    const budget = screen.getByText("Approved FY26 IT budget").parentElement;
+    expect(budget?.textContent).toContain("Not verified");
     expect(budget?.textContent).not.toContain("$492.5M");
 
     // The claim population is stated on the decision rail, which is where it now lives.
@@ -191,8 +191,8 @@ describe("TowerCommandCenter", () => {
     // The populations must stay distinct: 230 value claims, never the 969-row economic queue.
     // budgetUsd is null here, so the Verdict panel's budget card must say so rather than borrow
     // the approved-investment figure.
-    const budget = screen.getByText("Total IT budget").parentElement;
-    expect(budget?.textContent).toContain("Not loaded");
+    const budget = screen.getByText("Approved FY26 IT budget").parentElement;
+    expect(budget?.textContent).toContain("Not verified");
 
     // The populations must stay distinct on the rail: 230 value claims, never the 969-row queue.
     goTo(TAB.decisions, /Decisions for this review/);
@@ -202,8 +202,8 @@ describe("TowerCommandCenter", () => {
     expect(
       screen.getByText("Match each benefit claim to the proof it needs"),
     ).toBeInTheDocument();
-    expect(container).toHaveTextContent("Approved project funding");
-    expect(container).toHaveTextContent(/open evidence actions/);
+    expect(container).toHaveTextContent("Approved FY26 project funding");
+    expect(container).toHaveTextContent(/recorded evidence actions|Evidence actions not loaded/);
   });
 
   it("moves between tabs with arrow keys and reflects the tab in the URL", () => {

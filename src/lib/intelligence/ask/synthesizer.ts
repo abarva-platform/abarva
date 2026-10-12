@@ -4,6 +4,11 @@
  * Trade Secret Register (docs/ip/trade-secret-register.md). Do not distribute externally
  * or expose outside the tenant boundary. Access requires NDA + IP assignment (T075).
  */
+import {
+  EXECUTIVE_BRIEF_CONTRACT,
+  EXECUTIVE_BRIEF_REMINDER,
+} from "./executive-brief-contract";
+import { prepareExecutiveContext } from "./executive-context";
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
 import type { AskSource, AskIntent } from "./types";
 import {
@@ -544,6 +549,7 @@ export async function* synthesizeStream(args: {
    * When FALSY the path is 100% unchanged — byte-identical to today.
    */
   answerOnlyStreaming?: boolean;
+  modelAuthoredOutput?: boolean;
   /**
    * Observability hook · invoked with the EXACT system + user content sent to
    * the model, right before the model call. The agent-trace spine hashes this
@@ -562,6 +568,8 @@ export async function* synthesizeStream(args: {
   latencyStartedAt?: number;
 }): AsyncGenerator<string> {
   if (!process.env.ANTHROPIC_API_KEY || !args.tenantId) {
+    if (args.modelAuthoredOutput)
+      throw new Error("Claude synthesis is unavailable in this environment.");
     yield "aVa synthesis is not configured in this environment. Set ANTHROPIC_API_KEY to enable advisor-quality answers.";
     return;
   }
@@ -580,10 +588,19 @@ export async function* synthesizeStream(args: {
   const tenantIdentityPin = buildTenantIdentityPin(
     args.tenantClientKey ?? args.tenantId ?? null,
   );
+  const executiveContext = args.modelAuthoredOutput
+    ? prepareExecutiveContext(
+        args.sources,
+        args.tenantClientKey,
+        args.tenantId,
+        args.conversationContextBlock,
+      )
+    : null;
+  const modelSources = executiveContext?.sources ?? args.sources;
   const contextContractBlock = buildAgentContextContractBlock({
     agent: "ava",
     module: "intelligence",
-    sources: args.sources,
+    sources: modelSources,
   });
 
   // Healthcare CXO answer contract — gated on the Healthcare vertical
@@ -594,26 +611,34 @@ export async function* synthesizeStream(args: {
     args.tenantClientKey ?? args.tenantId ?? null,
   );
 
-  const contextBlocks = [
-    tenantIdentityPin,
-    contextContractBlock,
-    buildProductTruthSystemPromptBlock(),
-    healthcareAnswerContract,
-    args.intelligenceDossier
-      ? formatIntelligenceDossierForPrompt(args.intelligenceDossier)
-      : "",
-    args.factAvailabilityBlock?.trim() ?? "",
-    args.coverageReportBlock?.trim() ?? "",
-    args.userContextBlock?.trim() ?? "",
-    args.conversationContextBlock?.trim() ?? "",
-  ].filter(Boolean);
+  const contextBlocks = executiveContext
+    ? [
+        tenantIdentityPin,
+        contextContractBlock,
+        buildProductTruthSystemPromptBlock(),
+        executiveContext.prompt,
+      ]
+    : [
+        tenantIdentityPin,
+        contextContractBlock,
+        buildProductTruthSystemPromptBlock(),
+        args.modelAuthoredOutput ? "" : healthcareAnswerContract,
+        args.intelligenceDossier
+          ? formatIntelligenceDossierForPrompt(args.intelligenceDossier)
+          : "",
+        args.factAvailabilityBlock?.trim() ?? "",
+        args.coverageReportBlock?.trim() ?? "",
+        args.userContextBlock?.trim() ?? "",
+        args.conversationContextBlock?.trim() ?? "",
+      ].filter(Boolean);
   const rolePrompt = isExplicitConciseAsk(args.query)
     ? CONCISE_SYSTEM_PROMPT
     : SYSTEM_PROMPT;
   // Answer-only true-streaming (companion canvas). Light markdown, crisp
   // executive prose, NO five-tab / decision-canvas contract, NO advisor
   // artifact obligations — those move to the parallel companion-canvas engine.
-  const answerOnly = args.answerOnlyStreaming === true;
+  const modelAuthored = args.modelAuthoredOutput === true;
+  const answerOnly = modelAuthored || args.answerOnlyStreaming === true;
   // Light-markdown behavior is enabled for rich-text callers AND for the
   // answer-only stream (which always renders Markdown on the client).
   const lightMarkdown = args.richText === true || answerOnly;
@@ -679,13 +704,16 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
   const shapeContract = answerOnly
     ? CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH
     : CONSULTANT_ANSWER_SHAPE_CONTRACT;
-  const rawSystem =
-    contextBlocks.length > 0
+  const rawSystem = modelAuthored
+    ? `${contextBlocks.join("\n\n")}\n\n${EXECUTIVE_BRIEF_CONTRACT}\n\n${executiveContext?.decisionGuard ?? ""}`
+    : contextBlocks.length > 0
       ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`
       : `${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`;
-  const rawPrompt = answerOnly
-    ? `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}${rankedDecisionPromptDirective}\n\n${universalAnswerVisualContract}`
-    : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}${rankedDecisionPromptDirective}\n\nRespond with your synthesis. For rich-text Intelligence, the right canvas is mandatory: include Decision, Industry Insights, Chart, Table, and Evidence tabs.`;
+  const rawPrompt = modelAuthored
+    ? `SOURCES PROVIDED (aliases belong only in fenced sources and citationIds metadata; never in visible text):\n${modelSources.map((s, i) => `[S${i + 1}] ${s.type} | ${s.name}\n${s.detail}`).join("\n\n")}\n\nUSER QUESTION:\n${args.query}\n\n${EXECUTIVE_BRIEF_REMINDER}`
+    : answerOnly
+      ? `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}${rankedDecisionPromptDirective}\n\n${universalAnswerVisualContract}`
+      : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}${rankedDecisionPromptDirective}\n\nRespond with your synthesis. For rich-text Intelligence, the right canvas is mandatory: include Decision, Industry Insights, Chart, Table, and Evidence tabs.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
     ? '\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when memory is present. Never mention the memory mechanism, prior conversation state, or phrases such as "this session", "as discussed", "previous conversation", "same answer", or "answer hasn\'t changed" in user-visible text.'
     : "";
@@ -713,7 +741,15 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
   );
 
   try {
-    const model = chooseModel(args.intent, args.query);
+    const model =
+      modelAuthored && isExplicitConciseAsk(args.query)
+        ? "claude-sonnet-4-6"
+        : chooseModel(args.intent, args.query);
+    const primaryTokenBudget = modelAuthored
+      ? 8192
+      : answerOnly
+        ? 5000
+        : chooseSynthesisTokenBudget(args.query);
     // Pre-generation source pre-screen (defense-in-depth) — answer-only path
     // ONLY, so the flag-off path stays byte-identical. If retrieval is
     // contaminated with another tenant's identity, refuse BEFORE any tokens
@@ -721,10 +757,14 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
     // once-at-the-end post-response guard cannot un-send them).
     if (answerOnly) {
       const sourcePrescreen = prescreenSourcesForLeak(
-        args.sources,
+        modelSources,
         args.tenantClientKey ?? args.tenantId ?? null,
       );
       if (sourcePrescreen.contaminated) {
+        if (modelAuthored)
+          throw new Error(
+            "The answer was blocked because its context crossed the tenant boundary.",
+          );
         yield [
           "I stopped before answering. The retrieved context mixed another organization's data with your session, and I will not surface mixed-tenant content.",
           "",
@@ -757,15 +797,24 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
     emitTiming(
       latencyTrace.mark("claude.primary.start", {
         model,
-        maxTokens: chooseSynthesisTokenBudget(args.query),
+        maxTokens: primaryTokenBudget,
       }),
     );
     const stream = await client.messages.create({
       model,
-      max_tokens: answerOnly ? 5000 : chooseSynthesisTokenBudget(args.query),
+      max_tokens: primaryTokenBudget,
       system: systemWithContinuity,
       messages: [{ role: "user", content: prompt }],
       stream: true,
+      ...(modelAuthored
+        ? {
+            thinking: {
+              type: "adaptive" as const,
+              display: "omitted" as const,
+            },
+            output_config: { effort: "high" as const },
+          }
+        : {}),
     });
 
     // ANSWER-ONLY TRUE STREAMING PATH.
@@ -800,6 +849,8 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
           }
           const verdict = rollingGuard.push(chunk);
           if (verdict.abort) {
+            if (modelAuthored)
+              throw new Error("The answer was blocked at the tenant boundary.");
             emitTiming(
               latencyTrace.mark("answer_only.rolling_leak.aborted", { model }),
             );
@@ -819,10 +870,13 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
           yield chunk;
         }
       }
-      const cleanedText = stripInternalRecordIds(streamedText);
-      const finalText = args.richText
-        ? cleanedText
-        : applyCxoAnswerModeFallbacks(cleanedText, answerMode);
+      const cleanedText = modelAuthored
+        ? streamedText
+        : stripInternalRecordIds(streamedText);
+      const finalText =
+        modelAuthored || args.richText
+          ? cleanedText
+          : applyCxoAnswerModeFallbacks(cleanedText, answerMode);
       const { remainder: deterministicRemainder, diverged } =
         reconcileStreamRemainder(streamedText, finalText);
       if (deterministicRemainder) {
@@ -1457,6 +1511,7 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
       yield chunk;
     }
   } catch (err) {
+    if (args.modelAuthoredOutput) throw err;
     yield `\n\n[synthesis error: ${err instanceof Error ? err.message : "unknown"}]`;
   }
 }

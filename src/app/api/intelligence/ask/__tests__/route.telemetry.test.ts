@@ -550,7 +550,9 @@ describe("POST /api/intelligence/ask telemetry", () => {
     expect(askIntelligence).not.toHaveBeenCalled();
     expect(text).toContain('"type":"agent-answer"');
     expect(text).toContain("source_contract_unavailable");
-    expect(text).not.toContain("Requested contract was not returned by the active Source provider");
+    expect(text).not.toContain(
+      "Requested contract was not returned by the active Source provider",
+    );
     expect(text).not.toContain("No specific contract is selected");
   });
 
@@ -716,5 +718,53 @@ describe("POST /api/intelligence/ask telemetry", () => {
 
     expect(text).toContain("Vendor concentration is the live risk.");
     expect(text).not.toMatch(/tenant_fence|cross_tenant/);
+  });
+});
+
+describe("model-authored executive response", () => {
+  it("preserves authored prose and exhibits without automatic source exhibits", async () => {
+    const raw =
+      '**Validate first.**  [S1]\n\nKeep the next paragraph.\n\n```table\n{"id":"decision","title":"Decision","columns":[{"key":"option","label":"Option"},{"key":"action","label":"Action"}],"rows":[{"option":"Assist","action":"Validate"}],"citationIds":["S1"]}\n```';
+    (askIntelligence as jest.Mock).mockImplementationOnce(async function* () {
+      yield {
+        type: "sources",
+        sources: [
+          {
+            type: "TENANT",
+            id: "fact-1",
+            name: "Evidence",
+            detail: "Relevant evidence.",
+          },
+        ],
+      };
+      yield { type: "delta", text: raw.slice(0, 50) };
+      yield { type: "delta", text: raw.slice(50) };
+      yield { type: "done" };
+    });
+    const response = await POST(
+      makeRequest({
+        query: "What should we do?",
+        richText: true,
+        answerOnlyStreaming: true,
+        modelAuthoredOutput: true,
+        surfaceContext: { activeTab: "intelligence" },
+      }) as never,
+    );
+    const events = (await response.text())
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line));
+    expect(events.filter((e) => e.type === "delta")).toHaveLength(0);
+    const packet = events.find((e) => e.type === "agent-answer")?.answer;
+    expect(packet.modelAuthored.rawText).toBe(raw);
+    expect(packet.prose).toBe(
+      "**Validate first.**  [S1]\n\nKeep the next paragraph.\n\n",
+    );
+    expect(packet.artifacts).toHaveLength(1);
+    expect(packet.citations.map((c: { id: string }) => c.id)).toEqual(["S1"]);
+    expect(events.some((e) => e.type === "done")).toBe(true);
+    expect(
+      (askIntelligence as jest.Mock).mock.calls.at(-1)[1].modelAuthoredOutput,
+    ).toBe(true);
   });
 });

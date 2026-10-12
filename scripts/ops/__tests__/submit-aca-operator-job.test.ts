@@ -225,6 +225,68 @@ describe('terminalStatus', () => {
   })
 })
 
+describe('idle execution history readback', () => {
+  test('requests only unfinished names and statuses, keeping historical payloads out of the CLI output buffer', async () => {
+    const mod = await import(WRAPPER)
+    const args: string[] = mod.buildActiveExecutionListArgs({
+      job: 'operator-job',
+      resourceGroup: 'control-group',
+    })
+    expect(args.slice(0, 4)).toEqual(['containerapp', 'job', 'execution', 'list'])
+    expect(args).toEqual(expect.arrayContaining([
+      '--name', 'operator-job', '--resource-group', 'control-group', '--output', 'json',
+    ]))
+    const query = args[args.indexOf('--query') + 1]
+    expect(query).toMatch(/^\[\?.+\]\.\{name:name,status:properties\.status\}$/)
+    for (const status of ['Succeeded', 'Failed', 'Canceled', 'Cancelled', 'Stopped']) {
+      expect(query).toContain(`properties.status!='${status}'`)
+    }
+  })
+
+  test('still blocks a queued execution and an unknown status, while excluding this run', async () => {
+    const mod = await import(WRAPPER)
+    expect(mod.otherActiveExecutions([
+      { name: 'previous-success', status: 'Succeeded' },
+      { name: 'this-run', status: 'Running' },
+      { name: 'queued', status: 'Processing' },
+      { name: 'unrecognized', status: 'Unknown' },
+    ], 'this-run')).toEqual([
+      { name: 'queued', status: 'Processing' },
+      { name: 'unrecognized', status: 'Unknown' },
+    ])
+  })
+})
+
+describe('Azure CLI failure diagnostics', () => {
+  test('does not echo buffered stdout when the Azure CLI exceeds its output buffer', async () => {
+    const mod = await import(WRAPPER)
+    const failure = mod.formatAzFailure(
+      ['containerapp', 'job', 'execution', 'list', 'DATABASE_URL=private-connection'],
+      {
+        status: null,
+        error: { code: 'ENOBUFS', message: 'spawnSync az ENOBUFS' },
+        stdout: 'private execution history'.repeat(100_000),
+        stderr: '',
+      },
+    )
+    expect(failure.message).toContain('ENOBUFS')
+    expect(failure.message).toContain('DATABASE_URL=<redacted>')
+    expect(failure.message).not.toContain('private execution history')
+    expect(failure.message).not.toContain('private-connection')
+  })
+
+  test('bounds Azure CLI error output even without a process buffer error', async () => {
+    const mod = await import(WRAPPER)
+    const failure = mod.formatAzFailure(['containerapp', 'job', 'show'], {
+      status: 1,
+      stdout: 'X'.repeat(50_000),
+      stderr: '',
+    })
+    expect(failure.message).toContain('diagnostic truncated after 4096 characters')
+    expect(failure.message.length).toBeLessThan(5_000)
+  })
+})
+
 describe('Source ServiceNow request proof summary', () => {
   let outDir: string
 

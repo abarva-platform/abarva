@@ -22,18 +22,30 @@ function readFile(relativePath) {
 
 const homePageSource = readFile('src/app/(maestro)/home/page.tsx');
 
-// `/home` mounts the v4 executive readout, `HomePreviewAppRoot`. The reader it
-// replaced, `HomeSurface`, is retired from this route, so it is refused below
-// as a retired marker instead of being required here.
-if (!homePageSource.includes('@/components/home/preview/HomePreviewAppRoot')) {
-  failures.push('/home must import the canonical HomePreviewAppRoot component.');
+if (!homePageSource.includes('@/components/home/canvas/HomeCanvasApp')) {
+  failures.push('/home must import the canonical HomeCanvasApp component.');
 }
 
-if (!homePageSource.includes('<HomePreviewAppRoot')) {
-  failures.push('/home must mount HomePreviewAppRoot directly.');
+if (!homePageSource.includes('<HomeCanvasApp')) {
+  failures.push('/home must mount HomeCanvasApp directly.');
+}
+
+if (!homePageSource.includes('getHomeEclProjectionBundleOrReviewedSnapshotWithSource')) {
+  failures.push('/home must retain the governed reader and visible reviewed fallback.');
+}
+
+const previewPageSource = readFile('src/app/(maestro)/home/preview/page.tsx');
+if (!previewPageSource.includes('<HomeCanvasApp') || previewPageSource.includes('HomePreviewAppRoot')) {
+  failures.push('The gated Home review route must use the canonical canvas, not the retired presentation.');
+}
+const canvasAliasSource = readFile('src/app/(maestro)/home/canvas/page.tsx');
+if (!canvasAliasSource.includes('redirect(`/home') || canvasAliasSource.includes('HomeCanvasApp')) {
+  failures.push('/home/canvas must redirect to canonical Home rather than mount a second presentation.');
 }
 
 const forbiddenHomeRouteMarkers = [
+  'HomePreviewAppRoot',
+  'HomeV4App',
   'HomeSurface',
   'EnterpriseLandscapeHome',
   'getEnterpriseLandscapeViewModel',

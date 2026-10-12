@@ -125,8 +125,10 @@ const GENERAL_QUERY = "Who is our largest telecoms vendor?";
  * entry happens to carry and `systemContract` is absent from the union. This is
  * an annotation, not a cast: every entry is assignable to the declared shape.
  */
-const REGISTRY: Record<string, Partial<CxoAnswerModeContract>> =
-  CXO_ANSWER_MODE_REGISTRY;
+const REGISTRY: Record<
+  string,
+  Partial<CxoAnswerModeContract>
+> = CXO_ANSWER_MODE_REGISTRY;
 
 /**
  * The LINES a mode's deterministic fallback ADDS to a given text, read off the
@@ -181,6 +183,7 @@ interface AskRun {
 async function runAsk(args: {
   query: string;
   modelText: string;
+  modelAuthoredOutput?: boolean;
 }): Promise<AskRun> {
   getAuditedAnthropicClient.mockReset();
   getAuditedAnthropicClient.mockResolvedValue({
@@ -211,6 +214,7 @@ async function runAsk(args: {
     // See the header note: this is what makes the fallback case attributable
     // to `ask/index.ts` rather than to the synthesizer.
     richText: true,
+    modelAuthoredOutput: args.modelAuthoredOutput,
     onModelInput: (parts) => modelInputs.push(parts),
   })) {
     eventTypes.push(event.type);
@@ -237,6 +241,27 @@ describe("C-412 · answer-mode wiring inside the Ask module", () => {
     if (ORIGINAL_API_KEY === undefined) delete process.env.ANTHROPIC_API_KEY;
     else process.env.ANTHROPIC_API_KEY = ORIGINAL_API_KEY;
   });
+
+  it("preserves the full Claude output on the executive path and sends one unified contract", async () => {
+    const modelText =
+      '**Validate first.**  Preserve these spaces.\n\n- Keep this action.\n\n```followups\n["Which gate?","What economics?","Who owns it?"]\n```';
+    const result = await runAsk({
+      query: MOVES_EXECUTION_QUERY,
+      modelText,
+      modelAuthoredOutput: true,
+    });
+    expect(result.answer).toBe(modelText);
+    expect(result.eventTypes).toContain("done");
+    expect(result.eventTypes).not.toContain("error");
+    expect(result.modelInputs).toHaveLength(1);
+    expect(result.modelInputs[0].system).toContain("20-30 words");
+    expect(result.modelInputs[0].system).toContain("Never invent facts");
+    expect(result.modelInputs[0].system).not.toContain("valueScore");
+    expect(result.modelInputs[0].system).not.toContain("UNIVERSAL aVa ANSWER");
+    expect(result.modelInputs[0].user).not.toContain(
+      "MANDATORY FOR THIS USER QUESTION",
+    );
+  }, 30000);
 
   it("sends the classified mode's system contract and prompt directive to the model", async () => {
     expect(classifyAbarvaAnswerMode(MOVES_EXECUTION_QUERY)).toBe(

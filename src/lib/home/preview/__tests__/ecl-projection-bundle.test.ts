@@ -270,6 +270,7 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
           segment_name: "Operating Segment",
           revenue_share_pct: "40",
           pnl_owner_role: "Operating Executive",
+          segment_notes: "Declared service-delivery context.",
         },
       }),
       row({
@@ -282,6 +283,7 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
           function_name: "Service Operations",
           business_segment_key: "segment-a",
           business_segment: "Operating Segment",
+          business_capabilities: ["Service delivery", "Quality management"],
         },
       }),
       row({
@@ -354,6 +356,11 @@ describe("buildTechnologyEstateFromHomeProjectionRows", () => {
       segmentName: "Operating Segment",
       segmentKey: "segment-a",
       revenueSharePct: 40,
+      segmentNotes: "Declared service-delivery context.",
+    });
+    expect(estate.recordTypes[0]?.columns).toContain("segmentNotes");
+    expect(estate.recordTypes[1]?.rows[0]).toMatchObject({
+      businessCapabilities: "Service delivery; Quality management",
     });
 
     const base = getHomeReviewBundle("meridian-health");

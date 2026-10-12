@@ -10,8 +10,9 @@ import { numberFromDb } from "@/lib/source/data-model/vendor-contract-portfolio"
 import { asSentence, fmtDate, money } from "./viewModel";
 import type { SourceWorkspaceVM } from "./buildViewModel";
 import { countOrDash } from "./contractPopulations";
-import { contractPurposeSummary } from "./WorkspaceExecutiveShell";
+import { ContractGovernedStatement, contractPurposeSummary } from "./WorkspaceExecutiveShell";
 import { isGeneratedPurposeHeadline } from "@/lib/source/contract-purpose-refusal";
+import { ContractPlaybookBriefing } from "./ContractPlaybookBriefing";
 import {
   evidenceLede,
   relationshipLede,
@@ -325,6 +326,10 @@ export function ContractStoryBriefing({
   const committed = laneCount(coverage, "committed_spend_usd");
   const actual = laneCount(coverage, "actual_spend_usd");
   const workflow = vm.optWorkflow;
+  const candidate = vm.opportunityView?.opportunities.length
+    ? vm.commercialPosture?.items.find((item) => item.label === "Top lever")
+    : null;
+  const decisionOwner = vm.commercialPosture?.items.find((item) => item.label === "Decision owner");
   const evidenceSummary = story?.supporting_evidence_summary
     ?.split(";")
     .map((part) => part.trim())
@@ -359,19 +364,6 @@ export function ContractStoryBriefing({
     {
       name: "Document page text",
       value: laneCount(coverage, "document_page_text_rows"),
-      required: true,
-    },
-    {
-      // Item U-518. This counts governed action-candidate rows LOADED as
-      // evidence -- `opportunity_rows` is count(*) over
-      // source.contract_action_candidate_v1. It is not the contract's
-      // optimization opportunity set, which the rest of the page counts from
-      // `vm.opportunityView.opportunities` (source.optimization_opportunity, or
-      // a fallback derived from source.golden_contract_*). The two populations
-      // legitimately differ, so the lane says which one it is rather than
-      // printing a second number under the same word.
-      name: "Opportunity evidence rows",
-      value: laneCount(coverage, "opportunity_rows"),
       required: true,
     },
   ].map((lane) => ({
@@ -463,18 +455,38 @@ export function ContractStoryBriefing({
       </div>
 
       <div className="sw-c3-stack">
-        {workflow ? (
+        {workflow || candidate ? (
           <section className="sw-c3-card-dark">
             <div className="sw-c3-eyebrow">Action posture</div>
-            <p className="sw-c3-display sw-c3-display-sm">
-              {workflow.primaryAction}
-            </p>
-            <p className="sw-c3-prose">{workflow.primaryActionDetail}</p>
+            {workflow ? (
+              <>
+                <p className="sw-c3-display sw-c3-display-sm">{workflow.primaryAction}</p>
+                <p className="sw-c3-prose">{workflow.primaryActionDetail}</p>
+              </>
+            ) : null}
+            {candidate ? (
+              <div className="sw-c3-story-candidate">
+                <div className="sw-c3-eyebrow">Recorded candidate</div>
+                <p className="sw-c3-prose"><strong>{candidate.value}</strong></p>
+                <p className="sw-c3-note">{candidate.detail}</p>
+              </div>
+            ) : null}
+            {decisionOwner ? <p className="sw-c3-note sw-c3-story-owner">Decision owner: {decisionOwner.value}</p> : null}
           </section>
         ) : null}
 
-        <section className="sw-c3-card">
-          <div className="sw-c3-eyebrow">Evidence state</div>
+        <ContractPlaybookBriefing
+          contractArchetype={contract.contract_archetype}
+          coverageArchetype={coverage?.contract_archetype}
+        >
+          <ContractGovernedStatement
+            contract={contract}
+            coverage={coverage ?? null}
+            headlineOnly={false}
+            scopeRows={scopeRows}
+            tab="Story"
+            vm={vm}
+          />
           <div className="sw-c3-evidence-state">
             {evidenceState.map((lane) => (
               <div className="sw-c3-evidence-state-row" key={lane.name}>
@@ -493,7 +505,7 @@ export function ContractStoryBriefing({
               </div>
             ))}
           </div>
-        </section>
+        </ContractPlaybookBriefing>
       </div>
     </div>
   );

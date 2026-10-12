@@ -82,20 +82,6 @@ const CHAPTER_SOURCES: Partial<
 
 type EstateFamily = NonNullable<(typeof CHAPTER_SOURCES)[ChapterId]>[number];
 
-/**
- * Whether a chapter's argument is built on a given family of rows.
- *
- * A chart drawn wherever its data happens to exist is decoration. A renewal timeline under "what do
- * leaders agree on" answers nothing that chapter asked. This is the test for whether an exhibit
- * belongs to the argument on the page rather than merely to the bundle behind it.
- */
-export function chapterArguesFrom(
-  chapterId: ChapterId,
-  family: EstateFamily,
-): boolean {
-  return (CHAPTER_SOURCES[chapterId] ?? []).includes(family);
-}
-
 export interface EstateRecordTypes {
   /** The record's own as-of date, threaded so time-relative findings measure against the record. */
   asOf?: string;

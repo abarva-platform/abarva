@@ -200,9 +200,10 @@ describe("an unrecorded number is not zero", () => {
     // `payload_json` is `to_jsonb(p)`, so it carries the projection table's own
     // `monthly_cost_usd` column for every row. Reading through it made every tool rollout look
     // funded and render "$0". `display_payload_json` carries only what the loader wrote: a case
-    // payload has `approved_funding_usd`, a rollout payload has no cost key at all.
+    // A case amount also needs an explicit FY26 fiscal basis and approval. A rollout payload
+    // with no monthly cost key remains unpriced rather than becoming a real zero.
     expect(READER).toContain("const aiSpendLoaded =");
-    expect(READER).toContain('const approvedFundingRaw = displayNullableNumberFrom(row, [');
+    expect(READER).toContain('const approvedFundingRaw = approvedFy26Budget(row, "approved_fy_budget_usd")');
     expect(READER).toContain('const monthlyCostRaw = displayNullableNumberFrom(row, ["monthly_cost_usd"])');
     expect(READER).toContain('const aiSpendLoaded = aiAmountBasis !== "unknown"');
   });
@@ -582,7 +583,7 @@ describe("the finance trail and evidence reach the drill-down", () => {
   });
 
   it("says so when a case has no finance event, rather than implying none was needed", () => {
-    expect(drawer).toContain("No finance events are recorded against this case");
+    expect(drawer).toContain("No approved Finance trail is loaded for this case");
   });
 
   it("does not rename canonical event types, only spaces them", () => {

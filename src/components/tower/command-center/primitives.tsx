@@ -32,6 +32,7 @@ export const LANE_WORD: Record<TowerLaneKey, string> = {
   freeze: "Freeze",
   stop: "Stop",
   watch: "Watch",
+  unclassified: "Needs decision",
 };
 
 export const LANE_TONE: Record<TowerLaneKey, Tone> = {
@@ -40,6 +41,7 @@ export const LANE_TONE: Record<TowerLaneKey, Tone> = {
   freeze: "red",
   stop: "red",
   watch: "gray",
+  unclassified: "gray",
 };
 
 /** CSS-module class for a lane, e.g. `laneFund`. */
@@ -55,6 +57,7 @@ export const LANE_HEX: Record<TowerLaneKey, string> = {
   freeze: "#a32d2d",
   stop: "#a32d2d",
   watch: "#b4b2a9",
+  unclassified: "#b4b2a9",
 };
 
 /** Chart-safe hex per AI spend type — matches the design's `col` maps. */

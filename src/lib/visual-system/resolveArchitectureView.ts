@@ -1,5 +1,8 @@
 import type { TechRecordType } from "@/lib/home/preview/types";
-import type { ArchitectureView } from "@/lib/visual-system/architecture-view-contract";
+import {
+  AUDIENCE_DENSITY,
+  type ArchitectureView,
+} from "@/lib/visual-system/architecture-view-contract";
 import { buildBusinessCapabilityLandscapeView } from "@/lib/visual-system/projections/capability-landscape";
 import { buildCapabilityToTechnologyView } from "@/lib/visual-system/projections/capability-to-technology";
 import {
@@ -53,7 +56,8 @@ export function resolveArchitectureView(
   request: ResolveArchitectureViewRequest,
 ): ResolvedArchitectureView {
   if (request.format === "executive_landscape") {
-    if (!request.applications) return missingInputRefusal(request, "applications");
+    if (!request.applications)
+      return missingInputRefusal(request, "applications");
     return {
       status: "ready",
       view: request.capability
@@ -75,15 +79,35 @@ export function resolveArchitectureView(
   }
 
   if (request.format === "end_to_end_data_flow") {
-    if (!request.integrations) return missingInputRefusal(request, "integrations");
-    const result = buildCurrentStateFlow({
+    if (!request.integrations)
+      return missingInputRefusal(request, "integrations");
+    const options = {
       tenantKey: request.tenantKey,
       tenantDisplayName: request.tenantDisplayName,
       integrations: request.integrations,
       applications: request.applications,
       canonicalBuild: request.canonicalBuild,
-    });
+    };
+    let result = buildCurrentStateFlow(options);
+    const maximum = Math.min(
+      ARCHITECTURE_VIEW_POLICIES[request.format].maximumVisibleNodes,
+      AUDIENCE_DENSITY[result.view.audienceLevel].max ?? Infinity,
+    );
+    for (
+      let perLaneLimit = 5;
+      result.view.nodes.length > maximum && perLaneLimit >= 1;
+      perLaneLimit--
+    )
+      result = buildCurrentStateFlow({ ...options, perLaneLimit });
     const failures = flowAdmissionFailures(result);
+    if (result.view.nodes.length > maximum)
+      failures.push({
+        ruleId: "FLOW-DENSITY",
+        headline: "A narrower flow slice is needed",
+        detail:
+          "The recorded zones and platform nodes exceed this view's display budget even after aggregation. Inspect individual movements or select a narrower record slice.",
+        measurement: `${result.view.nodes.length} nodes; maximum ${maximum}.`,
+      });
     if (failures.length) {
       return {
         status: "refused",
@@ -133,7 +157,7 @@ function flowAdmissionFailures(
 ): ArchitectureAdmissionFailure[] {
   const failures: ArchitectureAdmissionFailure[] = [];
   const hasLanding = result.view.nodes.some((node) =>
-    ["data_warehouse", "data_mart"].includes(node.layer),
+    ["enterprise_warehouse", "data_marts"].includes(node.layer),
   );
   const hasConsumption = result.view.nodes.some((node) =>
     ["analytics_bi"].includes(node.layer),

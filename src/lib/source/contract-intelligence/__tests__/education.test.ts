@@ -1,4 +1,59 @@
-import { buildContractEducation, contractEducationFromRecord } from "../education";
+import {
+  buildContractEducation,
+  contractEducationFromRecord,
+} from "../education";
+import { resolveContractPlaybook } from "../playbook-crosswalk";
+
+describe("declared contract playbook crosswalk", () => {
+  it.each([
+    ["legacy_analytics_managed_services", "AMS_MANAGED_SERVICES", 6],
+    ["application_managed_services", "AMS_MANAGED_SERVICES", 6],
+    ["infra_service_desk_managed_services", "AMS_MANAGED_SERVICES", 6],
+    ["cloud_consumption", "CLOUD_FINOPS", 6],
+    ["consumption_commit", "CLOUD_FINOPS", 6],
+    ["cloud_consumption_commit", "CLOUD_FINOPS", 6],
+    ["productivity_platform", "CONTRACT_RENEWAL", 5],
+    ["crm_saas", "CONTRACT_RENEWAL", 5],
+  ])("maps %s explicitly to %s", (contractArchetype, id, count) => {
+    const result = resolveContractPlaybook(contractArchetype);
+    expect(result.state).toBe("mapped");
+    if (result.state !== "mapped") throw new Error("Expected mapping");
+    expect(result.archetype.id).toBe(id);
+    expect(result.archetype.valueLeverRules).toHaveLength(count);
+    expect(result.mapping.version).toBe("1.0.0");
+    expect(result.mapping.reviewState).toBe("engineering_declared");
+    expect(result.mapping.reviewedBy).toBeNull();
+    expect(result.mapping.rationale.length).toBeGreaterThan(30);
+    expect(result.mapping.sourceRef).toContain("playbook-crosswalk");
+  });
+
+  it.each([
+    null,
+    "",
+    "AMS",
+    "other_managed_services",
+    "CLOUD_FINOPS",
+    "toString",
+    "__proto__",
+  ])("never guesses a mapping for %s", (value) => {
+    expect(resolveContractPlaybook(value).state).toBe("unmapped");
+  });
+
+  it("refuses disagreeing declared fields even when both map to the same playbook", () => {
+    expect(
+      resolveContractPlaybook("cloud_consumption", "consumption_commit").state,
+    ).toBe("conflicted");
+  });
+
+  it("can use the coverage field only when the register has no declared type", () => {
+    expect(resolveContractPlaybook(null, "consumption_commit").state).toBe(
+      "mapped",
+    );
+    expect(
+      resolveContractPlaybook("unknown_type", "consumption_commit").state,
+    ).toBe("conflicted");
+  });
+});
 
 const base = {
   vendorName: "Synthetic Vendor",
@@ -140,7 +195,10 @@ describe("benchmarking clause basis line", () => {
 
   it.each([
     ["present", "benchmarking clause present"],
-    ["present_with_annual_right", "benchmarking clause present with annual right"],
+    [
+      "present_with_annual_right",
+      "benchmarking clause present with annual right",
+    ],
   ])("reports %s as recorded", (clause, expected) => {
     expect(basisFor(clause).toLowerCase()).toContain(expected);
   });

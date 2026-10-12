@@ -544,7 +544,7 @@ describe("validateManifest serving_approval", () => {
     expect(
       validateManifest(
         servableManifest({
-          serving_approval: servingApproval({ surface: "tower" as never }),
+          serving_approval: servingApproval({ surface: "source" as never }),
         }),
       ).ok,
     ).toBe(false);
@@ -590,6 +590,19 @@ describe("validateManifest serving_approval", () => {
 });
 
 describe("resolveServingApproval", () => {
+  it("approves Tower only with a separate exact-version Tower serving approval", () => {
+    const approved = servableManifest({
+      serving_approval: servingApproval({ surface: "tower" }),
+    });
+    expect(resolveServingApproval([approved], servingBinding({ surface: "tower" }))).toEqual({
+      approved: true,
+      approval: servingApproval({ surface: "tower" }),
+    });
+    expect(servingRefusal([approved], servingBinding({ surface: "home" }))).toBe(
+      "serving_approval is for tower, not home",
+    );
+  });
+
   it("approves serving a loaded version on the surface the approval names", () => {
     expect(
       resolveServingApproval([servableManifest()], servingBinding()),
@@ -648,7 +661,7 @@ describe("resolveServingApproval", () => {
     expect(
       servingRefusal(
         [servableManifest()],
-        servingBinding({ surface: "tower" as never }),
+        servingBinding({ surface: "tower" }),
       ),
     ).toBe("serving_approval is for home, not tower");
   });

@@ -1,4 +1,5 @@
 import { classifyIntent } from "./classifier";
+import { prepareExecutiveContext } from "./executive-context";
 import { route } from "./router";
 import {
   chunkAskText,
@@ -133,6 +134,8 @@ export interface AskOptions {
   companionCanvasEnabled?: boolean;
   /** Caller surface renders inline markdown (aVa dock) — stream plain answer only with no tab payload. Overrides companionCanvasEnabled for the answerOnly path. */
   answerOnlyStreaming?: boolean;
+  /** Executive surface: Claude authors the full answer and all exhibits. */
+  modelAuthoredOutput?: boolean;
   traceSession?: {
     user?: AnswerTraceEnvelope["session"]["user"];
     tenant?: unknown;
@@ -334,11 +337,9 @@ export async function* askIntelligence(
       surfaceContext: opts.surfaceContext,
     });
     emitTiming(
-      trace.finish(
-        "retrieval.curated_dossier.done",
-        curatedDossierStartedAt,
-        { sourceCount: curatedDossier.sources.length },
-      ),
+      trace.finish("retrieval.curated_dossier.done", curatedDossierStartedAt, {
+        sourceCount: curatedDossier.sources.length,
+      }),
     );
     // Keep DB-backed retrieval sequential to avoid exhausting session-mode pools under Ask verifier load.
     const tenantEnterpriseStartedAt = Date.now();
@@ -500,7 +501,15 @@ export async function* askIntelligence(
       tenantName: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
       sources: selectedSources,
     });
-    const sources = sourceSafety.sources;
+    const executiveContext = opts.modelAuthoredOutput
+      ? prepareExecutiveContext(
+          sourceSafety.sources,
+          tenantKeyForRetiredFactGate,
+          opts.tenantId,
+          opts.conversationContextBlock,
+        )
+      : null;
+    const sources = executiveContext?.sources ?? sourceSafety.sources;
     emitTiming(
       trace.mark("retrieval.sources_selected", {
         rawSourceCount: rawSources.length,
@@ -547,7 +556,7 @@ export async function* askIntelligence(
       sources: proofAnswerSources,
       surfaceContext: opts.surfaceContext,
     });
-    if (eclConsultantProofAnswer) {
+    if (!opts.modelAuthoredOutput && eclConsultantProofAnswer) {
       const rawAnswer = applyCxoAnswerModeFallbacks(
         eclConsultantProofAnswer.text,
         answerMode,
@@ -564,7 +573,8 @@ export async function* askIntelligence(
       answer = applyCxoAnswerModeFallbacks(guardedAnswer.text, answerMode);
       const proofAnswerRetiredFacts = scanRetiredFacts({
         tenantKey: tenantKeyForRetiredFactGate,
-        tenantName: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
+        tenantName:
+          opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
         textBlocks: [
           {
             location: `eclConsultantProofAnswer:${eclConsultantProofAnswer.id}`,
@@ -676,6 +686,7 @@ export async function* askIntelligence(
     const pendingDeltas: string[] = [];
     for await (const delta of synthesizeStream({
       richText: opts.richText,
+      modelAuthoredOutput: opts.modelAuthoredOutput,
       // Companion-canvas turns stream answer-only (true streaming); the
       // structured canvas is authored separately below. Flag off → unchanged.
       answerOnlyStreaming: opts.answerOnlyStreaming ?? companionCanvasEnabled,
@@ -688,20 +699,21 @@ export async function* askIntelligence(
       userContextBlock: opts.userContextBlock,
       factAvailabilityBlock,
       coverageReportBlock: formatCoverageReportForPrompt(coverageReport),
-      conversationContextBlock:
-        [
-          skyHarborCtoPromptAddendum,
-          sourceContract360PromptBlock,
-          opts.conversationContextBlock,
-          handoff
-            ? `ROUTING ADVISORY CONTEXT: A stakeholder-conflict question may need an Atlas handoff. Do not emit a deterministic handoff. Author the final user-visible answer yourself and, if a handoff is warranted, say it naturally. Suggested context only: ${handoff}`
-            : "",
-          currentStateAsk
-            ? "CURRENT-STATE QUESTION CONTEXT: The user is asking for a broad current-state read. Author the answer from the selected sources and visible output contract; do not rely on deterministic fallback prose."
-            : "",
-        ]
-          .filter(Boolean)
-          .join("\n\n") || undefined,
+      conversationContextBlock: opts.modelAuthoredOutput
+        ? opts.conversationContextBlock
+        : [
+            skyHarborCtoPromptAddendum,
+            sourceContract360PromptBlock,
+            opts.conversationContextBlock,
+            handoff
+              ? `ROUTING ADVISORY CONTEXT: A stakeholder-conflict question may need an Atlas handoff. Do not emit a deterministic handoff. Author the final user-visible answer yourself and, if a handoff is warranted, say it naturally. Suggested context only: ${handoff}`
+              : "",
+            currentStateAsk
+              ? "CURRENT-STATE QUESTION CONTEXT: The user is asking for a broad current-state read. Author the answer from the selected sources and visible output contract; do not rely on deterministic fallback prose."
+              : "",
+          ]
+            .filter(Boolean)
+            .join("\n\n") || undefined,
       averageConfidence,
       onModelInput: opts.onModelInput,
       onModelOutput: opts.onModelOutput,
@@ -723,6 +735,11 @@ export async function* askIntelligence(
         error: clientSafeRetiredFactMessage(),
         retiredFactFindings: modelOutputRetiredFacts,
       };
+      return;
+    }
+    if (opts.modelAuthoredOutput) {
+      for (const delta of pendingDeltas) yield { type: "delta", text: delta };
+      yield { type: "done" };
       return;
     }
     const productTruthGrounding = productTruthGroundingText([

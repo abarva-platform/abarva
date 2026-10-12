@@ -826,6 +826,8 @@ function buildComponents(
 export interface AgentMarkdownProps {
   /** Raw text emitted by the agent. May contain markdown, IDs, citation tags. */
   text: string;
+  /** Render authored Markdown without language normalization or token substitution. */
+  preserveOutput?: boolean;
   /**
    * Optional placeholder→React-node substitutions applied before any
    * other tokenization. Use this to embed pre-built nodes (e.g.
@@ -842,17 +844,36 @@ export interface AgentMarkdownProps {
  * XSS is mitigated by `rehype-sanitize` running over the parsed AST
  * before our component overrides see it.
  */
-export function AgentMarkdown({ text, inlineNodes }: AgentMarkdownProps) {
+export function AgentMarkdown({
+  text,
+  inlineNodes,
+  preserveOutput = false,
+}: AgentMarkdownProps) {
   const components = useMemo(() => buildComponents(inlineNodes), [inlineNodes]);
   const normalizedText = useMemo(
-    () => normalizeAbarvaAgentMarkup(text),
-    [text],
+    () => (preserveOutput ? text : normalizeAbarvaAgentMarkup(text)),
+    [text, preserveOutput],
   );
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[rehypeSanitize]}
-      components={components}
+      components={
+        preserveOutput
+          ? {
+              p: ({ children }) => (
+                <p style={{ margin: "0.6em 0" }}>{children}</p>
+              ),
+              pre: ({ children }) => (
+                <pre
+                  style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
+                >
+                  {children}
+                </pre>
+              ),
+            }
+          : components
+      }
     >
       {normalizedText}
     </ReactMarkdown>

@@ -3,7 +3,22 @@
   "tenant_key": "meridian-health",
   "contract_id": "MER-TECH-LAAMS-001",
   "vendor_name": "Cognizant Technology Solutions",
-  "status": "data_plane_loaded_verified",
+  "status": "input_corrected_not_reloaded",
+  "prior_input_status": {
+    "recorded_status": "data_plane_loaded_verified",
+    "package_sha256": "9e214eec25a43689c6dfeac206700e33e5408014da5e479f2a25ee3515a140a1",
+    "verification_basis": "Historical package-summary declaration; not independently reverified by the input correction."
+  },
+  "input_correction": {
+    "changed_fields": ["sla_performance.unit"],
+    "changed_rows": 72,
+    "prior_source_sha256": "be14bb0ee90c8875b313934165cf1c2345b90f120dfb3f8ac967da35e68cb909",
+    "corrected_source_sha256": "8a2687c51352982ad1bd352970708827140741cd4c26bb859c32da0b1bbf7b0e",
+    "package_sha256": "7f7cb6921946f6bec2aab39d1c5e940b0e9c4ca529650f4707be93f924109e05",
+    "validation_state": "offline_plan_pass",
+    "load_approval": null,
+    "apply_run_id": null
+  },
   "loader_ready_files": {
     "batch_job_volumetrics.csv": 96,
     "change_orders.csv": 12,

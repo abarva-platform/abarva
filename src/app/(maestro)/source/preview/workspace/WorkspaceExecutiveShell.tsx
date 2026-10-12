@@ -3466,7 +3466,7 @@ function ContractDetailLoadState({
   );
 }
 
-function ContractPage({
+export function ContractPage({
   vm,
   logic,
   portfolio,
@@ -3539,7 +3539,7 @@ function ContractPage({
       <ContractCaseThreadStrip vm={vm} isOptimizeTab={tab === "Optimize"} />
       <section
         className={`sw-v2-panel ${
-          tab === "Optimize" ? "sw-v2-span-3" : "sw-v2-span-2"
+          tab === "Optimize" || tab === "Story" ? "sw-v2-span-3" : "sw-v2-span-2"
         } sw-v2-contract-story-panel`}
       >
         {/*
@@ -3682,7 +3682,7 @@ function ContractPage({
         )}
       </section>
 
-      {tab !== "Optimize" ? <section className="sw-v2-panel sw-v2-contract-context-panel">
+      {tab !== "Optimize" && tab !== "Story" ? <section className="sw-v2-panel sw-v2-contract-context-panel">
         <ContractDetailSidePanel
           contract={contract}
           coverage={coverage}
@@ -3720,8 +3720,6 @@ function ContractPage({
           vm={vm}
         />
       </section> : null}
-
-      {tab === "Story" ? <ProductShellCommercialPostureStrip vm={vm} /> : null}
     </div>
   );
 }
@@ -4107,7 +4105,7 @@ function ContractTabBody({
  * tab cannot say — the content the removed tab-body block held — without the
  * builder-facing provenance label or the stat tiles that came with it.
  */
-function ContractGovernedStatement({
+export function ContractGovernedStatement({
   contract,
   coverage,
   headlineOnly,
@@ -4647,80 +4645,6 @@ function ContractRelationshipMap({
     </div>
   );
 }
-
-function ProductShellCommercialPostureStrip({ vm }: { vm: SourceWorkspaceVM }) {
-  const posture = vm.commercialPosture;
-  if (!posture) return null;
-  return (
-    <section
-      className="sw-v2-panel sw-v2-span-2"
-      aria-label="Commercial posture"
-    >
-      <PanelHead eyebrow="Commercial posture" title={posture.headline} />
-      <p className="sw-v2-lede">{posture.summary}</p>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(185px, 1fr))",
-          gap: 10,
-          marginTop: 14,
-        }}
-      >
-        {posture.items.map((item) => (
-          <div
-            key={item.label}
-            style={{
-              minHeight: 96,
-              border: "1px solid rgba(10,10,11,.1)",
-              borderRadius: 8,
-              background:
-                item.label === "Commitment posture"
-                  ? "rgba(15,110,86,.05)"
-                  : "#faf7f1",
-              padding: "12px 13px",
-            }}
-          >
-            <span
-              style={{
-                display: "block",
-                color: "#888780",
-                fontSize: 9.5,
-                fontWeight: 850,
-                letterSpacing: ".08em",
-                marginBottom: 6,
-                textTransform: "uppercase",
-              }}
-            >
-              {item.label}
-            </span>
-            <b
-              style={{
-                display: "block",
-                color: item.tone,
-                fontSize: 13,
-                lineHeight: 1.25,
-                marginBottom: 5,
-              }}
-            >
-              {item.value}
-            </b>
-            <small
-              style={{
-                color: "#5f5e5a",
-                display: "block",
-                fontSize: 11.2,
-                lineHeight: 1.35,
-              }}
-            >
-              {item.detail}
-            </small>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function contractOptimizeAvailableTabs(vm: SourceWorkspaceVM) {
   const opportunities = vm.opportunityView?.opportunities ?? [];
   const hasLevers = leverTableRows(opportunities).length > 0;

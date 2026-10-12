@@ -76,7 +76,7 @@ const AI_KIND_LABEL: Record<TowerAiKind, string> = {
 
 function formatLoadedUsdM(value: number | null | undefined): string {
   return value === null || value === undefined
-    ? "not loaded"
+    ? "not verified"
     : formatUsdM(value);
 }
 
@@ -135,8 +135,10 @@ function contractSummaryLine(view: TowerCommandCenterView) {
   const claimCount = valueClaimCount(view);
   return (
     <>
-      {formatLoadedUsdM(s.approvedInvestmentUsd)} in approved project funding ·{" "}
-      <strong>{claimCount > 0 ? formatUsdM(s.claimableUsd) : "Not loaded"} cleared for reporting in loaded months</strong> ·{" "}
+      {s.approvedInvestmentUsd === null
+        ? "Approved FY26 project funding is not verified"
+        : `${formatUsdM(s.approvedInvestmentUsd)} in approved FY26 project funding`} ·{" "}
+      <strong>{s.claimableAmountLoaded === false ? "Cleared amount not verified" : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? `${formatUsdM(s.claimableUsd)} cleared for reporting in loaded months` : "No benefit amount cleared for reporting"}</strong> ·{" "}
       {claimCount > 0
         ? `${formatCount(openClaimCount(view))} of ${formatCount(claimCount)} claims not cleared for reporting`
         : "Value claims not loaded"}
@@ -225,8 +227,8 @@ function ValueGateChart({ view }: { view: TowerCommandCenterView }) {
       title: "Approved funding",
       note: "AI funding is part of the project total. Neither amount shows money already spent or benefits earned.",
       rows: [
-        ["Approved project funding", formatLoadedUsdM(s.approvedInvestmentUsd)],
-        ["Approved AI case funding within it", caseFunding === null ? "Not loaded" : formatUsdM(caseFunding)],
+        ["Approved FY26 project funding", formatLoadedUsdM(s.approvedInvestmentUsd)],
+        ["Approved FY26 AI case funding within it", caseFunding === null ? "Not verified" : formatUsdM(caseFunding)],
       ],
     },
     {
@@ -243,8 +245,8 @@ function ValueGateChart({ view }: { view: TowerCommandCenterView }) {
       title: "Finance review · loaded months",
       note: "Finance review and permission to report are separate steps. Only the cleared amount can be presented as an achieved benefit.",
       rows: [
-        ["Finance validated", s.valueClaimCount > 0 ? formatUsdM(s.financeValidatedUsd) : "Not loaded"],
-        ["Cleared for reporting", s.valueClaimCount > 0 ? formatUsdM(s.claimableUsd) : "Not loaded"],
+        ["Finance validated", s.financeValidatedAmountLoaded === false ? "Not verified" : s.financeValidatedAmountLoaded === true || s.financeAttestedClaimCount > 0 ? formatUsdM(s.financeValidatedUsd) : "No amount recorded"],
+        ["Cleared for reporting", s.claimableAmountLoaded === false ? "Not verified" : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? formatUsdM(s.claimableUsd) : "No amount cleared"],
       ],
     },
   ];
@@ -742,7 +744,7 @@ function costFindings(view: TowerCommandCenterView): CostFinding[] {
   const actions = [...view.actions].sort((a, b) => a.sequence - b.sequence);
   const rows: CostFinding[] = actions.slice(0, 4).map((action, index) => ({
     id: `A${action.sequence || index + 1}`,
-    badge: action.lane,
+    badge: action.lane === "unclassified" ? "Evidence task" : action.lane,
     amountUsd: action.amountExposedUsd,
     amountLabel: action.moduleHandoff?.toLowerCase() === "source" ? "Potential annual saving" : "Projected yearly benefit affected",
     amountText: formatOptionalUsdM(action.amountExposedUsd),
@@ -861,7 +863,7 @@ export function AiPortfolioContractView({
       <div className={styles.contractModeRow}>
         <SectionTitle
           title="AI initiatives and tool rollouts"
-          subtitle={`${formatCount(s.aiInitiativeCount)} assets · ${caseFunding === null ? "AI case funding incomplete" : `${formatUsdM(caseFunding)} approved AI case funding`}`}
+          subtitle={`${formatCount(s.aiInitiativeCount)} assets · ${caseFunding === null ? "Approved FY26 AI case funding not verified" : `${formatUsdM(caseFunding)} approved FY26 AI case funding`}`}
         />
         <div
           className={styles.contractSegments}
@@ -1343,7 +1345,7 @@ export function EvidenceActionsContractView({
               ))
             ) : (
               <div className={styles.contractEmpty}>
-                No evidence-owner queue rows are loaded for this review.
+                No evidence-owner queue rows are loaded. An empty queue does not mean every claim has proof.
               </div>
             )}
           </div>
