@@ -38,9 +38,9 @@ The P4 workstream page could save only a milestone name and count milestones fro
 
 ## QA / Validation
 
-- Pass: fourteen combined model/editor/page/registry, complete host, capture-route/generation, approved-ROM/workbook and value-engine/API suites, 748 tests after merging actual main including the landed value readback; local fixtures only.
+- Pass: fourteen combined model/editor/page/registry, complete host, capture-route/generation, approved-ROM/workbook and value-engine/API suites, 748 tests, plus the new main gate-read integration suite with five tests. Total: fifteen suites, 753 tests after reconciling the combined main release; local fixtures only.
 - Pass: Node 24 typecheck, zero diagnostics.
-- Pass: sixteen milestone mutation checks and twelve saved-value/readiness checks replayed and killed after resolving the merge conflicts; sources restored after every run. Targeted ESLint, library and route/export reachability; coverage and tenancy write/check; manual regeneration/check; all 11 release gates. Genuine regeneration after actual-main reconciliation raises covered files from 2,831 to 2,833, exactly the two new model/editor test files.
+- Pass: sixteen milestone mutation checks and twelve saved-value/readiness checks replayed and killed after resolving the value-release merge conflicts; sources restored after every run. The subsequent main merge had no conflicts and preserves that P4 behavior. Targeted ESLint, library and route/export reachability; coverage and tenancy write/check; manual regeneration/check; all 11 release gates. Genuine regeneration after actual-main reconciliation raises covered files from 2,833 to 2,835, exactly the two new model/editor test files.
 - Pass: actual component renders at 1440 and 390 in light/dark, with the editor expanded and no horizontal overflow. Compared with template v1.10; the temporary render test was removed. These fixtures exclude the signed-in host and agent dock.
 - Not run: exact-head CI, merge, runtime invariant or fresh signed-in P4 acceptance.
 
