@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The inactive Tower build now stages each annual spend category alongside one total for the same spend. Category rows have no business IDs in the intake, so they remain source-row-backed measures under the shared canonical spend metric. The total, its categories, and contract exposures carry distinct roles and nonadditivity warnings. Outcome period labels are retained as source text. The build also records missing AI evidence links, unmatched program IDs, conflicting Finance amounts and claim statuses, and usage rates with different denominators. Approved budget, fiscal-year funding, and claimable value remain unknown.
+The inactive Tower build now stages each annual spend category alongside one total for the same spend. Category rows have no business IDs in the intake, so they remain source-row-backed measures under the shared canonical spend metric. The total, its categories, and contract exposures carry distinct roles and nonadditivity warnings. Outcome period labels are retained as source text. The build also records missing AI evidence links, unmatched program IDs, conflicting Finance amounts and claim statuses, and usage rates with different denominators. Approved budget, fiscal-year funding, and claimable value remain unknown. The exact source version now carries a named approval to stage it; it is not active or approved for serving.
 
 ## Layer Impact
 
@@ -40,13 +40,14 @@ Release lane: `client-data-lane`.
 ## QA / Validation
 
 - `node --test scripts/tower/__tests__/registered-intake-physical-stage.test.mjs scripts/tower/__tests__/registered-intake-reload-candidate.test.mjs`: eleven passed, including balanced category amount mutations, blank claim fields, blank program IDs, and structurally matching raw detail with unreconciled user counts.
-- Dry stage: 17 source-file metadata rows, 299 selected source records, 237 canonical objects, 308 measures, and 352 rows across nine Tower views. Stage quality gate passed with `materialized: false`; the exact load approval remains missing.
-- The source-set hash is unchanged at `11d0f3f92b0c1da9cd4ca2bf369d0a90587b2deac15f4108262b1d154f829c40`. The generated candidate SHA is now `0428caec53f4a3a2366acf117ba42ec9a82e0cac94ab917fb6ce87a027e9821c`; earlier dry candidate SHAs and the 325-row physical preview are superseded. Any later approval and private stage must bind to the new candidate bytes and 352-row plan.
+- Initial dry stage: 17 source-file metadata rows, 299 selected source records, 237 canonical objects, 308 measures, and 352 rows across nine Tower views. Stage quality gate passed with `materialized: false`; the load approval was missing at that point.
+- After the exact approval entry was supplied, a fresh dry stage again passed with the same source-set hash, candidate SHA, counts, and 352-row plan. Its preflight reports `load_approval_status: approved`, `physical_quality_gate_status: pass`, and `stage_status: not_written`.
+- The source-set hash is unchanged at `11d0f3f92b0c1da9cd4ca2bf369d0a90587b2deac15f4108262b1d154f829c40`. The generated candidate SHA is `0428caec53f4a3a2366acf117ba42ec9a82e0cac94ab917fb6ce87a027e9821c`; earlier dry candidate SHAs and the 325-row physical preview are superseded. The private stage must bind to these candidate bytes and the 352-row plan.
 - `git diff --check`, focused ESLint, Node syntax checks, manifest validation, and all 11 release gates passed locally. CI must rerun on the final PR head.
 
 ## Rollout Plan
 
-Merge through a PR after the base physical-stage release. The repo-owned main ACA workflow deploys the code. The data candidate remains inactive until its exact generated candidate SHA, source-set hash, assessment ID, and release record receive the required human-authored manifest approval. A private ACA operator job then stages and proves the exact candidate; a separate serving approval and promotion are required before the product reads it.
+Merge the exact-version load approval through a PR. The repo-owned main ACA workflow deploys the image containing it. The data candidate remains inactive until a private ACA operator job stages and proves the matching candidate from that image. A separate serving approval and promotion are required before the product reads it.
 
 ## Deployment Authority
 
@@ -64,7 +65,7 @@ Revert the PR and rebuild the inactive candidate. No active assessment is change
 
 ## Audit Evidence
 
-The PR diff and CI, dry-stage `candidate.json`, `stage-validation.json`, `stage-quality-gate.json`, and `stage-preflight.json` provide local evidence. Any later private stage needs its own ACA job, database readback, Blob proof receipt, and lifecycle evidence.
+The PR diff and CI, dry-stage `candidate.json`, `stage-validation.json`, `stage-quality-gate.json`, and `stage-preflight.json` provide local evidence. The post-approval dry stage passed without writing data. Any later private stage needs its own ACA job, database readback, Blob proof receipt, and lifecycle evidence.
 
 ## Known Gaps
 
