@@ -33,6 +33,7 @@ Moves step pages waited for several independent server reads in sequence before 
 - The charter bridge accepts a previously read register result and makes the final rows available to the page, preserving an explicit unavailable state after a failed read.
 - The P2 step page uses the server register projection when present. The gate page uses the server sign-off projection and shows an explicit unavailable state if document or sign-off reads fail. Non-gate pages continue the cabinet read after the head renders.
 - Independent client panels share an in-flight cabinet request, with failures delivered to every reader. The walk stores per-view timing details and measures settled head after the heading, next action, and step bar are present.
+- The Source layout smoke retries one transient Chromium screenshot-capture error before failing. Screenshot output and every layout assertion remain required.
 
 ## QA / Validation
 
@@ -42,6 +43,7 @@ Moves step pages waited for several independent server reads in sequence before 
 - PASS: route reachability, library orphan, export reachability, test coverage census, tenancy fence census, and manual check.
 - PASS: release check after adding the required release lane. It will be repeated on the final branch head.
 - PASS: six temporary behavior mutations each made its focused test fail; all source files were restored. The performance ordering itself is verified by the post-deploy timing walk rather than a unit mutation.
+- PASS: the Source stage layout smoke passes locally; complete CI on the final head remains required after the screenshot-capture retry.
 - PENDING: current-head CI and post-deploy signed-in timing walk.
 
 The pre-change signed-in walk reported the following five slowest reachable views. A separate fresh browser sample measured document response waits on those same views; these are distinct observations and are not paired trials.
@@ -82,3 +84,4 @@ Revert this PR on `main` and allow the repository-owned ACA main deploy workflow
 - Server stage durations are unavailable in the baseline walk; the new proof records them after deployment.
 - The response-time target and non-speed UX comparison require a post-deploy signed-in walk. Local tests do not establish live performance.
 - A later walk of a changing runtime encountered a missing static chunk and is a separate reliability failure, not a valid speed sample.
+- The screenshot retry addresses one observed browser protocol error; a repeated capture failure still fails the smoke job.
