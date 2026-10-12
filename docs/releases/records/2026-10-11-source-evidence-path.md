@@ -45,6 +45,7 @@ Design reference: `docs/design/source/SOURCE_OPTIMIZE_CONTRACT_CLAUDE_DESIGN_HAN
 - Desktop and narrow local browser QA uses the actual edited component and synthetic fixtures. This is not authenticated product acceptance. Recorded lineage disclosure, input selection and absent-input states were exercised.
 - No new raw color values, external icon package or client input files.
 - All 11 release gates pass. Browser viewports of 1440 and 390 pixels have no horizontal overflow in the local component harness.
+- CI exposed one older narrative assertion still expecting the replaced wording. Its replacement checks the evidence boundary and accountable input request; all 40 workspace suites now pass locally, 398 tests. Current-head CI remains required.
 
 ## Rollout Plan
 
