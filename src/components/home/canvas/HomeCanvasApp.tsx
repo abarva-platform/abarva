@@ -36,6 +36,11 @@ import {
 import { ArchitectureCanvas } from "./ArchitectureCanvas";
 import { FamilyCanvas } from "./FamilyCanvas";
 import styles from "./HomeCanvas.module.css";
+import {
+  homeIntelligenceHref,
+  rememberHomeQuestion,
+  type HomeIntelligenceRequest,
+} from "@/lib/home/preview/intelligence-handoff";
 
 export function HomeCanvasApp({
   bundle: rawBundle,
@@ -67,6 +72,13 @@ export function HomeCanvasApp({
   );
   const query = params.get("q") ?? "";
   const [inspection, setInspection] = useState<CanvasInspection | null>(null);
+  const [lastAvaQuestion, setLastAvaQuestion] = useState("");
+  const intelligenceRequest: HomeIntelligenceRequest = {
+    tenantKey,
+    recordToken,
+    requestedProvider,
+    chapterId: chapter?.chapterId,
+  };
   const dialog = useRef<HTMLDialogElement>(null);
   const viewport = useRef<HTMLDivElement>(null);
   const href = (
@@ -160,6 +172,7 @@ export function HomeCanvasApp({
       activeChapterId={chapter?.chapterId}
       recordSource={recordSource}
       requestedProvider={requestedProvider}
+      onQuestion={setLastAvaQuestion}
     >
       <div
         className={styles.app}
@@ -249,6 +262,15 @@ export function HomeCanvasApp({
               </button>
             </span>
             <div className={styles.actions}>
+              <Link
+                href={homeIntelligenceHref(intelligenceRequest)}
+                prefetch={false}
+                onClick={() =>
+                  rememberHomeQuestion(intelligenceRequest, lastAvaQuestion)
+                }
+              >
+                Explore in Intelligence
+              </Link>
               <a
                 href={`/api/home/walkthrough-export?${exportParams}`}
                 title="Download the existing full Home walkthrough PDF"
@@ -336,6 +358,7 @@ export function HomeCanvasApp({
                 bundle={bundle}
                 tenantKey={tenantKey}
                 href={href}
+                intelligenceRequest={intelligenceRequest}
               />
             ) : family ? (
               <FamilyCanvas
@@ -385,10 +408,12 @@ function ContextCanvas({
   bundle,
   tenantKey,
   href,
+  intelligenceRequest,
 }: {
   bundle: HomeReviewBundle;
   tenantKey: HomePreviewTenantKey;
   href: (view: CanvasView, panel?: CanvasPanel) => string;
+  intelligenceRequest: HomeIntelligenceRequest;
 }) {
   const families = bundle.technologyEstate?.recordTypes ?? [];
   return (
@@ -456,7 +481,11 @@ function ContextCanvas({
         ].map((module) => (
           <section key={module.name}>
             <Link
-              href={`${module.route}?tenant=${encodeURIComponent(tenantKey)}`}
+              href={
+                module.name === "Intelligence"
+                  ? homeIntelligenceHref(intelligenceRequest)
+                  : `${module.route}?tenant=${encodeURIComponent(tenantKey)}`
+              }
               prefetch={false}
             >
               {module.name}

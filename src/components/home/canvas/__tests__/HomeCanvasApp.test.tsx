@@ -121,6 +121,21 @@ beforeEach(() => {
 });
 
 describe("native Home canvas", () => {
+  it("continues the selected record, tenant and focus in Intelligence", () => {
+    mockParams.set("view", "technology_data");
+    render(app());
+    const link = screen.getByRole("link", { name: "Explore in Intelligence" });
+    const destination = new URL(
+      link.getAttribute("href")!,
+      "https://example.test",
+    );
+    expect(destination.pathname).toBe("/intelligence");
+    expect(destination.searchParams.get("homeContext")).toBe(
+      "same-export-binding",
+    );
+    expect(destination.searchParams.get("homeChapter")).toBe("technology_data");
+    expect(destination.searchParams.get("client")).toBe("meridian-health");
+  });
   it("passes the exact record and active focus to the unchanged shared aVa", () => {
     mockParams.set("view", "technology_data");
     render(app());

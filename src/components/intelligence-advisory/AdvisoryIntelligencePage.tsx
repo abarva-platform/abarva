@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type {
   EnterpriseLandscapeViewModel,
   LandscapeSection,
@@ -16,6 +16,10 @@ import { executiveReviewQuestions } from "@/lib/intelligence/answer/quality-revi
 import { IntelligenceQualityReview } from "./IntelligenceQualityReview";
 import { AvaChatShell } from "@/components/ava-chat/AvaChatShell";
 import type { AskSource } from "@/lib/intelligence/ask/types";
+import {
+  takeHomeQuestion,
+  type HomeIntelligenceState,
+} from "@/lib/home/preview/intelligence-handoff";
 
 type AssistantMessage = {
   id: string;
@@ -119,8 +123,10 @@ export function resolveAssistantAnswerText(
 
 export function AdvisoryIntelligencePage({
   viewModel,
+  homeHandoff,
 }: {
   viewModel: EnterpriseLandscapeViewModel;
+  homeHandoff?: HomeIntelligenceState;
 }) {
   const sectionList = useMemo(
     () => Object.values(viewModel.sections),
@@ -130,14 +136,30 @@ export function AdvisoryIntelligencePage({
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
   const [isAsking, setIsAsking] = useState(false);
   const [isReviewRunning, setIsReviewRunning] = useState(false);
+  const [homeQuestion, setHomeQuestion] = useState<string | null>(null);
+  const continuationBlocked = homeHandoff && homeHandoff.status !== "ready";
+  useEffect(() => {
+    if (homeHandoff?.status === "ready") {
+      const selectedQuestion = takeHomeQuestion(homeHandoff.request);
+      if (selectedQuestion) setHomeQuestion(selectedQuestion);
+    }
+  }, [homeHandoff]);
   const starterPrompts = useMemo(
-    () => buildStarterPrompts(viewModel),
-    [viewModel],
+    () =>
+      homeQuestion
+        ? [
+            homeQuestion,
+            ...buildStarterPrompts(viewModel)
+              .filter((prompt) => prompt !== homeQuestion)
+              .slice(0, 3),
+          ]
+        : buildStarterPrompts(viewModel),
+    [viewModel, homeQuestion],
   );
 
   async function submitAsk(input: string = question) {
     const trimmed = input.trim();
-    if (!trimmed || isAsking || isReviewRunning) return;
+    if (!trimmed || isAsking || isReviewRunning || continuationBlocked) return;
     const messageIndex = messages.length;
 
     const userMsg: UserMessage = {
@@ -175,11 +197,19 @@ export function AdvisoryIntelligencePage({
           modelAuthoredOutput: true,
           traceEnabled: true,
           surfaceContext: buildSurfaceContext(viewModel, sectionList),
+          ...(homeHandoff ? { homeContextRequest: homeHandoff.request } : {}),
         }),
       });
 
-      if (!response.ok || !response.body)
-        throw new Error(`Ask failed with ${response.status}`);
+      if (!response.ok) {
+        const failure = await response.json().catch(() => null);
+        throw new Error(
+          typeof failure?.error === "string"
+            ? failure.error
+            : "The advisor could not complete this question.",
+        );
+      }
+      if (!response.body) throw new Error("The advisor returned no answer.");
       setMessages((c) =>
         c.map((m) =>
           m.id === assistantId && m.role === "assistant"
@@ -362,7 +392,7 @@ export function AdvisoryIntelligencePage({
       onClick: () => void submitAsk(p),
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [latestAssistant, starterPrompts, isAsking, isReviewRunning]);
+  }, [latestAssistant, starterPrompts, isAsking, isReviewRunning, homeHandoff]);
 
   // onMessage handler for AvaChatShell
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -372,13 +402,44 @@ export function AdvisoryIntelligencePage({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <IntelligenceQualityReview
-        key={viewModel.clientKey}
-        viewModel={viewModel}
-        surfaceContext={buildSurfaceContext(viewModel, sectionList)}
-        disabled={isAsking}
-        onRunningChange={setIsReviewRunning}
-      />
+      {homeHandoff && (
+        <section
+          aria-label="Home continuation"
+          className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 bg-white px-6 py-3 text-sm"
+        >
+          <div>
+            {homeHandoff.status === "ready" ? (
+              <>
+                <strong>From Home</strong> · {homeHandoff.sourceLabel}
+                {homeHandoff.chapterTitle
+                  ? ` · ${homeHandoff.chapterTitle}`
+                  : ""}
+              </>
+            ) : (
+              <span role="alert">
+                {homeHandoff.status === "changed"
+                  ? "Home's record changed."
+                  : "The selected Home record is unavailable."}
+              </span>
+            )}
+          </div>
+          <a
+            href={`/home?tenant=${encodeURIComponent(homeHandoff.request.tenantKey)}`}
+            className="text-teal-700 underline"
+          >
+            Return to Home
+          </a>
+        </section>
+      )}
+      {!homeHandoff && (
+        <IntelligenceQualityReview
+          key={viewModel.clientKey}
+          viewModel={viewModel}
+          surfaceContext={buildSurfaceContext(viewModel, sectionList)}
+          disabled={isAsking}
+          onRunningChange={setIsReviewRunning}
+        />
+      )}
       <AvaChatShell
         surface="intelligence"
         agent={AVA_INTELLIGENCE_AGENT}
@@ -389,9 +450,9 @@ export function AdvisoryIntelligencePage({
         thread={thread}
         onMessage={handleMessage}
         canvas={null}
-        suggestedActions={suggestedActions}
+        suggestedActions={continuationBlocked ? [] : suggestedActions}
         keepSuggestedActionsVisible={true}
-        isBusy={isAsking || isReviewRunning}
+        isBusy={isAsking || isReviewRunning || Boolean(continuationBlocked)}
         preserveVisibleText
         surfaceContext={buildSurfaceContext(viewModel, sectionList)}
       />

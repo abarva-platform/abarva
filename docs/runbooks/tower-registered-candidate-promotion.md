@@ -22,7 +22,8 @@ Without a passing physical stage receipt, preflight produces `status: blocked`. 
 
 ### Reusable private ACA Job entry points
 
-`tower:registered-intake:preflight-job` and `tower:registered-intake:promote-job` run through
+`tower:registered-intake:preflight-job`, `tower:registered-intake:promote-job`, and the read-only
+`tower:registered-intake:verify-job` run through
 `npm run ops:aca-job -- --image <approved-image@sha256:...> --script <entry-point>`.
 They use the private operator Job and do not change web traffic. Pass
 `--secret-env DATABASE_URL=<existing-job-secret>` and the user-assigned Blob identity as
@@ -54,10 +55,19 @@ stores `preflight.json`, `progress.json`, and `job-contract.json` under
 Promotion downloads the reviewed preflight by its exact URI and SHA-256, uses the guarded
 operator, and stores `promotion.json`, `serving-readback.json`, progress, and job-contract files.
 The serving readback checks the active selector, lifecycle, all nine physical page populations,
-all nine `serving.tower_*` views, and the saved prior-generation fingerprints. Every uploaded
+all nine `serving.tower_*` views, and the saved prior-generation fingerprints. The command center
+serving view contains its summary, decision lanes, and recommended actions; the value proof
+serving view contains value proof and cost lens. The checker verifies each included population
+separately against its staged count and fingerprint. Every uploaded
 proof is downloaded and compared byte-for-byte. If promotion commits but a later proof step
 fails, the runner records the operator's pending proof if present and a fresh read-only selector
 observation; it fails the job and requires review. It never rolls back automatically.
+
+Use `tower:registered-intake:verify-job` when the selector is already on the reviewed candidate
+or when a separate post-commit readback is needed. Bind the exact staged ZIP and reviewed
+`preflight.json` URI/SHA-256 as for promotion. This job does not run the promotion operator or
+change the lifecycle pointer. It saves and reads back `serving-readback.json`, prints the exact
+proof and checksum in the private Job log, and restores the operator Job's idle template.
 
 ## Promote after review
 

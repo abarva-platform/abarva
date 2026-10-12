@@ -3,17 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { isFoundationPreviewOperatorSession } from "@/lib/auth/foundation-preview-session";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin-session";
 import { answerHomeAvaQuestion } from "@/lib/home/preview/ava-answer";
-import { getHomeEclProjectionBundleOrReviewedSnapshotWithSource } from "@/lib/home/preview/ecl-projection-bundle";
-import {
-  getHomeReviewBundle,
-  isHomePreviewTenantKey,
-} from "@/lib/home/preview/golden-snapshot";
+import { isHomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
+import { resolveHomeRecord } from "@/lib/home/preview/resolve-home-record";
 import { homeRecordSourceToken } from "@/lib/home/preview/record-source-token";
 import type { HomeRecordRenderSource } from "@/lib/home/preview/types";
-import {
-  isEclProductProvider,
-  resolveEclProductProvider,
-} from "@/lib/ecl/product-provider";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -65,29 +58,21 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const served = isEclProductProvider(
-    resolveEclProductProvider(
-      typeof body.requestedProvider === "string"
-        ? body.requestedProvider
-        : undefined,
-    ),
-  )
-    ? await getHomeEclProjectionBundleOrReviewedSnapshotWithSource(tenantKey)
-    : null;
-  const bundle = served?.bundle ?? getHomeReviewBundle(tenantKey);
-  if (!bundle) {
+  const record = await resolveHomeRecord(
+    tenantKey,
+    typeof body.requestedProvider === "string"
+      ? body.requestedProvider
+      : undefined,
+  );
+  if (!record) {
     return NextResponse.json(
       { error: "home_bundle_unavailable" },
       { status: 404 },
     );
   }
-  const recordSource: HomeRecordRenderSource = served?.recordSource ?? {
-    kind: "reviewed_snapshot",
-    canonicalSnapshotHash: bundle.provenance.canonical_snapshot_hash,
-  };
+  const { bundle, recordSource, recordToken } = record;
   if (
-    homeRecordSourceToken(tenantKey, body.expectedRecordSource) !==
-    homeRecordSourceToken(tenantKey, recordSource)
+    homeRecordSourceToken(tenantKey, body.expectedRecordSource) !== recordToken
   ) {
     return NextResponse.json(
       { error: "home_context_changed" },

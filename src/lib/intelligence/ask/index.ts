@@ -81,6 +81,10 @@ import {
   sanitizeSuggestedQuestions,
 } from "@/lib/agent/product-truth";
 import { buildSourceContract360PromptBlock } from "@/lib/source/ava/portfolio-fallback-answer";
+import {
+  homeRecordTenantMatches,
+  type BoundHomeRecordContext,
+} from "./home-record-context";
 
 export type {
   AskIntent,
@@ -117,6 +121,8 @@ export interface AskEvent {
 }
 
 export interface AskOptions {
+  /** Server-resolved only; never accepted as client-supplied facts. */
+  homeRecordContext?: BoundHomeRecordContext;
   userContextBlock?: string;
   conversationContextBlock?: string;
   tenantId?: string | null;
@@ -217,6 +223,22 @@ export async function* askIntelligence(
     yield { type: "error", error: "empty query" };
     return;
   }
+  const boundHome = opts.homeRecordContext;
+  if (
+    boundHome &&
+    (!opts.modelAuthoredOutput ||
+      !homeRecordTenantMatches(
+        boundHome,
+        opts.tenant?.canonicalKey ?? opts.tenantInventoryKey,
+      ))
+  ) {
+    yield {
+      type: "error",
+      error:
+        "The Home record does not match this authorized Intelligence question.",
+    };
+    return;
+  }
 
   try {
     const trace = createIntelligenceLatencyTrace({
@@ -270,10 +292,9 @@ export async function* askIntelligence(
       );
 
     const surfaceStartedAt = Date.now();
-    const surfaceContext = retrieveSurfaceContextSources(
-      opts.surfaceContext,
-      trimmed,
-    );
+    const surfaceContext = boundHome
+      ? []
+      : retrieveSurfaceContextSources(opts.surfaceContext, trimmed);
     emitTiming(
       trace.finish("retrieval.surface_context.done", surfaceStartedAt, {
         sourceCount: surfaceContext.length,
@@ -294,10 +315,9 @@ export async function* askIntelligence(
       return;
     }
     const eclServingStartedAt = Date.now();
-    const eclServingContext = await retrieveEclServingContextSources(
-      opts.surfaceContext,
-      trimmed,
-    );
+    const eclServingContext = boundHome
+      ? []
+      : await retrieveEclServingContextSources(opts.surfaceContext, trimmed);
     emitTiming(
       trace.finish("retrieval.ecl_serving_context.done", eclServingStartedAt, {
         sourceCount: eclServingContext.length,
@@ -331,11 +351,13 @@ export async function* askIntelligence(
     // an empty result here (no eligible dossier for this tenant/question)
     // degrades to the existing tenant-context retrievers below, unchanged.
     const curatedDossierStartedAt = Date.now();
-    const curatedDossier = await retrieveCuratedDossierSources(trimmed, {
-      tenantAppClientKey: opts.tenant?.appClientKey,
-      tenantInventoryKey: opts.tenantInventoryKey ?? opts.tenantClientKey,
-      surfaceContext: opts.surfaceContext,
-    });
+    const curatedDossier = boundHome
+      ? { sources: [] }
+      : await retrieveCuratedDossierSources(trimmed, {
+          tenantAppClientKey: opts.tenant?.appClientKey,
+          tenantInventoryKey: opts.tenantInventoryKey ?? opts.tenantClientKey,
+          surfaceContext: opts.surfaceContext,
+        });
     emitTiming(
       trace.finish("retrieval.curated_dossier.done", curatedDossierStartedAt, {
         sourceCount: curatedDossier.sources.length,
@@ -343,15 +365,17 @@ export async function* askIntelligence(
     );
     // Keep DB-backed retrieval sequential to avoid exhausting session-mode pools under Ask verifier load.
     const tenantEnterpriseStartedAt = Date.now();
-    const tenantEnterprise = await retrieveTenantEnterpriseSources(
-      opts.tenant ?? opts.tenantInventoryKey,
-      trimmed,
-      {
-        activePersonGraphNodeId: opts.activePersonGraphNodeId,
-        activePersonDisplayName: opts.activePersonDisplayName,
-        userContextBlock: opts.userContextBlock,
-      },
-    );
+    const tenantEnterprise = boundHome
+      ? []
+      : await retrieveTenantEnterpriseSources(
+          opts.tenant ?? opts.tenantInventoryKey,
+          trimmed,
+          {
+            activePersonGraphNodeId: opts.activePersonGraphNodeId,
+            activePersonDisplayName: opts.activePersonDisplayName,
+            userContextBlock: opts.userContextBlock,
+          },
+        );
     emitTiming(
       trace.finish(
         "retrieval.tenant_enterprise.done",
@@ -362,10 +386,12 @@ export async function* askIntelligence(
       ),
     );
     const tenantStructuredStartedAt = Date.now();
-    const tenantStructuredFacts = await retrieveTenantStructuredFacts(
-      opts.tenant ?? opts.tenantInventoryKey,
-      trimmed,
-    );
+    const tenantStructuredFacts = boundHome
+      ? []
+      : await retrieveTenantStructuredFacts(
+          opts.tenant ?? opts.tenantInventoryKey,
+          trimmed,
+        );
     emitTiming(
       trace.finish(
         "retrieval.tenant_structured_facts.done",
@@ -376,10 +402,9 @@ export async function* askIntelligence(
       ),
     );
     const tenantTechnologyStartedAt = Date.now();
-    const tenantTechnology = await retrieveTenantTechnologySources(
-      opts.tenantInventoryKey,
-      trimmed,
-    );
+    const tenantTechnology = boundHome
+      ? []
+      : await retrieveTenantTechnologySources(opts.tenantInventoryKey, trimmed);
     emitTiming(
       trace.finish(
         "retrieval.tenant_technology.done",
@@ -390,11 +415,13 @@ export async function* askIntelligence(
       ),
     );
     const retailStartedAt = Date.now();
-    const retailOverlay = await retrieveRetailOverlaySources(
-      opts.tenant,
-      trimmed,
-      questionCategory,
-    );
+    const retailOverlay = boundHome
+      ? []
+      : await retrieveRetailOverlaySources(
+          opts.tenant,
+          trimmed,
+          questionCategory,
+        );
     emitTiming(
       trace.finish("retrieval.retail_overlay.done", retailStartedAt, {
         sourceCount: retailOverlay.length,
@@ -421,60 +448,87 @@ export async function* askIntelligence(
         sourceCount: worldview.sources.length,
       }),
     );
-    const factFingerprint = await getTenantFactFingerprint({
-      tenantId: opts.tenantId,
-      tenantInventoryKey: opts.tenantInventoryKey,
-    });
-    const factAvailabilityBlock =
-      formatTenantFactAvailabilityBlock(factFingerprint);
-    const skyHarborCtoSource = buildSkyHarborCtoReadinessSource(trimmed, [
-      opts.tenantClientKey,
-      opts.tenantInventoryKey,
-      opts.tenant?.appClientKey,
-      opts.tenant?.canonicalKey,
-      opts.tenant?.displayName,
-      opts.surfaceContext?.clientKey,
-      opts.surfaceContext?.activeClient,
-    ]);
-    const skyHarborCtoPromptAddendum = buildSkyHarborCtoReadinessPromptAddendum(
-      trimmed,
-      [
-        opts.tenantClientKey,
-        opts.tenantInventoryKey,
-        opts.tenant?.appClientKey,
-        opts.tenant?.canonicalKey,
-        opts.tenant?.displayName,
-        opts.surfaceContext?.clientKey,
-        opts.surfaceContext?.activeClient,
-      ],
-    );
+    const factFingerprint = boundHome
+      ? null
+      : await getTenantFactFingerprint({
+          tenantId: opts.tenantId,
+          tenantInventoryKey: opts.tenantInventoryKey,
+        });
+    const factAvailabilityBlock = boundHome
+      ? "Use only the selected Home record for enterprise facts. Industry references describe possible approaches, not tenant facts or promised benefits. Missing ownership, financial approval and measured outcomes remain unknown."
+      : formatTenantFactAvailabilityBlock(factFingerprint!);
+    const skyHarborCtoSource = boundHome
+      ? null
+      : buildSkyHarborCtoReadinessSource(trimmed, [
+          opts.tenantClientKey,
+          opts.tenantInventoryKey,
+          opts.tenant?.appClientKey,
+          opts.tenant?.canonicalKey,
+          opts.tenant?.displayName,
+          opts.surfaceContext?.clientKey,
+          opts.surfaceContext?.activeClient,
+        ]);
+    const skyHarborCtoPromptAddendum = boundHome
+      ? ""
+      : buildSkyHarborCtoReadinessPromptAddendum(trimmed, [
+          opts.tenantClientKey,
+          opts.tenantInventoryKey,
+          opts.tenant?.appClientKey,
+          opts.tenant?.canonicalKey,
+          opts.tenant?.displayName,
+          opts.surfaceContext?.clientKey,
+          opts.surfaceContext?.activeClient,
+        ]);
     const conciseAsk = isExplicitConciseAsk(trimmed);
-    const sourceLimit = isEclProjectionProvider(opts.surfaceContext)
-      ? conciseAsk
-        ? 14
-        : 30
-      : conciseAsk
-        ? 9
-        : 18;
+    const sourceLimit = boundHome
+      ? 30
+      : isEclProjectionProvider(opts.surfaceContext)
+        ? conciseAsk
+          ? 14
+          : 30
+        : conciseAsk
+          ? 9
+          : 18;
     // Canonical as a floor. When every other retriever comes back empty -- which is how aVa ended up
     // telling a client their estate was not loaded while thousands of their records sat in the
     // projection -- this still grounds the answer.
-    const canonicalLandscapeSource = await buildCanonicalLandscapeSource([
-      opts.tenantClientKey,
-      opts.tenantInventoryKey,
-      opts.tenant?.appClientKey,
-      opts.tenant?.canonicalKey,
-      opts.surfaceContext?.clientKey,
-    ]).catch(() => null);
-    const currentTenantSources = [
-      ...(canonicalLandscapeSource ? [canonicalLandscapeSource] : []),
-      ...curatedDossier.sources,
-      ...tenantStructuredFacts,
-      ...tenantEnterprise,
-      ...tenantTechnology,
-      ...routed.sources,
-      ...worldview.sources,
-    ];
+    const canonicalLandscapeSource = boundHome
+      ? null
+      : await buildCanonicalLandscapeSource([
+          opts.tenantClientKey,
+          opts.tenantInventoryKey,
+          opts.tenant?.appClientKey,
+          opts.tenant?.canonicalKey,
+          opts.surfaceContext?.clientKey,
+        ]).catch(() => null);
+    const externalTypes = new Set<AskSource["type"]>([
+      "PATTERN",
+      "TOPIC",
+      "RESEARCH",
+      "REGULATION",
+      "BENCHMARK",
+      "WORLDVIEW",
+      "VENDOR",
+    ]);
+    const currentTenantSources = boundHome
+      ? [
+          ...boundHome.sources,
+          ...[...routed.sources, ...worldview.sources]
+            .filter((source) => externalTypes.has(source.type))
+            .map((source) => ({
+              ...source,
+              detail: `Industry/reference context only; not evidence about this enterprise.\n${source.detail}`,
+            })),
+        ]
+      : [
+          ...(canonicalLandscapeSource ? [canonicalLandscapeSource] : []),
+          ...curatedDossier.sources,
+          ...tenantStructuredFacts,
+          ...tenantEnterprise,
+          ...tenantTechnology,
+          ...routed.sources,
+          ...worldview.sources,
+        ];
     const clientGroundingPacket = buildClientGroundingPacketSource({
       query: trimmed,
       tenantKey:
@@ -506,7 +560,7 @@ export async function* askIntelligence(
           sourceSafety.sources,
           tenantKeyForRetiredFactGate,
           opts.tenantId,
-          opts.conversationContextBlock,
+          boundHome ? undefined : opts.conversationContextBlock,
         )
       : null;
     const sources = executiveContext?.sources ?? sourceSafety.sources;
@@ -699,21 +753,23 @@ export async function* askIntelligence(
       userContextBlock: opts.userContextBlock,
       factAvailabilityBlock,
       coverageReportBlock: formatCoverageReportForPrompt(coverageReport),
-      conversationContextBlock: opts.modelAuthoredOutput
-        ? opts.conversationContextBlock
-        : [
-            skyHarborCtoPromptAddendum,
-            sourceContract360PromptBlock,
-            opts.conversationContextBlock,
-            handoff
-              ? `ROUTING ADVISORY CONTEXT: A stakeholder-conflict question may need an Atlas handoff. Do not emit a deterministic handoff. Author the final user-visible answer yourself and, if a handoff is warranted, say it naturally. Suggested context only: ${handoff}`
-              : "",
-            currentStateAsk
-              ? "CURRENT-STATE QUESTION CONTEXT: The user is asking for a broad current-state read. Author the answer from the selected sources and visible output contract; do not rely on deterministic fallback prose."
-              : "",
-          ]
-            .filter(Boolean)
-            .join("\n\n") || undefined,
+      conversationContextBlock: boundHome
+        ? undefined
+        : opts.modelAuthoredOutput
+          ? opts.conversationContextBlock
+          : [
+              skyHarborCtoPromptAddendum,
+              sourceContract360PromptBlock,
+              opts.conversationContextBlock,
+              handoff
+                ? `ROUTING ADVISORY CONTEXT: A stakeholder-conflict question may need an Atlas handoff. Do not emit a deterministic handoff. Author the final user-visible answer yourself and, if a handoff is warranted, say it naturally. Suggested context only: ${handoff}`
+                : "",
+              currentStateAsk
+                ? "CURRENT-STATE QUESTION CONTEXT: The user is asking for a broad current-state read. Author the answer from the selected sources and visible output contract; do not rely on deterministic fallback prose."
+                : "",
+            ]
+              .filter(Boolean)
+              .join("\n\n") || undefined,
       averageConfidence,
       onModelInput: opts.onModelInput,
       onModelOutput: opts.onModelOutput,
