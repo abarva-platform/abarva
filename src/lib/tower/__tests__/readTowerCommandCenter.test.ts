@@ -121,6 +121,7 @@ describe("readTowerCommandCenter", () => {
         foundations: {
           no_declared_row_id: { row_count: 17 },
           relationship_rows: 2302,
+          segment_source_rows_mapping_pending: 4,
           itsm_extract_available: false,
         },
       },
@@ -165,6 +166,7 @@ describe("readTowerCommandCenter", () => {
     expect(mart?.foundationInventory).toEqual(expect.objectContaining({
       totalRecords: 41, matchingRecords: 41, page: 2, pageSize: 40,
       rawMaturityRowsWithoutId: 17, rawRelationshipRows: 2302,
+      segmentRowsMappingPending: 4,
       itsmExtractAvailable: false,
       records: [expect.objectContaining({
         sourceObjectId: "APP-041", sourceRecordId: "source-record-41",

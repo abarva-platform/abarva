@@ -461,6 +461,7 @@ export interface TowerMartFoundationInventory {
   unreadableRowCount: number;
   rawMaturityRowsWithoutId: number | null;
   rawRelationshipRows: number | null;
+  segmentRowsMappingPending: number | null;
   itsmExtractAvailable: boolean | null;
 }
 

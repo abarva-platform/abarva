@@ -213,8 +213,8 @@ export function FoundationSourceInventory({ inventory }: { inventory: TowerMartF
         <p>{inventory.rawRelationshipRows.toLocaleString("en-US")} source rows describe possible connections. They have not been checked as links between these items, so Tower shows no verified connections.</p>
       ) : null}
       {inventory.itsmExtractAvailable === false ? <p>An IT service workflow extract is not supplied in this source set.</p> : null}
-      {inventory.records.some((row) => row.segmentIdentityStatus === "source_key_present_mapping_pending") ? (
-        <p>Business segment keys appear in source records, but the segment mapping is pending. No segment spending or staffing total is shown.</p>
+      {inventory.segmentRowsMappingPending !== null && inventory.segmentRowsMappingPending > 0 ? (
+        <p>{inventory.segmentRowsMappingPending} business segment source rows still need their links checked. Tower shows no segment spending or staffing total.</p>
       ) : null}
       <p>Any dollar fields inside a record are source statements only. They are not added to approved funding or benefit totals.</p>
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", margin: "18px 0" }}>

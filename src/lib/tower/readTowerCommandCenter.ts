@@ -1507,6 +1507,7 @@ function mapFoundationInventory(
     unreadableRowCount: foundationRows.length - records.length,
     rawMaturityRowsWithoutId: nullableNum(noDeclaredId.row_count as Numeric),
     rawRelationshipRows: nullableNum(summary.relationship_rows as Numeric),
+    segmentRowsMappingPending: nullableNum(summary.segment_source_rows_mapping_pending as Numeric),
     itsmExtractAvailable: typeof summary.itsm_extract_available === "boolean"
       ? summary.itsm_extract_available : null,
   };

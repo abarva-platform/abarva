@@ -31,7 +31,8 @@ it("browses source records separately from AI foundation cases and never sums so
       }],
       totalRecords: 41, matchingRecords: 41, page: 1, pageSize: 40,
       filter: "all", search: "", unreadableRowCount: 0,
-      rawMaturityRowsWithoutId: 17, rawRelationshipRows: 2302, itsmExtractAvailable: false,
+      rawMaturityRowsWithoutId: 17, rawRelationshipRows: 2302,
+      segmentRowsMappingPending: 4, itsmExtractAvailable: false,
     },
   }} />);
 
@@ -39,6 +40,7 @@ it("browses source records separately from AI foundation cases and never sums so
   expect(screen.getByText(/No AI case is classified/)).toBeInTheDocument();
   expect(screen.getByText(/17 source rows describe maturity but have no individual record ID/)).toBeInTheDocument();
   expect(screen.getByText(/2,302 source rows describe possible connections/)).toBeInTheDocument();
+  expect(screen.getByText(/4 business segment source rows still need their links checked/)).toBeInTheDocument();
   expect(screen.queryByText(/\$500 in approved/)).not.toBeInTheDocument();
   fireEvent.click(screen.getByText(/Example system/));
   expect(screen.getByText("Source yearly cost (year unverified)")).toBeInTheDocument();
@@ -57,7 +59,8 @@ it("keeps an empty search honest and sends filters and search through the bounde
   render(<FoundationSourceInventory inventory={{
     records: [], totalRecords: 41, matchingRecords: 0, page: 1, pageSize: 40,
     filter: "all", search: "unmatched", unreadableRowCount: 0,
-    rawMaturityRowsWithoutId: null, rawRelationshipRows: null, itsmExtractAvailable: null,
+    rawMaturityRowsWithoutId: null, rawRelationshipRows: null,
+    segmentRowsMappingPending: null, itsmExtractAvailable: null,
   }} />);
   expect(screen.getByText("No matching records.")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Next page" })).not.toBeInTheDocument();
