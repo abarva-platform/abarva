@@ -104,13 +104,13 @@ it("exports categorical matrix labels and caveats without transforming advisory 
   expect(validated.session!.turns[1].answer!.modelAuthored!.rawText).toBe(raw);
 });
 
-it("formats source metadata without altering the source record or Claude prose", () => {
+it.each([":", " ·"])("formats source metadata with separator %s without altering the source record or Claude prose", (separator) => {
   const fixture = sessionFixture();
   const answer = fixture.turns[1].answer!;
   answer.citations = [
     {
       id: "S1",
-      label: "H123: Recorded evidence review",
+      label: `H123${separator} Recorded evidence review`,
       sourceClass: "tenant-fact",
     },
   ];
@@ -120,7 +120,7 @@ it("formats source metadata without altering the source record or Claude prose",
   const original = JSON.stringify(answer);
   const html = renderModelAuthoredSessionHtml(fixture);
   expect(html).toContain("Recorded evidence review");
-  expect(html).not.toContain("H123: Recorded evidence review");
+  expect(html).not.toContain(`H123${separator} Recorded evidence review`);
   expect(html).toContain("<th>H123: Authored title</th>");
   expect(JSON.stringify(answer)).toBe(original);
 });
