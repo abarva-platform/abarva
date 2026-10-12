@@ -16,6 +16,7 @@ import type {
   TowerMartEvidenceLineage,
   TowerMartProgramLane,
   TowerMartRequiredFieldGap,
+  TowerMartSourceValueRow,
   TowerMartValueTrajectoryPoint,
   TowerMartValueFunnelStage,
 } from "@/lib/tower/current-layer-view-model";
@@ -191,7 +192,14 @@ function costDetail(row: TowerServingRow, expectedFile: string): TowerMartCostDe
       payloadNullableNumber(row, "measure_value_number") !== amountUsd ||
       row.row_type !== "cost_exposure" ||
       row.value_state !== "estimated") return null;
-  return { id: row.row_key, label, amountUsd, sourceFile, sourceRow, sourceSha256 };
+  return {
+    id: row.row_key, label, amountUsd, sourceFile, sourceRow, sourceSha256,
+    sourcePriorYearActualUsd: displayNullableNumberFrom(row, ["source_prior_year_actual_usd"]),
+    sourceForecastNextYearUsd: displayNullableNumberFrom(row, ["source_forecast_next_year_usd"]),
+    sourceSavingsOpportunityUsd: displayNullableNumberFrom(row, ["source_savings_opportunity_usd"]),
+    sourceCalculationBasis: payloadTextFrom(row, ["source_calculation_basis"]),
+    sourceBudgetOwnerRole: payloadTextFrom(row, ["source_budget_owner_role"]),
+  };
 }
 
 function activeCostLens(rows: readonly TowerServingRow[]): TowerMartCostLens | null {
@@ -288,6 +296,20 @@ function displayNullableNumberFrom(
   for (const key of keys) {
     const value = nullableNum(display[key] as Numeric);
     if (value !== null) return value;
+  }
+  return null;
+}
+
+function displayScalarTextFrom(
+  row: TowerServingRow,
+  keys: readonly string[],
+): string | null {
+  const display = displayPayload(row);
+  for (const key of keys) {
+    const value = display[key];
+    if (typeof value === "number" && Number.isFinite(value)) return String(value);
+    const text = nullableText(value);
+    if (text !== null) return text;
   }
   return null;
 }
@@ -774,6 +796,15 @@ function mapProgramLane(row: TowerServingRow): TowerMartProgramLane {
       "ECL serving row requires evidence review before the claim can advance.",
     approvedFundingUsd: approvedFunding ?? 0,
     planningBudgetUsd: payloadNullableNumberFrom(row, ["planning_budget_usd"]),
+    sourceExpectedValueUsd: displayNullableNumberFrom(row, ["source_stated_expected_value_usd"]),
+    sourceStartDate: payloadTextFrom(row, ["source_start_date"]),
+    sourceEndDate: payloadTextFrom(row, ["source_end_date"]),
+    sourcePctComplete: displayNullableNumberFrom(row, ["source_pct_complete"]),
+    sourceStageGate: payloadTextFrom(row, ["source_stage_gate"]),
+    sourceBenefitRealizationStart: payloadTextFrom(row, ["source_benefit_realization_start"]),
+    sourceBlockedReason: payloadTextFrom(row, ["source_blocked_reason"]),
+    sourceObjective: payloadTextFrom(row, ["source_objective"]),
+    sourceTargetOutcomes: payloadTextFrom(row, ["source_target_outcomes"]),
     fundedAmount: payloadNumber(row, "funded_amount_usd"),
     fundingAmountLoaded: approvedFunding !== null,
     aiTaggedSpendUsd:
@@ -1058,6 +1089,10 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     sourceCaseStatus: payloadTextFrom(row, ["source_case_status"]),
     operationalOwnerRole: payloadTextFrom(row, ["operational_owner_role"]),
     expectedValueArchetype: payloadTextFrom(row, ["expected_value_archetype"]),
+    sourceValueHypothesis: payloadTextFrom(row, ["source_value_hypothesis"]),
+    sourceApprovalPath: payloadTextFrom(row, ["source_approval_path"]),
+    sourceRiskControls: payloadTextFrom(row, ["source_risk_controls"]),
+    sourceRequiredSystems: payloadTextFrom(row, ["source_required_systems"]),
     duplicateRisk: null,
     valueClaimStatus: usageRecorded ? "usage_recorded" : "usage_not_recorded",
     towerClaimAllowed: "blocked",
@@ -1287,6 +1322,61 @@ function isOutcomeMeasureRow(row: TowerServingRow): boolean {
 
 function isBenefitClaimRow(row: TowerServingRow): boolean {
   return isValueProofRow(row) && !isOutcomeMeasureRow(row) && !isTrajectoryOnlyRow(row);
+}
+
+function mapSourceValueRow(row: TowerServingRow): TowerMartSourceValueRow | null {
+  if (!isOutcomeMeasureRow(row) && !isBenefitClaimRow(row)) return null;
+  const display = displayPayload(row);
+  // v6 marks these as source assertions. Older serving rows have no marker and
+  // continue to use their existing proof story until this candidate is selected.
+  if (nullableText(display.source_assertion_caveat) === null) return null;
+  const outcome = isOutcomeMeasureRow(row);
+  const moneyFields = [
+    ["source_asserted_finance_value_usd", outcome ? "Outcome source: Finance amount stated" : "Benefit feed: Finance amount stated"],
+    ["benefit_feed_source_funded_spend_usd", "Benefit feed: funded spend stated"],
+    ["benefit_feed_source_actual_spend_ytd_usd", "Benefit feed: year-to-date spend stated"],
+    ["usage_feed_source_promised_value_usd", "Usage feed: promised value stated"],
+    ["usage_feed_source_finance_assertion_usd", "Usage feed: Finance amount stated"],
+    ["outcome_feed_source_finance_assertion_usd", "KPI feed: Finance amount stated"],
+  ] as const;
+  const statusFields = [
+    ["source_value_claim_status", "Source claim status"],
+    ["source_claim_readiness", "Source claim readiness"],
+    ["source_finance_validation_status", "Benefit feed Finance status"],
+    ["source_tower_claim_allowed", "Benefit feed claim flag"],
+    ["source_realized_value_allowed", "Benefit feed realized-value flag"],
+    ["source_owner_attestation_status", "Benefit feed owner attestation"],
+    ["usage_feed_source_claim_status", "Usage feed claim status"],
+    ["outcome_feed_claim_status", "KPI feed claim status"],
+    ["outcome_feed_claim_allowed", "KPI feed claim flag"],
+  ] as const;
+  return {
+    id: row.row_key,
+    kind: outcome ? "outcome_measure" : "ai_feed_claim",
+    title: nullableText(display.title) ?? row.title ?? row.row_key,
+    sourceFiles: [...new Set(sourceRefs(row).map((ref) =>
+      nullableText(ref.source_file) ?? nullableText(ref.source_family),
+    ).filter((value): value is string => value !== null))],
+    baseline: displayScalarTextFrom(row, [outcome ? "baseline" : "outcome_feed_baseline"]),
+    target: displayScalarTextFrom(row, [outcome ? "target" : "outcome_feed_target"]),
+    observed: displayScalarTextFrom(row, [outcome ? "observed" : "outcome_feed_actual"]),
+    baselinePeriod: payloadTextFrom(row, ["baseline_period"]),
+    observedPeriod: payloadTextFrom(row, ["observed_period"]),
+    kpiName: payloadTextFrom(row, ["outcome_feed_kpi_name"]),
+    kpiUnit: payloadTextFrom(row, ["outcome_feed_unit"]),
+    kpiPeriodStart: payloadTextFrom(row, ["outcome_feed_period_start"]),
+    kpiPeriodEnd: payloadTextFrom(row, ["outcome_feed_period_end"]),
+    sourceDataSource: payloadTextFrom(row, ["source_data_source"]),
+    sourceCalculationBasis: payloadTextFrom(row, ["source_calculation_basis"]),
+    moneyAssertions: moneyFields.flatMap(([sourceField, label]) => {
+      const amountUsd = displayNullableNumberFrom(row, [sourceField]);
+      return amountUsd === null ? [] : [{ sourceField, label, amountUsd }];
+    }),
+    statusAssertions: statusFields.flatMap(([sourceField, label]) => {
+      const code = payloadTextFrom(row, [sourceField]);
+      return code === null ? [] : [{ sourceField, label, code }];
+    }),
+  };
 }
 
 function gapsFromRows(
@@ -1634,6 +1724,10 @@ export async function readTowerCommandCenter(args: {
         )),
         programLanes: activeDecisionRows.map(mapProgramLane),
         aiPortfolio,
+        sourceValueRows: activeValueRows.flatMap((row) => {
+          const mapped = mapSourceValueRow(row);
+          return mapped ? [mapped] : [];
+        }),
         aiPortfolioCounts: {
           total: aiPortfolio.length,
           candidate: aiCandidates.length,

@@ -340,6 +340,18 @@ export function AiInitiativeDrawer({
                   sub={sourceFieldNote(a.expectedValueArchetype, "This describes a possibility, not a measured or Finance-verified benefit.")}
                 />
               ) : null}
+              {a.populationKind === "ai_case" && a.sourceValueHypothesis ? (
+                <DrawerRow label="Expected benefit described in source" value={a.sourceValueHypothesis} sub="This is a proposed benefit, not a measured or Finance-cleared result." />
+              ) : null}
+              {a.populationKind === "ai_case" && a.sourceApprovalPath ? (
+                <DrawerRow label="Approval route listed in source" value={a.sourceApprovalPath} sub="A listed route does not mean approval happened." />
+              ) : null}
+              {a.populationKind === "ai_case" && a.sourceRiskControls ? (
+                <DrawerRow label="Controls listed in source" value={a.sourceRiskControls} sub="The source lists controls; Tower has not verified that they were tested." />
+              ) : null}
+              {a.populationKind === "ai_case" && a.sourceRequiredSystems ? (
+                <DrawerRow label="Systems the source says are needed" value={a.sourceRequiredSystems} />
+              ) : null}
               <DrawerRow
                 label="Stopped at"
                 value={a.gatingConstraint ?? "Not recorded"}

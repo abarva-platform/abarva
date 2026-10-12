@@ -33,6 +33,10 @@ describe("Tower detail proof states", () => {
       functionLabel: null,
       fundingAmountLoaded: false,
       planningBudgetUsd: 1_250_000,
+      sourceExpectedValueUsd: 3_000_000,
+      sourcePctComplete: 40,
+      sourceStageGate: "gate_two",
+      sourceObjective: "Reduce review time",
       promisedBenefitLoaded: false,
     };
     render(<ProgramDrawer program={program} onClose={() => {}} onSeeAction={() => {}} />);
@@ -48,6 +52,10 @@ describe("Tower detail proof states", () => {
     expect(within(drawer).getByText("Program planning budget").parentElement).toHaveTextContent("$1.3M");
     expect(within(drawer).getByText(/Its fiscal year and approval are not verified/)).toBeInTheDocument();
     expect(within(drawer).getByText("Approved FY26 funding").parentElement).toHaveTextContent("Not verified");
+    expect(within(drawer).getByText("Expected value stated in source").parentElement).toHaveTextContent("$3M");
+    expect(within(drawer).getByText("Completion reported in source").parentElement).toHaveTextContent("40%");
+    expect(within(drawer).getByText("Source code: gate_two")).toBeInTheDocument();
+    expect(within(drawer).getByText(/neither an approved return nor a result already earned/)).toBeInTheDocument();
   });
 
   it("does not claim Finance sign-off or reporting clearance for unverified program amounts", () => {
@@ -82,6 +90,9 @@ describe("Tower detail proof states", () => {
       sourceCaseStatus: "pilot",
       operationalOwnerRole: "Operations lead",
       expectedValueArchetype: "time_savings",
+      sourceValueHypothesis: "Shorten review time",
+      sourceApprovalPath: "Sponsor then governance council",
+      sourceRiskControls: "Human review",
       financeStatus: null,
     };
     render(<AiInitiativeDrawer item={caseRow} onClose={() => {}} />);
@@ -94,6 +105,10 @@ describe("Tower detail proof states", () => {
     expect(within(drawer).getByText(/Recorded in intake as “pilot”/)).toBeInTheDocument();
     expect(within(drawer).getByText(/Recorded in intake as “time_savings”/)).toBeInTheDocument();
     expect(within(drawer).getByText(/not a measured or Finance-verified benefit/)).toBeInTheDocument();
+    expect(within(drawer).getByText("Shorten review time")).toBeInTheDocument();
+    expect(within(drawer).getByText("Sponsor then governance council")).toBeInTheDocument();
+    expect(within(drawer).getByText("A listed route does not mean approval happened.")).toBeInTheDocument();
+    expect(within(drawer).getByText("Human review")).toBeInTheDocument();
   });
 
   it("keeps a source program category from claiming unverified funding approval", () => {

@@ -147,6 +147,16 @@ export interface TowerMartProgramLane {
   approvedFundingUsd: number;
   /** Source-listed program plan, with fiscal period and approval unverified. */
   planningBudgetUsd?: number | null;
+  /** Source planning assertion; never an approved or earned return. */
+  sourceExpectedValueUsd?: number | null;
+  sourceStartDate?: string | null;
+  sourceEndDate?: string | null;
+  sourcePctComplete?: number | null;
+  sourceStageGate?: string | null;
+  sourceBenefitRealizationStart?: string | null;
+  sourceBlockedReason?: string | null;
+  sourceObjective?: string | null;
+  sourceTargetOutcomes?: string | null;
   fundedAmount?: number;
   /** The source explicitly records an approved FY26 amount for this program. */
   fundingAmountLoaded?: boolean;
@@ -299,6 +309,10 @@ export interface TowerMartAiPortfolioItem {
   sourceCaseStatus?: string | null;
   operationalOwnerRole?: string | null;
   expectedValueArchetype?: string | null;
+  sourceValueHypothesis?: string | null;
+  sourceApprovalPath?: string | null;
+  sourceRiskControls?: string | null;
+  sourceRequiredSystems?: string | null;
   duplicateRisk: string | null;
   valueClaimStatus: string;
   towerClaimAllowed: string;
@@ -390,6 +404,32 @@ export interface TowerMartCostDetail {
   sourceFile: string;
   sourceRow: number;
   sourceSha256: string;
+  sourcePriorYearActualUsd?: number | null;
+  sourceForecastNextYearUsd?: number | null;
+  sourceSavingsOpportunityUsd?: number | null;
+  sourceCalculationBasis?: string | null;
+  sourceBudgetOwnerRole?: string | null;
+}
+
+/** Source assertions stay outside approved funding, benefit and claimable totals. */
+export interface TowerMartSourceValueRow {
+  id: string;
+  kind: "outcome_measure" | "ai_feed_claim";
+  title: string;
+  sourceFiles: string[];
+  baseline: string | null;
+  target: string | null;
+  observed: string | null;
+  baselinePeriod: string | null;
+  observedPeriod: string | null;
+  kpiName: string | null;
+  kpiUnit: string | null;
+  kpiPeriodStart: string | null;
+  kpiPeriodEnd: string | null;
+  sourceDataSource: string | null;
+  sourceCalculationBasis: string | null;
+  moneyAssertions: Array<{ sourceField: string; label: string; amountUsd: number }>;
+  statusAssertions: Array<{ sourceField: string; label: string; code: string }>;
 }
 
 export interface TowerMartCostLens {
@@ -412,4 +452,6 @@ export interface TowerMartCommandViewModel {
   requiredFieldGaps: TowerMartRequiredFieldGap[];
   aiPortfolioCounts?: TowerMartAiPortfolioCounts;
   costLens?: TowerMartCostLens | null;
+  /** v6 source assertions for separate outcome/AI feed records, never headline money. */
+  sourceValueRows?: TowerMartSourceValueRow[];
 }

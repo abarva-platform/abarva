@@ -713,7 +713,7 @@ describe("mechanical Tower Command Center panels", () => {
       modeledAnnualSpendUsd: 10 * M,
       sourceNarrativeDifferenceUsd: 100_000,
       categories: [
-        { id: "spend:2", label: "Infrastructure", amountUsd: 6 * M, sourceFile: "08_spend_value.csv", sourceRow: 2, sourceSha256: "hash" },
+        { id: "spend:2", label: "Infrastructure", amountUsd: 6 * M, sourceFile: "08_spend_value.csv", sourceRow: 2, sourceSha256: "hash", sourcePriorYearActualUsd: 5 * M, sourceForecastNextYearUsd: 7 * M, sourceSavingsOpportunityUsd: 300_000, sourceCalculationBasis: "Supplier estimate" },
         { id: "spend:3", label: "Applications", amountUsd: 4 * M, sourceFile: "08_spend_value.csv", sourceRow: 3, sourceSha256: "hash" },
       ],
       contractExposure: [
@@ -731,6 +731,10 @@ describe("mechanical Tower Command Center panels", () => {
     fireEvent.click(screen.getByText("See 1 vendor contract amount"));
     expect(screen.getByText("Infrastructure")).toBeInTheDocument();
     expect(screen.getByText("$6,000,000")).toBeInTheDocument();
+    expect(screen.getByText("$5,000,000")).toBeInTheDocument();
+    expect(screen.getByText("$7,000,000")).toBeInTheDocument();
+    expect(screen.getByText("$300,000")).toBeInTheDocument();
+    expect(screen.getByText(/fiscal periods and savings have not been verified for Tower reporting/)).toBeInTheDocument();
     expect(screen.getByText("Vendor one")).toBeInTheDocument();
     expect(screen.getByText("$9,000,000")).toBeInTheDocument();
     expect(document.body.textContent).not.toContain("$19,000,000");
