@@ -3,7 +3,66 @@ import {
   snapshotsApprovePhase,
   isGateApprovedForPhase,
   findGatesPassedEntryForPhase,
+  originationApprovalReadback,
 } from "@/lib/programs/approved-gate-phases";
+import type { PhaseSnapshot } from "@/lib/programs/types.db";
+
+describe("stored origination approval readback", () => {
+  const snapshot = {
+    id: "snapshot-a",
+    engagementId: "move-a",
+    phaseNumber: 0,
+    approvalStatus: "approved",
+    phaseName: "Originate",
+    lockedByUserId: "user-a",
+    createdAt: "2026-10-12T12:00:00Z",
+    lockedAt: "2026-10-12T12:00:00Z",
+    snapshot: {
+      humanRationale: "Approved after reviewing the captured source.",
+    },
+  } as PhaseSnapshot;
+  it("retains the exact stored rationale and timestamp without phase progression as an input", () => {
+    expect(originationApprovalReadback("move-a", [snapshot])).toEqual({
+      state: "recorded",
+      moveId: "move-a",
+      snapshotId: "snapshot-a",
+      approvedAt: snapshot.lockedAt,
+      rationale: snapshot.snapshot.humanRationale,
+    });
+  });
+  it("does not substitute an older approval for the latest pending P0 snapshot", () => {
+    expect(
+      originationApprovalReadback("move-a", [
+        { ...snapshot, id: "newer", approvalStatus: "pending" },
+        snapshot,
+      ]).state,
+    ).toBe("not_recorded");
+  });
+  it("keeps unavailable and absent distinct and rejects another Move's row", () => {
+    expect(originationApprovalReadback("move-a", null).state).toBe(
+      "unavailable",
+    );
+    expect(originationApprovalReadback("move-a", []).state).toBe(
+      "not_recorded",
+    );
+    expect(originationApprovalReadback("move-b", [snapshot]).state).toBe(
+      "unavailable",
+    );
+  });
+  it("keeps missing details unknown while retaining the explicit approval fact", () => {
+    expect(
+      originationApprovalReadback("move-a", [
+        { ...snapshot, lockedAt: null, snapshot: {} },
+      ]),
+    ).toEqual({
+      state: "recorded",
+      moveId: "move-a",
+      snapshotId: "snapshot-a",
+      approvedAt: null,
+      rationale: null,
+    });
+  });
+});
 
 // The shape the demo tenant's engagement is seeded with: full gate records for
 // the phases it was seeded past, and nothing for the phases walked in product.
@@ -40,9 +99,9 @@ describe("gatesPassedContainsPhase — the denormalized array arm", () => {
   });
 
   it("rejects a record whose status is not an approving one", () => {
-    expect(
-      gatesPassedContainsPhase([{ phase: 3, status: "pending" }], 3),
-    ).toBe(false);
+    expect(gatesPassedContainsPhase([{ phase: 3, status: "pending" }], 3)).toBe(
+      false,
+    );
     expect(
       gatesPassedContainsPhase([{ phase: 3, status: "rejected" }], 3),
     ).toBe(false);
@@ -64,7 +123,10 @@ describe("gatesPassedContainsPhase — the denormalized array arm", () => {
 describe("snapshotsApprovePhase — the authoritative arm", () => {
   it("reads either column spelling", () => {
     expect(
-      snapshotsApprovePhase([{ phaseNumber: 2, approvalStatus: "approved" }], 2),
+      snapshotsApprovePhase(
+        [{ phaseNumber: 2, approvalStatus: "approved" }],
+        2,
+      ),
     ).toBe(true);
     expect(
       snapshotsApprovePhase(
@@ -84,7 +146,10 @@ describe("snapshotsApprovePhase — the authoritative arm", () => {
 
   it("does not match a different phase, and tolerates non-arrays", () => {
     expect(
-      snapshotsApprovePhase([{ phaseNumber: 3, approvalStatus: "approved" }], 2),
+      snapshotsApprovePhase(
+        [{ phaseNumber: 3, approvalStatus: "approved" }],
+        2,
+      ),
     ).toBe(false);
     expect(snapshotsApprovePhase(null, 2)).toBe(false);
   });
@@ -167,19 +232,99 @@ describe("findGatesPassedEntryForPhase", () => {
   it("carries the recorded date and summary when the record has them", () => {
     expect(
       findGatesPassedEntryForPhase(
-        [{ phase: 3, status: "approved", signed_at: "2026-05-06T00:00:00.000Z", summary: "Design agreed" }],
+        [
+          {
+            phase: 3,
+            status: "approved",
+            signed_at: "2026-05-06T00:00:00.000Z",
+            summary: "Design agreed",
+          },
+        ],
         3,
       ),
-    ).toEqual({ signedAt: "2026-05-06T00:00:00.000Z", summary: "Design agreed" });
+    ).toEqual({
+      signedAt: "2026-05-06T00:00:00.000Z",
+      summary: "Design agreed",
+    });
   });
 
   it("reports a blank date as absent rather than as an empty string", () => {
     expect(
-      findGatesPassedEntryForPhase([{ phase: 1, status: "approved", signed_at: "  " }], 1),
+      findGatesPassedEntryForPhase(
+        [{ phase: 1, status: "approved", signed_at: "  " }],
+        1,
+      ),
     ).toEqual({ signedAt: null, summary: null });
   });
 
   it("returns null for a phase the array does not name", () => {
-    expect(findGatesPassedEntryForPhase([{ phase: 1, status: "approved" }], 2)).toBeNull();
+    expect(
+      findGatesPassedEntryForPhase([{ phase: 1, status: "approved" }], 2),
+    ).toBeNull();
   });
+});
+
+describe("phase approval and origination request remain distinct", () => {
+  const approved = {
+    id: "phase-a",
+    engagementId: "move-a",
+    phaseNumber: 0,
+    approvalStatus: "approved",
+    snapshot: { humanRationale: "Stored rationale" },
+    lockedAt: null,
+    phaseName: null,
+    lockedByUserId: null,
+    createdAt: "2026-10-12T11:00:00Z",
+  } as PhaseSnapshot;
+  it("retains the exact pending request and submitted Move lifecycle beside the stored phase approval", () => {
+    expect(
+      originationApprovalReadback(
+        "move-a",
+        [approved],
+        [
+          {
+            id: "request-a",
+            programId: "move-a",
+            requestStatus: "pending",
+            briefSnapshot: {},
+          },
+        ],
+        "submitted_for_approval",
+      ),
+    ).toEqual({
+      state: "recorded",
+      moveId: "move-a",
+      snapshotId: "phase-a",
+      approvedAt: null,
+      rationale: "Stored rationale",
+      requestLifecycle: { readable: true, status: "pending" },
+      moveLifecycle: "submitted_for_approval",
+    });
+  });
+  it.each([
+    null,
+    [
+      {
+        id: "request-b",
+        programId: "move-b",
+        requestStatus: "approved",
+        briefSnapshot: {},
+      },
+    ],
+  ])(
+    "does not clear an unavailable or foreign request lifecycle",
+    (requests) => {
+      const readback = originationApprovalReadback(
+        "move-a",
+        [approved],
+        requests,
+      );
+      expect(readback.state).toBe("recorded");
+      if (readback.state === "recorded")
+        expect(readback.requestLifecycle).toEqual({
+          readable: false,
+          status: null,
+        });
+    },
+  );
 });

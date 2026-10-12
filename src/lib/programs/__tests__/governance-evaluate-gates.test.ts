@@ -1,10 +1,24 @@
+import { getProgramDeliverables } from "../queries";
+
 const getProgramByIdMock = jest.fn();
 const getModuleStateMock = jest.fn();
+const getPhaseSnapshotsMock = jest.fn();
+const mockGetOriginationRequestState = jest.fn(
+  async (_ctx: unknown, programId: string) =>
+    approvalRequestsFixture.map((row) => ({
+      id: "request-a",
+      programId,
+      requestStatus: row.request_status,
+      briefSnapshot: row.brief_snapshot,
+    })),
+);
 const fromMock = jest.fn();
 const listApprovedPhaseEvidenceMock = jest.fn();
 const loadApprovedMoveEvidenceSnapshotMock = jest.fn();
 const mockP5HandoffRead = jest.fn();
-jest.mock("@/lib/programs/p5-tower-handoff", () => ({ readP5Handoff: (...args: unknown[]) => mockP5HandoffRead(...args) }));
+jest.mock("@/lib/programs/p5-tower-handoff", () => ({
+  readP5Handoff: (...args: unknown[]) => mockP5HandoffRead(...args),
+}));
 
 let deliverablesFixture: Array<{
   id: string;
@@ -56,6 +70,11 @@ jest.mock("@/lib/programs/queries", () => ({
   __esModule: true,
   getProgramById: (...args: unknown[]) => getProgramByIdMock(...args),
   getModuleState: (...args: unknown[]) => getModuleStateMock(...args),
+  getPhaseSnapshots: (...args: unknown[]) => getPhaseSnapshotsMock(...args),
+  getOriginationRequestState: (
+    ...args: Parameters<typeof mockGetOriginationRequestState>
+  ) => mockGetOriginationRequestState(...args),
+  getProgramDeliverables: jest.fn(async () => deliverablesFixture),
 }));
 
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
@@ -279,6 +298,7 @@ function tableResult(table: string) {
 describe("evaluateGate", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    getPhaseSnapshotsMock.mockResolvedValue([]);
     getProgramByIdMock.mockResolvedValue({
       id: "program-1",
       currentPhase: 4,
@@ -343,6 +363,48 @@ describe("evaluateGate", () => {
     );
   });
 
+  it("reads an explicit stored P0 snapshot for historical seed checks without inventing approval from P1", async () => {
+    const ctx = { clientId: "client-1", userId: "user-1" };
+    getProgramByIdMock.mockResolvedValue({
+      id: "program-1",
+      currentPhase: 1,
+      problemStatement: "A declared problem",
+      targetOutcome: "A declared outcome",
+    });
+    getModuleStateMock.mockResolvedValue([]);
+    deliverablesFixture = [];
+    const snapshot = {
+      id: "snapshot-a",
+      engagementId: "program-1",
+      phaseNumber: 0,
+      approvalStatus: "approved",
+      lockedAt: "2026-10-12T12:00:00Z",
+      snapshot: { humanRationale: "Reviewed source" },
+    };
+    getPhaseSnapshotsMock.mockResolvedValue([snapshot]);
+    const approved = await evaluateGate(ctx, "program-1", 0, 1, {
+      allowHistoricalPhase: true,
+      readSet: createPhasePageReadSet(ctx, "program-1"),
+    });
+    expect(approved.failedChecks.map((x) => x.check)).not.toContain(
+      "program_seed_recorded",
+    );
+    expect(approved.failedChecks.map((x) => x.check)).not.toContain(
+      "value_hypothesis_seed",
+    );
+    getPhaseSnapshotsMock.mockResolvedValue([]);
+    const unproved = await evaluateGate(ctx, "program-1", 0, 1, {
+      allowHistoricalPhase: true,
+      readSet: createPhasePageReadSet(ctx, "program-1"),
+    });
+    expect(unproved.failedChecks.map((x) => x.check)).toContain(
+      "program_seed_recorded",
+    );
+    expect(unproved.failedChecks.map((x) => x.check)).toContain(
+      "value_hypothesis_seed",
+    );
+  });
+
   it("keeps canonical gate verdicts while sharing source reads across prior and displayed phases", async () => {
     const ctx = {
       clientId: "client-1",
@@ -384,16 +446,15 @@ describe("evaluateGate", () => {
     expect(getModuleStateMock).toHaveBeenCalledTimes(1);
     expect(loadApprovedMoveEvidenceSnapshotMock).toHaveBeenCalledTimes(1);
     expect(listApprovedPhaseEvidenceMock).toHaveBeenCalledTimes(1);
-    for (const table of [
-      "deliverables_v2",
-      "engagement_participants",
-      "program_approval_requests",
-      "program_milestones",
-    ]) {
+    for (const table of ["engagement_participants", "program_milestones"]) {
       expect(
         fromMock.mock.calls.filter(([name]) => name === table),
       ).toHaveLength(1);
     }
+    expect(
+      jest.mocked(getProgramDeliverables),
+    ).toHaveBeenCalledTimes(1);
+    expect(mockGetOriginationRequestState).toHaveBeenCalledTimes(1);
     expect(
       fromMock.mock.calls.filter(([name]) => name === "program_modules"),
     ).toHaveLength(0);
@@ -3128,24 +3189,83 @@ describe("evaluateGate", () => {
     );
   });
 
-  it.each(["published", "not_yet_linked", "failed", "changed_contract"])("flagged P5 requires current independent publication: %s", async state => {
-    getProgramByIdMock.mockResolvedValue({ id: "program-1", currentPhase: 5, archetype: "agent_assist" });
-    deliverablesFixture = [
-      { id: "handoff", deliverable_type_key: "handoff_package", status: "signed_off" },
-      { id: "contract", deliverable_type_key: "value_measurement_contract", status: "signed_off" },
-    ];
-    if (state === "failed" || state === "changed_contract") mockP5HandoffRead.mockRejectedValue(new Error(state === "failed" ? "Ledger state unavailable" : "Signed contract changed"));
-    else mockP5HandoffRead.mockResolvedValue({ view: { publication: { state } } });
-    const result = await evaluateGate({ clientId: "client-1", clientKey: "meridian", userId: "authorized-operator" }, "program-1", 5, 6);
-    expect(mockP5HandoffRead).toHaveBeenCalledWith(expect.objectContaining({ clientKey: "meridian" }), "program-1", true);
-    expect(result.failedChecks.some(check => check.check === "p5_tower_publication_current")).toBe(state !== "published");
-  });
+  it.each(["published", "not_yet_linked", "failed", "changed_contract"])(
+    "flagged P5 requires current independent publication: %s",
+    async (state) => {
+      getProgramByIdMock.mockResolvedValue({
+        id: "program-1",
+        currentPhase: 5,
+        archetype: "agent_assist",
+      });
+      deliverablesFixture = [
+        {
+          id: "handoff",
+          deliverable_type_key: "handoff_package",
+          status: "signed_off",
+        },
+        {
+          id: "contract",
+          deliverable_type_key: "value_measurement_contract",
+          status: "signed_off",
+        },
+      ];
+      if (state === "failed" || state === "changed_contract")
+        mockP5HandoffRead.mockRejectedValue(
+          new Error(
+            state === "failed"
+              ? "Ledger state unavailable"
+              : "Signed contract changed",
+          ),
+        );
+      else
+        mockP5HandoffRead.mockResolvedValue({
+          view: { publication: { state } },
+        });
+      const result = await evaluateGate(
+        {
+          clientId: "client-1",
+          clientKey: "meridian",
+          userId: "authorized-operator",
+        },
+        "program-1",
+        5,
+        6,
+      );
+      expect(mockP5HandoffRead).toHaveBeenCalledWith(
+        expect.objectContaining({ clientKey: "meridian" }),
+        "program-1",
+        true,
+      );
+      expect(
+        result.failedChecks.some(
+          (check) => check.check === "p5_tower_publication_current",
+        ),
+      ).toBe(state !== "published");
+    },
+  );
 
   it("publication preflight skips only its own publication check and preserves existing document gates", async () => {
     getProgramByIdMock.mockResolvedValue({ id: "program-1", currentPhase: 5 });
     deliverablesFixture = [];
-    const result = await evaluateGate({ clientId: "client-1", clientKey: "meridian", userId: "authorized-operator" }, "program-1", 5, 6, { skipP5Publication: true });
-    expect(result.failedChecks).toEqual(expect.arrayContaining([expect.objectContaining({ check: "value_measurement_contract_signed_off", severity: "hard" })]));
+    const result = await evaluateGate(
+      {
+        clientId: "client-1",
+        clientKey: "meridian",
+        userId: "authorized-operator",
+      },
+      "program-1",
+      5,
+      6,
+      { skipP5Publication: true },
+    );
+    expect(result.failedChecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          check: "value_measurement_contract_signed_off",
+          severity: "hard",
+        }),
+      ]),
+    );
     expect(mockP5HandoffRead).not.toHaveBeenCalled();
   });
 

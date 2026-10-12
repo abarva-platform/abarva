@@ -11,6 +11,7 @@ import {
   formatUsdM,
   gatingConstraintExplanation,
 } from "@/lib/tower/command-center/format";
+import { recordedAdoptionRate } from "@/lib/tower/command-center/adoption-rate";
 import type {
   TowerAiKind,
   TowerAiView,
@@ -37,6 +38,7 @@ import { ChartTooltip, HEX, toM, withSliver } from "../charts/chart-kit";
 import { cx } from "../primitives";
 import { approvedAiCaseFunding, isBusinessCase } from "./portfolio-kind";
 import { byEvidencePriority, evidenceGapAmount } from "./evidence-gap-amount";
+import { expectedBenefitKindLabel } from "./expected-benefit-kind";
 
 type Tone = "teal" | "amber" | "red" | "gray";
 type AiLens = "cost" | "risk" | "adoption" | "table";
@@ -72,7 +74,7 @@ type CampaignRow = {
 };
 
 const AI_KIND_LABEL: Record<TowerAiKind, string> = {
-  funded: "funded",
+  funded: "funding group",
   embedded: "embedded",
   candidate: "candidate",
   governance: "governance",
@@ -132,7 +134,7 @@ function openClaimCount(view: TowerCommandCenterView): number {
 
 function emittingAiCount(view: TowerCommandCenterView): number {
   return view.allInitiatives.filter(
-    (item) => item.usageHeadline || item.usageBars.some((bar) => bar.pct > 0),
+    (item) => item.usageHeadline || item.usageBars.length > 0,
   ).length;
 }
 
@@ -144,7 +146,7 @@ function contractSummaryLine(view: TowerCommandCenterView) {
       {s.approvedInvestmentUsd === null
         ? "Approved FY26 project funding is not verified"
         : `${formatUsdM(s.approvedInvestmentUsd)} in approved FY26 project funding`} ·{" "}
-      <strong>{s.claimableAmountLoaded === false ? "Cleared amount not verified" : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? `${formatUsdM(s.claimableUsd)} cleared for reporting in loaded months` : "No benefit amount cleared for reporting"}</strong> ·{" "}
+      <strong>{s.claimableAmountLoaded === true ? `${formatUsdM(s.claimableUsd)} cleared for reporting in loaded months` : "Cleared amount not verified"}</strong> ·{" "}
       {claimCount > 0
         ? `${formatCount(openClaimCount(view))} of ${formatCount(claimCount)} benefit claims do not show a cleared amount`
         : "Benefit claims not loaded"}
@@ -254,8 +256,8 @@ function ValueGateChart({ view }: { view: TowerCommandCenterView }) {
       title: "Finance review · loaded months",
       note: "Finance review and permission to report are separate steps. Only the cleared amount can be presented as an achieved benefit.",
       rows: [
-        ["Finance validated", s.financeValidatedAmountLoaded === false ? "Not verified" : s.financeValidatedAmountLoaded === true || s.financeAttestedClaimCount > 0 ? formatUsdM(s.financeValidatedUsd) : "No amount recorded"],
-        ["Cleared for reporting", s.claimableAmountLoaded === false ? "Not verified" : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? formatUsdM(s.claimableUsd) : "No amount cleared"],
+        ["Finance validated", s.financeValidatedAmountLoaded === true ? formatUsdM(s.financeValidatedUsd) : "Not verified"],
+        ["Cleared for reporting", s.claimableAmountLoaded === true ? formatUsdM(s.claimableUsd) : "Not verified"],
       ],
     },
   ];
@@ -430,7 +432,7 @@ function ClaimLedgerChart({ view }: { view: TowerCommandCenterView }) {
           <div className={styles.claimTrack}>
             <i
               className={toneClass("claimBar", row.tone)}
-              style={{ width: `${Math.min(100, Math.max(2, row.pct))}%` }}
+              style={{ width: `${Math.min(100, Math.max(0, row.pct))}%` }}
             />
           </div>
           <strong>{formatCount(row.count)}</strong>
@@ -539,7 +541,7 @@ export function ValueProofContractView({
         <article className={styles.contractCard}>
           {cardTitle(
             "Program decision rows",
-            `Top ${formatCount(programs.length)} of ${formatCount(view.programs.length)} reviewed program rows`,
+            `Top ${formatCount(programs.length)} of ${formatCount(view.programs.length)} loaded program rows`,
           )}
           <div className={styles.decisionLaneTableWrap}>
             <table className={styles.contractTable}>
@@ -717,14 +719,6 @@ function aiUsageLabel(item: TowerAiView): string {
   return "Usage metric not loaded";
 }
 
-function aiUsageScore(item: TowerAiView): number | null {
-  const scoredBars = item.usageBars
-    .map((bar) => bar.pct)
-    .filter((pct) => Number.isFinite(pct));
-  if (scoredBars.length > 0) return Math.max(...scoredBars);
-  return null;
-}
-
 function controlOrGateCell(item: TowerAiView): {
   text: string;
   title: string;
@@ -818,8 +812,7 @@ function adoptionRows(view: TowerCommandCenterView): TowerAiView[] {
     )
     .sort(
       (a, b) =>
-        (aiUsageScore(b) ?? -1) - (aiUsageScore(a) ?? -1) ||
-        b.aiSpendUsd - a.aiSpendUsd ||
+        (recordedAdoptionRate(b) ?? -1) - (recordedAdoptionRate(a) ?? -1) ||
         a.name.localeCompare(b.name),
     )
     .slice(0, 20);
@@ -1057,7 +1050,7 @@ export function AiPortfolioContractView({
         <article className={cx(styles.contractCard, styles.contractFullCard)}>
           {cardTitle(
             "Adoption lens",
-            "Tool rollouts ranked by recorded usage evidence",
+            "Tool rollouts with usage metrics; recorded adoption rates first",
           )}
           <p>{formatCount(view.usageObservations.length)} separate adoption-source rows are loaded; {formatCount(view.usageObservations.filter((item) => item.usageHeadline || item.usageBars.length > 0).length)} carry a displayable usage metric. These rows do not establish tool rollout targets or vendor exposure.</p>
           <div className={styles.decisionLaneTableWrap}>
@@ -1085,9 +1078,9 @@ export function AiPortfolioContractView({
                     </td>
                     <td>{aiUsageLabel(item)}</td>
                     <td>
-                      {aiUsageScore(item) === null
-                        ? "Unknown"
-                        : formatPct(aiUsageScore(item) ?? 0)}
+                      {recordedAdoptionRate(item) === null
+                        ? "Adoption rate not loaded"
+                        : formatPct(recordedAdoptionRate(item))}
                     </td>
                     <td>{aiBenefitLabel(item)}</td>
                   </tr>
@@ -1121,7 +1114,7 @@ export function AiPortfolioContractView({
                   <th>#</th>
                   <th>Initiative / tool</th>
                   <th>Vendor</th>
-                  <th>Value type</th>
+                  <th>Expected benefit kind (plan)</th>
                   <th>Funding or yearly tool cost</th>
                   <th>Benefit</th>
                   <th>Readiness</th>
@@ -1142,11 +1135,20 @@ export function AiPortfolioContractView({
                       </td>
                       <td>{item.vendor ?? "Not loaded"}</td>
                       <td>
-                        {humanizeLabel(
-                          item.businessValueType ??
-                            item.category ??
-                            AI_KIND_LABEL[item.displayBucket],
-                        )}
+                        {isBusinessCase(item)
+                          ? expectedBenefitKindLabel(item.expectedValueArchetype) ?? "Not recorded in intake"
+                          : "Not a business case"}
+                        <small style={{ display: "block" }}>
+                          Source category: {item.category ? humanizeLabel(item.category) : "Not recorded"}
+                        </small>
+                        <small style={{ display: "block" }}>
+                          Tower group: {AI_KIND_LABEL[item.displayBucket]}
+                        </small>
+                        {item.businessValueType ? (
+                          <small style={{ display: "block" }}>
+                            Recorded value category: {humanizeLabel(item.businessValueType)}
+                          </small>
+                        ) : null}
                       </td>
                       <td>{aiAmountLabel(item)}</td>
                       <td>{aiBenefitLabel(item)}</td>
@@ -1256,7 +1258,7 @@ function reconciliationRows(view: TowerCommandCenterView) {
     ["AI portfolio assets", ai],
     ["Benefit claims", claims],
     ["AI risk lens evidence gaps", view.gaps.length],
-    ["Pipeline field gaps (ops)", view.pipelineGaps.length],
+    ["Records needing source details or proof", view.pipelineGaps.length],
     ["Source recommendations", recommendations],
   ] as const;
 }
@@ -1271,9 +1273,7 @@ export function EvidenceActionsContractView({
   onOpenGap: (id: string) => void;
 }) {
   const s = view.summary;
-  // The review-queue count, and only that. This fell back to `gaps.length + pipelineGaps.length`
-  // — the size of two unrelated collections — whenever the queue count was zero, so a label
-  // reading "N in the economic review queue" could be counting something else entirely.
+  // This is the loaded review-row count, not a count of unique claims or missing dollar values.
   const economicRows = s.economicReviewQueueCount;
   const campaigns = campaignRows(view);
   const sourceActions = sourceContractActions(view);
@@ -1283,8 +1283,8 @@ export function EvidenceActionsContractView({
     <div className={styles.contractView}>
       <ContractMasthead view={view} />
       <SectionTitle
-        title="Distinct review populations"
-        subtitle="Assets, benefit claims, evidence gaps, pipeline gaps and recommendations have different counting bases"
+        title="Different counts in this review"
+        subtitle="These groups can overlap. Each count describes its own set of loaded records."
       />
 
       <section className={styles.populationGrid}>
@@ -1300,8 +1300,8 @@ export function EvidenceActionsContractView({
         </article>
         <article>
           <strong>{formatCount(economicRows)}</strong>
-          <span>Unreviewed economic rows</span>
-          <p>Rows with no known value yet. A backlog, not a workload.</p>
+          <span>Rows flagged for review</span>
+          <p>Loaded records marked gated or blocked before a claim can be reported. A case can appear in more than one record, and its dollar value may already be present.</p>
         </article>
       </section>
 
@@ -1426,12 +1426,12 @@ export function EvidenceActionsContractView({
 
         <article className={styles.contractCard}>
           {cardTitle(
-            "Projection population counts",
-            "Separate, overlapping populations; do not add these rows",
+            "Counts from loaded records",
+            "These groups can overlap; do not add their counts",
           )}
           <div className={styles.reconcileTables}>
             <div>
-              <h3>Rows by population</h3>
+              <h3>What each count covers</h3>
               {rowsByPage.map(([label, count]) => (
                 <p key={label}>
                   <span>{label}</span>
@@ -1441,8 +1441,8 @@ export function EvidenceActionsContractView({
             </div>
           </div>
           <p className={styles.contractCallout}>
-            The AI risk lens lists business evidence gaps only. Pipeline field
-            gaps are an operations backlog and do not appear in that lens.
+            The AI risk lens lists business evidence gaps. These source follow-ups
+            name a field or reporting gate to check, and do not appear in that lens.
           </p>
         </article>
       </section>

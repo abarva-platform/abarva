@@ -16,15 +16,19 @@
 // loadDocumentEvidence() for SkyHarbor / the meridian-golden-20260809 package.
 //
 // Scope is explicit and narrow by design: pass --contract-id to limit to one
-// or more contracts. Nothing here invents content -- every row traces to a
-// CSV row already reviewed and tagged synthetic_demo_reviewed /
-// synthetic_demo_only_not_client_truth in the source package.
+// or more contracts. Imported text preserves its declared provenance;
+// importing authored text does not perform or certify a PDF extraction.
 
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Client } from "pg";
+import {
+  classifyContractClauseTextBasis,
+  DERIVED_CLAUSE_TEXT_BASIS,
+  EXTRACTED_CLAUSE_TEXT_BASIS,
+} from "../../src/lib/source/contract-depth-package/clause-text-basis.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
@@ -42,18 +46,30 @@ function parseArgs() {
   const value = (name) => {
     const index = args.indexOf(name);
     if (index >= 0) return args[index + 1];
-    return args.find((arg) => arg.startsWith(`${name}=`))?.slice(name.length + 1);
+    return args
+      .find((arg) => arg.startsWith(`${name}=`))
+      ?.slice(name.length + 1);
   };
-  const contractIdsRaw = value("--contract-id") || process.env.CONTRACT_DEPTH_DOC_EVIDENCE_CONTRACT_ID || "";
+  const contractIdsRaw =
+    value("--contract-id") ||
+    process.env.CONTRACT_DEPTH_DOC_EVIDENCE_CONTRACT_ID ||
+    "";
   return {
-    apply: args.includes("--apply") || process.env.CONTRACT_DEPTH_DOC_EVIDENCE_APPLY === "true",
-    tenantKey: value("--tenant-key") || process.env.CONTRACT_DEPTH_DOC_EVIDENCE_TENANT_KEY || DEFAULT_TENANT_KEY,
+    apply:
+      args.includes("--apply") ||
+      process.env.CONTRACT_DEPTH_DOC_EVIDENCE_APPLY === "true",
+    tenantKey:
+      value("--tenant-key") ||
+      process.env.CONTRACT_DEPTH_DOC_EVIDENCE_TENANT_KEY ||
+      DEFAULT_TENANT_KEY,
     datasetVersion:
       value("--dataset-version") ||
       process.env.CONTRACT_DEPTH_DOC_EVIDENCE_DATASET_VERSION ||
       DEFAULT_DATASET_VERSION,
     packageDir: path.resolve(
-      value("--package-dir") || process.env.CONTRACT_DEPTH_DOC_EVIDENCE_PACKAGE_DIR || DEFAULT_PACKAGE_DIR,
+      value("--package-dir") ||
+        process.env.CONTRACT_DEPTH_DOC_EVIDENCE_PACKAGE_DIR ||
+        DEFAULT_PACKAGE_DIR,
     ),
     contractIds: contractIdsRaw
       .split(",")
@@ -67,7 +83,10 @@ function parseArgs() {
 }
 
 function stamp() {
-  return new Date().toISOString().replace(/[-:]/gu, "").replace(/\.\d{3}Z$/u, "Z");
+  return new Date()
+    .toISOString()
+    .replace(/[-:]/gu, "")
+    .replace(/\.\d{3}Z$/u, "Z");
 }
 
 function sha256(value) {
@@ -96,7 +115,9 @@ function postgresClientOptions(connectionString, applicationName) {
     connectionTimeoutMillis: Number(process.env.PG_CONNECT_TIMEOUT_MS || 15000),
     query_timeout: Number(process.env.PG_QUERY_TIMEOUT_MS || 120000),
     statement_timeout: Number(process.env.PG_STATEMENT_TIMEOUT_MS || 120000),
-    ssl: connectionString.includes("sslmode=disable") ? false : { rejectUnauthorized: true },
+    ssl: connectionString.includes("sslmode=disable")
+      ? false
+      : { rejectUnauthorized: true },
   };
 }
 
@@ -134,11 +155,16 @@ function parseCsv(text) {
     row.push(cell);
     rows.push(row);
   }
-  return rows.filter((candidate) => candidate.some((value) => value.length > 0));
+  return rows.filter((candidate) =>
+    candidate.some((value) => value.length > 0),
+  );
 }
 
 function readCsv(packageDir, relativePath) {
-  const text = fs.readFileSync(path.join(packageDir, "source-files", relativePath), "utf8");
+  const text = fs.readFileSync(
+    path.join(packageDir, "source-files", relativePath),
+    "utf8",
+  );
   const parsed = parseCsv(text);
   const headers = parsed[0] ?? [];
   return parsed.slice(1).map((values) => {
@@ -170,51 +196,64 @@ function nonEmpty(value) {
 // The dense contract-depth package uses the canonical clause columns while
 // this companion writes the document-shaped projection. Normalize at that
 // boundary so the projection cannot silently insert undefined identities.
-export function normalizeDocumentClauseRows(clauses, pages) {
-  const pageByFile = new Map();
-  for (const row of pages) {
-    const sourceFileId = nonEmpty(row.source_file_id);
-    if (sourceFileId && !pageByFile.has(sourceFileId)) pageByFile.set(sourceFileId, row);
-  }
+export function normalizeDocumentClauseRows(clauses, _pages) {
   return clauses.map((row) => {
     const sourceFileId = nonEmpty(row.source_file_id);
-    const page = sourceFileId ? pageByFile.get(sourceFileId) : undefined;
+    const basis = classifyContractClauseTextBasis(row, {
+      extractorVersion: nonEmpty(row.extractor_version) ?? undefined,
+    });
     return {
       ...row,
-      extraction_id: nonEmpty(row.extraction_id) || nonEmpty(row.clause_id) || nonEmpty(row.source_row_id),
+      extraction_id:
+        nonEmpty(row.extraction_id) ||
+        nonEmpty(row.clause_id) ||
+        nonEmpty(row.source_row_id),
       concept_ref: nonEmpty(row.concept_ref) || nonEmpty(row.clause_type),
       subject_kind: nonEmpty(row.subject_kind) || "contract",
       subject_ref: nonEmpty(row.subject_ref) || nonEmpty(row.contract_id),
-      source_section: nonEmpty(row.source_section) || nonEmpty(row.source_page_ref),
-      source_page: nonEmpty(row.source_page) || nonEmpty(page?.source_page) || "1",
+      source_section:
+        nonEmpty(row.source_section) || nonEmpty(row.source_page_ref),
+      source_page: basis.sourcePage ?? "",
       source_file_id: sourceFileId,
       evidence_class: nonEmpty(row.evidence_class) || "contract_clause",
-      confidence: nonEmpty(row.confidence) || "0.95",
-      review_state: nonEmpty(row.review_state) || "system_extracted_synthetic_demo",
+      confidence: basis.confidence === null ? "" : String(basis.confidence),
+      review_state: basis.reviewState,
+      extractor_version: basis.extractorVersion,
+      clause_text_basis: basis.textBasis,
     };
   });
 }
 
 function documentOriginMetadata(sourceFileId, fileRows, origin) {
-  if (fileRows.some((row) =>
-    (nonEmpty(row.tenant_key) && row.tenant_key !== origin.tenantKey) ||
-    (nonEmpty(row.dataset_version) && row.dataset_version !== origin.datasetVersion)
-  )) {
+  if (
+    fileRows.some(
+      (row) =>
+        (nonEmpty(row.tenant_key) && row.tenant_key !== origin.tenantKey) ||
+        (nonEmpty(row.dataset_version) &&
+          row.dataset_version !== origin.datasetVersion),
+    )
+  ) {
     throw new Error(`Document row identity conflict: ${sourceFileId}`);
   }
   const contracts = new Set(fileRows.map((row) => nonEmpty(row.contract_id)));
   if (contracts.size !== 1 || contracts.has(null)) {
-    throw new Error(`Document file contract identity conflict: ${sourceFileId}`);
+    throw new Error(
+      `Document file contract identity conflict: ${sourceFileId}`,
+    );
   }
-  const matches = (origin.manifest ?? []).filter((row) => row.source_file_id === sourceFileId);
-  if (matches.length > 1) throw new Error(`Ambiguous document origin: ${sourceFileId}`);
+  const matches = (origin.manifest ?? []).filter(
+    (row) => row.source_file_id === sourceFileId,
+  );
+  if (matches.length > 1)
+    throw new Error(`Ambiguous document origin: ${sourceFileId}`);
   const declared = matches[0];
   const first = fileRows[0];
-  if (declared && (
-    declared.tenant_key !== origin.tenantKey ||
-    declared.dataset_version !== origin.datasetVersion ||
-    declared.contract_id !== first.contract_id
-  )) {
+  if (
+    declared &&
+    (declared.tenant_key !== origin.tenantKey ||
+      declared.dataset_version !== origin.datasetVersion ||
+      declared.contract_id !== first.contract_id)
+  ) {
     throw new Error(`Document origin identity conflict: ${sourceFileId}`);
   }
   return {
@@ -260,23 +299,31 @@ export function buildDocumentFileInputs(pages, clauses, origin) {
       const filePages = pagesByFile.get(sourceFileId) ?? [];
       const fileClauses = clausesByFile.get(sourceFileId) ?? [];
       const first = filePages[0] ?? fileClauses[0];
-      const pageCount = Math.max(
-        filePages.length,
-        ...fileClauses.map((row) => intValue(row.source_page) ?? 1),
-        1,
-      );
+      const knownPages = [...filePages, ...fileClauses]
+        .map((row) => intValue(row.source_page))
+        .filter((number) => number !== null);
+      const pageCount =
+        filePages.length || knownPages.length
+          ? Math.max(filePages.length, ...knownPages)
+          : null;
       const combinedText = filePages.length
         ? filePages.map((row) => row.page_text || "").join("\n")
         : fileClauses.map((row) => row.value_text || "").join("\n");
       const metadata = origin
-        ? documentOriginMetadata(sourceFileId, [...filePages, ...fileClauses], origin)
+        ? documentOriginMetadata(
+            sourceFileId,
+            [...filePages, ...fileClauses],
+            origin,
+          )
         : undefined;
       return { sourceFileId, first, pageCount, combinedText, metadata };
     });
 }
 
 export function documentFileIdentityConflictMessage(rows) {
-  const details = rows.map((row) => `${row.file_id} -> ${row.contract_ref}`).join(", ");
+  const details = rows
+    .map((row) => `${row.file_id} -> ${row.contract_ref}`)
+    .join(", ");
   return `Source file identity conflict: ${details}. A document file id cannot be reused across contract ids.`;
 }
 
@@ -422,11 +469,13 @@ async function ensureDocumentSchema(client) {
   );
 }
 
-function documentRole(sourceFileId) {
-  const id = String(sourceFileId || "").toUpperCase();
-  if (id.includes("-MSA")) return "executed_agreement";
-  if (id.includes("-SOW")) return "sow";
-  return "supplemental_contract_pdf";
+function documentRole(row) {
+  if (
+    row.source_basis === "synthetic_modelled" ||
+    row.clause_text_basis === DERIVED_CLAUSE_TEXT_BASIS
+  )
+    return "authored_contract_reference";
+  return nonEmpty(row.document_role) ?? "contract_evidence";
 }
 
 function documentTypeFor(sourceFileId) {
@@ -453,7 +502,14 @@ function spanId(row) {
   return `${row.extraction_id}:span`;
 }
 
-async function deleteExisting(client, args, fileIds, pageIds, spanIds, extractionIds) {
+async function deleteExisting(
+  client,
+  args,
+  fileIds,
+  pageIds,
+  spanIds,
+  extractionIds,
+) {
   const aliases = [args.tenantKey];
   if (fileIds.length || extractionIds.length) {
     await client.query(
@@ -481,7 +537,10 @@ async function deleteExisting(client, args, fileIds, pageIds, spanIds, extractio
   }
   // Keep the file row in place when possible. Existing spans/pages reference
   // it, so the upsert below is the idempotent replacement boundary.
-  if (fileIds.length && process.env.SOURCE_DOCUMENT_EVIDENCE_DELETE_ORPHAN_FILES === "true") {
+  if (
+    fileIds.length &&
+    process.env.SOURCE_DOCUMENT_EVIDENCE_DELETE_ORPHAN_FILES === "true"
+  ) {
     await client.query(
       `DELETE FROM ${quoteIdent(DOC_SCHEMA)}.file WHERE tenant_key = ANY($1::text[]) AND file_id = ANY($2::text[])`,
       [aliases, fileIds],
@@ -514,10 +573,21 @@ async function deleteStalePackageFiles(client, args, fileIds) {
   );
 }
 
-export async function loadDocumentEvidence(client, args, pages, clauses, documentFiles) {
+export async function loadDocumentEvidence(
+  client,
+  args,
+  pages,
+  clauses,
+  documentFiles,
+) {
   await ensureDocumentSchema(client);
 
-  const fileIds = [...new Set([...pages.map((r) => r.source_file_id), ...clauses.map((r) => r.source_file_id)])].filter(Boolean);
+  const fileIds = [
+    ...new Set([
+      ...pages.map((r) => r.source_file_id),
+      ...clauses.map((r) => r.source_file_id),
+    ]),
+  ].filter(Boolean);
   const conflictingFiles = await client.query(
     `SELECT file_id, contract_ref
        FROM ${quoteIdent(DOC_SCHEMA)}.file
@@ -528,8 +598,12 @@ export async function loadDocumentEvidence(client, args, pages, clauses, documen
     [args.tenantKey, fileIds, args.contractIds],
   );
   if (conflictingFiles.rows.length > 0) {
-    const details = conflictingFiles.rows.map((row) => `${row.file_id} -> ${row.contract_ref}`).join(", ");
-    throw new Error(`Source file identity conflict: ${details}. A document file id cannot be reused across contract ids.`);
+    const details = conflictingFiles.rows
+      .map((row) => `${row.file_id} -> ${row.contract_ref}`)
+      .join(", ");
+    throw new Error(
+      `Source file identity conflict: ${details}. A document file id cannot be reused across contract ids.`,
+    );
   }
   const staleFiles = await client.query(
     `SELECT file_id, contract_ref, metadata_json
@@ -538,7 +612,12 @@ export async function loadDocumentEvidence(client, args, pages, clauses, documen
         AND contract_ref = ANY($2::text[])
         AND metadata_json->>'source_package' = $3
         AND NOT (file_id = ANY($4::text[]))`,
-    [args.tenantKey, args.contractIds, `${args.datasetVersion}/source-files`, fileIds],
+    [
+      args.tenantKey,
+      args.contractIds,
+      `${args.datasetVersion}/source-files`,
+      fileIds,
+    ],
   );
   const staleFileIds = staleDocumentFileIds(staleFiles.rows, fileIds, args);
   await deleteStalePackageFiles(client, args, staleFileIds);
@@ -557,8 +636,15 @@ export async function loadDocumentEvidence(client, args, pages, clauses, documen
       domain: "contract",
       label: conceptRef.replace(/_/gu, " "),
       datatype: isNumeric ? "numeric" : "text",
-      unit: isNumeric && /value|cost|spend|credit|variance|amount|pct/iu.test(conceptRef) ? (conceptRef.includes("pct") ? "%" : "usd") : null,
-      definition: "Synthetic contract-document concept extracted from the governed contract-depth evidence package.",
+      unit:
+        isNumeric &&
+        /value|cost|spend|credit|variance|amount|pct/iu.test(conceptRef)
+          ? conceptRef.includes("pct")
+            ? "%"
+            : "usd"
+          : null,
+      definition:
+        "Contract-document concept imported from the declared contract-depth package; review and extraction provenance remain separate.",
     });
   }
   for (const concept of concepts.values()) {
@@ -568,7 +654,14 @@ export async function loadDocumentEvidence(client, args, pages, clauses, documen
        ON CONFLICT (concept_ref) DO UPDATE SET
          domain = excluded.domain, label = excluded.label, datatype = excluded.datatype,
          unit = excluded.unit, definition = excluded.definition, active = true`,
-      [concept.concept_ref, concept.domain, concept.label, concept.datatype, concept.unit, concept.definition],
+      [
+        concept.concept_ref,
+        concept.domain,
+        concept.label,
+        concept.datatype,
+        concept.unit,
+        concept.definition,
+      ],
     );
   }
 
@@ -578,7 +671,13 @@ export async function loadDocumentEvidence(client, args, pages, clauses, documen
   // separate PDF binary -- consistent with how contract_page_text.csv already
   // ships a page_text_sha256 per page).
   let fileCount = 0;
-  for (const { sourceFileId, first, pageCount, combinedText, metadata } of documentFiles) {
+  for (const {
+    sourceFileId,
+    first,
+    pageCount,
+    combinedText,
+    metadata,
+  } of documentFiles) {
     await client.query(
       `INSERT INTO ${quoteIdent(DOC_SCHEMA)}.file (
          file_id, tenant_key, blob_uri, content_sha256, file_name, media_type,
@@ -601,7 +700,7 @@ export async function loadDocumentEvidence(client, args, pages, clauses, documen
         `${sourceFileId}.txt`,
         pageCount,
         args.loadRunId,
-        documentRole(sourceFileId),
+        documentRole(first),
         documentTypeFor(sourceFileId),
         nonEmpty(first.contract_id),
         JSON.stringify(metadata),
@@ -618,11 +717,24 @@ export async function loadDocumentEvidence(client, args, pages, clauses, documen
        ON CONFLICT (page_id) DO UPDATE SET
          tenant_key = excluded.tenant_key, file_id = excluded.file_id, page_no = excluded.page_no,
          page_text = excluded.page_text, char_end = excluded.char_end, page_sha256 = excluded.page_sha256`,
-      [pageId(row), args.tenantKey, row.source_file_id, intValue(row.source_page) ?? 1, text, text.length, row.page_text_sha256],
+      [
+        pageId(row),
+        args.tenantKey,
+        row.source_file_id,
+        intValue(row.source_page) ?? 1,
+        text,
+        text.length,
+        row.page_text_sha256,
+      ],
     );
   }
 
   for (const row of clauses) {
+    const basis = classifyContractClauseTextBasis(row, {
+      extractorVersion: nonEmpty(row.extractor_version) ?? undefined,
+    });
+    const derived = basis.textBasis === DERIVED_CLAUSE_TEXT_BASIS;
+    const extracted = basis.textBasis === EXTRACTED_CLAUSE_TEXT_BASIS;
     const valueNum = numericValue(row.value_num);
     const valueText = valueNum == null ? nonEmpty(row.value_text) : null;
     await client.query(
@@ -641,7 +753,7 @@ export async function loadDocumentEvidence(client, args, pages, clauses, documen
         row.source_file_id,
         row.source_section || row.concept_ref,
         row.value_text,
-        intValue(row.source_page),
+        intValue(basis.sourcePage),
         String(row.value_text || "").length,
       ],
     );
@@ -653,11 +765,12 @@ export async function loadDocumentEvidence(client, args, pages, clauses, documen
          confidence, method, review_state, visibility_class, content_authenticity,
          payload_json, extracted_at
        )
-       VALUES ($1, $2, $3, $4, 'contract_pdf_adapter_v1', $5, $6, $7, $8, $9,
-               'span', $10, $11, $12, $13, $14, $15, $16, 'internal', 'synthetic', $17::jsonb, now())
+       VALUES ($1, $2, $3, $4, $18, $5, $6, $7, $8, $9,
+               $19, $10, $11, $12, $13, $14, $15, $16, 'internal', 'synthetic', $17::jsonb, $20)
        ON CONFLICT (extraction_id) DO UPDATE SET
          tenant_key = excluded.tenant_key, load_run_id = excluded.load_run_id,
          concept_ref = excluded.concept_ref, subject_ref = excluded.subject_ref,
+         extractor_version = excluded.extractor_version, source_kind = excluded.source_kind,
          value_text = excluded.value_text, value_num = excluded.value_num,
          source_span_id = excluded.source_span_id, source_file_id = excluded.source_file_id,
          source_page = excluded.source_page, source_section = excluded.source_section,
@@ -673,14 +786,24 @@ export async function loadDocumentEvidence(client, args, pages, clauses, documen
         row.contract_id,
         valueText,
         valueNum,
-        valueNum == null ? null : (/value|cost|spend|credit|variance|amount/iu.test(row.concept_ref) ? "usd" : (row.concept_ref.includes("pct") ? "%" : null)),
-        spanId(row),
+        valueNum == null
+          ? null
+          : /value|cost|spend|credit|variance|amount/iu.test(row.concept_ref)
+            ? "usd"
+            : row.concept_ref.includes("pct")
+              ? "%"
+              : null,
+        extracted ? spanId(row) : null,
         row.source_file_id,
-        intValue(row.source_page),
+        intValue(basis.sourcePage),
         row.source_section,
-        numericValue(row.confidence),
-        "pdf_text_extraction",
-        row.review_state || "unreviewed",
+        basis.confidence,
+        derived
+          ? "authored_text_import"
+          : extracted
+            ? (nonEmpty(row.method) ?? "declared_document_text_import")
+            : "unverified_text_import",
+        basis.reviewState,
         JSON.stringify({
           dataset_version: args.datasetVersion,
           contract_id: row.contract_id,
@@ -689,7 +812,11 @@ export async function loadDocumentEvidence(client, args, pages, clauses, documen
           document_type: documentTypeFor(row.source_file_id),
           evidence_class: row.evidence_class,
           value_bool: row.value_bool,
+          clause_text_basis: basis.textBasis,
         }),
+        basis.extractorVersion,
+        extracted ? "span" : "file",
+        extracted ? nonEmpty(row.extracted_at) : null,
       ],
     );
   }
@@ -711,7 +838,9 @@ async function verifyContractsExist(client, args) {
   const found = new Set(result.rows.map((r) => r.contract_id));
   const missing = args.contractIds.filter((id) => !found.has(id));
   if (missing.length) {
-    throw new Error(`Contract(s) not found in source.contract for tenant ${args.tenantKey}: ${missing.join(", ")}. Run load-contract-depth-package.ts (Layer 3) for this package first.`);
+    throw new Error(
+      `Contract(s) not found in source.contract for tenant ${args.tenantKey}: ${missing.join(", ")}. Run load-contract-depth-package.ts (Layer 3) for this package first.`,
+    );
   }
   return result.rows;
 }
@@ -719,23 +848,35 @@ async function verifyContractsExist(client, args) {
 async function main() {
   const args = parseArgs();
   if (args.contractIds.length === 0) {
-    throw new Error("Refusing to run with no --contract-id scope. Pass one or more contract ids explicitly.");
+    throw new Error(
+      "Refusing to run with no --contract-id scope. Pass one or more contract ids explicitly.",
+    );
   }
 
   const allPages = readCsv(args.packageDir, "contract_page_text.csv");
   const allClauses = readCsv(args.packageDir, "contract_clauses.csv");
-  const pages = allPages.filter((row) => args.contractIds.includes(row.contract_id));
+  const pages = allPages.filter((row) =>
+    args.contractIds.includes(row.contract_id),
+  );
   const clauses = normalizeDocumentClauseRows(
     allClauses.filter((row) => args.contractIds.includes(row.contract_id)),
     pages,
   );
-  const manifestPath = path.join(args.packageDir, "source-files", "evidence_manifest.csv");
+  const manifestPath = path.join(
+    args.packageDir,
+    "source-files",
+    "evidence_manifest.csv",
+  );
   const manifestExists = fs.existsSync(manifestPath);
   // Validate origin identity before opening a database connection or deleting rows.
   const documentFiles = buildDocumentFileInputs(pages, clauses, {
     ...args,
-    manifest: manifestExists ? readCsv(args.packageDir, "evidence_manifest.csv") : [],
-    manifestSha256: manifestExists ? sha256(fs.readFileSync(manifestPath, "utf8")) : null,
+    manifest: manifestExists
+      ? readCsv(args.packageDir, "evidence_manifest.csv")
+      : [],
+    manifestSha256: manifestExists
+      ? sha256(fs.readFileSync(manifestPath, "utf8"))
+      : null,
   });
 
   const plan = {
@@ -749,17 +890,22 @@ async function main() {
     rows_in_scope: {
       contract_page_text: pages.length,
       contract_clauses: clauses.length,
-      distinct_source_files: new Set([...pages.map((r) => r.source_file_id), ...clauses.map((r) => r.source_file_id)]).size,
+      distinct_source_files: new Set([
+        ...pages.map((r) => r.source_file_id),
+        ...clauses.map((r) => r.source_file_id),
+      ]).size,
     },
     document_origins: documentFiles.map(({ sourceFileId, metadata }) => ({
       source_file_id: sourceFileId,
       ...metadata,
     })),
-    note: "Companion loader to load-contract-depth-package.ts. Writes doc.file/doc.page/doc.span/doc.extraction from CSV data that script already reads into source.contract_term and canonical_fact_assertion. Every row traces to a reviewed synthetic-package source row; nothing is invented here.",
+    note: "Companion loader to load-contract-depth-package.ts. Imports declared CSV text into document-shaped records, preserving derived/extracted basis, explicit citations and source review state. Import is not independent extraction or review.",
   };
 
   if (pages.length === 0 && clauses.length === 0) {
-    throw new Error(`No page-text or clause rows found for contract id(s): ${args.contractIds.join(", ")}`);
+    throw new Error(
+      `No page-text or clause rows found for contract id(s): ${args.contractIds.join(", ")}`,
+    );
   }
 
   if (!args.apply) {
@@ -769,17 +915,41 @@ async function main() {
 
   const url = databaseUrl();
   if (!url) {
-    throw new Error("Missing database URL. Set SOURCE_CONTEXT_DATABASE_URL, AZURE_LAB_DATABASE_URL, LAB_DATABASE_URL, ABARVA_AZURE_DATABASE_URL, AZURE_DATABASE_URL, or DATABASE_URL.");
+    throw new Error(
+      "Missing database URL. Set SOURCE_CONTEXT_DATABASE_URL, AZURE_LAB_DATABASE_URL, LAB_DATABASE_URL, ABARVA_AZURE_DATABASE_URL, AZURE_DATABASE_URL, or DATABASE_URL.",
+    );
   }
-  const client = new Client(postgresClientOptions(url, "source-contract-depth-document-evidence-load"));
+  const client = new Client(
+    postgresClientOptions(url, "source-contract-depth-document-evidence-load"),
+  );
   await client.connect();
   try {
     await client.query("begin");
-    await client.query("select set_config('app.tenant_key', $1, false)", [args.tenantKey]);
+    await client.query("select set_config('app.tenant_key', $1, false)", [
+      args.tenantKey,
+    ]);
     const contracts = await verifyContractsExist(client, args);
-    const inserted = await loadDocumentEvidence(client, args, pages, clauses, documentFiles);
+    const inserted = await loadDocumentEvidence(
+      client,
+      args,
+      pages,
+      clauses,
+      documentFiles,
+    );
     await client.query("commit");
-    console.log(JSON.stringify({ ...plan, event: "source_contract_depth_document_evidence_loaded", apply: true, contracts, inserted }, null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          ...plan,
+          event: "source_contract_depth_document_evidence_loaded",
+          apply: true,
+          contracts,
+          inserted,
+        },
+        null,
+        2,
+      ),
+    );
   } catch (error) {
     await client.query("rollback").catch(() => undefined);
     throw error;
@@ -788,10 +958,27 @@ async function main() {
   }
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isMain =
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   main().catch((error) => {
-    console.error(JSON.stringify({ ok: false, error: error.message, code: error.code, detail: error.detail, schema: error.schema, table: error.table, column: error.column, constraint: error.constraint }, null, 2));
+    console.error(
+      JSON.stringify(
+        {
+          ok: false,
+          error: error.message,
+          code: error.code,
+          detail: error.detail,
+          schema: error.schema,
+          table: error.table,
+          column: error.column,
+          constraint: error.constraint,
+        },
+        null,
+        2,
+      ),
+    );
     process.exit(1);
   });
 }

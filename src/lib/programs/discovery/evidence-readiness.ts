@@ -688,9 +688,14 @@ export function evaluateDiscoveryEvidenceReadiness(args: {
 export async function loadDiscoveryEvidenceReadiness(
   ctx: TenancyCtx,
   programId: string,
-  options: { loadProgram?: typeof getProgramById } = {},
+  options: {
+    loadProgram?: typeof getProgramById;
+    parallelReadbacks?: boolean;
+  } = {},
 ): Promise<DiscoveryEvidenceReadiness> {
   const program = await (options.loadProgram ?? getProgramById)(ctx, programId);
+  if (options.parallelReadbacks && !program)
+    throw new Error("Move unavailable for discovery readiness");
   const resolution = resolveDiscoveryBlueprintWithBasis(
     buildDiscoveryBlueprintInputFromProgram(program),
     resolveDeclaredProgramArchetypeId(program),
@@ -700,8 +705,8 @@ export async function loadDiscoveryEvidenceReadiness(
   // substrate alias), so approved evidence loaded under either is counted. The
   // alias set is per-tenant, so this cannot widen to another tenant.
   const tenantKeys = tenantAliasesFor(ctx.clientKey ?? "");
-  const rows = await azureRead
-    .query<{
+  const readApproved = () =>
+    azureRead.query<{
       id: string;
       title: string | null;
       summary: string | null;
@@ -733,22 +738,21 @@ export async function loadDiscoveryEvidenceReadiness(
         LIMIT 200
       `,
       [programId, tenantKeys],
-      { missingTable: "empty" },
-    )
-    .catch(() => []);
+      { missingTable: options.parallelReadbacks ? "throw" : "empty" },
+    );
   // The undecided/refused backlog is read SEPARATELY from the approved rows,
   // deliberately. Folding it into the query above would let these rows crowd
   // out approved ones inside its LIMIT and change what counts as covered;
-  // coverage must keep grading on approved rows alone. This read only ever
-  // adds wording, so a failure degrades to "no backlog" rather than failing
-  // the readiness load.
+  // coverage must keep grading on approved rows alone. The legacy reader
+  // degrades a backlog failure to "no backlog"; the flagged parallel reader
+  // keeps either failed read unavailable.
   //
   // Both non-approved decisions come back in ONE grouped read. `rejected` is
   // the third and last value of the column's CHECK constraint and was read by
   // nothing, which left a rejected family presenting the bare "upload"
   // instruction for a file already in the cabinet.
-  const backlogRows = await azureRead
-    .query<FamilyReviewDecisionRow>(
+  const readBacklog = () =>
+    azureRead.query<FamilyReviewDecisionRow>(
       `
         SELECT
           per.family_key,
@@ -762,9 +766,14 @@ export async function loadDiscoveryEvidenceReadiness(
         GROUP BY per.family_key, per.decision
       `,
       [programId, tenantKeys],
-      { missingTable: "empty" },
-    )
-    .catch(() => []);
+      { missingTable: options.parallelReadbacks ? "throw" : "empty" },
+    );
+  const [rows, backlogRows] = options.parallelReadbacks
+    ? await Promise.all([readApproved(), readBacklog()])
+    : [
+        await readApproved().catch(() => []),
+        await readBacklog().catch(() => []),
+      ];
   const { familiesAwaitingReview, familiesWithRejectedEvidence } =
     familyReviewBacklogFromDecisionRows(backlogRows);
 

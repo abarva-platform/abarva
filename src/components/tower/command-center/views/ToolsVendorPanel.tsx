@@ -41,11 +41,21 @@ const PANEL: React.CSSProperties = {
   padding: "24px 26px",
 };
 
+const ACTIVE_USER_METRICS = new Set([
+  "active users",
+  "monthly active users",
+  "30 day active users",
+  "unique active users",
+]);
+
 function activeUsers(item: TowerAiView): number | null {
-  const usage = item.usageBars.find((bar) => bar.label !== "Adoption");
-  if (!usage) return null;
-  const parsed = Number(usage.valueText.replace(/,/g, ""));
-  return Number.isFinite(parsed) ? parsed : null;
+  const hasActiveUserMetric = item.usageBars.some((bar) =>
+    ACTIVE_USER_METRICS.has(bar.label.replace(/[_-]/g, " ").replace(/\s+/g, " ").trim().toLowerCase()),
+  );
+  const count = item.monthlyActiveUsers;
+  return hasActiveUserMetric && typeof count === "number" && Number.isFinite(count) && count >= 0
+    ? count
+    : null;
 }
 
 export function buildToolVendorRows(view: TowerCommandCenterView): readonly VendorRow[] {
@@ -94,7 +104,7 @@ function VendorChart({ rows }: { rows: readonly VendorRow[] }) {
           <Tooltip
             cursor={{ fill: "rgba(10,10,11,0.05)" }}
             contentStyle={{ fontFamily: "var(--abarva-sans)", fontSize: 13, border: "1px solid var(--canon-border)", borderRadius: 0, background: "#fff" }}
-            formatter={(v) => [formatCount(Number(v)), "active users"] as [string, string]}
+            formatter={(v) => [formatCount(Number(v)), "active-user counts across tools"] as [string, string]}
           />
           <Bar dataKey="value" isAnimationActive={false} barSize={16}>
             {data.map((d) => (
@@ -113,7 +123,8 @@ export function ToolsVendorPanel({ view }: { view: TowerCommandCenterView }) {
   const blockers = rows.filter((row) => row.blockerCount > 0);
   const totalTools = rows.reduce((sum, row) => sum + row.toolCount, 0);
   const blockedTools = rows.reduce((sum, row) => sum + row.blockerCount, 0);
-  const hasActiveUsers = rows.some((row) => row.activeUsers !== null);
+  const vendorsWithActiveUsers = rows.filter((row) => row.activeUsers !== null).length;
+  const hasActiveUsers = vendorsWithActiveUsers > 0;
 
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>
@@ -129,12 +140,12 @@ export function ToolsVendorPanel({ view }: { view: TowerCommandCenterView }) {
       >
         {!hasActiveUsers
           ? `No vendor-level active-user counts are loaded. ${formatCount(view.usageObservations.length)} adoption-source rows do not establish vendor exposure.`
-          : `Active tool usage is grouped across ${formatCount(rows.length)} vendors.`}
+          : `${formatCount(vendorsWithActiveUsers)} of ${formatCount(rows.length)} vendor groups with usage-linked rollouts have recorded active-user counts.`}
       </h2>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
         <div style={{ ...PANEL, flex: "1 1 440px" }}>
           <h3 style={{ margin: "0 0 20px", fontSize: 15, fontWeight: 600 }}>
-            Active users by vendor
+            Active-user counts across tools by vendor
           </h3>
           <VendorChart rows={rows} />
         </div>
@@ -168,15 +179,15 @@ export function ToolsVendorPanel({ view }: { view: TowerCommandCenterView }) {
           )}
           <p style={{ margin: "16px 0 0", paddingTop: 16, borderTop: "1px solid var(--canon-border)", fontSize: 15, lineHeight: 1.6, color: "var(--canon-gray-700)" }}>
             {blockedTools > 0
-              ? `${formatCount(blockedTools)} of ${formatCount(totalTools)} rollouts carry a named control blocker.`
+              ? `${formatCount(blockedTools)} of ${formatCount(totalTools)} usage-linked tool rollouts carry a named control blocker.`
               : "Control blockers are not loaded for the vendor usage rows."}
           </p>
         </div>
       </div>
       <p style={{ margin: 0, fontSize: 14, color: "var(--canon-gray-500)" }}>
         {hasActiveUsers
-          ? "The chart counts recorded active users, not licensed seats; license entitlements are not loaded."
-          : "No active-user or licensed-seat measure is loaded for a vendor comparison."} Rollout counts use declared page and canonical object identity;
+          ? "Only rows explicitly measured as active users enter this chart. Counts are added across tool rollouts, so one person using two tools can be counted twice. Licensed seats are not loaded."
+          : "No explicitly named active-user or licensed-seat measure is loaded for a vendor comparison."} Rollout counts here cover only tool rows with a usage metric, using declared page and canonical object identity;
         {" "}{unclassifiedPortfolioCount(view.allInitiatives)} rows without that identity are excluded.
       </p>
     </section>

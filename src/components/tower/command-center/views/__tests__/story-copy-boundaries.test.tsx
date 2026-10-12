@@ -49,6 +49,7 @@ function sourceShapedView(): TowerCommandCenterView {
     id: `program-${index + 1}`,
     name: `Program ${index + 1}`,
     functionLabel: null,
+    affectedFunctions: [],
   }));
   return {
     ...original,
@@ -75,7 +76,7 @@ describe("Tower story copy at missing-source boundaries", () => {
       <ValueProofContractView view={sourceShapedView()} onOpenProgram={() => undefined} />,
     );
     expect(html).toContain("Program decision rows");
-    expect(html).toContain("Top 20 of 38 reviewed program rows");
+    expect(html).toContain("Top 20 of 38 loaded program rows");
     expect(html).toContain("18 benefit claims + 50 separate outcome-measure records");
     expect(html).toContain("These are program-level planning amounts");
     expect(html).toContain("Quarterly trajectory not loaded");
@@ -100,11 +101,16 @@ describe("Tower story copy at missing-source boundaries", () => {
     expect(rollouts).toContain("do not prove tool adoption");
   });
 
-  it("withdraws domain and foundation conclusions when their classifications are absent", () => {
+  it("shows missing affected work areas separately from funding and foundation gaps", () => {
     const view = sourceShapedView();
     const domain = renderToStaticMarkup(<BudgetDomainPanel view={view} />);
-    expect(domain).toContain("38 reviewed program rows have no domain classification loaded");
-    expect(domain).toContain("No program domain labels are loaded");
+    expect(domain).toContain("0 of 38 loaded programs have an affected work area linked in the source");
+    expect(domain).toContain("38 programs need a work area link");
+    expect(domain).toContain("These links cannot show a funding split");
+    expect(domain).toContain("Approved funding by work area and the full IT budget split are not verified here");
+    const emptyDomain = renderToStaticMarkup(<BudgetDomainPanel view={{ ...view, programs: [] }} />);
+    expect(emptyDomain).toContain("No program rows are loaded");
+    expect(emptyDomain).toContain("Approved funding by work area and the full IT budget split are not verified in this view");
     const foundations = renderToStaticMarkup(<FoundationsPanel view={view} />);
     expect(foundations).toContain("No foundation rows are loaded");
     expect(foundations).toMatch(/Approved foundation funding<\/div><div[^>]*>Not loaded/);
@@ -146,7 +152,7 @@ describe("Tower story copy at missing-source boundaries", () => {
     expect(queue).toContain("Task-system assignment, status, and due date are not loaded");
     expect(queue).not.toContain("Open tasks");
     const distribution = renderToStaticMarkup(<InitiativesDistributionPanel view={view} />);
-    expect(distribution).toMatch(/benefit type; 18 have no funding amount; 18 have no projected benefit amount/);
+    expect(distribution).toMatch(/recorded value category; 18 have no approved funding amount; 18 have no projected yearly benefit amount/);
     expect(distribution).not.toContain("0rows");
     expect(distribution).not.toContain("amount;18");
   });

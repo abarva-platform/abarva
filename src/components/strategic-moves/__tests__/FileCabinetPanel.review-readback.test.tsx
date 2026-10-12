@@ -585,3 +585,46 @@ describe("the cabinet states why a review decision was refused", () => {
     expect(refusal).toHaveAttribute("role", "status");
   });
 });
+
+describe("reviewer attribution in the existing Files cabinet", () => {
+  it.each(["delegated_automated", "unreported", undefined])(
+    "does not turn %s into independent human approval",
+    async (attribution) => {
+      global.fetch = jest.fn(async () => ({
+        ok: true,
+        json: async () =>
+          artifactsBody({
+            pendingEvidenceReviews: [],
+            reviewedEvidence: [
+              {
+                evidenceId: "evidence-a",
+                reviewId: "review-a",
+                title: "Reviewed source",
+                familyKey: "source",
+                phase: 1,
+                reviewedAt: "2026-10-12T12:00:00Z",
+                reviewerAttribution: attribution,
+              },
+            ],
+          }),
+      })) as unknown as typeof fetch;
+      const { container } = render(
+        <FileCabinetPanel
+          moveId="move-1"
+          phase={1}
+          discloseReviewerAttribution
+        />,
+      );
+      await screen.findByText("Reviewed source");
+      expect(container.textContent).toContain(
+        "approval does not establish independent human review",
+      );
+      expect(container.textContent).not.toContain("Human-approved");
+      expect(container.textContent).toContain(
+        attribution === "delegated_automated"
+          ? "Delegated automated review"
+          : "Reviewer attribution unavailable",
+      );
+    },
+  );
+});

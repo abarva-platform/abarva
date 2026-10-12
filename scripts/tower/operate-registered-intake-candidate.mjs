@@ -523,9 +523,16 @@ function writeProof(file, value) {
   fs.renameSync(tmp, file);
 }
 
-function servingApproval(candidatePath, receiptPath) {
+function servingApproval(candidatePath, receiptPath, priorActive, privateBundleSha) {
   if (!receiptPath) return { approved: false, reasons: ["stage receipt missing"] };
-  const result = spawnSync("npx", ["--no-install", "tsx", "scripts/tower/verify-registered-intake-serving-approval.ts", "--candidate", candidatePath, "--stage-receipt", receiptPath], {
+  const verifierArgs = ["--no-install", "tsx", "scripts/tower/verify-registered-intake-serving-approval.ts",
+    "--candidate", candidatePath, "--stage-receipt", receiptPath];
+  if (priorActive?.assessment_id && Number.isInteger(Number(priorActive.projection_version))) {
+    verifierArgs.push("--prior-assessment-id", priorActive.assessment_id,
+      "--prior-projection-version", String(priorActive.projection_version));
+  }
+  if (privateBundleSha) verifierArgs.push("--private-bundle-sha256", privateBundleSha);
+  const result = spawnSync("npx", verifierArgs, {
     cwd: ROOT,
     encoding: "utf8",
     maxBuffer: 1024 * 1024,
@@ -615,8 +622,6 @@ async function main() {
   localGaps.push(...(receipt ? validateReceipt(receipt, candidate, candidateBytes) : ["stage_receipt_missing"]));
   const blobProof = options.mode === "rollback" ? null : await privateBlobProof(candidateBytes, receiptBytes, receipt);
   if (blobProof?.status !== "verified" && options.mode !== "rollback") localGaps.push(blobProof?.gap ?? "private_blob_proof_missing");
-  const approval = servingApproval(options.candidatePath, options.receiptPath);
-  if (!approval.approved) localGaps.push(...approval.reasons.map((reason) => `serving_approval:${reason}`));
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required for a live lifecycle and physical readback");
   const { default: pg } = await import("pg");
   const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
@@ -640,6 +645,9 @@ async function main() {
     inspection.fact_lineage = lineage.findings;
     inspection.private_blob_proof = blobProof;
     await client.query("commit");
+    const approval = servingApproval(options.candidatePath, options.receiptPath,
+      inspection.prior_active, blobProof?.status === "verified" ? blobProof.sha256 : null);
+    if (!approval.approved) localGaps.push(...approval.reasons.map((reason) => `serving_approval:${reason}`));
     const proof = proofValue(candidateBytes, receiptBytes, inspection, localGaps, approval);
     if (options.mode === "preflight") {
       writeProof(options.outPath, proof);

@@ -1,5 +1,7 @@
 const fromMock = jest.fn();
 
+jest.mock("@/lib/programs/governance", () => ({ evaluateGate: jest.fn() }));
+
 jest.mock("@/lib/supabase-server", () => ({
   getServerSupabase: () => ({ from: fromMock }),
 }));
@@ -50,17 +52,136 @@ function makeBuilder(state: QueryState, rowsByTable: Record<string, unknown>) {
 
 function setupRows(rowsByTable: Record<string, unknown>) {
   const participants = rowsByTable.engagement_participants;
-  const rows = { ...rowsByTable, engagements: rowsByTable.engagements ??
-    (Array.isArray(participants) ? participants.map((row) => ({ id: row.engagement_id })) : []) };
-  fromMock.mockImplementation((table: string) =>
-    makeBuilder({ table }, rows),
-  );
+  const rows = {
+    ...rowsByTable,
+    engagements:
+      rowsByTable.engagements ??
+      (Array.isArray(participants)
+        ? participants.map((row) => ({ id: row.engagement_id }))
+        : []),
+  };
+  fromMock.mockImplementation((table: string) => makeBuilder({ table }, rows));
 }
 
 describe("program access policy", () => {
   beforeEach(() => {
     jest.resetModules();
     fromMock.mockReset();
+  });
+
+  it("shares the canonical scoped policy inside one page request and rereads it on the next request", async () => {
+    setupRows({
+      person_client_memberships: { access_level: "program_viewer" },
+      engagement_participants: [],
+    });
+    const { createPhasePageReadSet } =
+      await import("@/lib/programs/phase-page-gate-reads");
+    const { loadUserProgramAccessPolicy } =
+      await import("../program-access-policy");
+    const ctx = {
+      clientId: "tenant-a",
+      userId: "00000000-0000-4000-8000-000000000001",
+    };
+    const options = {
+      programId: "move-a",
+      readSet: createPhasePageReadSet(ctx, "move-a"),
+    };
+    const [first, second] = await Promise.all([
+      loadUserProgramAccessPolicy(ctx, options),
+      loadUserProgramAccessPolicy(ctx, options),
+    ]);
+    expect(first).toBe(second);
+    expect(first.programIdsAllowed).toEqual([]);
+    expect(
+      fromMock.mock.calls.filter(
+        ([table]) => table === "person_client_memberships",
+      ),
+    ).toHaveLength(1);
+    await loadUserProgramAccessPolicy(ctx, {
+      ...options,
+      readSet: createPhasePageReadSet(ctx, "move-a"),
+    });
+    expect(
+      fromMock.mock.calls.filter(
+        ([table]) => table === "person_client_memberships",
+      ),
+    ).toHaveLength(2);
+  });
+
+  it("uses that same policy for the canonical read decision and refuses context or Move drift", async () => {
+    setupRows({
+      person_client_memberships: { access_level: "program_member" },
+      engagement_participants: [
+        {
+          engagement_id: "move-a",
+          role: "Contributor",
+          can_view_financial: false,
+          can_approve_phase_gates: false,
+        },
+      ],
+    });
+    const { createPhasePageReadSet } =
+      await import("@/lib/programs/phase-page-gate-reads");
+    const { loadUserProgramAccessPolicy, canReadProgram } =
+      await import("../program-access-policy");
+    const ctx = {
+      clientId: "tenant-a",
+      userId: "00000000-0000-4000-8000-000000000001",
+    };
+    const readSet = createPhasePageReadSet(ctx, "move-a");
+    const policy = await loadUserProgramAccessPolicy(ctx, {
+      programId: "move-a",
+      readSet,
+    });
+    expect(await canReadProgram(ctx, "move-a", { readSet })).toBe(true);
+    expect(policy.canApproveGates).toBe(false);
+    expect(policy.canViewFinancialData).toBe(false);
+    expect(
+      fromMock.mock.calls.filter(
+        ([table]) => table === "person_client_memberships",
+      ),
+    ).toHaveLength(1);
+    fromMock.mockClear();
+    await expect(
+      canReadProgram({ ...ctx, clientId: "tenant-b" }, "move-a", { readSet }),
+    ).rejects.toThrow("scope mismatch");
+    await expect(canReadProgram(ctx, "move-b", { readSet })).rejects.toThrow(
+      "scope mismatch",
+    );
+    await expect(loadUserProgramAccessPolicy(ctx, { readSet })).rejects.toThrow(
+      "Move scope",
+    );
+    expect(fromMock).not.toHaveBeenCalled();
+  });
+
+  it("shares a failed policy read as unavailable without turning it into a permission denial", async () => {
+    const error = new Error("Policy source unavailable");
+    fromMock.mockImplementation(() => {
+      throw error;
+    });
+    const { createPhasePageReadSet } =
+      await import("@/lib/programs/phase-page-gate-reads");
+    const { loadUserProgramAccessPolicy, canReadProgram } =
+      await import("../program-access-policy");
+    const ctx = {
+      clientId: "tenant-a",
+      userId: "00000000-0000-4000-8000-000000000001",
+    };
+    const readSet = createPhasePageReadSet(ctx, "move-a");
+    expect(
+      await Promise.allSettled([
+        loadUserProgramAccessPolicy(ctx, { programId: "move-a", readSet }),
+        canReadProgram(ctx, "move-a", { readSet }),
+      ]),
+    ).toEqual([
+      { status: "rejected", reason: error },
+      { status: "rejected", reason: error },
+    ]);
+    expect(
+      fromMock.mock.calls.filter(
+        ([table]) => table === "person_client_memberships",
+      ),
+    ).toHaveLength(1);
   });
 
   it("does not turn a scoped operator into a tenant admin through an agent email", async () => {
@@ -74,7 +195,8 @@ describe("program access policy", () => {
       },
       engagement_participants: [],
     });
-    const { loadUserProgramAccessPolicy } = await import("../program-access-policy");
+    const { loadUserProgramAccessPolicy } =
+      await import("../program-access-policy");
     const policy = await loadUserProgramAccessPolicy({
       clientId: "client-1",
       clientKey: "meridian",

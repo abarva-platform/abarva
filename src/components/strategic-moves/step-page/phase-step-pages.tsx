@@ -67,6 +67,7 @@ export interface StepPageHostProps {
   gateProps: GateReadinessStepProps;
   charterBasis?: {
     active: boolean;
+    busy?: boolean;
     values: Readonly<Record<string, CharterBasisValue>>;
     approvedSources: Readonly<
       Record<string, readonly CharterBasisApprovedSource[]>

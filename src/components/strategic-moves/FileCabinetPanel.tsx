@@ -1973,6 +1973,7 @@ export function FileCabinetPanel({
   phase = 0,
   presentationMode = false,
   canApproveGates = false,
+  discloseReviewerAttribution = false,
   onEvidenceChanged,
   evidenceFamilies = [],
 }: {
@@ -1980,6 +1981,7 @@ export function FileCabinetPanel({
   phase?: number;
   presentationMode?: boolean;
   canApproveGates?: boolean;
+  discloseReviewerAttribution?: boolean;
   onEvidenceChanged?: () => void;
   /**
    * The evidence families this phase requires. When supplied, the uploader
@@ -2006,6 +2008,7 @@ export function FileCabinetPanel({
       familyKey: string;
       phase: number | null;
       reviewedAt: string | null;
+      reviewerAttribution?: "delegated_automated" | "unreported";
     }>
   >([]);
   // Rejected reviews are a THIRD list. They are in neither the queue (pending)
@@ -2541,9 +2544,9 @@ export function FileCabinetPanel({
             {reviewedEvidence.length === 1 ? "" : "s"}
           </h3>
           <p style={{ margin: "4px 0 8px", fontSize: 12, color: "#4a5a50" }}>
-            Human-approved evidence used by phase generation. This is a
-            read-only audit trail of what a reviewer accepted; it is not an
-            editing surface.
+            {discloseReviewerAttribution
+              ? "Approved evidence used by phase generation. The recorded reviewer attribution appears below; approval does not establish independent human review."
+              : "Human-approved evidence used by phase generation. This is a read-only audit trail of what a reviewer accepted; it is not an editing surface."}
           </p>
           <ul
             style={{
@@ -2576,6 +2579,13 @@ export function FileCabinetPanel({
                   }}
                 >
                   <span>{item.familyKey.replace(/_/g, " ")}</span>
+                  {discloseReviewerAttribution && (
+                    <span>
+                      {item.reviewerAttribution === "delegated_automated"
+                        ? "Delegated automated review"
+                        : "Reviewer attribution unavailable"}
+                    </span>
+                  )}
                   {item.phase != null && <span>Phase {item.phase}</span>}
                   {item.reviewedAt && (
                     <span>

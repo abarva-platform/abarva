@@ -12,7 +12,7 @@ import { CommandCenterView } from "../views/CommandCenterView";
 import { InitiativesTablePanel } from "../views/InitiativesTablePanel";
 import { QueueOwnerPanel } from "../views/QueueOwnerPanel";
 import { VerdictPanel } from "../views/VerdictPanel";
-import { buildBudgetDomainRows } from "../views/BudgetDomainPanel";
+import { buildAffectedWorkAreaCoverage } from "../views/BudgetDomainPanel";
 import { BudgetShapePanel } from "../views/BudgetShapePanel";
 import { buildToolVendorRows } from "../views/ToolsVendorPanel";
 import { isBusinessCase, isToolRollout, unclassifiedPortfolioCount } from "../views/portfolio-kind";
@@ -122,7 +122,7 @@ describe("Tower story denominators", () => {
     render(<InitiativesTablePanel view={viewWith([validatedZero, unvalidated])} />);
     const financeCell = (name: string) =>
       screen.getByText(name).closest('[title="Double-click to open case details"]')?.children[5];
-    expect(financeCell("Validated zero")?.textContent).toBe("Amount not shown");
+    expect(financeCell("Validated zero")?.textContent).toBe("Amount not verified");
     expect(financeCell("Unvalidated case")?.textContent).toBe("Not loaded");
   });
 
@@ -132,11 +132,12 @@ describe("Tower story denominators", () => {
     expect(document.body.textContent).toContain("No foundation rows are loaded");
   });
 
-  it("groups only reviewed program counts, without inventing budget categories", () => {
+  it("keeps affected work area coverage separate from funding categories", () => {
     const view = base();
-    const rows = buildBudgetDomainRows(view);
-    expect(rows.every((row) => "reviewedCount" in row)).toBe(true);
-    expect(rows.every((row) => !("approvedProgramFundingUsd" in row) && !("runUsd" in row))).toBe(true);
+    const coverage = buildAffectedWorkAreaCoverage(view);
+    expect(coverage.totalPrograms).toBe(view.programs.length);
+    expect(coverage.linkedPrograms + coverage.unlinkedPrograms.length).toBe(coverage.totalPrograms);
+    expect(coverage.rows.every((row) => !("approvedProgramFundingUsd" in row) && !("runUsd" in row))).toBe(true);
   });
 
   it("withholds budget projection amounts when reconciliation status is absent", () => {

@@ -11,6 +11,7 @@ import { buildTowerChatAvaAnswerPacket } from "@/lib/cio-tower/tower-chat-artifa
 import type { TowerChatVisibleAnswer } from "@/lib/cio-tower/tower-chat-artifacts";
 import type { AtlasSuggestion } from "@/lib/atlas/types";
 import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
+import { recordedAdoptionRate } from "@/lib/tower/command-center/adoption-rate";
 import type { CioTowerPageContext } from "@/lib/tower/current-layer-answer-contract";
 
 import { TowerCommandCenter } from "./TowerCommandCenter";
@@ -111,7 +112,7 @@ function towerSummaryPrompt(view: TowerCommandCenterView | null): string {
  * promises a population the tenant does not have. A surface with nothing to say about falls back
  * to the portfolio-wide set instead of offering an empty question.
  */
-function surfaceSuggestions(
+export function surfaceSuggestions(
   view: TowerCommandCenterView,
   tab: string | null | undefined,
   subTab: string | null | undefined,
@@ -120,11 +121,11 @@ function surfaceSuggestions(
     (item) => item.populationKind === "tool_rollout",
   );
   const belowTarget = rollouts.filter((item) => {
-    const adoption = item.usageBars.find((bar) => bar.label === "Adoption");
+    const adoption = recordedAdoptionRate(item);
     return (
-      adoption !== undefined &&
+      adoption !== null &&
       item.adoptionTargetPct !== null &&
-      adoption.pct < item.adoptionTargetPct
+      adoption < item.adoptionTargetPct
     );
   }).length;
   const blockedRollouts = rollouts.filter(
@@ -166,7 +167,7 @@ function surfaceSuggestions(
     return [
       belowTarget > 0
         ? `Which of the ${belowTarget} rollouts below target should move first?`
-        : "How does adoption compare with target across the rollouts?",
+        : "Which rollouts have a recorded adoption rate and target?",
       blockedRollouts > 0
         ? `Which ${blockedRollouts} rollouts carry a named control blocker?`
         : "Which rollouts have no control blocker recorded?",
@@ -475,17 +476,17 @@ export function TowerCommandCenterAvaShell({
                 label: "Projected yearly benefit, not proven savings",
                 value: view.summary.promisedUsd,
               }] : []),
-              ...(view.summary.claimableAmountLoaded === false ? [] : [{
+              ...(view.summary.claimableAmountLoaded === true ? [{
                 measureKey: "realized_value_ytd_allowed",
                 label: "Value cleared for reporting in loaded months",
                 value: view.summary.claimableUsd,
-              }]),
+              }] : []),
             ]
           : [],
         towerKnownGaps: view
           ? [
               "Total IT budget is omitted from assistant measures because the Tower projection amount has no reconciled active-intake lineage status. Treat it as unverified until that status is available.",
-              ...(view.summary.claimableAmountLoaded === false ? ["Cleared value is not verified because no approved claim amount with a valid reporting period is loaded."] : []),
+              ...(view.summary.claimableAmountLoaded === true ? [] : ["Cleared value is not verified because no approved claim amount with a valid reporting period is loaded."]),
               ...view.gaps.map((gap) => gap.missing).slice(0, 12),
             ]
           : [],

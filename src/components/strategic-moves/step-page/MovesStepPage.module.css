@@ -2,7 +2,7 @@
  * Moves step page — the canonical capture visual language (design handoff
  * `moves-capture`) composed into the step page template. Ported from Claude
  * Design's final `core.css`; every value is a canonical token. Tokens are
- * scoped to `.root` so the page carries its own light/dark theme:
+ * scoped to `.root` and its notes slot so both carry the light/dark theme:
  * `prefers-color-scheme` unless the root sets `data-theme`.
  */
 
@@ -20,7 +20,8 @@
     padding: var(--space-page-inline-mobile);
     overflow-wrap: anywhere;
   }
-  .intakeResponsive :global([aria-label="P0 steps"] > section > div:first-child) {
+  .intakeResponsive
+    :global([aria-label="P0 steps"] > section > div:first-child) {
     display: flex;
     flex-wrap: wrap;
   }
@@ -30,7 +31,8 @@
 }
 
 /* ───────── Tokens ───────── canonical (moves-capture handoff). No new values. */
-.root {
+.root,
+.notes-panel {
   --mv-bg: #f5f1eb;
   --mv-surface: #ffffff;
   --mv-ink: #2c2c2a;
@@ -54,7 +56,8 @@
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
-  .root:not([data-theme="light"]) {
+  .root:not([data-theme="light"]),
+  .notes-panel:not([data-theme="light"]) {
     --mv-bg: #141413;
     --mv-surface: #1d1d1b;
     --mv-ink: #f1efe8;
@@ -71,7 +74,8 @@
     color-scheme: dark;
   }
 }
-.root[data-theme="dark"] {
+.root[data-theme="dark"],
+.notes-panel[data-theme="dark"] {
   --mv-bg: #141413;
   --mv-surface: #1d1d1b;
   --mv-ink: #f1efe8;
@@ -88,11 +92,76 @@
   color-scheme: dark;
 }
 
+.notes-panel {
+  min-width: 0;
+  background: var(--mv-bg);
+  color: var(--mv-ink);
+  font-family: var(--mv-font-sans);
+}
+
+.notes-panel,
+.notes-panel * {
+  box-sizing: border-box;
+}
+
+/* Palette changes stay atomic while existing movement and opacity remain. */
+.root :global(a),
+.root :global(button),
+.root :global([role="button"]),
+.notes-panel :global(a),
+.notes-panel :global(button),
+.notes-panel :global([role="button"]) {
+  transition-property: opacity, transform;
+}
+
 /* Existing estimate editor, composed inside the P4.2 step workspace. */
 .root :global(.mxw-estimate-model) {
   display: grid;
   gap: 12px;
   min-width: 0;
+}
+
+/* The existing transition workbook producer uses the step's canonical theme. */
+.root :global(.mxw-stage-actions),
+.root :global(.mxw-workbook-preview) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.root :global(.mxw-stage-download) {
+  font: inherit;
+  color: var(--mv-ink);
+  background: var(--mv-surface);
+  border: 1px solid var(--mv-line-strong);
+  border-radius: var(--mv-radius);
+  padding: 8px 12px;
+  text-decoration: none;
+}
+.root :global(.mxw-hidden-file) {
+  display: none;
+}
+.root :global(.mxw-workbook-preview-status),
+.root :global(.mxw-workbook-review-summary) {
+  display: grid;
+  gap: 8px;
+  color: var(--mv-muted);
+}
+.root :global(.mxw-workbook-review) {
+  width: 100%;
+  min-width: 0;
+}
+.root :global(.mxw-workbook-review-list) {
+  max-height: 360px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+.root :global(.mxw-workbook-review-list label) {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 0;
 }
 .root :global(.mxw-estimate-toolbar) {
   display: flex;

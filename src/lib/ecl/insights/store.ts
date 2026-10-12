@@ -85,6 +85,10 @@ export async function persistInsightCandidates(
 }
 
 export async function verifyInsightCandidates(db: JobDatabase, plan: InsightPlan, firstRunId: string): Promise<number> {
+  return (await readInsightCandidateContent(db, plan, firstRunId)).findings;
+}
+
+export async function readInsightCandidateContent(db: JobDatabase, plan: InsightPlan, firstRunId: string) {
   const stored = await db.query<{ id: string; finding_hash: string; payload_json: InsightFinding; governance_json: unknown }>(
     `select id::text, finding_hash, payload_json, governance_json from ecl_projection.enterprise_insight_finding
      where tenant_key=$1 and assessment_id=$2 and release_id=$3 order by id`,
@@ -95,6 +99,15 @@ export async function verifyInsightCandidates(db: JobDatabase, plan: InsightPlan
     insightHash(row.governance_json) !== insightHash(candidateGovernance(plan, plan.findings[index], firstRunId)))) {
     throw new Error("Insight content readback failed");
   }
+  const findingComparisons = stored.rows.map((row, index) => ({
+    id: row.id,
+    expectedFindingHash: insightHash(plan.findings[index]),
+    storedFindingHash: row.finding_hash,
+    actualPayloadHash: insightHash(row.payload_json),
+    expectedGovernanceHash: insightHash(candidateGovernance(plan, plan.findings[index], firstRunId)),
+    actualGovernanceHash: insightHash(row.governance_json),
+  }));
+  const lineageComparisons: Array<{ table: string; expectedCount: number; actualCount: number; expectedHash: string; actualHash: string }> = [];
   for (const [table, column, key] of [
     ["enterprise_insight_object_ref", "object_id", "objectIds"],
     ["enterprise_insight_relationship_ref", "relationship_id", "relationshipIds"],
@@ -110,7 +123,10 @@ export async function verifyInsightCandidates(db: JobDatabase, plan: InsightPlan
       [plan.tenantKey, plan.assessmentId, plan.releaseId]);
     const expected = plan.findings.flatMap((finding) => finding[key].map((ref_id) => ({ finding_id: finding.id, ref_id })));
     const order = (rows: typeof expected) => rows.sort((a, b) => `${a.finding_id}:${a.ref_id}`.localeCompare(`${b.finding_id}:${b.ref_id}`));
-    if (insightHash(order(refs.rows)) !== insightHash(order(expected))) throw new Error(`Insight lineage readback failed: ${table}`);
+    const actualHash = insightHash(order(refs.rows));
+    const expectedHash = insightHash(order(expected));
+    if (actualHash !== expectedHash) throw new Error(`Insight lineage readback failed: ${table}`);
+    lineageComparisons.push({ table, expectedCount: expected.length, actualCount: refs.rows.length, expectedHash, actualHash });
   }
-  return stored.rows.length;
+  return { findings: stored.rows.length, findingComparisons, lineageComparisons };
 }

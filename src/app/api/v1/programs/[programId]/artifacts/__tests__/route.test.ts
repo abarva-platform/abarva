@@ -6,7 +6,12 @@ const tenancy = {
   clientId: "client-uuid",
   clientKey: "skyharbor-air",
   userId: "u1",
+  syntheticE2eOperator: false,
 };
+const mockIsFeatureEnabled = jest.fn();
+jest.mock("@/lib/features/is-feature-enabled", () => ({
+  isFeatureEnabled: (...args: unknown[]) => mockIsFeatureEnabled(...args),
+}));
 let moveRows: Array<Record<string, unknown>> = [];
 let generatedRecs: Array<Record<string, unknown>> = [];
 let mockPendingEvidenceReviewRows: Array<Record<string, unknown>> = [];
@@ -134,6 +139,8 @@ function params(programId: string) {
 }
 
 beforeEach(() => {
+  mockIsFeatureEnabled.mockReturnValue(false);
+  tenancy.syntheticE2eOperator = false;
   moveRows = [];
   generatedRecs = [];
   mockDeliverablesV2Rows = [];
@@ -1097,7 +1104,8 @@ describe("GET /api/v1/programs/[programId]/artifacts — operator-job evidence",
     id: "evidence-job-1",
     title: "Identity resolution current state",
     summary: "SYNTHETIC - NOT CLIENT-ATTESTED. Pending review.",
-    extracted_text: "# Identity resolution\n\nOne record per person is not yet established.",
+    extracted_text:
+      "# Identity resolution\n\nOne record per person is not yet established.",
     // The job nests its citation under `flexible` and sets none of the
     // top-level structured lists the upload parser produces.
     extracted_structured: {
@@ -1400,4 +1408,43 @@ describe("GET artifacts reports the health of its sign-off projection read", () 
     expect(json.evidenceReviewStatus).toBe("available");
     expect(json.deliverableSignOffStatus).toBe("unavailable");
   });
+});
+
+describe("recorded reviewer attribution", () => {
+  it.each([
+    [true, true, "u1", "delegated_automated"],
+    [true, true, "another-reviewer", "unreported"],
+    [true, false, "u1", "unreported"],
+    [false, true, "u1", undefined],
+  ])(
+    "binds attribution to the flagged authenticated reviewer (%s, %s, %s)",
+    async (flagged, automated, reviewerId, expected) => {
+      mockIsFeatureEnabled.mockReturnValue(flagged);
+      tenancy.syntheticE2eOperator = automated as boolean;
+      mockPendingEvidenceReviewRows = [
+        {
+          id: "review-a",
+          evidence_id: "evidence-a",
+          decision: "approved",
+          reviewed_by_user_id: reviewerId,
+          reviewed_at: "2026-10-12T12:00:00Z",
+        },
+      ];
+      mockPendingEvidenceRows = [
+        { id: "evidence-a", title: "Reviewed source" },
+      ];
+      const response = await GET(
+        req(),
+        params("11111111-1111-1111-1111-111111111111"),
+      );
+      const body = await response.json();
+      expect(body.reviewedEvidence).toHaveLength(1);
+      if (flagged)
+        expect(body.reviewedEvidence[0].reviewerAttribution).toBe(expected);
+      else
+        expect(body.reviewedEvidence[0]).not.toHaveProperty(
+          "reviewerAttribution",
+        );
+    },
+  );
 });

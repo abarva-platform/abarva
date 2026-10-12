@@ -81,3 +81,26 @@ it("keeps annual tool cost out of the assistant's approved funding measure", () 
     expect.objectContaining({ measureKey: "ai_tagged_spend_fy26_non_additive" }),
   ]));
 });
+
+it("withholds a zero cleared-value placeholder when the approval amount flag is absent", () => {
+  const built = buildTowerCommandCenterView(designFixtureMart(), { tenantName: "Example tenant" })!;
+  const view = {
+    ...built,
+    summary: {
+      ...built.summary,
+      claimableUsd: 0,
+      claimableClaimCount: 1,
+      claimableAmountLoaded: undefined,
+    },
+  };
+
+  render(<TowerCommandCenterAvaShell view={view} tenantName="Example tenant" clientId="example" />);
+
+  const context = JSON.parse(screen.getByTestId("tower-ava-context").textContent ?? "{}");
+  expect(context.towerMeasures).not.toEqual(expect.arrayContaining([
+    expect.objectContaining({ measureKey: "realized_value_ytd_allowed" }),
+  ]));
+  expect(context.towerKnownGaps).toEqual(expect.arrayContaining([
+    expect.stringContaining("Cleared value is not verified"),
+  ]));
+});

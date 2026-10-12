@@ -36,6 +36,72 @@
 // approved, as the denormalized array has always been read); the snapshot arm
 // requires `approved` exactly, as `gateApproved` required it.
 
+import type { PhaseSnapshot } from "./types.db";
+import type { OriginationRequestStateRow } from "./queries";
+import type { P0ReviewedCapturePreview } from "./p0-reviewed-capture-correction";
+
+export type OriginationApprovalReadback =
+  | { state: "unavailable" | "not_recorded"; moveId: string }
+  | {
+      state: "recorded";
+      moveId: string;
+      snapshotId: string;
+      approvedAt: string | null;
+      rationale: string | null;
+      requestLifecycle?: { status: string | null; readable: boolean };
+      moveLifecycle?: string | null;
+      captureCorrection?: P0ReviewedCapturePreview;
+    };
+
+/** Canonical snapshots are supplied newest first by the scoped reader. */
+export function originationApprovalReadback(
+  moveId: string,
+  snapshots: readonly PhaseSnapshot[] | null,
+  requestRows?: readonly OriginationRequestStateRow[] | null,
+  moveLifecycle?: string | null,
+): OriginationApprovalReadback {
+  if (snapshots === null) return { state: "unavailable", moveId };
+  const latest = snapshots.find((snapshot) => snapshot.phaseNumber === 0);
+  if (latest && (latest.engagementId !== moveId || !latest.id))
+    return { state: "unavailable", moveId };
+  if (!latest || latest.approvalStatus !== "approved")
+    return { state: "not_recorded", moveId };
+  let content: unknown = latest.snapshot;
+  if (typeof content === "string") {
+    try {
+      content = JSON.parse(content);
+    } catch {
+      content = null;
+    }
+  }
+  const raw =
+    content && typeof content === "object" && !Array.isArray(content)
+      ? (content as Record<string, unknown>).humanRationale
+      : null;
+  return {
+    state: "recorded",
+    moveId,
+    snapshotId: latest.id,
+    approvedAt: latest.lockedAt || null,
+    rationale: typeof raw === "string" && raw.trim() ? raw : null,
+    ...(requestRows !== undefined
+      ? {
+          requestLifecycle: {
+            readable:
+              requestRows !== null &&
+              requestRows.every((row) => row.programId === moveId),
+            status:
+              requestRows !== null &&
+              requestRows.every((row) => row.programId === moveId)
+                ? (requestRows[0]?.requestStatus ?? null)
+                : null,
+          },
+          moveLifecycle: moveLifecycle ?? null,
+        }
+      : {}),
+  };
+}
+
 /** A `phase_snapshots` row, in either the camelCase or raw-column spelling. */
 export type ApprovedGateSnapshot = {
   phaseNumber?: number | null;
@@ -76,9 +142,7 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 }
 
 function namesPhase(value: unknown, phase: number): boolean {
-  return (
-    value === phase || value === String(phase) || value === `P${phase}`
-  );
+  return value === phase || value === String(phase) || value === `P${phase}`;
 }
 
 /**

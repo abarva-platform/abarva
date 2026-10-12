@@ -12,7 +12,12 @@ import {
 import { isBusinessChangeAssessmentComplete } from "@/lib/programs/solution-route-assessment";
 import type { StepPageHostProps } from "./phase-step-pages";
 import { useStepEvidence } from "./StepEvidence";
-import { MovesStepPage, SourceLine, type StepPageRow } from "./MovesStepPage";
+import {
+  MovesStepPage,
+  StepNotesPanel,
+  SourceLine,
+  type StepPageRow,
+} from "./MovesStepPage";
 import { BusinessChangeAssessmentForm } from "../BusinessChangeAssessmentForm";
 import { CharterBasisField } from "../CharterBasisField";
 import styles from "./MovesStepPage.module.css";
@@ -259,6 +264,7 @@ export function TextCaptureStep({
           value={host.charterBasis.values[field.key] ?? null}
           approvedSources={host.charterBasis.approvedSources[field.key] ?? []}
           emptyValue={!accepted.trim()}
+          disabled={!saved || host.charterBasis.busy === true}
           saveError={host.charterBasis.errors[field.key] ?? null}
           onChange={(next) => host.charterBasis?.setValue(field.key, next)}
         />
@@ -377,18 +383,34 @@ export function TextCaptureStep({
   }
   if (config.sponsorCheck) {
     const sponsor = host.move.participants.find(
-      (participant) => participant.role.toLowerCase() === "sponsor",
+      (participant) =>
+        participant.role.toLowerCase() === "sponsor" &&
+        participant.declaredRoleOnly !== true,
+    );
+    const proposedSponsor = host.move.participants.find(
+      (participant) =>
+        participant.role.toLowerCase() === "sponsor" &&
+        participant.declaredRoleOnly === true,
     );
     rows.push({
       id: "sponsor-role",
       eyebrow: "Participant role",
       rank: fields.length,
-      subject: "Sponsor assigned",
+      subject:
+        proposedSponsor && !sponsor
+          ? "Sponsor participant needed"
+          : "Sponsor assigned",
       shortName: "sponsor participant",
       state: sponsor ? "settled" : "decision",
       clause: "assign the sponsor participant role",
       middle: sponsor ? (
         <p>{sponsor.name} has the sponsor role on this Move.</p>
+      ) : proposedSponsor ? (
+        <p>
+          {proposedSponsor.name} is stored as a proposed sponsor role. A role
+          placeholder does not confirm a sponsor participant or human approval.
+          Assign the sponsor participant role before continuing.
+        </p>
       ) : (
         <p>
           A sponsor contact answer does not assign a Move participant. Users
@@ -417,23 +439,25 @@ export function TextCaptureStep({
   });
   const phaseBase = `/strategic-moves/${encodeURIComponent(host.move.id)}/phase/${host.phase}`;
   const notesPanel = (
-    <div className={cx("warn-inline")}>
-      <label className={cx("q-label")} htmlFor={`${config.view}-notes`}>
-        Paste labelled session notes
-      </label>
-      <textarea
-        id={`${config.view}-notes`}
-        className={cx("q-input")}
-        rows={5}
-        value={notes}
-        onChange={(event) => setNotes(event.target.value)}
-        placeholder={fields.map((field) => `${field.label}: …`).join("\n")}
-      />
-      <button type="button" className={cx("btn-ink")} onClick={fillFromNotes}>
-        Fill this step from my notes
-      </button>
-      {reply ? <p role="status">{reply}</p> : null}
-    </div>
+    <StepNotesPanel>
+      <div className={cx("warn-inline")}>
+        <label className={cx("q-label")} htmlFor={`${config.view}-notes`}>
+          Paste labelled session notes
+        </label>
+        <textarea
+          id={`${config.view}-notes`}
+          className={cx("q-input")}
+          rows={5}
+          value={notes}
+          onChange={(event) => setNotes(event.target.value)}
+          placeholder={fields.map((field) => `${field.label}: …`).join("\n")}
+        />
+        <button type="button" className={cx("btn-ink")} onClick={fillFromNotes}>
+          Fill this step from my notes
+        </button>
+        {reply ? <p role="status">{reply}</p> : null}
+      </div>
+    </StepNotesPanel>
   );
   const page = (
     <MovesStepPage

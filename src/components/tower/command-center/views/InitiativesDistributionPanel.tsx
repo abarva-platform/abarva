@@ -20,8 +20,9 @@ import {
 } from "recharts";
 import type React from "react";
 
-import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
-import { formatUsdM } from "@/lib/tower/command-center/format";
+import type { TowerAiView, TowerCommandCenterView } from "@/lib/tower/command-center/types";
+import { formatCount, formatUsdM } from "@/lib/tower/command-center/format";
+import { expectedBenefitKindLabel } from "./expected-benefit-kind";
 import { isBusinessCase } from "./portfolio-kind";
 
 type GroupRow = {
@@ -31,6 +32,18 @@ type GroupRow = {
   readonly missingInvestmentCount: number;
   readonly missingValueCount: number;
 };
+
+export function expectedBenefitKindRows(cases: readonly TowerAiView[]) {
+  const counts = new Map<string, number>();
+  for (const item of cases) {
+    const code = item.expectedValueArchetype?.trim();
+    if (!code) continue;
+    counts.set(code, (counts.get(code) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([sourceCode, count]) => ({ sourceCode, label: expectedBenefitKindLabel(sourceCode) ?? sourceCode, count }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+}
 
 const PANEL: React.CSSProperties = {
   background: "var(--canon-bg-surface)",
@@ -147,6 +160,8 @@ export function InitiativesDistributionPanel({ view }: { view: TowerCommandCente
   const cases = view.allInitiatives.filter(isBusinessCase);
   const caseView = { ...view, allInitiatives: cases };
   const byType = groupBy(caseView, (item) => item.businessValueType);
+  const expectedKinds = expectedBenefitKindRows(cases);
+  const expectedKindCount = expectedKinds.reduce((total, row) => total + row.count, 0);
   const missingTypes = cases.filter((item) => !item.businessValueType).length;
   const topType = byType.find((row) => row.name !== "Not loaded" && row.investmentUsd !== null);
   const missingFunding = cases.filter((item) => item.aiAmountBasis !== "approved_funding").length;
@@ -166,27 +181,48 @@ export function InitiativesDistributionPanel({ view }: { view: TowerCommandCente
       >
         {topType
           ? `${topType.name} has the most approved AI funding in these business cases.`
-          : "Initiative distribution is only partially loaded."}
+          : expectedKindCount > 0
+            ? `The source describes what ${formatCount(expectedKindCount)} of ${formatCount(cases.length)} AI cases hope to improve. Dollar amounts still need separate proof.`
+            : "Expected benefit kinds and the financial breakdown are not loaded."}
       </h2>
+      <div style={PANEL}>
+        <h3 style={{ margin: "0 0 8px", fontSize: 15, fontWeight: 600 }}>
+          Expected benefit kind from intake
+        </h3>
+        <p style={{ margin: "0 0 14px", fontSize: 14, lineHeight: 1.5, color: "var(--canon-gray-700)" }}>
+          This describes the plan for each AI case. It is not a measured result or a benefit cleared by Finance. Each case counts once under its source description.
+        </p>
+        {expectedKinds.length === 0 ? (
+          <p style={{ margin: 0, fontSize: 15 }}>Not recorded in intake</p>
+        ) : (
+          <ul style={{ margin: 0, paddingLeft: 20, fontSize: 15, lineHeight: 1.7 }}>
+            {expectedKinds.map((row) => (
+              <li key={row.sourceCode}>{row.label}: {formatCount(row.count)} {row.count === 1 ? "case" : "cases"}</li>
+            ))}
+          </ul>
+        )}
+        {expectedKindCount < cases.length ? (
+          <p style={{ margin: "12px 0 0", fontSize: 14 }}>
+            {formatCount(cases.length - expectedKindCount)} {cases.length - expectedKindCount === 1 ? "case has" : "cases have"} no expected benefit kind recorded.
+          </p>
+        ) : null}
+      </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
         <div style={{ ...PANEL, flex: "1 1 440px" }}>
           <h3 style={{ margin: "0 0 20px", fontSize: 15, fontWeight: 600 }}>
-            Approved AI funding by benefit type
+            Approved AI funding by recorded value category
           </h3>
           <HBar rows={byType} metric="investmentUsd" fill="#0f6e56" />
         </div>
         <div style={{ ...PANEL, flex: "1 1 440px" }}>
           <h3 style={{ margin: "0 0 20px", fontSize: 15, fontWeight: 600 }}>
-            Projected yearly benefit by benefit type
+            Projected yearly benefit by recorded value category
           </h3>
           <HBar rows={byType} metric="valueUsd" fill="#ba7517" />
         </div>
       </div>
       <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: "var(--canon-gray-500)" }}>
-        {`${missingTypes} cases have no benefit type; ${missingFunding} have no funding amount; ${missingBenefits} have no projected benefit amount.`} Bars marked partial omit unknown
-        amounts rather than treating them as zero. The loaded funding category repeats this
-        same grouping, so there is no second category chart. A reliable business-area
-        breakdown needs each case linked to its business area.
+        {`${missingTypes} cases have no recorded value category; ${missingFunding} have no approved funding amount; ${missingBenefits} have no projected yearly benefit amount.`} These money charts use the separate value category where it is loaded, not the expected benefit kind above. Bars marked partial omit unknown amounts rather than treating them as zero. Neither chart shows benefits actually delivered or cleared by Finance.
       </p>
     </section>
   );

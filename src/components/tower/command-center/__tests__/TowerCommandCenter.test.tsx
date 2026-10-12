@@ -150,7 +150,7 @@ describe("TowerCommandCenter", () => {
     expect(
       screen.getByText("Finance review gap"),
     ).toBeInTheDocument();
-    expect(document.body).toHaveTextContent("No amount cleared");
+    expect(document.body).toHaveTextContent("No benefit claims are loaded, so cleared value is unknown");
   });
 
   it("does not substitute promised benefit when approved investment is not loaded", () => {
@@ -303,7 +303,7 @@ describe("TowerCommandCenter", () => {
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: /Adoption lens/ }));
     expect(
-      screen.getByText("Tool rollouts ranked by recorded usage evidence"),
+      screen.getByText("Tool rollouts with usage metrics; recorded adoption rates first"),
     ).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("tab", { name: /All initiatives\/tools/ }),
@@ -383,7 +383,7 @@ describe("TowerCommandCenter", () => {
     const { container } = renderPage();
     goTo(TAB.decisions, /What proof is missing/);
     expect(
-      screen.getByText("Distinct review populations"),
+      screen.getByText("Different counts in this review"),
     ).toBeInTheDocument();
     expect(screen.getByText("Review follow-ups")).toBeInTheDocument();
     expect(container).toHaveTextContent(
@@ -395,7 +395,7 @@ describe("TowerCommandCenter", () => {
     expect(container).not.toHaveTextContent(/Vendor leverage review/);
     expect(screen.getAllByText("Next step").length).toBeGreaterThan(0);
     expect(screen.getByText("Evidence-owner queue")).toBeInTheDocument();
-    expect(screen.getByText("Projection population counts")).toBeInTheDocument();
+    expect(screen.getByText("Counts from loaded records")).toBeInTheDocument();
   });
 
   it("renders evidence campaign due keys as short next-step labels", () => {

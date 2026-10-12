@@ -20,6 +20,7 @@ import {
   DrawerShell,
   DrawerStat,
 } from "./DrawerShell";
+import { sourceFieldLabel, sourceFieldNote } from "./sourceFieldCopy";
 
 const KIND_LABEL: Record<TowerAiView["kind"], string> = {
   funded: "Funded program",
@@ -29,6 +30,12 @@ const KIND_LABEL: Record<TowerAiView["kind"], string> = {
   platform: "Platform",
   unknown: "Spend type not loaded",
 };
+
+function kindLabel(a: TowerAiView): string {
+  return a.kind === "funded" && a.aiAmountBasis !== "approved_funding"
+    ? "Program"
+    : KIND_LABEL[a.kind];
+}
 
 /**
  * The "in plain terms" sentence for an AI item. Definitions are fixed per spend
@@ -160,6 +167,9 @@ export function plainAi(a: TowerAiView): string {
   if (isToolRollout(a)) {
     return "This is an AI tool rollout. Read it through adoption against target, active usage, linked business cases and the controls that govern use.";
   }
+  if (a.kind === "funded" && a.aiAmountBasis !== "approved_funding") {
+    return `This is a program row. Approved funding is not verified. Recommended posture: ${a.posture}.`;
+  }
   const definition: Record<TowerAiView["kind"], string> = {
     funded: "an approved program with recorded funding",
     embedded:
@@ -183,7 +193,7 @@ export function AiInitiativeDrawer({
   const open = item !== null;
   const a = item;
   const plainTone =
-    a?.kind === "funded"
+    a?.kind === "funded" && a.aiAmountBasis === "approved_funding"
       ? "pTeal"
       : a?.kind === "governance"
         ? "pAmber"
@@ -193,7 +203,7 @@ export function AiInitiativeDrawer({
     <DrawerShell
       open={open}
       onClose={onClose}
-      eyebrow={a ? `AI capability ${a.n} · ${KIND_LABEL[a.kind]}` : ""}
+      eyebrow={a ? `AI capability ${a.n} · ${kindLabel(a)}` : ""}
       title={a?.name ?? ""}
       footer={
         <>
@@ -307,7 +317,11 @@ export function AiInitiativeDrawer({
                 value={a.lifecycleStage ?? "Not recorded"}
               />
               {a.populationKind === "ai_case" && a.sourceCaseStatus ? (
-                <DrawerRow label="Status in intake" value={humanizeEvent(a.sourceCaseStatus)} />
+                <DrawerRow
+                  label="Status reported in intake"
+                  value={sourceFieldLabel("aiCaseStatus", a.sourceCaseStatus)}
+                  sub={sourceFieldNote(a.sourceCaseStatus, "This is a source description, not a checked outcome.")}
+                />
               ) : null}
               {a.populationKind === "ai_case" && a.businessFunction ? (
                 <DrawerRow label="Business work area" value={a.businessFunction} />
@@ -322,8 +336,8 @@ export function AiInitiativeDrawer({
               {a.populationKind === "ai_case" && a.expectedValueArchetype ? (
                 <DrawerRow
                   label="Expected kind of benefit"
-                  value={humanizeEvent(a.expectedValueArchetype)}
-                  sub="A source description of the plan, not a verified dollar benefit."
+                  value={sourceFieldLabel("benefitKind", a.expectedValueArchetype)}
+                  sub={sourceFieldNote(a.expectedValueArchetype, "This describes a possibility, not a measured or Finance-verified benefit.")}
                 />
               ) : null}
               <DrawerRow
@@ -535,7 +549,17 @@ export function AiInitiativeDrawer({
           <DrawerSection>Vendor &amp; system</DrawerSection>
           <DrawerRow label="Vendor" value={a.vendor ?? "Not recorded"} />
           <DrawerRow label="System" value={a.system ?? "Not recorded"} />
-          <DrawerRow label="Spend type" value={AI_KIND_WORD[a.kind]} />
+          <DrawerRow
+            label="Portfolio category"
+            value={a.kind === "funded" && a.aiAmountBasis !== "approved_funding" ? "Program" : AI_KIND_WORD[a.kind]}
+          />
+          {a.originalItemKind !== "unknown" ? (
+            <DrawerRow
+              label="Source category key"
+              value={a.originalItemKind}
+              sub="This category does not establish approved funding."
+            />
+          ) : null}
           <DrawerRow label="Category" value={a.category ?? "Not recorded"} />
           {!isToolRollout(a) ? (
             <>
@@ -586,19 +610,25 @@ export function AiInitiativeDrawer({
                     <span className={styles.un}>{bar.label}</span>
                     <span className={styles.uv}>{bar.valueText}</span>
                   </div>
-                  <div className={styles.ubar}>
-                    <i
-                      style={{
-                        width: `${bar.pct}%`,
-                        background:
-                          bar.tone === "teal"
-                            ? "var(--canon-teal)"
-                            : bar.tone === "amber"
-                              ? "var(--canon-amber)"
-                              : "var(--canon-red)",
-                      }}
-                    />
-                  </div>
+                  {a.adoptionActualPct != null &&
+                  bar.label === "Adoption" &&
+                  bar.valueText.endsWith("%") ? (
+                    <div className={styles.ubar}>
+                      <i
+                        style={{
+                          width: `${bar.pct}%`,
+                          background:
+                            bar.tone === "teal"
+                              ? "var(--canon-teal)"
+                              : bar.tone === "amber"
+                                ? "var(--canon-amber)"
+                                : "var(--canon-red)",
+                        }}
+                      />
+                    </div>
+                  ) : a.adoptionActualPct == null ? (
+                    <p className={styles.us}>Count recorded; adoption rate not loaded.</p>
+                  ) : null}
                 </div>
               ))}
             </div>

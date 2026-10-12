@@ -9,6 +9,8 @@ import path from "node:path";
 import vm from "node:vm";
 import ts from "typescript";
 import Papa from "papaparse";
+import os from "node:os";
+import { projectContractDepthPackage } from "../../../src/lib/source/contract-depth-package/projection";
 
 function readThroughLoader(
   packageDirectory?: string,
@@ -56,6 +58,197 @@ function readThroughLoader(
 }
 
 describe("contract depth source row normalization", () => {
+  it("keeps service identities distinct from role and tower labels through the actual loader", () => {
+    const root = path.resolve(
+      __dirname,
+      "../../../datasets/source/contract-depth/demo-subscription-contract-evidence-20261012",
+    );
+    const fixture = fs.mkdtempSync(
+      path.join(os.tmpdir(), "source-service-identity-"),
+    );
+    fs.cpSync(root, fixture, { recursive: true });
+    try {
+      for (const [file, label] of [
+        ["cmdb_application_scope.csv", "scope_status"],
+        ["sla_performance.csv", "service_tower"],
+      ]) {
+        const target = path.join(fixture, "source-files", file);
+        const rows = Papa.parse<Record<string, string>>(
+          fs.readFileSync(target, "utf8"),
+          { header: true, skipEmptyLines: true },
+        ).data;
+        fs.writeFileSync(
+          target,
+          Papa.unparse([
+            {
+              ...rows[0],
+              source_row_id: "service-declared-row",
+              service_id: "SVC-declared-fixture",
+              [label]: "Context label",
+            },
+            {
+              ...rows[0],
+              source_row_id: "service-absent-row",
+              service_id: "",
+              [label]: "Context label",
+            },
+          ]),
+        );
+      }
+      const input = readThroughLoader(fixture);
+      for (const rows of [input.applicationScope, input.slaPerformance]) {
+        expect(rows[0].service_id).toBe("SVC-declared-fixture");
+        expect(rows[1].service_id).toBe("");
+        expect(rows[0].service_id).not.toBe("Context label");
+      }
+      expect(input.applicationScope[0].scope_role).toBe("Context label");
+      expect(input.slaPerformance[0].service_tower).toBe("Context label");
+    } finally {
+      fs.rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+  it("preserves declared clause and opportunity provenance through the actual loader and projection", () => {
+    const root = path.resolve(
+      __dirname,
+      "../../../datasets/source/contract-depth/demo-subscription-contract-evidence-20261012",
+    );
+    const fixture = fs.mkdtempSync(
+      path.join(os.tmpdir(), "source-declared-provenance-"),
+    );
+    fs.cpSync(root, fixture, { recursive: true });
+    try {
+      const clauseFile = path.join(
+        fixture,
+        "source-files",
+        "contract_clauses.csv",
+      );
+      const clauses = Papa.parse<Record<string, string>>(
+        fs.readFileSync(clauseFile, "utf8"),
+        { header: true, skipEmptyLines: true },
+      ).data;
+      fs.writeFileSync(
+        clauseFile,
+        Papa.unparse([
+          {
+            ...clauses[0],
+            value_text: "Supplier shall maintain monthly availability.",
+            source_basis: "document_extracted",
+            confidence: "0.74",
+            review_state: "human_reviewed",
+            source_page: "17",
+            source_section: "Schedule 4",
+            extractor_version: "declared-parser",
+            extracted_at: "2026-09-03T12:00:00.000Z",
+          },
+        ]),
+      );
+      const opportunityFile = path.join(
+        fixture,
+        "source-files",
+        "optimization_opportunities.csv",
+      );
+      const opportunities = Papa.parse<Record<string, string>>(
+        fs.readFileSync(opportunityFile, "utf8"),
+        { header: true, skipEmptyLines: true },
+      ).data;
+      fs.writeFileSync(
+        opportunityFile,
+        Papa.unparse([
+          {
+            ...opportunities[0],
+            source_file_id: "SYN-DOC-SUBSCRIPTION-20261012-USAGE",
+          },
+        ]),
+      );
+      let input = readThroughLoader(fixture);
+      expect(input.contractClauses[0]).toMatchObject({
+        confidence: "0.74",
+        review_state: "human_reviewed",
+        source_page: "17",
+        source_section: "Schedule 4",
+      });
+      expect(input.optimizationOpportunities[0].source_file_id).toBe(
+        "SYN-DOC-SUBSCRIPTION-20261012-USAGE",
+      );
+      let projected = projectContractDepthPackage(input);
+      expect(projected.contractPdfClauseExtractions[0]).toMatchObject({
+        confidence: "0.74",
+        review_state: "human_reviewed",
+        source_page: "17",
+        extractor_version: "declared-parser",
+        extracted_at: "2026-09-03T12:00:00.000Z",
+      });
+      fs.writeFileSync(
+        clauseFile,
+        Papa.unparse([
+          {
+            ...clauses[0],
+            value_text: "Imported text with unknown provenance.",
+            source_basis: "",
+            confidence: "",
+            review_state: "",
+            source_page: "",
+            source_section: "Scope boundary",
+          },
+        ]),
+      );
+      fs.writeFileSync(
+        opportunityFile,
+        Papa.unparse([{ ...opportunities[0], source_file_id: "" }]),
+      );
+      input = readThroughLoader(fixture);
+      expect(input.contractClauses[0]).toMatchObject({
+        confidence: "",
+        review_state: "",
+        source_page: "",
+        source_section: "Scope boundary",
+      });
+      expect(input.optimizationOpportunities[0].source_file_id).toBe("");
+      projected = projectContractDepthPackage(input);
+      expect(projected.contractPdfClauseExtractions[0]).toMatchObject({
+        clause_text_basis: "imported_unverified",
+        confidence: "",
+        source_page: "",
+        source_excerpt: "",
+        extractor_version: "",
+        extracted_at: "",
+      });
+    } finally {
+      fs.rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+  it("does not invent a header document identity before the canonical writer", () => {
+    const root = path.resolve(
+      __dirname,
+      "../../../datasets/source/contract-depth/demo-subscription-contract-evidence-20261012",
+    );
+    const fixture = fs.mkdtempSync(
+      path.join(os.tmpdir(), "source-header-identity-"),
+    );
+    fs.cpSync(root, fixture, { recursive: true });
+    try {
+      const file = path.join(fixture, "source-files", "contracts.csv");
+      const rows = Papa.parse<Record<string, string>>(
+        fs.readFileSync(file, "utf8"),
+        { header: true, skipEmptyLines: true },
+      ).data;
+      for (const row of rows) delete row.source_file_id;
+      fs.writeFileSync(file, Papa.unparse(rows));
+      const input = readThroughLoader(fixture);
+      expect(input.contracts[0].source_file_id).toBe("");
+      const projected = projectContractDepthPackage(input);
+      expect(
+        projected.contractPdfDocumentInventory.every(
+          (row) => row.source_file_id !== "EVID-01",
+        ),
+      ).toBe(true);
+      expect(readThroughLoader().contracts[0].source_file_id).toBe(
+        "SYN-DOC-SUBSCRIPTION-20261012-AGREEMENT",
+      );
+    } finally {
+      fs.rmSync(fixture, { recursive: true, force: true });
+    }
+  });
   it("preserves nonzero batch measurements through the actual historical loader", () => {
     const dir = path.resolve(
       __dirname,

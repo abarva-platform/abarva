@@ -10,6 +10,7 @@
  */
 
 import type { TowerAiView, TowerCommandCenterView } from "@/lib/tower/command-center/types";
+import { recordedAdoptionRate } from "@/lib/tower/command-center/adoption-rate";
 import {
   BLOCKER_TONE,
   controlBlockerExplanation,
@@ -24,7 +25,7 @@ import { isToolRollout } from "./portfolio-kind";
 
 type ToolRow = {
   readonly item: TowerAiView;
-  readonly activeUsers: string;
+  readonly usageMeasure: string;
   readonly adoptionPct: number | null;
   readonly targetPct: number | null;
   readonly linkedCases: number | null;
@@ -32,21 +33,12 @@ type ToolRow = {
 
 const GRID: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0,2.2fr) minmax(0,1.5fr) 82px minmax(0,1.8fr) minmax(0,1.5fr) 64px 86px",
+  gridTemplateColumns: "minmax(0,2fr) minmax(0,1.3fr) minmax(0,1.4fr) minmax(0,1.8fr) minmax(0,1.5fr) 64px 86px",
   gap: 14,
 };
 
 function clampPct(pct: number): number {
   return Math.max(0, Math.min(100, pct));
-}
-
-function usageMetric(item: TowerAiView) {
-  return item.usageBars.find((bar) => bar.label !== "Adoption") ?? null;
-}
-
-function adoptionMetric(item: TowerAiView): number | null {
-  const bar = item.usageBars.find((candidate) => candidate.label === "Adoption");
-  return bar ? bar.pct : null;
 }
 
 function toolRows(view: TowerCommandCenterView): readonly ToolRow[] {
@@ -57,11 +49,10 @@ function toolRows(view: TowerCommandCenterView): readonly ToolRow[] {
         (item.usageHeadline !== null || item.usageBars.length > 0),
     )
     .map((item) => {
-      const usage = usageMetric(item);
       return {
         item,
-        activeUsers: usage?.valueText ?? "Not loaded",
-        adoptionPct: adoptionMetric(item),
+        usageMeasure: item.usageHeadline ?? "Not loaded",
+        adoptionPct: recordedAdoptionRate(item),
         targetPct: item.adoptionTargetPct,
         linkedCases: item.linkedBusinessCaseCount,
       };
@@ -92,6 +83,8 @@ export function ToolsTablePanel({
   const withTarget = rows.filter(
     (row) => row.targetPct !== null && row.adoptionPct !== null,
   );
+  const rowsWithTarget = rows.filter((row) => row.targetPct !== null).length;
+  const rowsWithRate = rows.filter((row) => row.adoptionPct !== null).length;
   const belowTarget = withTarget.filter(
     (row) => (row.adoptionPct as number) < (row.targetPct as number),
   ).length;
@@ -123,7 +116,11 @@ export function ToolsTablePanel({
         }}
       >
         {withTarget.length === 0
-          ? `${formatCount(rows.length)} tool rollouts have usage; adoption targets are not loaded.`
+          ? rowsWithTarget === 0
+            ? `${formatCount(rows.length)} tool rollouts have usage context; adoption targets are not loaded.`
+            : rowsWithRate === 0
+              ? `${formatCount(rows.length)} tool rollouts have usage context; adoption rates are not loaded for target comparison.`
+              : `${formatCount(rows.length)} tool rollouts have usage context; no rollout has both a recorded adoption rate and target.`
           : `${formatCount(belowTarget)} of ${formatCount(withTarget.length)} rollouts sit below their own adoption target.`}
       </h2>
       <div style={{ background: "var(--canon-bg-surface)", border: "1px solid var(--canon-border)" }}>
@@ -141,13 +138,13 @@ export function ToolsTablePanel({
         >
           <span>Tool</span>
           <span>Vendor</span>
-          <span style={{ textAlign: "right" }}>Users</span>
+          <span>Recorded usage</span>
           <span>Adoption vs target</span>
           <span>Control blocker</span>
           <span style={{ textAlign: "right" }}>Cases</span>
           <span style={{ textAlign: "right" }}>Detail</span>
         </div>
-        {rows.map(({ item, activeUsers, adoptionPct, targetPct, linkedCases }) => (
+        {rows.map(({ item, usageMeasure, adoptionPct, targetPct, linkedCases }) => (
           <div
             key={item.id}
             onDoubleClick={() => onOpenAi?.(item.n)}
@@ -172,8 +169,8 @@ export function ToolsTablePanel({
             <span style={{ fontSize: 14, color: "var(--canon-gray-500)", minWidth: 0 }}>
               {item.vendor ?? "Not loaded"}
             </span>
-            <span style={{ fontFamily: "var(--abarva-mono)", fontSize: 14, textAlign: "right" }}>
-              {activeUsers}
+            <span style={{ fontFamily: "var(--abarva-mono)", fontSize: 13, lineHeight: 1.35 }}>
+              {usageMeasure}
             </span>
             <span style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
               <span style={{ position: "relative", height: 12, background: "var(--canon-gray-100)" }}>

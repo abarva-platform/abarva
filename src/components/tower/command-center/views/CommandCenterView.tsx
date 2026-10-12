@@ -51,11 +51,9 @@ function fundingSentence(view: TowerCommandCenterView): string {
 
 function clearedValueSentence(view: TowerCommandCenterView): string {
   const s = view.summary;
-  return s.claimableAmountLoaded === false
-    ? "A cleared amount is not verified for the loaded months."
-    : s.claimableAmountLoaded === true || s.claimableClaimCount > 0
+  return s.claimableAmountLoaded === true
     ? `${formatUsdM(s.claimableUsd)} cleared for reporting in the loaded months.`
-    : "No benefit amount is cleared for reporting in the loaded months.";
+    : "A cleared amount is not verified for the loaded months.";
 }
 
 function usageValueLabel(summary: TowerCommandCenterView["summary"]): string {
@@ -101,10 +99,6 @@ function conflictCount(view: TowerCommandCenterView): number {
     view.evidenceFacts.filter((fact) => fact.lineageState === "CONFLICT")
       .length,
   );
-}
-
-function absentCount(view: TowerCommandCenterView): number {
-  return view.unknownSlots.length + view.pipelineGaps.length;
 }
 
 function executiveHeadline(view: TowerCommandCenterView): string {
@@ -158,7 +152,7 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
     {
       label: "Projected yearly benefit",
       badge:
-        !s.promisedBenefitLoaded ? "NOT LOADED" : s.claimableAmountLoaded === false ? "NOT VERIFIED" : s.claimableUsd > 0 ? "PARTIAL" : "UNPROVEN",
+        !s.promisedBenefitLoaded ? "NOT LOADED" : s.claimableAmountLoaded !== true ? "NOT VERIFIED" : s.claimableUsd > 0 ? "PARTIAL" : "UNPROVEN",
       value: s.promisedBenefitLoaded ? formatUsdM(s.promisedUsd) : "Not loaded",
       note:
         !s.promisedBenefitLoaded
@@ -168,15 +162,15 @@ function metrics(view: TowerCommandCenterView): ExecutiveMetric[] {
     },
     {
       label: "Cleared in loaded months",
-      badge: s.claimableClaimCount > 0 ? "OPEN" : "NOT CLEARED",
-      value: s.claimableAmountLoaded === false ? "Not verified" : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? formatUsdM(s.claimableUsd) : "No amount cleared",
+      badge: s.claimableAmountLoaded === true ? (s.claimableClaimCount > 0 ? "OPEN" : "RECORDED") : "NOT VERIFIED",
+      value: s.claimableAmountLoaded === true ? formatUsdM(s.claimableUsd) : "Not verified",
       note:
         claims <= 0
           ? "No benefit claims are loaded for Finance review."
           : `${formatCount(s.financeAttestedClaimCount)} of ${formatCount(
               claims,
             )} benefit claims have Finance sign-off`,
-      tone: s.claimableClaimCount > 0 ? "teal" : "gray",
+      tone: s.claimableAmountLoaded === true && s.claimableClaimCount > 0 ? "teal" : "gray",
     },
     {
       label: "AI initiatives and tools tracked",
@@ -282,8 +276,8 @@ function ValueEvidenceGroups({ view }: { view: TowerCommandCenterView }) {
       heading: "Finance review · loaded months",
       note: "Finance may validate a claim that is still blocked from board reporting. Only the cleared amount has passed every required gate.",
       rows: [
-        ["Finance validated", s.financeValidatedAmountLoaded === false ? "Not verified" : s.financeValidatedAmountLoaded === true || s.financeAttestedClaimCount > 0 ? formatUsdM(s.financeValidatedUsd) : "No amount recorded"],
-        ["Cleared for reporting", s.claimableAmountLoaded === false ? "Not verified" : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? formatUsdM(s.claimableUsd) : "No amount cleared"],
+        ["Finance validated", s.financeValidatedAmountLoaded === true ? formatUsdM(s.financeValidatedUsd) : "Not verified"],
+        ["Cleared for reporting", s.claimableAmountLoaded === true ? formatUsdM(s.claimableUsd) : "Not verified"],
       ],
     },
   ];
@@ -347,7 +341,10 @@ export function CommandCenterView({
                 {formatCount(conflictCount(view))} conflicts in this Tower projection · intake reconciliation not assessed
               </span>
               <span className={styles.auditAmber}>
-                {formatCount(absentCount(view))} Tower projection gaps
+                {formatCount(view.unknownSlots.length)} Tower details not available
+              </span>
+              <span className={styles.auditAmber}>
+                {formatCount(view.pipelineGaps.length)} records need source details or proof
               </span>
               <span>
                 {s.refreshTimestamp

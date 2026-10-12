@@ -80,9 +80,55 @@ describe("Tower financial story boundaries", () => {
       />,
     );
     expect(html).toContain("AI risk lens evidence gaps");
-    expect(html).toContain("Pipeline field gaps (ops)");
-    expect(html).toContain("Separate, overlapping populations");
+    expect(html).toContain("Records needing source details or proof");
+    expect(html).toContain("These groups can overlap; do not add their counts");
     expect(html).not.toContain("rows, both ways");
+  });
+
+  it("names three overlapping count bases without adding them or calling review rows missing values", () => {
+    const view = fixtureView();
+    const firstSourceFollowUp = view.pipelineGaps[0];
+    if (!firstSourceFollowUp) throw new Error("Fixture needs a source follow-up");
+    const withCounts = {
+      ...view,
+      unknownSlots: ["detail one", "detail two"],
+      pipelineGaps: [
+        firstSourceFollowUp,
+        { ...firstSourceFollowUp, id: "follow-up-two" },
+        { ...firstSourceFollowUp, id: "follow-up-three" },
+      ],
+      summary: {
+        ...view.summary,
+        economicReviewQueueCount: 7,
+        unknownValueClaimCount: 0,
+      },
+    };
+    const overview = renderToStaticMarkup(
+      <CommandCenterView
+        view={withCounts}
+        onOpenGap={() => undefined}
+        onGoToFunnel={() => undefined}
+        onGoToAi={() => undefined}
+        onGoToActions={() => undefined}
+      />,
+    );
+    expect(overview).toContain("2 Tower details not available");
+    expect(overview).toContain("3 records need source details or proof");
+    expect(overview).not.toContain("5 Tower projection gaps");
+
+    const proof = renderToStaticMarkup(
+      <EvidenceActionsContractView
+        view={withCounts}
+        onOpenAction={() => undefined}
+        onOpenGap={() => undefined}
+      />,
+    );
+    expect(proof).toContain("<strong>7</strong><span>Rows flagged for review</span>");
+    expect(proof).toContain("<span>Records needing source details or proof</span><strong>3</strong>");
+    expect(proof).toContain("marked gated or blocked before a claim can be reported");
+    expect(proof).toContain("its dollar value may already be present");
+    expect(proof).not.toContain("Unreviewed economic rows");
+    expect(proof).not.toContain("Rows with no known value yet");
   });
 
   it("renders absent claim amounts as unknown rather than zero", () => {
@@ -158,5 +204,66 @@ describe("Tower financial story boundaries", () => {
     expect(unknown).toContain("Not verified");
     expect(recordedZero).toContain("$0.0M is cleared for reporting across loaded benefit claims");
     expect(recordedZero).not.toContain("A cleared value amount is not verified");
+  });
+
+  it("does not turn Finance status counts into verified zero-dollar totals", () => {
+    const view = fixtureView();
+    const summary = {
+      ...view.summary,
+      financeAttestedClaimCount: 2,
+      financeValidatedUsd: 0,
+      financeValidatedAmountLoaded: undefined,
+      claimableClaimCount: 1,
+      claimableUsd: 0,
+      claimableAmountLoaded: undefined,
+    };
+    const verdict = renderToStaticMarkup(<VerdictPanel view={{ ...view, summary }} />);
+    const contract = renderToStaticMarkup(<CommandCenterView
+      view={{ ...view, summary }}
+      onOpenGap={() => undefined}
+      onGoToFunnel={() => undefined}
+      onGoToAi={() => undefined}
+      onGoToActions={() => undefined}
+    />);
+    const proof = renderToStaticMarkup(<ValueProofContractView
+      view={{ ...view, summary }}
+      onOpenProgram={() => undefined}
+    />);
+
+    expect(verdict).toContain("A cleared value amount is not verified for the loaded months");
+    expect(verdict).not.toContain("$0.0M is cleared for reporting");
+    expect(contract).toContain("A cleared amount is not verified for the loaded months");
+    expect(contract).toMatch(/Finance validated<\/span><strong[^>]*>Not verified<\/strong>/);
+    expect(contract).not.toContain("$0.0M cleared for reporting in loaded months");
+    expect(proof).toContain("Cleared amount not verified");
+    expect(proof).not.toContain("$0.0M cleared for reporting in loaded months");
+  });
+
+  it("withholds the Finance-case estimate when case status or yearly estimates are missing", () => {
+    const view = fixtureView();
+    const cases = view.allInitiatives
+      .filter((item) => item.populationKind === "ai_case")
+      .map((item) => ({ ...item, financeStatus: null, promisedBenefitLoaded: false, promisedUsd: 0 }));
+    const html = renderToStaticMarkup(<VerdictPanel view={{
+      ...view,
+      allInitiatives: cases,
+      summary: { ...view.summary, promisedBenefitLoaded: true, promisedUsd: 12_000_000 },
+    }} />);
+
+    expect(cases.length).toBeGreaterThan(0);
+    expect(html).toContain("No complete yearly estimate is loaded for Finance-validated AI cases, so that comparison is withheld");
+    expect(html).not.toContain("Estimate on Finance-reviewed cases");
+    expect(html).not.toContain("$0.0M</text>");
+  });
+
+  it("shows zero claim coverage as an empty bar", () => {
+    const view = fixtureView();
+    const html = renderToStaticMarkup(<ValueProofContractView
+      view={{ ...view, summary: { ...view.summary, valueClaimCount: 2, baselineLinkedClaimCount: 0 } }}
+      onOpenProgram={() => undefined}
+    />);
+
+    expect(html).toMatch(/Baseline linked<\/span><div[^>]*><i[^>]*style="width:0%"/);
+    expect(html).not.toMatch(/Baseline linked<\/span><div[^>]*><i[^>]*style="width:2%"/);
   });
 });

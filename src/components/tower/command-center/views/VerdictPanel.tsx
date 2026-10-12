@@ -34,7 +34,6 @@ import { approvedAiCaseFunding, isBusinessCase } from "./portfolio-kind";
 const AMBER = "#ba7517";
 const AMBER_LIGHT = "#e8c98f";
 const TEAL = "#0f6e56";
-const GREY = "#b4b2a9";
 
 const MONO = {
   fontFamily: "var(--abarva-mono)",
@@ -245,15 +244,13 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
   // still be absent; a missing status is its own unknown bucket, never a submitted/not-submitted inference.
   const cases = view.allInitiatives.filter(isBusinessCase);
   const casesMissingFinanceStatus = cases.filter((item) => item.financeStatus === null).length;
-  const clearedValueStory = s.claimableAmountLoaded === false
-    ? "A cleared value amount is not verified for the loaded months."
-    : s.claimableAmountLoaded === true || s.claimableClaimCount > 0
-      ? `${bigMoney(s.claimableUsd)} is cleared for reporting across loaded benefit claims.`
-      : "No benefit amount is cleared for reporting.";
+  const clearedValueStory = s.claimableAmountLoaded === true
+    ? `${bigMoney(s.claimableUsd)} is cleared for reporting across loaded benefit claims.`
+    : "A cleared value amount is not verified for the loaded months.";
   const verdictStory = casesMissingFinanceStatus > 0
     ? `Review Finance status for ${casesMissingFinanceStatus} of ${cases.length} AI use cases before reporting case benefits; their status is not loaded. ${caseFunding === null ? "Approved AI case funding is not verified." : `${bigMoney(caseFunding)} in approved AI case funding is recorded.`} ${hasAssertion ? `The loaded benefit claims project ${bigMoney(s.promisedUsd)} a year; their relationship to the AI cases is not reconciled here.` : "No yearly benefit estimate is loaded."} ${clearedValueStory}`
     : hasAssertion
-      ? `The loaded claims project ${bigMoney(s.promisedUsd)} a year. ${s.claimableAmountLoaded === false ? "A cleared amount is not verified for the loaded months." : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? `${bigMoney(s.claimableUsd)} has cleared the reporting gate in the loaded months.` : "No benefit amount is cleared for reporting."}`
+      ? `The loaded claims project ${bigMoney(s.promisedUsd)} a year. ${s.claimableAmountLoaded === true ? `${bigMoney(s.claimableUsd)} has cleared the reporting gate in the loaded months.` : "A cleared amount is not verified for the loaded months."}`
       : "No yearly benefit estimate is loaded, so its value remains unknown.";
   const validatedCases = cases.filter(
     (i) => i.financeStatus === "finance_validated_actual",
@@ -261,19 +258,20 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
   const validatedCasesWithPositiveAmount = validatedCases.filter(
     (i) => i.financeValidatedUsd > 0,
   ).length;
+  const validatedCasesWithEstimate = validatedCases.filter((i) => i.promisedBenefitLoaded);
   const assertedOnValidated =
-    cases.length === 0
+    validatedCases.length === 0 || validatedCasesWithEstimate.length !== validatedCases.length
       ? null
       : M(validatedCases.reduce((sum, i) => sum + i.promisedUsd, 0));
 
   const gate: readonly BarDatum[] = [
     { name: "Yearly estimate", value: asserted, label: money(asserted), fill: AMBER },
-    {
+    ...(assertedOnValidated === null ? [] : [{
       name: "Estimate on Finance-reviewed cases",
-      value: assertedOnValidated ?? 0,
-      label: assertedOnValidated === null ? "Not recorded" : money(assertedOnValidated),
-      fill: assertedOnValidated === null ? GREY : AMBER_LIGHT,
-    },
+      value: assertedOnValidated,
+      label: money(assertedOnValidated),
+      fill: AMBER_LIGHT,
+    }]),
   ];
 
   // Keep the case denominator even when Finance status was not loaded.
@@ -338,7 +336,7 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
         />
         <MetricCard
           label="Cleared value in loaded months"
-          value={s.claimableAmountLoaded === false ? "Not verified" : s.claimableAmountLoaded === true || s.claimableClaimCount > 0 ? bigMoney(s.claimableUsd) : "No amount cleared"}
+          value={s.claimableAmountLoaded === true ? bigMoney(s.claimableUsd) : "Not verified"}
           caption="Requires Finance validation and approved evidence for the loaded period"
           accent="var(--canon-teal)"
           valueColor="var(--canon-teal-dark)"
@@ -351,19 +349,24 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
             Yearly estimates in benefit claims and Finance-reviewed AI cases
           </h3>
           {hasAssertion ? (
-            <HBar
-              data={gate}
-              axisLabel="Projected yearly benefit"
-              height={190}
-              labelWidth={168}
-              axisFmt={money}
-            />
+            <>
+              <HBar
+                data={gate}
+                axisLabel="Projected yearly benefit"
+                height={190}
+                labelWidth={168}
+                axisFmt={money}
+              />
+              {assertedOnValidated === null ? (
+                <p>No complete yearly estimate is loaded for Finance-validated AI cases, so that comparison is withheld.</p>
+              ) : null}
+            </>
           ) : (
             <p>No yearly case-benefit amounts are loaded for this comparison. Separate outcome-measure records may still be present in Tower.</p>
           )}
           <p style={NOTE}>
             {hasAssertion
-              ? "The first bar covers loaded benefit claims; the second covers AI cases with a Finance validation status. Their crosswalk is not established here. The cleared amount covers loaded months, so it cannot be divided by either yearly estimate to show a success rate."
+              ? `The first bar covers loaded benefit claims. ${assertedOnValidated === null ? "The Finance-validated case comparison is not available." : "The second bar covers AI cases with a Finance validation status."} Their crosswalk is not established here. The cleared amount covers loaded months, so it cannot be divided by yearly estimates to show a success rate.`
               : "No yearly benefit estimate is loaded, so there is no estimate to compare with Finance review."}
           </p>
           {validatedCases.length > 0 ? (

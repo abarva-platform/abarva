@@ -1,6 +1,7 @@
 /** @jest-environment jsdom */
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { renderToString } from "react-dom/server";
 import type { StepPageHostProps } from "../phase-step-pages";
 import { P0_STEP_PAGES } from "../p0-step-pages";
 import { P1_STEP_PAGES } from "../p1-step-pages";
@@ -34,7 +35,7 @@ afterEach(() => {
 function host(
   phase: number,
   values: Record<string, string> = {},
-  participants: Array<{ personId: string; name: string; role: string }> = [],
+  participants: StepPageHostProps["move"]["participants"] = [],
 ): StepPageHostProps {
   return {
     move: {
@@ -98,6 +99,32 @@ const views: Array<[StepPageView, number, string]> = [
 ];
 
 describe("P0 and P1 text capture step pages", () => {
+  it("keeps the notes sibling on the same theme as its step without changing saved answers", () => {
+    window.localStorage.removeItem("mv-theme");
+    const props = host(0, {
+      business_trigger: "A recorded signal",
+      problem_statement: "A recorded problem",
+    });
+    const mounted = page("p0-signal", props);
+    const notes = screen.getByRole("region", { name: "Session notes" });
+    fireEvent.click(screen.getByRole("button", { name: "Dark mode" }));
+    expect(notes.getAttribute("data-theme")).toBe("dark");
+    expect(
+      mounted.container.querySelector(".root")?.getAttribute("data-theme"),
+    ).toBe("dark");
+    fireEvent.click(screen.getByRole("button", { name: "Light mode" }));
+    expect(notes.getAttribute("data-theme")).toBe("light");
+    expect(props.setValue).not.toHaveBeenCalled();
+    window.localStorage.removeItem("mv-theme");
+  });
+
+  it("keeps the theme control disabled in server markup until its client handler is mounted", () => {
+    const html = renderToString(<>{P0_STEP_PAGES["p0-signal"]?.(host(0))}</>);
+    expect(html).toMatch(
+      /<button[^>]*disabled=""[^>]*>Dark<!-- --> mode<\/button>/,
+    );
+  });
+
   it.each(views)(
     "mounts %s with a decision row and count",
     (view, phase, label) => {
@@ -349,5 +376,86 @@ describe("P0 and P1 text capture step pages", () => {
       screen.getByRole("combobox", { name: "Expected workflow change" }),
     ).toBeTruthy();
     expect(screen.getAllByText("How do you know this?").length).toBe(2);
+  });
+});
+
+describe("Charter basis waits for authoritative answer saves", () => {
+  it.each(["answer", "other-write"])(
+    "holds a basis control while %s is pending",
+    (pending) => {
+      const props = host(1, {
+        sponsor_commitment: "Proposed sponsor contact",
+        scope_boundary: "Bounded scope",
+      });
+      props.captureSaved = {
+        sponsor_commitment: pending !== "answer",
+        scope_boundary: true,
+      };
+      const setValue = jest.fn();
+      props.charterBasis = {
+        active: true,
+        busy: pending === "other-write",
+        values: {},
+        approvedSources: {},
+        errors: {},
+        setValue,
+      };
+      const mounted = page("p1-sponsor-scope", props);
+      const button = screen.getAllByRole("radio", {
+        name: /I'm asserting this/,
+      })[0];
+      expect((button as HTMLButtonElement).disabled).toBe(true);
+      fireEvent.click(button);
+      expect(setValue).not.toHaveBeenCalled();
+      props.captureSaved = { sponsor_commitment: true, scope_boundary: true };
+      props.charterBasis.busy = false;
+      mounted.rerender(<>{P1_STEP_PAGES["p1-sponsor-scope"]?.(props)}</>);
+      const ready = screen.getAllByRole("radio", {
+        name: /I'm asserting this/,
+      })[0];
+      expect((ready as HTMLButtonElement).disabled).toBe(false);
+      fireEvent.click(ready);
+      expect(setValue).toHaveBeenCalledWith("sponsor_commitment", {
+        kind: "workspace_assertion",
+      });
+    },
+  );
+
+  it("keeps a declared role placeholder open and prefers an assigned sponsor participant", () => {
+    const proposed = {
+      personId: "proposal",
+      name: "Proposed sponsor role",
+      role: "Sponsor",
+      declaredRoleOnly: true,
+    };
+    const props = host(
+      1,
+      {
+        sponsor_commitment: "Proposed contact",
+        scope_boundary: "Bounded scope",
+      },
+      [proposed],
+    );
+    const mounted = page("p1-sponsor-scope", props);
+    expect(
+      screen.getByText(
+        /placeholder does not confirm a sponsor participant or human approval/,
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("status", { name: "What to do next" }).textContent,
+    ).toContain("2 of 3 settled");
+    props.move.participants.push({
+      personId: "operator",
+      name: "Delegated operator",
+      role: "Sponsor",
+    });
+    mounted.rerender(<>{P1_STEP_PAGES["p1-sponsor-scope"]?.(props)}</>);
+    expect(
+      screen.getByText("Delegated operator has the sponsor role on this Move."),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("status", { name: "What to do next" }).textContent,
+    ).toContain("3 of 3 settled");
   });
 });

@@ -234,8 +234,10 @@ export async function getProgramForTurnByGraphNodeId(
   graphNodeId: string,
 ): Promise<ProgramTurnEngagementRow | null> {
   assertTenancy(ctx);
-  const row = await selectProgramsReadAdapter(undefined, ctx.clientKey)
-    .getProgramByGraphNodeIdRow(graphNodeId, ctx.clientId);
+  const row = await selectProgramsReadAdapter(
+    undefined,
+    ctx.clientKey,
+  ).getProgramByGraphNodeIdRow(graphNodeId, ctx.clientId);
   if (!row || !(await canReadProgram(ctx, row.id))) return null;
   return row;
 }
@@ -257,7 +259,7 @@ function readProgramAccess(
 ): Promise<boolean> {
   return opts.readSet && !opts.supabase
     ? opts.readSet(ctx, programId, "programReadAccess", () =>
-        canReadProgram(ctx, programId),
+        canReadProgram(ctx, programId, { readSet: opts.readSet }),
       )
     : canReadProgram(ctx, programId);
 }
@@ -486,6 +488,75 @@ export async function getPendingApprovals(
   }));
 }
 
+export interface OriginationRequestStateRow {
+  id: string;
+  programId: string;
+  requestStatus: string;
+  briefSnapshot: Record<string, unknown> | null;
+}
+
+export type ProgramDeliverableReadRow = Record<string, unknown> & {
+  id: string;
+  engagement_id: string;
+  deliverable_type_key: string;
+  title: string | null;
+  status: string;
+  current_version: number | null;
+  updated_at: string | null;
+};
+
+export async function getProgramDeliverables(
+  ctx: TenancyCtx,
+  programId: string,
+  opts: { readSet?: PhasePageReadSet } = {},
+): Promise<ProgramDeliverableReadRow[]> {
+  assertTenancy(ctx);
+  await assertProgramReadable(ctx, programId, opts);
+  const rows = await azureRead.query<Record<string, unknown>>(
+    "SELECT * FROM deliverables_v2 WHERE engagement_id = $1 ORDER BY updated_at DESC",
+    [programId],
+    { missingTable: "throw" },
+  );
+  if (
+    rows.some(
+      (row) => row.engagement_id !== programId || typeof row.id !== "string",
+    )
+  )
+    throw new Error("Deliverable read scope unavailable");
+  return rows as ProgramDeliverableReadRow[];
+}
+
+export async function getOriginationRequestState(
+  ctx: TenancyCtx,
+  programId: string,
+  opts: { readSet?: PhasePageReadSet } = {},
+): Promise<OriginationRequestStateRow[]> {
+  assertTenancy(ctx);
+  await assertProgramReadable(ctx, programId, opts);
+  const rows = await azureRead.query<Record<string, unknown>>(
+    "SELECT id, program_id, request_status, brief_snapshot FROM program_approval_requests WHERE program_id = $1 ORDER BY created_at DESC LIMIT 1",
+    [programId],
+    { missingTable: "throw" },
+  );
+  return rows.map((row) => {
+    if (
+      row.program_id !== programId ||
+      typeof row.id !== "string" ||
+      !row.id.trim() ||
+      typeof row.request_status !== "string" ||
+      !row.request_status.trim()
+    )
+      throw new Error("Origination request read scope or state unavailable");
+    return {
+      id: row.id,
+      programId,
+      requestStatus: row.request_status,
+      briefSnapshot:
+        (row.brief_snapshot as Record<string, unknown> | null) ?? null,
+    };
+  });
+}
+
 export async function getPhaseSnapshots(
   ctx: TenancyCtx,
   programId: string,
@@ -539,6 +610,7 @@ export async function getStrategicMoveById(
     evaluateGateCriteria?: boolean;
     loadProgram?: typeof getProgramById;
     loadPhaseSnapshots?: typeof getPhaseSnapshots;
+    readSet?: PhasePageReadSet;
   } = {},
 ): Promise<StrategicMove | null> {
   const program = await (opts.loadProgram ?? getProgramById)(ctx, moveId, opts);

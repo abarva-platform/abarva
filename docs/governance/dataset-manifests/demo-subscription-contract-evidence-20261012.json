@@ -14,5 +14,5 @@
   "expected_object_count": 71,
   "approved_by": "AbarVa Source engineering",
   "approved_at": "2026-10-12",
-  "notes": "Declaration only; not load approval. Uses a declared canonical contract/source-record binding, fixed reporting cutoff, explicit engineering archetype and versioned synthetic assumptions. Terms remain not_reviewed, candidate opportunity amounts remain unsized, and diagnostic ratios are not savings. Exact delegated load candidate, before-image proof, load quality gates and cite-render proof are required separately. No real ERP, ITSM or document-repository connection is asserted."
+  "notes": "Declaration only; not load approval. Uses a declared canonical contract/source-record and native application-scope binding, fixed reporting cutoff, explicit engineering archetype and versioned synthetic assumptions. Application and system namespaces are not equated; no service identity is inferred from an application reference. Terms remain not_reviewed, candidate opportunity amounts remain unsized, and diagnostic ratios are not savings. Exact delegated load candidate, before-image proof, load quality gates and cite-render proof are required separately. No real ERP, ITSM or document-repository connection is asserted."
 }
