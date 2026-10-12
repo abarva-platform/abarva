@@ -26,5 +26,13 @@
   ],
   "synthetic_policy": "synthetic_demo_only_not_client_truth",
   "assumption_basis": "Authored synthetic quantities, minimum, unit rate and performance history. The rate/quantity model reconciles to the planning register annual baseline but is not evidence that actual invoices, activity or legal rights were observed. No executed document, signature, client review or savings is claimed.",
-  "generator_version": "subscription-evidence-v1"
+  "generator_version": "subscription-evidence-v1",
+  "document_ids": {
+    "agreement": "SYN-DOC-SUBSCRIPTION-20261012-AGREEMENT",
+    "scope": "SYN-DOC-SUBSCRIPTION-20261012-SCOPE",
+    "usage": "SYN-DOC-SUBSCRIPTION-20261012-USAGE",
+    "invoices": "SYN-DOC-SUBSCRIPTION-20261012-INVOICES",
+    "performance": "SYN-DOC-SUBSCRIPTION-20261012-PERFORMANCE",
+    "changes": "SYN-DOC-SUBSCRIPTION-20261012-CHANGES"
+  }
 }

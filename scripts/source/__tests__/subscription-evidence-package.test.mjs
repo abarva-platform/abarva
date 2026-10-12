@@ -28,6 +28,14 @@ const config = () => ({
     2100, 2075, 2050, 2025, 2000, 1975, 1950, 1925, 1900, 1850, 1825, 1800,
   ],
   synthetic_policy: "synthetic_demo_only_not_client_truth",
+  document_ids: {
+    agreement: "DOC-test-agreement",
+    scope: "DOC-test-scope",
+    usage: "DOC-test-usage",
+    invoices: "DOC-test-invoices",
+    performance: "DOC-test-performance",
+    changes: "DOC-test-changes",
+  },
   assumption_basis:
     "Authored synthetic scenario, not observed client evidence.",
 });
@@ -163,6 +171,20 @@ for (const [label, mutate, pattern] of [
       delete c.assumption_basis;
     },
     /assumption_basis/,
+  ],
+  [
+    "undeclared document identities",
+    (c) => {
+      delete c.document_ids;
+    },
+    /document_ids/,
+  ],
+  [
+    "duplicate document identities",
+    (c) => {
+      c.document_ids.usage = c.document_ids.invoices;
+    },
+    /document_ids/,
   ],
 ]) {
   test(`refuses ${label}`, () => {

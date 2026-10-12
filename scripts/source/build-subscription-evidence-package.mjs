@@ -16,6 +16,22 @@ const endOfMonth = (month) =>
 const round = (n) => Math.round(n * 100) / 100;
 
 export function buildSubscriptionEvidencePackage(config) {
+  const ids = config.document_ids;
+  const families = [
+    "agreement",
+    "scope",
+    "usage",
+    "invoices",
+    "performance",
+    "changes",
+  ];
+  check(
+    families.every(
+      (key) =>
+        typeof ids?.[key] === "string" && /^[A-Za-z0-9._:-]+$/.test(ids[key]),
+    ) && new Set(families.map((key) => ids[key])).size === families.length,
+    "Six distinct declared document_ids required",
+  );
   for (const field of [
     "tenant_key",
     "dataset_version",
@@ -152,7 +168,7 @@ export function buildSubscriptionEvidencePackage(config) {
       business_owner: config.business_owner,
       it_owner: config.it_owner,
       source_confidence: 0.8,
-      source_file_id: "EVID-01",
+      source_file_id: ids.agreement,
     }),
   ];
   tables.cmdb_applications = [
@@ -162,7 +178,7 @@ export function buildSubscriptionEvidencePackage(config) {
       business_unit: "Declared subscription scope",
       criticality: "tier2",
       owner_role: config.it_owner,
-      source_file_id: "EVID-02",
+      source_file_id: ids.scope,
     }),
   ];
   tables.cmdb_application_scope = [
@@ -171,7 +187,7 @@ export function buildSubscriptionEvidencePackage(config) {
       scope_status: "included",
       scope_description:
         "Synthetic scenario: subscription administration and licensed platform access; no managed-service labor inferred.",
-      source_file_id: "EVID-02",
+      source_file_id: ids.scope,
     }),
   ];
   tables.monthly_spend = months.map((month, i) =>
@@ -186,7 +202,7 @@ export function buildSubscriptionEvidencePackage(config) {
       variance_to_committed_usd: 0,
       currency: "USD",
       invoice_ref: `SYN-INV-${config.contract_id}-${month}`,
-      source_file_id: "EVID-04",
+      source_file_id: ids.invoices,
       formula_key: "licensed_quantity_times_monthly_unit_rate",
       formula_version: "1.0.0",
     }),
@@ -206,7 +222,7 @@ export function buildSubscriptionEvidencePackage(config) {
       unit: "seats",
       annual_opportunity_usd: "",
       note: "Synthetic usage assumptions, not a client export or a savings calculation.",
-      source_file_id: "EVID-03",
+      source_file_id: ids.usage,
     }),
   );
   tables.invoice_line_detail = months.map((month, i) =>
@@ -225,7 +241,7 @@ export function buildSubscriptionEvidencePackage(config) {
       paid_amount_usd: i === 11 ? 0 : monthly,
       currency: "USD",
       description: "Synthetic licensed platform accounts",
-      source_file_id: "EVID-04",
+      source_file_id: ids.invoices,
     }),
   );
   tables.sla_performance = months.map((month) =>
@@ -241,7 +257,7 @@ export function buildSubscriptionEvidencePackage(config) {
       breach_state: "met",
       credit_amount_usd: "",
       credit_claimed: "false",
-      source_file_id: "EVID-05",
+      source_file_id: ids.performance,
       source_confidence: 0.8,
     }),
   );
@@ -301,10 +317,10 @@ export function buildSubscriptionEvidencePackage(config) {
       value_bool: concept === "auto_renew" ? "true" : "",
       source_file_id:
         family === "scope"
-          ? "EVID-02"
+          ? ids.scope
           : family === "service_level"
-            ? "EVID-05"
-            : "EVID-01",
+            ? ids.performance
+            : ids.agreement,
       source_section: concept,
       source_page: 1,
       confidence: 0.8,
@@ -325,14 +341,14 @@ export function buildSubscriptionEvidencePackage(config) {
       evidence_rows: `${prefix}:usage:${months.at(-1)};${prefix}:term:minimum_licensed_quantity;${prefix}:term:true_down_rights;${prefix}:term:notice_period_days`,
       recommended_action: `Confirm which inactive accounts can be retired with ${config.it_owner}. Review the renewal terms and minimum before proposing a reduction; no current refund or savings is established.`,
       selected_for_action_state: "candidate",
-      source_file_id: "EVID-03",
+      source_file_id: ids.usage,
       rule_key: "SUBSCRIPTION.UNUSED_ENTITLEMENT_DIAGNOSTIC",
       rule_version: "1.0.0",
     }),
   ];
   const docs = [
     [
-      "EVID-01",
+      ids.agreement,
       "contract",
       "Synthetic CLM contract export",
       "Contract Ops",
@@ -342,35 +358,35 @@ export function buildSubscriptionEvidencePackage(config) {
         .join("\n"),
     ],
     [
-      "EVID-02",
+      ids.scope,
       "sow",
       "Synthetic contract scope workbook",
       "Contract Ops / platform owner",
       terms.find((t) => t[0] === "scope_boundary")[3],
     ],
     [
-      "EVID-03",
+      ids.usage,
       "usage",
       "Synthetic platform usage export",
       "Platform admin",
       `Synthetic scenario: entitlement is ${config.entitled_seats} seats; ${config.active_seats.at(-1)} active at ${months.at(-1)}. Monthly assumptions are declared in saas_usage.csv.`,
     ],
     [
-      "EVID-04",
+      ids.invoices,
       "invoice_export",
       "Synthetic ERP AP invoice and payment export",
       "AP / Finance",
       "Synthetic scenario: each invoice line reconciles quantity times monthly unit price. Payment references are distinct; the last period is explicitly unpaid. This is not a connected ERP export.",
     ],
     [
-      "EVID-05",
+      ids.performance,
       "sla_report",
       "Synthetic ITSM performance export",
       "Service delivery",
       terms.find((t) => t[0] === "availability_target_pct")[3],
     ],
     [
-      "EVID-06",
+      ids.changes,
       "change_order_ledger",
       "Synthetic contract change register",
       "Contract Ops",

@@ -45,7 +45,7 @@ Release lanes: `global-control-lane` for adapter and product behavior; `internal
 
 - Red-first real-loader test observed replacement invoice references and source files before the hook; fixed loader passed.
 - Red-first render tests observed spend being asserted as consumption and incomplete totals being displayed.
-- Node suites: 49 passing assertions, zero skips, including eight real disposable-Postgres subtests for no-write preflight, exact metadata updates, restore, count rollback, drift refusal, private backup failure, non-metadata side effects and post-commit proof failure.
+- Node suites: 51 passing assertions, zero skips, including eight real disposable-Postgres subtests for no-write preflight, exact metadata updates, restore, count rollback, drift refusal, private backup failure, non-metadata side effects and post-commit proof failure.
 - Focused Jest: 56 passing assertions across four suites, including the existing suite-owner guard.
 - Full contract workspace plus adapter and loader: 44 suites / 450 passing assertions, using exact test paths so route-group parentheses cannot silently omit the UI suites. Nonzero batch measurements are also checked through the real historical loader, not just its helper.
 - Mutation proof: relaxing the SQL affected-count guard failed the rollback test; restoring payment-from-spend failed four assertions. Both mutations restored before validation.
@@ -53,6 +53,7 @@ Release lanes: `global-control-lane` for adapter and product behavior; `internal
 - Independent authority tests reject matching self-issued receipts, tampered exact bytes, revoked/future grants and invalid private proof paths. Removing the certified-decision byte check failed its tamper assertion. The actual immutable private conditional grant was also verified locally against its released-pin candidate; no execution or apply approval is inferred.
 - Code-certificate, full native runtime invariant and exact mode/run/idempotency/scope/code binding assertions pass. Their native network collection still needs an ACA read-only preflight; this is not runtime acceptance.
 - Historical package regression plans: four rich packages pass both gates; the baseline package retains eight named missing managed-service inputs and is refused. No historical package is applied.
+- Six document identities must be explicitly declared and distinct. Generic source-file defaults were removed from the new scenario so the tenant-wide document namespace is not reused across contracts.
 - Offline package plan passed both adapter and projection quality gates with an invalid database URL: no connection opened. Expected 71 adapter rows, 68 canonical fact assertions and 14 invoice facts. The opportunity remains unsized with a blocked calculation, not a priced result.
 - TypeScript and focused lint passed. Manifest governance passed with the existing warning that engineering attribution is not personal load approval. No personal review attribution was invented.
 - CI coverage census matches the committed shape; tests are placed outside another owner's suite-declaration region.

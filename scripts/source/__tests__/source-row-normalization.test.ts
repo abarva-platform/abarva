@@ -10,7 +10,11 @@ import vm from "node:vm";
 import ts from "typescript";
 import Papa from "papaparse";
 
-function readThroughLoader(packageDirectory?: string, tenantKey?: string, datasetVersion?: string) {
+function readThroughLoader(
+  packageDirectory?: string,
+  tenantKey?: string,
+  datasetVersion?: string,
+) {
   const file = path.resolve(__dirname, "../load-contract-depth-package.ts");
   const parsed = ts.createSourceFile(
     file,
@@ -33,23 +37,59 @@ function readThroughLoader(packageDirectory?: string, tenantKey?: string, datase
     preserveSourceFile,
     normalizeBatchSourceRow,
   });
-  const dir = packageDirectory ?? path.resolve(
-    __dirname,
-    "../../../datasets/source/contract-depth/demo-subscription-contract-evidence-20261012",
+  const dir =
+    packageDirectory ??
+    path.resolve(
+      __dirname,
+      "../../../datasets/source/contract-depth/demo-subscription-contract-evidence-20261012",
+    );
+  const summary = !tenantKey
+    ? JSON.parse(
+        fs.readFileSync(path.join(dir, "package-summary.json"), "utf8"),
+      )
+    : null;
+  return read(
+    dir,
+    tenantKey ?? summary.binding.tenant_key,
+    datasetVersion ?? summary.dataset_version,
   );
-  const summary = !tenantKey ? JSON.parse(fs.readFileSync(path.join(dir, "package-summary.json"), "utf8")) : null;
-  return read(dir, tenantKey ?? summary.binding.tenant_key, datasetVersion ?? summary.dataset_version);
 }
 
 describe("contract depth source row normalization", () => {
   it("preserves nonzero batch measurements through the actual historical loader", () => {
-    const dir = path.resolve(__dirname, "../../../datasets/source/contract-depth/meridian-laams-new-event-rich-v2-20260908");
-    const raw = Papa.parse<Record<string, string>>(fs.readFileSync(path.join(dir, "source-files/batch_job_volumetrics.csv"), "utf8"), { header: true, skipEmptyLines: true });
+    const dir = path.resolve(
+      __dirname,
+      "../../../datasets/source/contract-depth/meridian-laams-new-event-rich-v2-20260908",
+    );
+    const raw = Papa.parse<Record<string, string>>(
+      fs.readFileSync(
+        path.join(dir, "source-files/batch_job_volumetrics.csv"),
+        "utf8",
+      ),
+      { header: true, skipEmptyLines: true },
+    );
     expect(raw.errors).toHaveLength(0);
-    const measured = raw.data.find(r => Number(r.failed_jobs) > 0 || Number(r.late_completion_count) > 0 || Number(r.manual_restarts) > 0);
+    const measured = raw.data.find(
+      (r) =>
+        Number(r.failed_jobs) > 0 ||
+        Number(r.late_completion_count) > 0 ||
+        Number(r.manual_restarts) > 0,
+    );
     expect(measured).toBeDefined();
-    const loaded = readThroughLoader(dir, "meridian-health", "meridian-laams-new-event-rich-v2-20260908").batchJobVolumetrics.find((r: Record<string, string>) => r.source_row_id === measured!.source_row_id);
-    expect(loaded).toMatchObject({ failed_jobs: measured!.failed_jobs, late_completion_count: measured!.late_completion_count, manual_restarts: measured!.manual_restarts, source_file_id: measured!.source_file_id });
+    const loaded = readThroughLoader(
+      dir,
+      "meridian-health",
+      "meridian-laams-new-event-rich-v2-20260908",
+    ).batchJobVolumetrics.find(
+      (r: Record<string, string>) =>
+        r.source_row_id === measured!.source_row_id,
+    );
+    expect(loaded).toMatchObject({
+      failed_jobs: measured!.failed_jobs,
+      late_completion_count: measured!.late_completion_count,
+      manual_restarts: measured!.manual_restarts,
+      source_file_id: measured!.source_file_id,
+    });
   });
   it("retains authored opportunity amounts as source payload, not financial facts", () => {
     expect(
@@ -90,18 +130,20 @@ describe("contract depth source row normalization", () => {
   it("reaches the real loader with financial identity, zero payments and usage intact", () => {
     const loaded = readThroughLoader();
     expect(loaded.monthlySpend[11]).toMatchObject({
-      source_file_id: "EVID-04",
+      source_file_id: "SYN-DOC-SUBSCRIPTION-20261012-INVOICES",
       paid_amount_usd: "0",
       invoice_ref: expect.stringMatching(/^SYN-INV-/),
     });
     expect(loaded.saasUsage[11]).toMatchObject({
-      source_file_id: "EVID-03",
+      source_file_id: "SYN-DOC-SUBSCRIPTION-20261012-USAGE",
       metric_name: "licensed_platform_accounts",
       entitled_quantity: "2500",
       active_quantity: "1800",
       unused_quantity: "700",
     });
-    expect(loaded.invoiceLineDetail[11].source_file_id).toBe("EVID-04");
+    expect(loaded.invoiceLineDetail[11].source_file_id).toBe(
+      "SYN-DOC-SUBSCRIPTION-20261012-INVOICES",
+    );
   });
   it("preserves explicit financial amounts, zero payment, invoice identity and source file", () => {
     const input = {
