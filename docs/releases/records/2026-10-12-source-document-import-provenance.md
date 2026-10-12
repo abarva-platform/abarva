@@ -39,6 +39,10 @@ Release lane: `global-control-lane` for future document imports. Any later tenan
 
 ## QA / Validation
 
+- Reconciled onto the repaired writer prerequisite's exact current-main head. Unknown imports remain `imported_unverified`, without a cited span, extraction method or timestamp; authored imports likewise have no extraction timestamp. Genuine declared extraction dates survive the repeat write rather than being replaced with import time.
+- Added actual Postgres assertions for authored-reference, undeclared and unknown imports, plus declared extraction time. The timestamp assertion failed before repair; after that fix the unknown-import span assertion independently failed. Both now pass. Reinstating a citation span or import-time extraction timestamp each fails the real writer test, and the restored baseline passes.
+- Final combined Source generator, authority, transaction, contract writer and document suites: 88 tests pass, zero skips. The existing 19-test document suite includes the real Postgres repeat-import assertions. No new census or Jest file is introduced by this child slice.
+
 - Red-first missing-page/authored-basis cases failed before the hook; a separate file-name case reproduced an unsupported executed-agreement role.
 - 19 document cases pass, zero skips with the disposable Postgres fixture. Actual writer persistence checks page, confidence, parser, method, source kind and file page count; a repeat genuine reviewed import retains page17, confidence0.74 and its declared parser.
 - Three mutations killed: page1 fallback fails three cases including actual stored file page count; PDF-method substitution fails the recorded and Postgres writer assertions; fixed parser version fails the Postgres extraction assertion. Restored before validation.

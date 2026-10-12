@@ -27,6 +27,7 @@ import { Client } from "pg";
 import {
   classifyContractClauseTextBasis,
   DERIVED_CLAUSE_TEXT_BASIS,
+  EXTRACTED_CLAUSE_TEXT_BASIS,
 } from "../../src/lib/source/contract-depth-package/clause-text-basis.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -733,6 +734,7 @@ export async function loadDocumentEvidence(
       extractorVersion: nonEmpty(row.extractor_version) ?? undefined,
     });
     const derived = basis.textBasis === DERIVED_CLAUSE_TEXT_BASIS;
+    const extracted = basis.textBasis === EXTRACTED_CLAUSE_TEXT_BASIS;
     const valueNum = numericValue(row.value_num);
     const valueText = valueNum == null ? nonEmpty(row.value_text) : null;
     await client.query(
@@ -764,7 +766,7 @@ export async function loadDocumentEvidence(
          payload_json, extracted_at
        )
        VALUES ($1, $2, $3, $4, $18, $5, $6, $7, $8, $9,
-               $19, $10, $11, $12, $13, $14, $15, $16, 'internal', 'synthetic', $17::jsonb, now())
+               $19, $10, $11, $12, $13, $14, $15, $16, 'internal', 'synthetic', $17::jsonb, $20)
        ON CONFLICT (extraction_id) DO UPDATE SET
          tenant_key = excluded.tenant_key, load_run_id = excluded.load_run_id,
          concept_ref = excluded.concept_ref, subject_ref = excluded.subject_ref,
@@ -791,14 +793,16 @@ export async function loadDocumentEvidence(
             : row.concept_ref.includes("pct")
               ? "%"
               : null,
-        derived ? null : spanId(row),
+        extracted ? spanId(row) : null,
         row.source_file_id,
         intValue(basis.sourcePage),
         row.source_section,
         basis.confidence,
         derived
           ? "authored_text_import"
-          : (nonEmpty(row.method) ?? "declared_document_text_import"),
+          : extracted
+            ? (nonEmpty(row.method) ?? "declared_document_text_import")
+            : "unverified_text_import",
         basis.reviewState,
         JSON.stringify({
           dataset_version: args.datasetVersion,
@@ -811,7 +815,8 @@ export async function loadDocumentEvidence(
           clause_text_basis: basis.textBasis,
         }),
         basis.extractorVersion,
-        derived ? "file" : "span",
+        extracted ? "span" : "file",
+        extracted ? nonEmpty(row.extracted_at) : null,
       ],
     );
   }

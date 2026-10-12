@@ -532,6 +532,7 @@ test(
       assert.equal(extraction.method, "authored_text_import");
       assert.equal(extraction.source_kind, "file");
       assert.equal(extraction.source_span_id, null);
+      assert.equal(extraction.extracted_at, null);
       assert.equal(
         extraction.payload_json.clause_text_basis,
         "derived_not_extracted",
@@ -544,6 +545,55 @@ test(
         ).rows[0].page_count,
         null,
       );
+      for (const sourceBasis of ["authored_reference", "", "unknown_import"]) {
+        const unknown = normalizeDocumentClauseRows(
+          [
+            {
+              ...imported[0],
+              value_text:
+                "Proposed operating model assigns an owner to the transition review.",
+              source_basis: sourceBasis,
+              source_page: "3",
+              confidence: "0.9",
+              review_state: "unreviewed",
+              method: "pdf_text_extraction",
+              extractor_version: "unproven-parser",
+              extracted_at: "2026-08-28T00:00:00.000Z",
+            },
+          ],
+          [],
+        );
+        await loadDocumentEvidence(
+          client,
+          args,
+          [],
+          unknown,
+          buildDocumentFileInputs([], unknown, args),
+        );
+        const stored = (
+          await client.query(
+            "SELECT * FROM doc.extraction WHERE extraction_id='C-PG'",
+          )
+        ).rows[0];
+        assert.equal(stored.source_page, null);
+        assert.equal(stored.confidence, null);
+        assert.equal(stored.extractor_version, null);
+        assert.equal(stored.source_kind, "file");
+        assert.equal(stored.source_span_id, null);
+        assert.equal(stored.extracted_at, null);
+        assert.equal(
+          stored.method,
+          sourceBasis === "authored_reference"
+            ? "authored_text_import"
+            : "unverified_text_import",
+        );
+        assert.equal(
+          stored.payload_json.clause_text_basis,
+          sourceBasis === "authored_reference"
+            ? "derived_not_extracted"
+            : "imported_unverified",
+        );
+      }
       const reviewed = normalizeDocumentClauseRows(
         [
           {
@@ -554,6 +604,7 @@ test(
             confidence: "0.74",
             review_state: "human_reviewed",
             extractor_version: "reviewed-parser-test",
+            extracted_at: "2026-09-03T12:00:00.000Z",
           },
         ],
         [],
@@ -574,6 +625,10 @@ test(
       assert.equal(Number(extraction.confidence), 0.74);
       assert.equal(extraction.extractor_version, "reviewed-parser-test");
       assert.equal(extraction.review_state, "human_reviewed");
+      assert.equal(
+        extraction.extracted_at.toISOString(),
+        "2026-09-03T12:00:00.000Z",
+      );
       assert.equal(
         extraction.payload_json.clause_text_basis,
         "document_extracted",
