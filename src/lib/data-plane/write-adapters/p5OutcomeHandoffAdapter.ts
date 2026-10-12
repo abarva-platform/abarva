@@ -38,7 +38,9 @@ export function p5Hash(value: unknown): string {
   };
   return createHash("sha256")
     .update(
-      typeof value === "string" ? value : (JSON.stringify(canonical(value)) ?? "undefined"),
+      typeof value === "string"
+        ? value
+        : (JSON.stringify(canonical(value)) ?? "undefined"),
     )
     .digest("hex");
 }
@@ -81,7 +83,7 @@ export async function readP5PublishedRows(
   const { data, error } = await sb
     .from("outcome_ledger")
     .select(
-      "id, tenant_client_key, client_id, subject_kind, subject_ref, is_current, value_rung, category, unit, counterfactual_confidence, governance_review_status, projected_amount, realized_amount, baseline_amount, measurement_owner_role, evidence_pointer, note, recorded_by, recorded_at, metadata",
+      "id, tenant_client_key, client_id, subject_kind, subject_ref, subject_label, is_current, value_rung, category, unit, counterfactual_confidence, governance_review_status, projected_amount, realized_amount, baseline_amount, measurement_owner_role, evidence_pointer, evidence_claim_ids, note, recorded_by, recorded_at, metadata",
     )
     .eq("client_id", ctx.clientId)
     .eq("subject_kind", "move")
@@ -130,21 +132,36 @@ export function verifyP5PublishedRows(
           row.client_id === binding.clientId &&
           row.subject_ref === binding.moveId &&
           row.subject_kind === "move" &&
+          row.subject_label === item.subjectLabel &&
           row.is_current === true &&
           row.value_rung === "projected_only" &&
-          row.category === item.category && row.unit === "usd_seed" &&
-          row.counterfactual_confidence === "low" && row.governance_review_status === "approved" &&
-          row.measurement_owner_role === item.ownerRole && row.evidence_pointer === item.sourceReference && row.note === item.note &&
+          row.category === item.category &&
+          row.unit === "usd_seed" &&
+          row.counterfactual_confidence === "low" &&
+          row.governance_review_status === "approved" &&
+          row.measurement_owner_role === item.ownerRole &&
+          row.evidence_pointer === item.sourceReference &&
+          p5Hash(row.evidence_claim_ids) ===
+            p5Hash([
+              `deliverable:${binding.contractId}:v${binding.contractVersion}:${binding.contractHash}`,
+            ]) &&
+          row.note === item.note &&
           row.realized_amount == null &&
           row.baseline_amount == null &&
           typeof row.recorded_by === "string" &&
           row.recorded_by.length > 0 &&
           Number.isFinite(Date.parse(String(row.recorded_at))) &&
-          row.projected_amount != null && Number.isFinite(Number(row.projected_amount)) && Number(row.projected_amount) === item.projectedUsd &&
-          (row.metadata as Record<string, unknown>)?.ownerUserId === item.metadata.ownerUserId &&
-          (row.metadata as Record<string, unknown>)?.leverId === item.metadata.leverId &&
-          p5Hash((row.metadata as Record<string, unknown>)?.measure) === p5Hash(item.metadata.measure) &&
-          p5Hash((row.metadata as Record<string, unknown>)?.p4Lever) === p5Hash(item.metadata.p4Lever) &&
+          row.projected_amount != null &&
+          Number.isFinite(Number(row.projected_amount)) &&
+          Number(row.projected_amount) === item.projectedUsd &&
+          (row.metadata as Record<string, unknown>)?.ownerUserId ===
+            item.metadata.ownerUserId &&
+          (row.metadata as Record<string, unknown>)?.leverId ===
+            item.metadata.leverId &&
+          p5Hash((row.metadata as Record<string, unknown>)?.measure) ===
+            p5Hash(item.metadata.measure) &&
+          p5Hash((row.metadata as Record<string, unknown>)?.p4Lever) ===
+            p5Hash(item.metadata.p4Lever) &&
           p5Hash((row.metadata as Record<string, unknown>)?.binding) ===
             p5Hash(binding) &&
           p5Hash(
@@ -175,24 +192,28 @@ export async function withP5HandoffTransaction<T>(
       "The data plane is unavailable. No handoff was published.",
       503,
     );
-  return withAzureWriteTransaction(url, async (query) => {
-    const locked = await query(
-      "SELECT id, current_phase FROM engagements WHERE id = $1 AND client_id = $2 FOR UPDATE",
-      [moveId, ctx.clientId],
-    );
-    if (!locked.rows.length)
-      throw new P5HandoffRefusal(
-        "move_not_readable",
-        "This Move is not accessible.",
-        404,
+  return withAzureWriteTransaction(
+    url,
+    async (query) => {
+      const locked = await query(
+        "SELECT id, current_phase FROM engagements WHERE id = $1 AND client_id = $2 FOR UPDATE",
+        [moveId, ctx.clientId],
       );
-    if (locked.rows[0].current_phase !== 5)
-      throw new P5HandoffRefusal(
-        "handoff_phase_required",
-        "Publish the reviewed measurement handoff while this Move is in P5.",
-      );
-    return work();
-  }, { includeReads: true });
+      if (!locked.rows.length)
+        throw new P5HandoffRefusal(
+          "move_not_readable",
+          "This Move is not accessible.",
+          404,
+        );
+      if (locked.rows[0].current_phase !== 5)
+        throw new P5HandoffRefusal(
+          "handoff_phase_required",
+          "Publish the reviewed measurement handoff while this Move is in P5.",
+        );
+      return work();
+    },
+    { includeReads: true },
+  );
 }
 
 export async function persistP5Handoff(

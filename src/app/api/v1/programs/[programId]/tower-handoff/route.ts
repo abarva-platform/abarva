@@ -5,7 +5,10 @@ import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { evaluateGate } from "@/lib/programs/governance";
 import { readP5Handoff } from "@/lib/programs/p5-tower-handoff";
-import { P5_TOWER_HANDOFF_FLAG, P5HandoffBindingSchema } from "@/lib/programs/p5-measurement-plan";
+import {
+  P5_TOWER_HANDOFF_FLAG,
+  P5HandoffBindingSchema,
+} from "@/lib/programs/p5-measurement-plan";
 import {
   P5HandoffRefusal,
   persistP5Handoff,
@@ -26,10 +29,10 @@ const requestSchema = z.strictObject({
 async function authorize(programId: string, write: boolean) {
   const ctx = await requireTenancy();
   if (
-    !isFeatureEnabled(
+    isFeatureEnabled(
       { clientKey: ctx.clientKey, clientId: ctx.clientId },
       P5_TOWER_HANDOFF_FLAG,
-    )
+    ) !== true
   )
     throw new P5HandoffRefusal(
       "handoff_not_enabled",
@@ -82,7 +85,8 @@ function refusal(error: unknown, completedTransaction?: "committed") {
         ok: false,
         error: error.code,
         detail: error.message,
-        transactionOutcome: completedTransaction ?? writeTransactionOutcome(error),
+        transactionOutcome:
+          completedTransaction ?? writeTransactionOutcome(error),
       },
       { status: error.status },
     );
@@ -98,7 +102,8 @@ function refusal(error: unknown, completedTransaction?: "committed") {
     {
       ok: false,
       error: "handoff_unavailable",
-      transactionOutcome: completedTransaction ?? writeTransactionOutcome(error),
+      transactionOutcome:
+        completedTransaction ?? writeTransactionOutcome(error),
       detail:
         "The handoff could not be verified. Its stored state is unknown; read it before retrying.",
     },
@@ -145,8 +150,16 @@ export async function POST(
       );
     const result = await withP5HandoffTransaction(ctx, programId, async () => {
       const currentActor = await authorize(programId, true);
-      if (currentActor.clientId !== ctx.clientId || currentActor.clientKey !== ctx.clientKey || currentActor.userId !== ctx.userId)
-        throw new P5HandoffRefusal("handoff_actor_changed", "The signed-in actor or tenant changed. Refresh the handoff before accepting.", 403);
+      if (
+        currentActor.clientId !== ctx.clientId ||
+        currentActor.clientKey !== ctx.clientKey ||
+        currentActor.userId !== ctx.userId
+      )
+        throw new P5HandoffRefusal(
+          "handoff_actor_changed",
+          "The signed-in actor or tenant changed. Refresh the handoff before accepting.",
+          403,
+        );
       await prerequisites(ctx, programId);
       const current = await readP5Handoff(ctx, programId);
       if (

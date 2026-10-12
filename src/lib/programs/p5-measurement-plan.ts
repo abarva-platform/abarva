@@ -98,20 +98,47 @@ export interface P5HandoffView {
 }
 
 export const P5HandoffBindingSchema = z.strictObject({
-  tenantKey: z.string().min(1), clientId: z.string().uuid(), moveId: z.string().uuid(),
-  contractId: z.string().uuid(), contractVersion: z.number().int().positive(),
-  contractHash: z.string().regex(/^[a-f0-9]{64}$/), planHash: z.string().regex(/^[a-f0-9]{64}$/),
+  tenantKey: z.string().min(1),
+  clientId: z.string().uuid(),
+  moveId: z.string().uuid(),
+  contractId: z.string().uuid(),
+  contractVersion: z.number().int().positive(),
+  contractHash: z.string().regex(/^[a-f0-9]{64}$/),
+  planHash: z.string().regex(/^[a-f0-9]{64}$/),
   inputBasisHash: z.string().regex(/^[a-f0-9]{64}$/),
 });
-export const P5HandoffViewSchema = z.object({
-  ok: z.literal(true), programId: z.string().min(1), binding: P5HandoffBindingSchema.nullable(),
-  savedPlan: P5MeasurementPlanSchema.nullable(),
-  owners: z.array(z.object({ userId: words, role: words })),
-  levers: z.array(z.object({ leverId: words, name: words, inCash: z.boolean(), projectedUsd: z.number().finite().nonnegative() })),
-  publication: z.object({ state: z.enum(["published", "not_yet_linked"]), rowIds: z.array(z.string().uuid()) }),
-  detail: words,
-}).superRefine((view, ctx) => {
-  if ((view.binding && view.binding.moveId !== view.programId) ||
-      (view.publication.state === "published" && (!view.binding || !view.savedPlan || !view.levers.length || view.publication.rowIds.length !== view.levers.length)))
-    ctx.addIssue({ code: "custom", message: "Publication identity or proof is incomplete." });
-});
+export const P5HandoffViewSchema = z
+  .object({
+    ok: z.literal(true),
+    programId: z.string().min(1),
+    binding: P5HandoffBindingSchema.nullable(),
+    savedPlan: P5MeasurementPlanSchema.nullable(),
+    owners: z.array(z.object({ userId: words, role: words })),
+    levers: z.array(
+      z.object({
+        leverId: words,
+        name: words,
+        inCash: z.boolean(),
+        projectedUsd: z.number().finite().nonnegative(),
+      }),
+    ),
+    publication: z.object({
+      state: z.enum(["published", "not_yet_linked"]),
+      rowIds: z.array(z.string().uuid()),
+    }),
+    detail: words,
+  })
+  .superRefine((view, ctx) => {
+    if (
+      (view.binding && view.binding.moveId !== view.programId) ||
+      (view.publication.state === "published" &&
+        (!view.binding ||
+          !view.savedPlan ||
+          !view.levers.length ||
+          view.publication.rowIds.length !== view.levers.length))
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "Publication identity or proof is incomplete.",
+      });
+  });

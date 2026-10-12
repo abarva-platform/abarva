@@ -473,6 +473,40 @@ describe("POST .../phase-capture · step-page records", () => {
     mockGetModuleState.mockResolvedValue([]);
   });
 
+  const P5_PLAN = JSON.stringify({ kind: "p5_measurement_handoff", version: 1, measures: [{
+    leverId: "L1", ownerUserId: "receiving-participant", ownerRole: "Measurement owner",
+    sourceReference: "Synthetic source export", comparator: "Matched cohort", method: "Unique claim reconciliation",
+    cadence: "monthly", firstReviewTrigger: "Mature cohort", exclusionRules: "Credit once", openConditions: "Synthetic plan; access pending",
+  }] });
+
+  it.each([true, false, "truthy"])("P5 capture reads the record only with a boolean enabled flag: %s", async enabled => {
+    mockIsFeatureEnabled.mockImplementation((_ctx, key) => key === "moves_p5_tower_handoff_v1" ? enabled : false);
+    mockGetProgramById.mockResolvedValue({ id: "prog-1", currentPhase: 5, charter: {} });
+    mockGetModuleState.mockResolvedValue([{ moduleKey: "phase_5_p5_measurement_handoff", status: "in_progress", state: { value: P5_PLAN } }]);
+    const response = await GET(new NextRequest("http://test/api/v1/programs/prog-1/phase-capture?phase=5"), { params });
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    if (enabled === true) expect(body.values.p5_measurement_handoff).toBe(P5_PLAN);
+    else expect(body.values).not.toHaveProperty("p5_measurement_handoff");
+  });
+
+  it.each([true, false, "truthy"])("P5 capture writes the record only with a boolean enabled flag: %s", async enabled => {
+    mockIsFeatureEnabled.mockImplementation((_ctx, key) => key === "moves_p5_tower_handoff_v1" ? enabled : false);
+    mockGetProgramById.mockResolvedValue({ id: "prog-1", currentPhase: 5, charter: {} });
+    const inserts = recordingClient();
+    const response = await POST(req({ phase: 5, sections: { p5_measurement_handoff: P5_PLAN } }) as never, { params });
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    const row = inserts.find(row => row.module_key === "phase_5_p5_measurement_handoff");
+    if (enabled === true) {
+      expect(body.values.p5_measurement_handoff).toBe(P5_PLAN);
+      expect(row).toMatchObject({ engagement_id: "prog-1", state_jsonb: { value: P5_PLAN, step_record: true } });
+    } else {
+      expect(body.values).not.toHaveProperty("p5_measurement_handoff");
+      expect(row).toBeUndefined();
+    }
+  });
+
   it("stores P3's traceability record beside the answers, as a record, not a question", async () => {
     const inserts = recordingClient();
     const res = await POST(

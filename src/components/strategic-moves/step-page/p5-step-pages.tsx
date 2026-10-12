@@ -21,6 +21,7 @@ function MeasurementBaselines({ moveId }: { moveId: string }) {
         return response.json() as Promise<{ assumptions?: AssumptionView[] }>;
       })
       .then((body) => {
+        if (!Array.isArray(body.assumptions)) throw new Error("Register response is unreadable");
         if (live) {
           setRows(
             (body.assumptions ?? []).filter(

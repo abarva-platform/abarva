@@ -135,7 +135,7 @@ export async function loadP5HandoffBasis(
       "P4 must be approved before preparing the P5 measurement handoff.",
     );
   const tenantKey = canonicalTenantKey(ctx.clientKey ?? "");
-  if (!CANONICAL_TENANT_KEYS.some(key => key === tenantKey))
+  if (!CANONICAL_TENANT_KEYS.some((key) => key === tenantKey))
     throw new P5HandoffRefusal(
       "tenant_identity_unavailable",
       "The canonical tenant identity could not be verified.",
@@ -222,7 +222,9 @@ export async function loadP5HandoffBasis(
   const sb = getAzureWriteFluentClient();
   const ownersRead = await sb
     .from("engagement_participants")
-    .select("user_id, role, program_access_level, can_publish_deliverables, can_approve_phase_gates")
+    .select(
+      "user_id, role, program_access_level, can_publish_deliverables, can_approve_phase_gates",
+    )
     .eq("engagement_id", moveId);
   if (ownersRead.error || !Array.isArray(ownersRead.data))
     throw new P5HandoffRefusal(
@@ -230,8 +232,23 @@ export async function loadP5HandoffBasis(
       "Receiving participants could not be read. No ownership is claimed.",
       503,
     );
-  const owners = (ownersRead.data as Array<{ user_id: string; role: string; program_access_level: string | null; can_publish_deliverables: boolean; can_approve_phase_gates: boolean }>)
-    .filter((row) => row.user_id && row.role && (row.program_access_level === "program_member" || row.can_publish_deliverables === true || row.can_approve_phase_gates === true))
+  const owners = (
+    ownersRead.data as Array<{
+      user_id: string;
+      role: string;
+      program_access_level: string | null;
+      can_publish_deliverables: boolean;
+      can_approve_phase_gates: boolean;
+    }>
+  )
+    .filter(
+      (row) =>
+        row.user_id &&
+        row.role &&
+        (row.program_access_level === "program_member" ||
+          row.can_publish_deliverables === true ||
+          row.can_approve_phase_gates === true),
+    )
     .map((row) => ({ userId: row.user_id, role: row.role }));
   const view: P5HandoffView = {
     ok: true,

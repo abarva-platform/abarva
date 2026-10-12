@@ -75,11 +75,12 @@ export function P5TowerHandoff({
   onStateRef.current = onState;
   const path = `/api/v1/programs/${encodeURIComponent(moveId)}/tower-handoff`;
   useEffect(() => {
+    let live = true;
     const serial = ++request.current;
     fetch(path, { credentials: "include" })
       .then((response) => readResponse(response, moveId))
       .then((body) => {
-        if (serial !== request.current) return;
+        if (!live || serial !== request.current) return;
         setView(body);
         setDetail(body.detail);
         setMeasures(
@@ -90,13 +91,13 @@ export function P5TowerHandoff({
         onStateRef.current?.(body.publication.state === "published");
       })
       .catch((error) => {
-        if (serial !== request.current) return;
+        if (!live || serial !== request.current) return;
         setView(null);
         setDetail(error.message);
         onStateRef.current?.(false);
       });
     return () => {
-      request.current++;
+      live = false;
     };
     // The keyed mount binds a read to one Move; edits are reviewed explicitly.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -272,23 +273,30 @@ export function P5TowerHandoff({
           </select>
         </details>
       ))}
-      <button
-        type="button"
-        className={styles["btn-ink"]}
-        disabled={
-          busy || !canAccept || !P5MeasurementPlanSchema.safeParse(plan).success
-        }
-        onClick={() => {
-          if (!validatedPlan.success) return;
-          setMeasures(validatedPlan.data.measures);
-          setValue(P5_MEASUREMENT_PLAN_KEY, JSON.stringify(validatedPlan.data));
-          setDetail(
-            "Measurement plan entered. Wait for capture to save, then review the saved handoff.",
-          );
-        }}
-      >
-        Save measurement plan
-      </button>
+      {!view?.binding || edited || !matchesSaved ? (
+        <button
+          type="button"
+          className={styles["btn-ink"]}
+          disabled={
+            busy ||
+            !canAccept ||
+            !P5MeasurementPlanSchema.safeParse(plan).success
+          }
+          onClick={() => {
+            if (!validatedPlan.success) return;
+            setMeasures(validatedPlan.data.measures);
+            setValue(
+              P5_MEASUREMENT_PLAN_KEY,
+              JSON.stringify(validatedPlan.data),
+            );
+            setDetail(
+              "Measurement plan entered. Wait for capture to save, then review the saved handoff.",
+            );
+          }}
+        >
+          Save measurement plan
+        </button>
+      ) : null}
       <button
         type="button"
         className={styles["link-btn"]}
@@ -299,7 +307,7 @@ export function P5TowerHandoff({
       </button>
       {view?.binding && !edited && matchesSaved ? (
         <>
-          <p className={styles["item-note"]}>
+          <p className={`${styles["item-note"]} ${styles["handoff-proof"]}`}>
             Signed contract {view.binding.contractId} · version{" "}
             {view.binding.contractVersion} · SHA-256 {view.binding.contractHash}
           </p>
@@ -355,7 +363,10 @@ export function P5TowerPublicationReadback({ moveId }: { moveId: string }) {
     };
   }, [moveId]);
   return (
-    <section className={styles.field} aria-label="Move planned outcome handoff">
+    <section
+      className={`${styles.root} ${styles["handoff-readback"]}`}
+      aria-label="Move planned outcome handoff"
+    >
       <h2 className={styles["q-label"]}>Planned outcome handoff</h2>
       <p className={styles.proposal} role="status">
         {detail}

@@ -184,7 +184,7 @@ async function loadCaptureSnapshot(
   for (const record of phaseStepRecordSections(phase).filter(
     (record) =>
       record.key !== P5_MEASUREMENT_PLAN_KEY ||
-      isFeatureEnabled(ctx, P5_TOWER_HANDOFF_FLAG),
+      isFeatureEnabled(ctx, P5_TOWER_HANDOFF_FLAG) === true,
   )) {
     const value = moduleValue(phase, record.key);
     if (value) values[record.key] = value;
@@ -437,7 +437,7 @@ export async function POST(
     for (const record of phaseStepRecordSections(phase).filter(
       (record) =>
         record.key !== P5_MEASUREMENT_PLAN_KEY ||
-        isFeatureEnabled(ctx, P5_TOWER_HANDOFF_FLAG),
+        isFeatureEnabled(ctx, P5_TOWER_HANDOFF_FLAG) === true,
     )) {
       const value = String(mergedValues[record.key] ?? "").trim();
       if (value) storedValues[record.key] = value;
@@ -645,6 +645,7 @@ export async function POST(
     const changedKeys = new Set(changedSections.map((c) => c.key));
     const hasBasisEdits = basisKeys.size > 0;
     const { nowIso, moduleKeys } = await persistPhaseCaptureModules({
+      p5HandoffEnabled: isFeatureEnabled(ctx, P5_TOWER_HANDOFF_FLAG) === true,
       programId,
       phase,
       evaluation,
