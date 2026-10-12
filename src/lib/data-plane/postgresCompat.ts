@@ -30,6 +30,13 @@ const pools = new Map<string, import('pg').Pool>();
 let activeConnectionString: string | null = null;
 let client: PostgresCompatClient | null = null;
 const writeTransactionContext = new AsyncLocalStorage<PostgresCompatClient>();
+const readTransactionContext = new AsyncLocalStorage<PostgresCompatClient>();
+const readQueryTransactionContext = new AsyncLocalStorage<QueryExecutor>();
+
+/** Present only when a governed writer opts its basis reads into its transaction. */
+export function getAzureTransactionReadExecutor(): QueryExecutor | undefined {
+  return readQueryTransactionContext.getStore();
+}
 
 export function resolveDatabaseUrlCandidates(env: NodeJS.ProcessEnv = process.env): string[] {
   return resolveDatabaseUrlCandidatesForScope(env);
@@ -576,6 +583,8 @@ function createPostgresCompatClient(query: QueryExecutor = queryWithFallback): P
 }
 
 export function getAzureReadFluentClient(): PostgresCompatClient {
+  const transaction = readTransactionContext.getStore();
+  if (transaction) return transaction;
   client ??= createPostgresCompatClient();
   return client;
 }
@@ -590,7 +599,7 @@ type WriteTransactionConnection = Pick<import('pg').PoolClient, 'query' | 'relea
 export async function withAzureWriteTransaction<T>(
   connectionString: string,
   work: (query: QueryExecutor) => Promise<T>,
-  options: { connect?: () => Promise<WriteTransactionConnection> } = {},
+  options: { connect?: () => Promise<WriteTransactionConnection>; includeReads?: boolean } = {},
 ): Promise<T> {
   if (writeTransactionContext.getStore()) throw new Error('nested_write_transaction_refused');
   const connection = options.connect
@@ -604,7 +613,10 @@ export async function withAzureWriteTransaction<T>(
     await connection.query("SET LOCAL statement_timeout = '60s'");
     await connection.query("SET LOCAL lock_timeout = '15s'");
     const query: QueryExecutor = (sql, params) => connection.query(sql, params);
-    const result = await writeTransactionContext.run(createPostgresCompatClient(query), () => work(query));
+    const transactionClient = createPostgresCompatClient(query);
+    const result = await writeTransactionContext.run(transactionClient, () =>
+      options.includeReads ? readTransactionContext.run(transactionClient, () =>
+        readQueryTransactionContext.run(query, () => work(query))) : work(query));
     commitAttempted = true;
     const committed = await connection.query('COMMIT');
     if (committed.command !== 'COMMIT') throw new Error('write_transaction_not_committed');

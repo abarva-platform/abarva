@@ -1,0 +1,67 @@
+# 2026-10-11 — Governed planned P5 outcome handoff
+
+## Release ID
+
+`2026-10-11-moves-p5-governed-handoff`
+
+## Status
+
+`candidate`
+
+## Plain-English Summary
+
+P5.2 can save receiving participants and measurement definitions for every current P4 lever, then accept a planned Tower handoff against the current signed measurement contract. The product derives planned cash from the deterministic P4 case. It records projected-only rows in the existing outcome ledger and confirms them through an independent read after commit. A changed contract, plan, input basis or receiving participant refuses acceptance. Repeat acceptance of the same basis retains the original rows, actor and time.
+
+P5 completion requires current publication readback when the new flag is enabled. Tower can read the exact Move through `?moveId=`, and the decision trace distinguishes unavailable state from an absent publication. A baseline projection also clears its prior Move identity while another Move loads or fails.
+
+## Layer Impact
+
+- Release lane: `global-control-lane`, restricted by a tenant feature flag.
+- Layers 1 and 2: no intake, template, source adapter or shared dataset rebuild.
+- Layer 3: one declared measurement step record and governed metadata on the existing outcome ledger; no schema migration. Planned figures come from the current deterministic approved P4 case. The ledger stores unknown baseline and realized amounts as null.
+- Layer 4: P5 measurement acceptance, publication-aware completion, exact-Move Tower readback and trace status.
+- Data-plane transaction seam: an opt-in `includeReads` option keeps policy, evidence and capture basis reads on the existing serializable publication transaction. Default callers keep their current independent read path.
+
+## Client Applicability
+
+- All clients: existing behavior remains with the new flag off.
+- Specific clients: approved synthetic demo scope only.
+- Internal only: no.
+- Public/demo only: synthetic validation; no real-client rollout is authorized.
+- Feature flag: `moves_p5_tower_handoff_v1`, tenant policy with the approved synthetic scope included. The step-page mount still requires the existing capture and step-page flags.
+
+## Changes Included
+
+- `p5_measurement_handoff`: receiving participant ID and role, source reference, cohort/comparator, method, cadence, first review trigger, exclusions and open conditions per P4 lever. Both text readers emit only the team's saved words.
+- `GET/POST /api/v1/programs/[programId]/tower-handoff`: authenticated tenant and exact-Move access; financial visibility for review; gate and publication permission for acceptance; existing P4/P5 hard checks; current signed document ID/version/content hash, saved-plan hash and P4 input basis; receiving participants revalidated against current permissions.
+- Deterministic physical UUIDs, real commit timestamps, original actor provenance and repeat idempotence. The write and basis reads share a transaction; post-commit readback uses the independent reader.
+- Dataset declaration `moves_p5_outcome_handoff_v1`. Each row carries a policy-validated `GovernedObject` with `committed_not_indexed` readiness, no applicable agents and no indexing, retrieval, citation or agent-ready claim.
+- Product labels describe a planned handoff. Execution, baseline confirmation and realized-value verification remain future governed work.
+
+## QA / Validation
+
+- PASS: baseline identity regressions fail before the fix and pass afterward; removing the identity key kills both regressions.
+- PASS: original baseline validation, 642 local tests. This is local proof only.
+- PASS: first 31 publication route/model/persistence tests, including stale document/input refusals, tenant/actor/participant authority, idempotence and independent readback.
+- PENDING: final combined tests, publication mutations, component visual inspection, typecheck, lint, orphan/reachability checks, coverage and tenancy censuses, generated manuals, all context/corpus validators and release check.
+- PENDING: controlled PR, exact-head CI, fetched-ref collision scan, merge, repo-owned deployment and signed-in acceptance.
+
+## Rollout Plan
+
+Merge only after local gates and completed exact-head CI, with a fresh coverage-count scan of every open Moves PR, including drafts. Deploy through the repo-owned main ACA workflow and prove digest parity. The sole approved execution owner then saves the fresh Move plan, reviews/signs current P5 documents, accepts the planned handoff, reads its exact-Move Tower projection and completes P5 through the existing governed gate. Capture document/version hashes, actor, row IDs and terminal state in private proof.
+
+## Deployment Authority
+
+Only `.github/workflows/aca-main-deploy.yml` may build the shared web image or move shared ACA traffic. Support performs no runtime publication, data job, flag command, ad-hoc build or deployment. Runtime writes belong to the already-authorized execution owner through the product path.
+
+## Rollback Plan
+
+Disable `moves_p5_tower_handoff_v1` through the approved release lane, or roll back to the previous approved digest via the repo-owned workflow. Existing ledger rows are preserved as auditable planned records; no cleanup or deletion is implied. Rebaseline or retirement requires a separate governed decision. The default transaction path remains unchanged.
+
+## Audit Evidence
+
+Release record, dataset manifest, explicit step-record registry, tests and generated census/manual artifacts in this PR. Private QA and runtime proof remain outside the public repository. The manifest declaration records delegated implementation honestly; it carries no bulk-load or serving approval and attributes no action to another person.
+
+## Known Gaps
+
+Fresh Move identity, approved input binding, P4/P5 documents, terminal gate readback, deployment and signed-in Tower proof are pending. These rows are planned cash projections; they do not validate a baseline, prove execution or establish realized value. Changed publication inputs fail closed and require a future governed rebaseline; this release does not silently supersede a prior handoff.

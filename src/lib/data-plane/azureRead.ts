@@ -3,6 +3,7 @@ import {
   type SessionRunner,
   type SqlRunner,
 } from './read-adapters/azureSession';
+import { getAzureTransactionReadExecutor } from './postgresCompat';
 
 type SqlScalar = string | number | boolean | Date | null;
 type SqlValue = SqlScalar | readonly SqlScalar[];
@@ -177,7 +178,13 @@ function buildSelectSql(request: AzureReadSelect, count = false): { sql: string;
 export function createAzureReadClient(
   session: SessionRunner = createDefaultSession(DEFAULT_APPLICATION_NAME),
 ): AzureReadClient {
-  const withSession: AzureReadClient['withSession'] = (fn) => session(fn);
+  const withSession: AzureReadClient['withSession'] = (fn) => {
+    const transaction = typeof getAzureTransactionReadExecutor === 'function' ? getAzureTransactionReadExecutor() : undefined;
+    return transaction ? fn(async <R>(sql: string, params: unknown[]) => {
+      assertSelectOnly(sql);
+      return (await transaction(sql, params)).rows as R[];
+    }) : session(fn);
+  };
 
   const query: AzureReadClient['query'] = async (sql, params = [], opts = {}) => {
     assertSelectOnly(sql);

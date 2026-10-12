@@ -11,6 +11,8 @@
 // calling back into queries.ts or return a stable default.
 
 import { azureRead } from "@/lib/data-plane/azureRead";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { P5_TOWER_HANDOFF_FLAG } from "./p5-measurement-plan";
 import type {
   ActivityEntry,
   ArchetypeKey,
@@ -172,7 +174,9 @@ export async function buildGateCriteria(
   currentPhase: number,
   opts: { allowHistoricalPhase?: boolean } = {},
 ): Promise<StrategicMove["gateCriteria"]> {
-  const criteria = gateCriteriaForPhase(currentPhase);
+  const criteria = gateCriteriaForPhase(currentPhase, {
+    p5Publication: isFeatureEnabled(ctx, P5_TOWER_HANDOFF_FLAG),
+  });
   // Terminal phase (or unknown phase) — no outgoing gate to evaluate.
   if (!criteria) return [];
 

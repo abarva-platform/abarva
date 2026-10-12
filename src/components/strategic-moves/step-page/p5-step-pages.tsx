@@ -6,6 +6,7 @@ import { SourceLine, type StepPageRow } from "./MovesStepPage";
 import { CaptureStepPage, field } from "./p4-step-pages";
 import type { PhaseStepPageMap } from "./phase-step-pages";
 import styles from "./MovesStepPage.module.css";
+import { P5TowerHandoff } from "./P5TowerHandoff";
 
 function MeasurementBaselines({ moveId }: { moveId: string }) {
   const [rows, setRows] = useState<AssumptionView[] | null>(null);
@@ -104,7 +105,7 @@ export const P5_STEP_PAGES: PhaseStepPageMap = {
       subject: "Confirmed assumptions for measurement",
       state: "settled",
       wide: true,
-      middle: <MeasurementBaselines moveId={host.move.id} />,
+      middle: <MeasurementBaselines key={host.move.id} moveId={host.move.id} />,
       facts: [
         {
           kind: "team",
@@ -122,7 +123,34 @@ export const P5_STEP_PAGES: PhaseStepPageMap = {
           "tower_cadence_defined",
           "value_measurement_contract_signed_off",
         ]}
-        beforeRows={[baselines]}
+        beforeRows={[
+          baselines,
+          ...(host.p5TowerHandoffEnabled
+            ? [
+                {
+                  id: "TOWER_HANDOFF",
+                  rank: 0,
+                  shortName: "planned handoff",
+                  subject: "Review and accept the planned Tower handoff",
+                  state: host.stepDone["P5.2"]
+                    ? ("settled" as const)
+                    : ("decision" as const),
+                  wide: true,
+                  clause: "review and accept the planned handoff",
+                  middle: (
+                    <P5TowerHandoff
+                      key={host.move.id}
+                      moveId={host.move.id}
+                      value={host.values.p5_measurement_handoff ?? ""}
+                      setValue={host.setValue}
+                      canAccept={host.canApproveGates}
+                      onState={host.onP5HandoffState}
+                    />
+                  ),
+                },
+              ]
+            : []),
+        ]}
         fields={[
           field(
             "value_proof_rules",

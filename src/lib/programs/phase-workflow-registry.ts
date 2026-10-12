@@ -229,6 +229,7 @@ const P5_STEPS: readonly PhaseWorkflowStep[] = [
     title: "Tower measurement",
     depth: allFull,
     sectionKeys: same(["value_proof_rules", "governance_cadence"]),
+    recordKeys: same(["p5_measurement_handoff"]),
   },
   {
     id: "P5.3",
@@ -531,6 +532,15 @@ export const PHASE_STEP_RECORD_SECTIONS: Readonly<
       label: "Bottom-up estimate (ROM)",
       description:
         "The inputs of the bottom-up estimate, each with its source and status: counts per use case, a register or benchmark reference for each component's unit hours, the delivery pod, the delivery factors and the release grouping, plus the snapshot a person approved.",
+    },
+  ],
+  5: [
+    {
+      key: "p5_measurement_handoff",
+      stepId: "P5.2",
+      label: "Planned Tower measurement handoff",
+      description:
+        "Receiving participants, source, comparator, measurement method, cadence and exclusions for each approved P4 lever. Planned figures come from the deterministic case.",
     },
   ],
 };

@@ -117,6 +117,7 @@ export type FeatureFlagKey =
   | "moves_step_pages_catch_up_v1"
   | "moves_step_pages_p0p1_v1"
   | "moves_step_pages_p4p5_v1"
+  | "moves_p5_tower_handoff_v1"
   | "moves_public_source_research"
   | "moves_assumption_register_v1"
   | "moves_value_engine_v1"
@@ -128,7 +129,8 @@ export type FeatureFlagKey =
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "moves_synthetic_e2e_operator_v1",
-    summary: "Scoped automated Moves proof account for a synthetic tenant. The account must carry an exact signed Clerk profile, a bound persons identity, and an assigned-program membership. No client administration or cross-tenant access is granted.",
+    summary:
+      "Scoped automated Moves proof account for a synthetic tenant. The account must carry an exact signed Clerk profile, a bound persons identity, and an assigned-program membership. No client administration or cross-tenant access is granted.",
     policy: "tenant",
     includeTenants: ["meridian"],
   },
@@ -454,6 +456,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "moves_step_pages_p4p5_v1",
     summary:
       "Opt-in P4 and P5 step-page mount and sunset routing. A phase defaults to step pages only after every step has an implemented page; the existing capture remains available during transition. Requires moves_step_pages_v3 and moves_capture_v2.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_p5_tower_handoff_v1",
+    summary:
+      "P5 planned Tower handoff: receiving participants and measurement definitions are saved as a step record. Authorized product acceptance binds the current signed measurement-contract ID, version and content hash, saved plan and deterministic approved P4 input basis to idempotent projected-only outcome-ledger rows. P5 completion requires current publication readback. Exact-Move Tower and trace reads distinguish unavailable state from no publication. Baseline and realized values remain unknown; no execution, shared intake rebuild, indexing or agent-ready claim. Enabled for the synthetic demo scope only.",
     policy: "tenant",
     includeTenants: ["meridian"],
   },

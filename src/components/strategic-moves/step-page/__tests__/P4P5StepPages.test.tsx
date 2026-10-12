@@ -12,6 +12,8 @@ import { stepPageHref } from "@/lib/programs/step-page-views";
 import { P4_STEP_PAGES } from "../p4-step-pages";
 import { P5_STEP_PAGES } from "../p5-step-pages";
 import type { StepPageHostProps } from "../phase-step-pages";
+import { P5TowerHandoff, P5TowerPublicationReadback } from "../P5TowerHandoff";
+import type { P5HandoffView } from "@/lib/programs/p5-measurement-plan";
 
 jest.mock("../StepEvidence", () => ({
   useStepEvidence: () => ({
@@ -84,6 +86,8 @@ function page(
 }
 
 beforeEach(() => {
+  global.fetch ??= jest.fn();
+  jest.mocked(global.fetch).mockClear();
   jest.mocked(readApprovedRomSnapshot).mockReset();
   jest.mocked(readApprovedRomSnapshot).mockResolvedValue({ status: "missing" });
   jest.mocked(previewMatchesApproval).mockReset();
@@ -92,6 +96,94 @@ beforeEach(() => {
 
 afterEach(() => {
   jest.restoreAllMocks();
+});
+
+describe("Governed P5 publication UI", () => {
+  const moveId = "11111111-1111-4111-a111-111111111111";
+  const currentView = (published = false): P5HandoffView => ({
+    ok: true, programId: moveId,
+    binding: { tenantKey: "meridian-health", clientId: "22222222-2222-4222-a222-222222222222", moveId,
+      contractId: "33333333-3333-4333-a333-333333333333", contractVersion: 2,
+      contractHash: "a".repeat(64), planHash: "b".repeat(64), inputBasisHash: "c".repeat(64) },
+    savedPlan: { kind: "p5_measurement_handoff", version: 1, measures: [{ leverId: "L1", ownerUserId: "owner-1", ownerRole: "Measurement owner",
+      sourceReference: "[A:V1] Source export", comparator: "Same cohort", method: "Unique claim reconciliation", cadence: "monthly",
+      firstReviewTrigger: "Mature cohort", exclusionRules: "Credit collections once", openConditions: "Synthetic plan; access pending" }] },
+    owners: [{ userId: "owner-1", role: "Measurement owner" }],
+    levers: [{ leverId: "L1", name: "Synthetic avoided purchases", inCash: true, projectedUsd: 4000 }],
+    publication: { state: published ? "published" : "not_yet_linked", rowIds: published ? ["44444444-4444-5444-a444-444444444444"] : [] },
+    detail: published ? "Planned handoff published and read back from Tower's outcome ledger." : "Review the current signed contract and saved plan.",
+  });
+  const response = (body: unknown, ok = true) => ({ ok, json: async () => body } as Response);
+
+  it("keeps the publication surface absent with its flag off", () => {
+    jest.spyOn(global, "fetch").mockResolvedValue(response({ assumptions: [] }));
+    render(page(P5_STEP_PAGES, "p5-measurement", host(5)));
+    expect(screen.queryByText("Review saved handoff")).not.toBeInTheDocument();
+    expect(jest.mocked(fetch).mock.calls.some(([url]) => String(url).endsWith("/tower-handoff"))).toBe(false);
+  });
+
+  it("mounts the flagged surface with the actual Move identity", async () => {
+    jest.spyOn(global, "fetch").mockResolvedValue(response(currentView()));
+    const input = host(5); input.p5TowerHandoffEnabled = true; input.move.id = moveId;
+    render(page(P5_STEP_PAGES, "p5-measurement", input));
+    expect(await screen.findByText("Review saved handoff")).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledWith(`/api/v1/programs/${moveId}/tower-handoff`, { credentials: "include" });
+  });
+
+  it("accepts only the reviewed binding and links independent published readback", async () => {
+    const view = currentView(); const state = jest.fn();
+    jest.spyOn(global, "fetch").mockResolvedValueOnce(response(view)).mockResolvedValueOnce(response(currentView(true)));
+    render(<P5TowerHandoff moveId={moveId} value={JSON.stringify(view.savedPlan)} setValue={jest.fn()} canAccept onState={state} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Accept planned Tower handoff" }));
+    expect(await screen.findByRole("link", { name: "Read this Move in Tower" })).toHaveAttribute("href", `/tower?moveId=${moveId}`);
+    const init = jest.mocked(fetch).mock.calls[1][1]!;
+    expect(JSON.parse(String(init.body))).toEqual({ action: "accept_planned_handoff", binding: view.binding });
+    expect(init.method).toBe("POST"); expect(state).toHaveBeenLastCalledWith(true);
+  });
+
+  it("withholds the current binding after editing, saves own words, and refuses stale product acceptance", async () => {
+    const view = currentView(); const setValue = jest.fn();
+    jest.spyOn(global, "fetch").mockResolvedValue(response(view));
+    render(<P5TowerHandoff moveId={moveId} value={JSON.stringify(view.savedPlan)} setValue={setValue} canAccept />);
+    await screen.findByRole("button", { name: "Accept planned Tower handoff" });
+    fireEvent.change(screen.getByLabelText("Measurement method"), { target: { value: "Changed reconciliation" } });
+    expect(screen.queryByRole("button", { name: "Accept planned Tower handoff" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Save measurement plan" }));
+    const saved = JSON.parse(setValue.mock.calls[0][1]); expect(saved.measures[0].method).toBe("Changed reconciliation");
+    fireEvent.click(screen.getByRole("button", { name: "Review saved handoff" }));
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole("button", { name: "Accept planned Tower handoff" })).not.toBeInTheDocument();
+    expect(jest.mocked(fetch).mock.calls.every(([, init]) => init?.method !== "POST")).toBe(true);
+  });
+
+  it("read-only viewers cannot change definitions or accept", async () => {
+    const view = currentView(); jest.spyOn(global, "fetch").mockResolvedValue(response(view));
+    render(<P5TowerHandoff moveId={moveId} value={JSON.stringify(view.savedPlan)} setValue={jest.fn()} canAccept={false} />);
+    expect(await screen.findByRole("button", { name: "Accept planned Tower handoff" })).toBeDisabled();
+    expect(screen.getByLabelText("Measurement method")).toBeDisabled();
+  });
+
+  it.each(["wrong_move", "malformed_values", "failed_read"])("Tower readback withholds amounts after %s", async failure => {
+    const view = currentView(true);
+    const body = failure === "wrong_move" ? { ...view, programId: "another-move" } : failure === "malformed_values" ? { ...view, levers: [{ ...view.levers[0], projectedUsd: null }] } : { detail: "Ledger read unavailable; state unknown." };
+    jest.spyOn(global, "fetch").mockResolvedValue(response(body, failure !== "failed_read"));
+    render(<P5TowerPublicationReadback moveId={moveId} />);
+    await screen.findByText(failure === "failed_read" ? "Ledger read unavailable; state unknown." : "The handoff response does not match this Move. No publication is claimed.");
+    expect(screen.queryByText(/planned annual cash/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Ledger rows:/)).not.toBeInTheDocument();
+  });
+
+  it("clears prior Move readback while a different Move loads and fails", async () => {
+    let rejectNext!: (error: Error) => void;
+    jest.spyOn(global, "fetch").mockResolvedValueOnce(response(currentView(true))).mockImplementationOnce(() => new Promise((_resolve, reject) => { rejectNext = reject; }));
+    const component = render(<P5TowerPublicationReadback moveId={moveId} />);
+    expect(await screen.findByText(/planned annual cash/)).toHaveTextContent("$4,000.00");
+    component.rerender(<P5TowerPublicationReadback moveId="next-move" />);
+    expect(screen.queryByText(/planned annual cash/)).not.toBeInTheDocument();
+    rejectNext(new Error("Next Move read failed"));
+    await screen.findByText("Next Move read failed");
+    expect(screen.queryByText(/planned annual cash/)).not.toBeInTheDocument();
+  });
 });
 
 describe("P4 and P5 step pages", () => {
@@ -537,6 +629,90 @@ describe("P4 and P5 step pages", () => {
     );
     expect(screen.queryByText(/\[A:V4\]/)).not.toBeInTheDocument();
     expect(screen.getByText(/10 hours/)).toBeInTheDocument();
+  });
+
+  it("withholds the previous Move's baselines while a different Move is loading", async () => {
+    let finishFirstRead!: (value: unknown) => void;
+    let finishSecondRead!: (value: unknown) => void;
+    global.fetch = jest
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishFirstRead = resolve;
+          }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishSecondRead = resolve;
+          }),
+      );
+    const { rerender } = render(page(P5_STEP_PAGES, "p5-measurement", host(5)));
+    finishFirstRead({
+      ok: true,
+      json: async () => ({
+        assumptions: [
+          {
+            id: "V-FIRST",
+            statement: "First Move baseline",
+            status: "confirmed",
+          },
+        ],
+      }),
+    });
+    await screen.findByText(/\[A:V-FIRST\] First Move baseline/);
+
+    const secondMove = host(5);
+    secondMove.move = { ...secondMove.move, id: "move-2" };
+    rerender(page(P5_STEP_PAGES, "p5-measurement", secondMove));
+    expect(screen.queryByText(/\[A:V-FIRST\]/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText("Reading confirmed register rows…"),
+    ).toBeInTheDocument();
+    expect(global.fetch).toHaveBeenLastCalledWith(
+      "/api/v1/programs/move-2/assumptions",
+      expect.objectContaining({ credentials: "include" }),
+    );
+    finishSecondRead({
+      ok: true,
+      json: async () => ({
+        assumptions: [
+          {
+            id: "V-SECOND",
+            statement: "Second Move baseline",
+            status: "confirmed",
+          },
+        ],
+      }),
+    });
+    await screen.findByText(/\[A:V-SECOND\] Second Move baseline/);
+    expect(screen.queryByText(/\[A:V-FIRST\]/)).not.toBeInTheDocument();
+  });
+
+  it("does not retain the previous Move's baselines when the next Move's read fails", async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          assumptions: [
+            {
+              id: "V-FIRST",
+              statement: "First Move baseline",
+              status: "confirmed",
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({ ok: false });
+    const { rerender } = render(page(P5_STEP_PAGES, "p5-measurement", host(5)));
+    await screen.findByText(/\[A:V-FIRST\] First Move baseline/);
+    const secondMove = host(5);
+    secondMove.move = { ...secondMove.move, id: "move-2" };
+    rerender(page(P5_STEP_PAGES, "p5-measurement", secondMove));
+    await screen.findByText(/No measurement baseline is claimed/);
+    expect(screen.queryByText(/\[A:V-FIRST\]/)).not.toBeInTheDocument();
   });
 
   it("keeps a note-derived answer in review until the person accepts it", () => {

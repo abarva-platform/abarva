@@ -26,6 +26,7 @@ import {
   CAPTURE_TEXT_STEP_RECORD_KEYS,
   captureTextStepWords,
 } from "@/lib/programs/capture-text-step-record";
+import { P5_MEASUREMENT_PLAN_KEY, p5MeasurementPlanText } from "./p5-measurement-plan";
 
 /**
  * How a capture answer reads as text, by section key. Step pages store some
@@ -38,6 +39,7 @@ import {
  */
 
 export function captureValueText(key: string, raw: string): string {
+  if (key === P5_MEASUREMENT_PLAN_KEY) return p5MeasurementPlanText(raw);
   if ((CAPTURE_TEXT_STEP_RECORD_KEYS as readonly string[]).includes(key))
     return captureTextStepWords(raw);
   if (key === "gaps_root_causes") return rootCauseCaptureText(raw);
@@ -62,6 +64,7 @@ export function captureValueText(key: string, raw: string): string {
 
 /** Only the team's own words, never a register's labels, for phrase checks. */
 export function captureValueGateText(key: string, raw: string): string {
+  if (key === P5_MEASUREMENT_PLAN_KEY) return p5MeasurementPlanText(raw);
   if ((CAPTURE_TEXT_STEP_RECORD_KEYS as readonly string[]).includes(key))
     return captureTextStepWords(raw);
   if (key === "gaps_root_causes") return rootCauseGateText(raw);

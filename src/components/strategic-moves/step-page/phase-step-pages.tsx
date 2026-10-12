@@ -41,6 +41,8 @@ export interface StepPageHostProps {
   setValue: (key: string, value: string) => void;
   priorPhaseCapture: Readonly<Record<string, string>> | null;
   canApproveGates: boolean;
+  p5TowerHandoffEnabled?: boolean;
+  onP5HandoffState?: (published: boolean) => void;
   currentUser: { email: string | null; role: string | null } | null;
   chrome: StepPageChrome;
   stepDone: Readonly<Record<string, boolean>>;

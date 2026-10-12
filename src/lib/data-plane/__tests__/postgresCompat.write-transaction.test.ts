@@ -1,8 +1,10 @@
 import {
+  getAzureReadFluentClient,
   getAzureWriteFluentClient,
   withAzureWriteTransaction,
   writeTransactionOutcome,
 } from '../postgresCompat';
+import { azureRead } from '../azureRead';
 
 type Connection = Pick<import('pg').PoolClient, 'query' | 'release'>;
 
@@ -54,6 +56,29 @@ function transactionConnection(options: {
 }
 
 describe('Postgres compat write transaction', () => {
+  it('opt-in policy and evidence reads share the transaction and restore the independent reader afterward', async () => {
+    const db = transactionConnection();
+    const independent = getAzureReadFluentClient();
+    await withAzureWriteTransaction('unused', async () => {
+      expect(getAzureReadFluentClient()).toBe(getAzureWriteFluentClient());
+      const result = await getAzureReadFluentClient().from('program_modules').select('id').eq('engagement_id', 'move-1');
+      expect(result.error).toBeNull();
+      expect(await azureRead.query('SELECT id FROM phase_snapshots WHERE engagement_id = $1', ['move-1'])).toEqual([{ id: 'seed-row' }]);
+    }, { connect: db.connect, includeReads: true });
+    expect(db.statements.some(sql => sql.includes('FROM "program_modules"'))).toBe(true);
+    expect(db.statements).toContain('SELECT id FROM phase_snapshots WHERE engagement_id = $1');
+    expect(getAzureReadFluentClient()).toBe(independent);
+  });
+
+  it('default transaction callers keep their independent read client', async () => {
+    const db = transactionConnection();
+    const independent = getAzureReadFluentClient();
+    await withAzureWriteTransaction('unused', async () => {
+      expect(getAzureReadFluentClient()).toBe(independent);
+      expect(getAzureReadFluentClient()).not.toBe(getAzureWriteFluentClient());
+    }, { connect: db.connect });
+  });
+
   it('keeps direct locks and every fluent write on one connection, then commits once', async () => {
     const db = transactionConnection();
     const result = await withAzureWriteTransaction('unused', async (query) => {
