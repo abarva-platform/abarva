@@ -361,7 +361,7 @@ function useDockSelfTop(ref: RefObject<HTMLDivElement | null>) {
         childList: true,
         subtree: true,
         attributes: true,
-        attributeFilter: ["style", "class", "hidden"],
+        attributeFilter: ["style", "class", "hidden", "open"],
       });
     }
 
