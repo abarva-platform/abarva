@@ -101,10 +101,6 @@ function conflictCount(view: TowerCommandCenterView): number {
   );
 }
 
-function absentCount(view: TowerCommandCenterView): number {
-  return view.unknownSlots.length + view.pipelineGaps.length;
-}
-
 function executiveHeadline(view: TowerCommandCenterView): string {
   const claims = valueClaimCount(view);
   const outcomeRecords = view.summary.valueProofOutcomeRecordCount ?? 0;
@@ -345,7 +341,10 @@ export function CommandCenterView({
                 {formatCount(conflictCount(view))} conflicts in this Tower projection · intake reconciliation not assessed
               </span>
               <span className={styles.auditAmber}>
-                {formatCount(absentCount(view))} Tower projection gaps
+                {formatCount(view.unknownSlots.length)} Tower details not available
+              </span>
+              <span className={styles.auditAmber}>
+                {formatCount(view.pipelineGaps.length)} records need source details or proof
               </span>
               <span>
                 {s.refreshTimestamp
