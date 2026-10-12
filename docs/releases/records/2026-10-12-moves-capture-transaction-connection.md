@@ -39,13 +39,13 @@ This changes connection selection before the correction transaction. The origina
 ## QA / Validation
 
 - PASS: the real tenant resolver reproduced the pre-transaction unavailable result before this fix. The new regression failed on the preceding source.
-- PASS: 141 assertions across seven existing suites. These include the real resolver and real serializable transaction wrapper supplied an in-memory connection, plus route, transaction outcome, operator policy SQL and capture contracts. No database was contacted.
+- PASS: 263 assertions across fourteen existing suites after reconciling the genuine deck and Tower landings. The additional Home narrative boundary runner passes its three behavior suites with database credentials removed. These include the real resolver and real serializable transaction wrapper supplied an in-memory connection, plus route, transaction outcome, operator policy SQL and capture contracts. No database was contacted.
 - PASS: eight individually detected connection-boundary mutations; every source was restored. They cover the declared transport, synthetic classification, deployment binding, both strict scoped resolutions, canonical normalization, scoped precedence and alias compatibility.
 - PASS: official Node 24 typecheck and changed-file lint.
-- PASS: genuine preliminary coverage regeneration gives 2856, with all count fields matching the preceding source, zero new test files and genuine delta zero. A later upstream landing requires fresh reconciliation and regeneration.
+- PASS: actual landed deck/Tower main `1b8f8548` and later Home main `6bc68d73` were merged without rebasing. Manual/coverage/tenancy artifacts were regenerated. Independent immutable source regeneration gives 2856 and matches every candidate count field, with zero new test files and genuine delta zero.
 - PASS: the transaction body is byte-identical to the preceding deployed source. Existing UI/model/CSS sources are unchanged; their prior visual proof is retained as local proof only.
 - PASS: saved deployment metadata confirms the existing transport projection and absence of explicit deployment-scope environment names. Credential values were not inspected and runtime settings were not changed.
-- PENDING: final landed-main reconciliation, required local gates, complete new exact-head CI and an immediate stable fetched guard before this candidate may merge.
+- PASS: final library/route/export reachability, regenerated manual/coverage/tenancy checks, all six corpus validators and all eleven release gates after the actual Home reconciliation. Complete new exact-head CI and an immediate stable fetched guard remain required before merging.
 - PENDING: actual deployed correction, mandatory audit and independent native preservation readback. Unit transaction results are not runtime proof.
 
 ## Rollout Plan

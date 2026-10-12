@@ -503,10 +503,10 @@ assert(
   "EnterpriseThesis prompt requires exact citable support for numbers, rankings, and management questions",
 );
 assert(
-  script.includes("technologyBudget: sumPayload(permittedApplications, \"annual_cost_usd\")") &&
-    script.includes("technologyBudgetShareOfRevenue: Number.isFinite(revenue)") &&
+  script.includes("recordedApplicationAnnualCost: applicationCosts.length") &&
+    script.includes("technologyBudget: null") && script.includes("technologyBudgetShareOfRevenue: null") &&
     script.includes("This is recorded application annual cost, not a complete enterprise technology budget"),
-  "ECL narrative packet exposes recorded application annual cost as structured budget context with a visible scope caveat",
+  "ECL narrative packet separates recorded application annual cost from unknown enterprise budget and budget share",
 );
 assert(
   script.includes("source-family summaries describe intake breadth but are not evidence for a business claim by themselves") &&
