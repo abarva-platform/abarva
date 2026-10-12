@@ -19,7 +19,7 @@ import {
   within,
 } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
-import { RomEstimateStep, type RomEstimateStepProps } from "../RomEstimateStep";
+import { RomEstimateStep, parseProposedPodMembers, type RomEstimateStepProps } from "../RomEstimateStep";
 import type { StepAvaAction } from "../RootCausesStep";
 import {
   approveMapping,
@@ -30,6 +30,8 @@ import {
   emptyRomEstimate,
   parseRomEstimate,
   serializeRomEstimate,
+  saveRomDeliveryOption,
+  setPod,
   type RomEstimate,
   type RomRegisterRow,
 } from "@/lib/programs/rom-estimate";
@@ -229,6 +231,7 @@ function settledRecord(): RomEstimate {
 /** A result shaped like the ROM service's for a posted structure. Its figures are fixtures. */
 function fakeRom(structure: unknown): RomResult {
   const lines = [24500, 9500, 8500].map((cents, index) => ({
+    member: { roleCode: ["ROL-DA", "ROL-DE", "ROL-AE"][index], levelCode: "LVL-08", locationCode: "LOC-NEAR", providerClassCode: "SI-T2", fte: 1 },
     rate: { hourlyRateCents: cents, ...(index === 2 ? {
       baseSource: "rate_band:ROL-AE-LVL-08 [Role Rate Card row RC-TEST]",
       location: { source: "location:LOC-NEAR [Geography row 1]" },
@@ -436,6 +439,7 @@ describe("RomEstimateStep", () => {
       "Step 4 of 5 · 6 still open",
     );
     await estimateReady(container);
+    expect(container.querySelector('section[aria-label="Delivery option comparison"]')).toBeNull();
   });
 
   it("shows confirmed counts read-only and session-note counts as editable drafts with their citation", async () => {
@@ -597,6 +601,11 @@ describe("RomEstimateStep", () => {
     const pod=row(container,"POD");
     fireEvent.click(within(pod).getByRole("button",{name:"Set the pod…"}));
     fireEvent.change(within(pod).getByLabelText("Pod source"),{target:{value:"members"}});
+    expect(within(pod).getByLabelText("Proposed members, one per line: role code | role name | level code | FTE | source role")).toBeTruthy();
+    expect(pod.textContent).not.toContain("location (optional)");
+    const withTerms="ROL-037 | Data Engineer | LVL-08 | 6 | Data Engineer | LOC-INDIA-T1 | SI-T2";
+    expect(parseProposedPodMembers(withTerms)).toBeNull();
+    expect(parseProposedPodMembers(withTerms,true)).toEqual([expect.objectContaining({locationCode:"LOC-INDIA-T1",providerClassCode:"SI-T2"})]);
     fireEvent.change(within(pod).getByLabelText(/Proposed members, one per line/),{
       target:{value:"ROL-024 | Data Product Manager | LVL-06 | 1 | Data Product Mgr\nROL-037 | Data Engineer | LVL-08 | 6 | Data Engineer"},
     });
@@ -608,6 +617,19 @@ describe("RomEstimateStep", () => {
       members:[{roleCode:"ROL-024",fte:1,proposedMapping:{from:"Data Product Mgr"}},
         {roleCode:"ROL-037",fte:6,proposedMapping:{from:"Data Engineer"}}]});
     expect(row(container,"POD").textContent).toContain("Proposed role mapping, unapproved");
+    fireEvent.click(within(row(container,"POD")).getByRole("button",{name:"Change template…"}));
+    expect((within(row(container,"POD")).getByLabelText(/Proposed members, one per line/) as HTMLTextAreaElement).value).toBe(
+      "ROL-024 | Data Product Manager | LVL-06 | 1 | Data Product Mgr\nROL-037 | Data Engineer | LVL-08 | 6 | Data Engineer");
+    cleanup();
+    const flagged=render(<Harness initial={serializeRomEstimate({...fixture(),pod:null})} deliveryOptionsEnabled />);
+    const flaggedPod=row(flagged.container,"POD");
+    fireEvent.click(within(flaggedPod).getByRole("button",{name:"Set the pod…"}));
+    fireEvent.change(within(flaggedPod).getByLabelText("Pod source"),{target:{value:"members"}});
+    fireEvent.change(within(flaggedPod).getByLabelText("Proposed members, one per line: role code | role name | level code | FTE | source role | location (optional) | provider (optional)"),{target:{value:withTerms}});
+    fireEvent.change(within(flaggedPod).getByLabelText("Delivery location code"),{target:{value:"LOC-DALLAS"}});
+    fireEvent.change(within(flaggedPod).getByLabelText("Rate basis"),{target:{value:"bill_rate"}});
+    fireEvent.click(within(flaggedPod).getByRole("button",{name:"Save"}));
+    expect(last().pod?.members).toEqual([expect.objectContaining({locationCode:"LOC-INDIA-T1",providerClassCode:"SI-T2"})]);
   });
 
   it("settles sourced factors, and asks for them when one is missing", async () => {
@@ -1221,4 +1243,30 @@ describe("RomEstimateStep", () => {
     );
     expect(last().releases?.acceptedBy).toBe("me");
   });
+});
+
+it("shows both current previews and persists a reasoned choice before estimate approval", async () => {
+  let initial = settledRecord();
+  initial = ok(saveRomDeliveryOption(initial, "A", "Onshore pod"));
+  initial = ok(setPod(initial, { ...initial.pod!, locationCode: "LOC-INDIA" }));
+  initial = ok(saveRomDeliveryOption(initial, "B", "Blended pod"));
+  mockFetch({ register: REGISTER_ANSWERED, preview: (_url, init) => {
+    const rom = fakeRom(JSON.parse(String(init?.body)));
+    const lines = rom.foundation!.priced.pod.memberLines;
+    for (const [index, line] of lines.entries()) {
+      line.rate.baseSource = `fixture-rate-${index}`;
+      line.rate.location = { ...line.rate.location, source: "fixture-location" };
+      line.rate.provider = { ...line.rate.provider, source: "fixture-provider" };
+    }
+    return { status: 200, body: { ok: true, writes: false, rom } };
+  } });
+  const { container, getByRole, getByLabelText } = render(<Harness initial={serializeRomEstimate(initial)} deliveryOptionsEnabled />);
+  await waitFor(() => expect(isDisabled(getByRole("button", { name: "Choose option B" }))).toBe(true));
+  expect(next(container).textContent).toContain("Compare both delivery prices and choose an option with a reason.");
+  fireEvent.change(getByLabelText("Why this delivery option"), { target: { value: "Reviewed delivery capacity and rate provenance support B." } });
+  await waitFor(() => expect(isDisabled(getByRole("button", { name: "Choose option B" }))).toBe(false));
+  fireEvent.click(getByRole("button", { name: "Choose option B" }));
+  expect(last().deliverySelection).toMatchObject({ code: "B", selectedBy: "me", reason: "Reviewed delivery capacity and rate provenance support B." });
+  expect(last().pod?.locationCode).toBe("LOC-INDIA");
+  expect(last().deliverySelection?.comparison).toHaveLength(2);
 });

@@ -420,6 +420,7 @@ interface MovesPhaseStandaloneClientProps {
    * which this flag also gates.
    */
   romEngineEnabled?: boolean;
+  deliveryOptionsEnabled?: boolean;
   /**
    * The step page the URL asked for, when the flag is on: `gate` (P3 Gate
    * readiness) or `root-causes` (P2 Step 3).
@@ -1093,6 +1094,7 @@ export function MovesPhaseStandaloneClient({
   initialLegacySectionKey = null,
   romEngineEnabled = false,
   p5TowerHandoffEnabled = false,
+  deliveryOptionsEnabled = false,
   initialStepView = null,
   initialWorkspaceView = "phase",
   priorPhaseCapture = null,
@@ -4353,6 +4355,7 @@ export function MovesPhaseStandaloneClient({
     return (
       <RomEstimateStep
         moveId={move.id}
+        deliveryOptionsEnabled={deliveryOptionsEnabled}
         canReviewEvidence={canApproveGates}
         onEvidenceChanged={() => window.location.reload()}
         moveName={displayMoveName}
