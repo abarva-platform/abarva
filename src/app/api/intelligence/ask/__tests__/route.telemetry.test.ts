@@ -2,6 +2,12 @@ import { displaySafeIntelligenceDelta, POST } from "../route";
 import { askIntelligence } from "@/lib/intelligence/ask";
 import { recordSynthesisEvent } from "@/lib/reasoning/synthesis-telemetry";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
+import { resolveIntelligenceHomeHandoff } from "@/lib/intelligence/home-context-handoff";
+import { prepareAskSessionMemory } from "@/lib/intelligence/ask/session-memory";
+
+jest.mock("@/lib/intelligence/home-context-handoff", () => ({
+  resolveIntelligenceHomeHandoff: jest.fn(),
+}));
 
 jest.mock("@clerk/nextjs/server", () => ({
   currentUser: jest.fn(async () => ({ id: "user-1" })),
@@ -766,5 +772,100 @@ describe("model-authored executive response", () => {
     expect(
       (askIntelligence as jest.Mock).mock.calls.at(-1)[1].modelAuthoredOutput,
     ).toBe(true);
+  });
+});
+
+describe("version-bound Home continuation", () => {
+  const homeContextRequest = {
+    tenantKey: "apex-retail",
+    recordToken: "a".repeat(64),
+    chapterId: "technology_data",
+  };
+  const body = {
+    q: "What should the CFO address first?",
+    client: "apexretail",
+    richText: true,
+    answerOnlyStreaming: true,
+    modelAuthoredOutput: true,
+    surfaceContext: { activeTab: "intelligence", clientKey: "apexretail" },
+    homeContextRequest,
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("rejects a malformed binding before retrieval or session work", async () => {
+    const response = await POST(
+      makeRequest({
+        ...body,
+        homeContextRequest: { ...homeContextRequest, recordToken: "invalid" },
+      }) as never,
+    );
+    expect(response.status).toBe(400);
+    expect(resolveIntelligenceHomeHandoff).not.toHaveBeenCalled();
+    expect(prepareAskSessionMemory).not.toHaveBeenCalled();
+    expect(askIntelligence).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["changed", 409],
+    ["not_authorized", 403],
+    ["unavailable", 403],
+  ])("refuses %s before starting an answer", async (status, code) => {
+    (resolveIntelligenceHomeHandoff as jest.Mock).mockResolvedValueOnce({
+      state: { request: homeContextRequest, status },
+    });
+    const response = await POST(makeRequest(body) as never);
+    expect(response.status).toBe(code);
+    expect(resolveIntelligenceHomeHandoff).toHaveBeenCalledWith(
+      homeContextRequest,
+      "apex-retail",
+    );
+    expect(prepareAskSessionMemory).not.toHaveBeenCalled();
+    expect(askIntelligence).not.toHaveBeenCalled();
+  });
+
+  it("passes only server-resolved evidence and excludes previous-version memory", async () => {
+    const context = {
+      tenantKey: homeContextRequest.tenantKey,
+      recordToken: homeContextRequest.recordToken,
+      sources: [
+        { type: "TENANT", id: "selected-record", name: "Selected record" },
+      ],
+    };
+    (resolveIntelligenceHomeHandoff as jest.Mock).mockResolvedValueOnce({
+      state: { request: homeContextRequest, status: "ready" },
+      context,
+    });
+    (prepareAskSessionMemory as jest.Mock).mockResolvedValueOnce({
+      sessionId: "ask-session-1",
+      tabId: "tab-1",
+      priorTurnCount: 1,
+      contextBlock: "Previous-version facts must not reach the model",
+    });
+    const response = await POST(
+      makeRequest({
+        ...body,
+        surfaceContext: {
+          ...body.surfaceContext,
+          pageFacts: ["Untrusted browser assertion"],
+        },
+      }) as never,
+    );
+    expect(response.status).toBe(200);
+    await readResponseText(response);
+    expect(askIntelligence).toHaveBeenCalledWith(
+      body.q,
+      expect.objectContaining({
+        homeRecordContext: context,
+        conversationContextBlock: "",
+        surfaceContext: {
+          activeTab: "intelligence",
+          clientKey: "apexretail",
+          activeClient: "Apex Retail Group",
+        },
+      }),
+    );
   });
 });
