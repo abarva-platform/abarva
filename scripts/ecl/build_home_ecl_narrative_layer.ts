@@ -419,6 +419,27 @@ function payloadNumber(data: JsonRecord, ...fields: string[]): number {
   return 0;
 }
 
+function recordedNumber(data: JsonRecord, ...fields: string[]): number | null {
+  for (const field of fields) {
+    const raw = data[field];
+    if (typeof raw !== "number" && typeof raw !== "string") continue;
+    const value = String(raw).trim().replace(/[$,\s]/g, "");
+    if (!/^-?\d+(?:\.\d+)?$/.test(value)) continue;
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
+function recordedList(data: JsonRecord, ...fields: string[]): string[] {
+  for (const field of fields) {
+    const raw = data[field];
+    const values = Array.isArray(raw) ? stringArray(raw) : typeof raw === "string" ? splitSourceList(raw) : [];
+    if (values.length) return values;
+  }
+  return [];
+}
+
 function payload(row: HomeProjectionWriteRow): JsonRecord {
   return row.display_payload_json && typeof row.display_payload_json === "object" ? row.display_payload_json : {};
 }
@@ -1197,6 +1218,21 @@ export function governedCandidateForSignal(
 }
 
 function rowDomains(row: HomeProjectionWriteRow): string[] {
+  switch (row.row_type) {
+    case "enterprise_profile": return ["tenant_profile", "enterprise_profile", "business_model"];
+    case "business_segment": return ["business_model", "business_function"];
+    case "business_function": return ["business_function", "organization"];
+    case "organization_ownership": return ["organization", "business_function"];
+    case "workforce_role": return ["workforce", "business_function"];
+    case "priority": return ["tenant_profile", "program_initiative", "business_model"];
+    case "program": return ["program_initiative", "business_function"];
+    case "ai_use_case": return ["ai_value", "business_function"];
+    case "risk": return ["risk_control"];
+    case "metric": return ["performance_metric"];
+    case "spend_line": return ["spend_value_fact"];
+    case "executive_interview": return ["leadership_voice", "ai_value_interview_evidence"];
+    case "evidence_request": return ["risk_control", "evidence_sources"];
+  }
   switch (row.page_key) {
     case "applications_systems":
       return ["application_system"];
@@ -1210,6 +1246,132 @@ function rowDomains(row: HomeProjectionWriteRow): string[] {
     default:
       return ["evidence_sources"];
   }
+}
+
+function canonicalRowStatement(row: HomeProjectionWriteRow, labels: Map<string, string>): string | null {
+  const data = payload(row);
+  const visible = (value: unknown) => visibleText(value, labels);
+  const named = (label: string, ...keys: string[]) => {
+    const value = keys.map((key) => data[key]).find((item) =>
+      (typeof item === "string" && item.trim()) || typeof item === "number");
+    return value === undefined ? null : `${label}: ${visible(value)}`;
+  };
+  const number = (label: string, ...keys: string[]) => {
+    const value = recordedNumber(data, ...keys);
+    return value === null ? null : `${label}: ${value}`;
+  };
+  const money = (label: string, ...keys: string[]) => {
+    const value = recordedNumber(data, ...keys);
+    return value === null ? null : `${label}: ${formatUsdNumber(value)}`;
+  };
+  const list = (label: string, ...keys: string[]) => {
+    const values = recordedList(data, ...keys);
+    return values.length ? `${label}: ${visible(values.join(", "))}` : null;
+  };
+  let facts: Array<string | null>;
+  switch (row.row_type) {
+    case "enterprise_profile":
+      facts = [named("Business model", "business_model", "businessModel"), named("Industry", "industry"),
+        money("Declared annual revenue", "annual_revenue_usd", "revenue_usd", "revenueUsd"),
+        number("Declared employees", "employee_count", "employeeCount"),
+        list("Customer segments", "customer_segments", "customerSegments"),
+        list("Declared priorities", "strategic_priorities", "strategicPriorities")];
+      break;
+    case "business_segment":
+      facts = [named("Operating segment", "segment_name"), money("Declared segment revenue", "revenue_usd"),
+        number("Revenue share percent", "revenue_share_pct"), named("P&L owner role", "pnl_owner_role", "accountable_role")];
+      break;
+    case "business_function":
+      facts = [named("Function", "function_name"), named("Declared segment", "business_segment"),
+        named("Executive owner role", "executive_owner")];
+      break;
+    case "organization_ownership":
+      facts = [named("Accountability", "accountability", "org_unit"), named("Owner role", "owner_role", "leader_name_or_role")];
+      break;
+    case "workforce_role":
+      facts = [named("Role", "persona_or_role"), named("Function", "function_name"),
+        number("Recorded role count", "role_count"), number("Employees", "employee_count"), number("Contractors", "contractor_count")];
+      break;
+    case "priority":
+      facts = [named("Declared priority", "priority_name"), named("Target outcome", "target_outcome"), number("Target year", "target_year")];
+      break;
+    case "program":
+      facts = [named("Program", "program_name"), named("Status", "status"), number("Completion percent", "pct_complete", "completion_pct"),
+        named("Sponsor function", "business_sponsor", "sponsor_function"), money("Declared program budget", "approved_budget_usd", "budget_usd"),
+        money("Forecast", "forecast_usd"), money("Target value", "target_value_usd"), named("Value basis", "value_claim_status"),
+        named("Recorded blocker", "blocked_reason")];
+      break;
+    case "ai_use_case":
+      facts = [named("Use case", "use_case_name", "name"), named("Function", "business_function", "function"),
+        named("Stage", "stage", "status"), named("Expected benefit kind", "expected_benefit_kind", "benefit_kind"),
+        named("Benefit basis", "benefit_hypothesis", "value_claim_status"), named("Review state", "review_state_detail")];
+      break;
+    case "risk":
+      facts = [named("Risk", "risk_name", "risk_statement"), named("Severity", "severity"),
+        named("Recorded control assessment", "control_state", "control_status"), named("Owner role", "owner_role"),
+        named("Next review", "next_review_date")];
+      break;
+    case "metric":
+      facts = [named("Metric", "metric_name", "kpi_name"), number("Recorded actual", "actual_value", "kpi_value"),
+        named("Unit", "unit"), number("Target", "target_value"), named("Period", "period", "as_of"),
+        named("Claim basis", "claim_readiness", "value_claim_status")];
+      break;
+    case "spend_line":
+      facts = [named("Category", "category", "spend_category"), money("Recorded budget", "budget_usd"),
+        money("Recorded actual", "actual_usd"), named("Period", "period", "fiscal_year")];
+      break;
+    case "executive_interview": {
+      const synthetic = payloadText(data, "synthetic_answer");
+      const transcript = payloadText(data, "transcript", "transcribed_answer");
+      const response = synthetic ?? transcript ?? payloadText(data, "response", "answer");
+      const basis = synthetic ? "Synthetic or simulated response, not a transcribed client statement"
+        : transcript ? "Recorded transcript field" : "Response basis not established";
+      facts = [named("Attributed role", "stakeholder_role", "interviewee_role"), named("Theme", "theme", "question"),
+        response ? `${basis}: ${visible(response)}` : "Response not supplied"];
+      break;
+    }
+    case "evidence_request":
+      facts = [named("Evidence needed", "evidence_request", "requested_evidence", "description"), named("Owner role", "owner_role"),
+        named("Status", "status"), named("Due date", "due_date")];
+      break;
+    default: return null;
+  }
+  facts.push(named("Declared gap", "known_gaps"));
+  return [visible(row.title) ?? row.title, ...facts.filter(Boolean)].join(". ");
+}
+
+function contextRowsWithinBudget(rows: HomeProjectionWriteRow[], signals: Signal[], limit = 900): HomeProjectionWriteRow[] {
+  const ordered = [...rows].sort((a, b) => contextId(a).localeCompare(contextId(b)));
+  const byId = new Map<string, HomeProjectionWriteRow>();
+  for (const row of ordered) {
+    const id = contextId(row);
+    if (byId.has(id)) throw new Error("Admitted canonical context IDs are ambiguous");
+    byId.set(id, row);
+  }
+  const required = [...new Set(signals.flatMap((signal) => signal.evidenceRefs))].sort();
+  if (required.length > limit || required.some((id) => !byId.has(id))) {
+    throw new Error("Admitted signals exceed the bounded canonical context or cite an unavailable row");
+  }
+  const selected = new Map(required.map((id) => [id, byId.get(id)!]));
+  const families = new Map<string, HomeProjectionWriteRow[]>();
+  for (const row of ordered) {
+    if (selected.has(contextId(row))) continue;
+    const group = families.get(row.row_type) ?? [];
+    group.push(row);
+    families.set(row.row_type, group);
+  }
+  const groups = [...families.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, group]) => group);
+  for (let index = 0; selected.size < limit; index++) {
+    let added = false;
+    for (const group of groups) {
+      const row = group[index];
+      if (!row || selected.size === limit) continue;
+      selected.set(contextId(row), row);
+      added = true;
+    }
+    if (!added) break;
+  }
+  return [...selected.values()].sort((a, b) => contextId(a).localeCompare(contextId(b)));
 }
 
 function proofFromBundle(
@@ -1249,6 +1411,8 @@ function proofFromBundle(
 }
 
 function rowStatement(row: HomeProjectionWriteRow, labelByIdentifier: Map<string, string> = new Map()): string {
+  const canonical = canonicalRowStatement(row, labelByIdentifier);
+  if (canonical) return canonical;
   const data = payload(row);
   const visible = (value: unknown) => visibleText(value, labelByIdentifier);
   switch (row.page_key) {
@@ -1443,7 +1607,7 @@ function buildScopeContextItems(args: {
   sourceSummaries: SourceSummary[];
   sourceRows: EclSourceRecordSummaryRow[];
 }): ContextItem[] {
-  const { rows, sourceSummaries, sourceRows } = args;
+  const { rows, sourceSummaries } = args;
   const readyRowsForPage = (pageKey: string) =>
     rows.filter((row) => row.page_key === pageKey && row.row_type !== "summary" && row.row_type !== "chapter_claim" && candidateIsReady(row));
   const rawSourceRowCount = sourceSummaries.reduce((sum, item) => sum + (item.rawRowCount ?? item.recordCount), 0);
@@ -1452,22 +1616,13 @@ function buildScopeContextItems(args: {
   const strategyRows = readyRowsForPage("strategy_value_creation");
   const performanceRows = readyRowsForPage("performance_value");
   const workloadRows = readyRowsForPage("data_assets_integrations").filter((row) => row.row_type === "data_analytics_workload");
-  const workloadSourceSummaries = sourceSummaries.filter((summary) =>
-    /SP04|Data_BI_ETL|data.*bi|etl|analytics/i.test(summary.sourcePath) ||
-    summary.materialFields.some((field) => /workload_count|active_user_count|data_volume_tb|technology_name/i.test(field)),
-  );
-  const profileRows = sourceFileRows(sourceRows, /00_enterprise_profile/i);
-  const segmentRows = sourceFileRows(sourceRows, /01b_business_segments/i);
-  const programRows = sourceFileRows(sourceRows, /09_programs_initiatives/i);
-  const interviewRows = sourceFileRows(sourceRows, /SA10_AI_Value_Interview_Evidence/i);
-  const spendRows = sourceFileRows(sourceRows, /08_spend_value/i);
-  const metricRows = sourceFileRows(sourceRows, /14_metrics_outcomes/i);
-  const aiRows = [
-    ...sourceFileRows(sourceRows, /10_ai_automation_use_cases/i),
-    ...sourceFileRows(sourceRows, /SA08_AI_Benefits_Realization_Usage_Ledger/i),
-    ...sourceFileRows(sourceRows, /SA09_AI_Tool_Usage_Feed/i),
-    ...sourceFileRows(sourceRows, /SA11_AI_KPI_Operational_Outcome_Feed/i),
-  ];
+  const profileRows = rows.filter((row) => row.row_type === "enterprise_profile");
+  const segmentRows = rows.filter((row) => row.row_type === "business_segment");
+  const programRows = rows.filter((row) => row.row_type === "program");
+  const interviewRows = rows.filter((row) => row.row_type === "executive_interview");
+  const spendRows = rows.filter((row) => row.row_type === "spend_line");
+  const metricRows = rows.filter((row) => row.row_type === "metric");
+  const aiRows = rows.filter((row) => row.row_type === "ai_use_case");
 
   return [
     {
@@ -1475,25 +1630,25 @@ function buildScopeContextItems(args: {
       statement: profileRows.length || segmentRows.length
         ? `Enterprise profile and segment evidence is supplied by ${profileRows.length.toLocaleString()} enterprise-profile row and ${segmentRows.length.toLocaleString()} business-segment rows; business-model conclusions may use those cited rows while keeping synthetic/non-client-attested limits explicit.`
         : "Segment revenue, customer/channel economics, and formal enterprise identity attributes are not supplied by the current Home narrative input; business-model conclusions should therefore be limited to the cited technology, commercial, infrastructure, and data-movement facts.",
-      domains: ["enterprise_profile", "spend_value_fact", "application_system", "vendor_contract"],
+      domains: ["enterprise_profile", "business_model", "business_function"],
     },
     {
       id: "ctx_ecl_scope_strategy_programs_001",
       statement: programRows.length
-        ? `Declared strategic priorities and ${programRows.length.toLocaleString()} program/initiative rows are supplied; strategic claims must cite profile or program evidence and distinguish funded programs from achieved outcomes.`
+        ? `${programRows.length.toLocaleString()} program records are supplied; strategic claims must cite named priority or program evidence and distinguish declared budgets and target value from achieved outcomes.`
         : strategyRows.length
         ? `The strategy and value chapter has ${strategyRows.length.toLocaleString()} ready evidence items, but the Home narrative input does not supply a full program-to-outcome ledger; strategic claims must cite the named evidence and avoid implying a complete transformation roadmap.`
         : "Declared strategic priorities, funded programs, and program-to-outcome linkage are not supplied by the current Home narrative input; the chapter should treat strategy as an evidence gap rather than infer a transformation agenda.",
-      domains: ["spend_value_fact", "vendor_contract", "evidence_sources"],
+      domains: ["program_initiative", "business_model"],
     },
     {
       id: "ctx_ecl_scope_leadership_001",
       statement: interviewRows.length
-        ? `${interviewRows.length.toLocaleString()} leadership or operator interview evidence rows are supplied; leadership claims must cite interview evidence and should not generalize beyond the roles, tracks, and questions represented.`
+        ? `${interviewRows.length.toLocaleString()} leadership observation records are supplied; preserve each response's column and basis, never present simulated or modelled responses as transcribed client statements, and do not generalize beyond the roles and themes represented.`
         : leadershipRows.length
         ? `The leadership perspective chapter has ${leadershipRows.length.toLocaleString()} ready evidence items; leadership consensus or disagreement claims must cite those items and should not be generalized beyond them.`
         : "Leadership interview quotes, leadership sentiment, and named consensus or disagreement evidence are not supplied by the current Home narrative input; do not infer executive priorities or leadership alignment.",
-      domains: ["evidence_sources"],
+      domains: ["leadership_voice", "ai_value_interview_evidence"],
     },
     {
       id: "ctx_ecl_scope_value_linkage_001",
@@ -1502,12 +1657,12 @@ function buildScopeContextItems(args: {
         : performanceRows.length
         ? `The performance and value chapter has ${performanceRows.length.toLocaleString()} ready evidence items, but the Home narrative input does not establish a complete value chain from spend to programs, KPIs, finance attestation, and realized benefit.`
         : "Contract values and application costs are present, but program, KPI, finance-attestation, and realized-benefit mappings are not supplied by the current Home narrative input; value claims should name that limitation instead of implying measured outcomes.",
-      domains: ["spend_value_fact", "vendor_contract", "evidence_sources"],
+      domains: ["spend_value_fact", "performance_metric", "ai_value"],
     },
     {
       id: "ctx_ecl_scope_data_workload_001",
       statement: workloadRows.length
-        ? `The data, reporting, ETL, script, and analytics workload context includes ${workloadRows.length.toLocaleString()} ready segment-level evidence rows from ${Math.max(1, workloadSourceSummaries.length).toLocaleString()} source-family summaries.`
+        ? `The data, reporting, ETL, script, and analytics workload context includes ${workloadRows.length.toLocaleString()} ready segment-level evidence rows. Source-family summaries do not establish these facts.`
         : "No ready segment-level data, reporting, ETL, script, or analytics workload rows reached the Home narrative packet.",
       domains: ["data_asset_or_integration", "infrastructure_platform", "evidence_sources"],
     },
@@ -1783,6 +1938,22 @@ function buildDeterministicHomeSignals(args: {
       domains,
       evidenceRows,
     );
+  }
+  const canonicalKinds: Record<string, Signal["kind"]> = {
+    enterprise_profile: "portfolio", business_segment: "portfolio", business_function: "operational",
+    organization_ownership: "operational", workforce_role: "workforce", priority: "change",
+    program: "change", ai_use_case: "ai_value", risk: "risk", metric: "portfolio",
+    spend_line: "portfolio", executive_interview: "testimony", evidence_request: "gap",
+  };
+  const perFamily = new Map<string, number>();
+  const labels = buildVisibleIdentifierLabels(permittedRows);
+  for (const row of [...permittedRows].sort((a, b) => contextId(a).localeCompare(contextId(b)))) {
+    const kind = canonicalKinds[row.row_type];
+    if (!kind || (perFamily.get(row.row_type) ?? 0) >= 3) continue;
+    const statement = canonicalRowStatement(row, labels);
+    if (!statement) continue;
+    perFamily.set(row.row_type, (perFamily.get(row.row_type) ?? 0) + 1);
+    add(`sig_${contextId(row).slice(4)}`, kind, statement, rowDomains(row), [row]);
   }
   add(
     "sig_ecl_source_breadth_guardrail_019",
@@ -2073,6 +2244,8 @@ export function buildGovernedSignalPacket(
   const usableSignalIds = new Set(validatedSignals.usable.map((candidate) => candidate.id));
   const signals = rawSignals.filter((signal) => usableSignalIds.has(signal.id));
 
+  const contextRows = contextRowsWithinBudget(permittedRows, signals);
+
   const contextItems: ContextItem[] = [
     {
       id: "ctx_ecl_assessment_001",
@@ -2081,9 +2254,8 @@ export function buildGovernedSignalPacket(
     },
     ...sourceContextItems,
     ...buildScopeContextItems({ rows: permittedRows, sourceSummaries, sourceRows }),
-    ...permittedRows
-      .map((row) => ({ id: contextId(row), statement: rowStatement(row, labelByIdentifier), domains: rowDomains(row) }))
-      .slice(0, 900),
+    ...contextRows.map((row) => ({ id: contextId(row), statement: rowStatement(row, labelByIdentifier),
+      domains: rowDomains(row), evidenceRefs: sourceRefIds(row.source_refs_json) })),
   ];
   if (validatedRows.blocked.length > 0) {
     contextItems.push({
@@ -2107,30 +2279,34 @@ export function buildGovernedSignalPacket(
     readinessCounts,
   );
 
-  const enterpriseProfile = sourceRowsMatching(sourceRows, /00_enterprise_profile/i)[0];
-  const enterpriseProfilePayload = enterpriseProfile ? rowPayload(enterpriseProfile) : {};
-  const segmentRows = sourceRowsMatching(sourceRows, /01b_business_segments/i);
-  const revenue = Number(payloadField(enterpriseProfilePayload, "revenue_usd", "revenueUsd", "revenue") ?? NaN);
-  const employeeCount = Number(payloadField(enterpriseProfilePayload, "employee_count", "employeeCount") ?? NaN);
+  const profileRows = permittedRows.filter((row) => row.row_type === "enterprise_profile");
+  // Do not pick a preferred profile when several independently admitted records disagree in scope.
+  const enterpriseProfilePayload = profileRows.length === 1 ? payload(profileRows[0]) : {};
+  const segmentRows = permittedRows.filter((row) => row.row_type === "business_segment");
+  const revenue = recordedNumber(enterpriseProfilePayload, "annual_revenue_usd", "revenue_usd", "revenueUsd");
+  const employeeCount = recordedNumber(enterpriseProfilePayload, "employee_count", "employeeCount");
+  const priorityRows = permittedRows.filter((row) => row.row_type === "priority");
+  const applicationCosts = permittedApplications.map((row) => recordedNumber(payload(row), "annual_cost_usd"))
+    .filter((value): value is number => value !== null);
   const businessEconomics = {
     operatingSegments: segmentRows
-      .map((row) => payloadField(rowPayload(row), "segment_name", "segmentName"))
+      .map((row) => payloadText(payload(row), "segment_name", "segmentName"))
       .filter((value): value is string => Boolean(value)),
-    customerSegments: splitSourceList(payloadField(enterpriseProfilePayload, "customer_segments", "customerSegments")),
-    technologyBudget: sumPayload(permittedApplications, "annual_cost_usd"),
-    technologyBudgetShareOfRevenue: Number.isFinite(revenue) && revenue > 0
-      ? sumPayload(permittedApplications, "annual_cost_usd") / revenue
-      : null,
+    customerSegments: recordedList(enterpriseProfilePayload, "customer_segments", "customerSegments"),
+    technologyBudget: null,
+    technologyBudgetShareOfRevenue: null,
+    recordedApplicationAnnualCost: applicationCosts.length ? applicationCosts.reduce((sum, value) => sum + value, 0) : null,
   };
   const packet = {
     enterpriseIdentity: {
       businessModel: payloadField(enterpriseProfilePayload, "business_model", "businessModel"),
       industry: payloadField(enterpriseProfilePayload, "industry"),
-      revenue: Number.isFinite(revenue) ? revenue : null,
-      employeeCount: Number.isFinite(employeeCount) ? employeeCount : null,
+      revenue,
+      employeeCount,
     },
     businessEconomics,
-    strategicPriorities: splitSourceList(payloadField(enterpriseProfilePayload, "strategic_priorities", "strategicPriorities")),
+    strategicPriorities: [...new Set([...recordedList(enterpriseProfilePayload, "strategic_priorities", "strategicPriorities"),
+      ...priorityRows.map((row) => payloadText(payload(row), "priority_name") ?? row.title)])],
     signals,
     contextItems,
     visualDatasets: {

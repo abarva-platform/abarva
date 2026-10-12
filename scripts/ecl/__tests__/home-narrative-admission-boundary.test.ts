@@ -313,7 +313,9 @@ test("a row without a current proof for this tenant, source and content never re
   // The builder adds category summaries beyond the packet's declared type.
   const { categorySummaries } = packet as unknown as { categorySummaries: Array<{ recordCount: number }> };
   assert.deepEqual(categorySummaries.map((summary) => summary.recordCount), [1, 1, 1, 1, 1]);
-  assert.equal(packet.businessEconomics.technologyBudget, 1_000_000);
+  assert.equal(packet.businessEconomics.recordedApplicationAnnualCost, 1_000_000);
+  assert.equal(packet.businessEconomics.technologyBudget, null);
+  assert.equal(packet.businessEconomics.technologyBudgetShareOfRevenue, null);
   assert.deepEqual(packet.visualDatasets.application_landscape_by_function, [{ label: "Admitted Finance", sharePct: 100 }]);
   assert.deepEqual(packet.visualDatasets.vendor_spend_concentration, [{ label: "Admitted Supplier", sharePct: 100 }]);
   assert.equal(
@@ -613,4 +615,134 @@ test("the thesis and chapter builders the job imports run only when invoked dire
     if (fs.lstatSync(linkedRoot, { throwIfNoEntry: false })) fs.unlinkSync(linkedRoot);
     fs.rmSync(scratch, { recursive: true, force: true });
   }
+});
+
+const businessRows = [
+  projectionRow("business_unit_profile", "enterprise_profile", "ENTERPRISE-TEST", {
+    business_model: "Integrated operating business", industry: "Recorded industry",
+    annual_revenue_usd: "100,000,000", employee_count: 1234,
+    customer_segments: ["Recorded customer A", "Recorded customer B"],
+  }),
+  projectionRow("business_unit_profile", "business_segment", "SEGMENT-TEST", {
+    segment_name: "Recorded segment", revenue_share_pct: 60, pnl_owner_role: "Segment executive",
+  }),
+  projectionRow("strategy_value_creation", "priority", "PRIORITY-TEST", {
+    priority_name: "Recorded quality priority", target_outcome: "Recorded target outcome",
+  }),
+  projectionRow("programs_initiatives", "program", "PROGRAM-TEST", {
+    program_name: "Recorded transformation", pct_complete: 0, approved_budget_usd: 1_000_000,
+    target_value_usd: 2_000_000, value_claim_status: "modelled_not_finance_validated",
+    blocked_reason: "Recorded funding boundary",
+  }),
+  projectionRow("executive_interviews", "executive_interview", "INTERVIEW-TEST", {
+    stakeholder_role: "Recorded executive role", theme: "Recorded leadership theme",
+    synthetic_answer: "Recorded simulated response", response_basis: "modelled",
+  }),
+];
+
+test("admitted canonical business fields populate the structured spine without raw-source access", () => {
+  const built = build([...ADMITTED, ...businessRows], [...ADMITTED_PROOFS, ...businessRows.map((row) => rowProof(row))]);
+  const packet = built.signalPacket;
+  assert.deepEqual(packet.enterpriseIdentity, {
+    businessModel: "Integrated operating business", industry: "Recorded industry", revenue: 100_000_000, employeeCount: 1234,
+  });
+  assert.deepEqual(packet.businessEconomics.operatingSegments, ["Recorded segment"]);
+  assert.deepEqual(packet.businessEconomics.customerSegments, ["Recorded customer A", "Recorded customer B"]);
+  assert.deepEqual(packet.strategicPriorities, ["Recorded quality priority"]);
+  assert.equal(packet.businessEconomics.technologyBudget, null);
+  assert.equal(packet.businessEconomics.technologyBudgetShareOfRevenue, null);
+  assert.equal(packet.businessEconomics.recordedApplicationAnnualCost, 1_000_000);
+  const byId = new Map(packet.contextItems.map((item) => [item.id, item]));
+  assert.match(byId.get(contextIdOf(businessRows[0]))!.statement, /Recorded customer A, Recorded customer B/);
+  const program = byId.get(contextIdOf(businessRows[3]))!;
+  assert.match(program.statement, /Completion percent: 0/);
+  assert.match(program.statement, /Recorded funding boundary/);
+  assert.match(program.statement, /modelled_not_finance_validated/);
+  assert.deepEqual(program.domains, ["program_initiative", "business_function"]);
+  assert.deepEqual(program.evidenceRefs, ["source-record-PROGRAM-TEST"]);
+  const leader = byId.get(contextIdOf(businessRows[4]))!;
+  assert.match(leader.statement, /Synthetic or simulated response, not a transcribed client statement/);
+  assert.match(leader.statement, /Recorded simulated response/);
+  assert.deepEqual(leader.domains, ["leadership_voice", "ai_value_interview_evidence"]);
+  assert.match(byId.get("ctx_ecl_scope_leadership_001")!.statement, /1 leadership observation records are supplied/);
+  assert.ok(built.candidateSignals.some((signal) => signal.kind === "testimony" && signal.evidenceRefs.includes(leader.id)));
+  assert.deepEqual(packet.signals, [], "new canonical signals still need their independent readiness proofs");
+});
+
+test("unadmitted canonical business fields cannot populate the spine or influence its signals", () => {
+  const bare = build(ADMITTED, ADMITTED_PROOFS);
+  const mixed = build([...ADMITTED, ...businessRows], ADMITTED_PROOFS);
+  assert.deepEqual(mixed.signalPacket.enterpriseIdentity, bare.signalPacket.enterpriseIdentity);
+  assert.deepEqual(mixed.signalPacket.businessEconomics, bare.signalPacket.businessEconomics);
+  assert.deepEqual(mixed.signalPacket.strategicPriorities, []);
+  assert.deepEqual(mixed.candidateSignals, bare.candidateSignals);
+  for (const marker of ["Integrated operating business", "Recorded segment", "Recorded funding boundary", "Recorded simulated response"])
+    assert.ok(!JSON.stringify(mixed.signalPacket).includes(marker), marker);
+});
+
+test("ambiguous profiles and missing numbers stay unknown; explicit zero is not treated as absence", () => {
+  const first = businessRows[0];
+  const second = projectionRow("business_unit_profile", "enterprise_profile", "ENTERPRISE-OTHER", {
+    business_model: "Another scope", annual_revenue_usd: 50,
+  });
+  const ambiguous = build([first, second], [rowProof(first), rowProof(second)]).signalPacket;
+  assert.deepEqual(ambiguous.enterpriseIdentity, { businessModel: null, industry: null, revenue: null, employeeCount: null });
+  const zero = projectionRow("business_unit_profile", "enterprise_profile", "ENTERPRISE-ZERO", {
+    annual_revenue_usd: 0, employee_count: 0,
+  });
+  const packet = build([zero], [rowProof(zero)]).signalPacket;
+  assert.equal(packet.enterpriseIdentity.revenue, 0);
+  assert.equal(packet.enterpriseIdentity.employeeCount, 0);
+  assert.equal(packet.businessEconomics.recordedApplicationAnnualCost, null);
+  assert.match(packet.contextItems.find((item) => item.id === contextIdOf(zero))!.statement, /Declared annual revenue: \$0/);
+});
+
+test("synthetic response columns override an inconsistent transcript label", () => {
+  const row = projectionRow("executive_interviews", "executive_interview", "INTERVIEW-BASIS", {
+    synthetic_answer: "Simulated response", response_basis: "transcribed",
+  });
+  const item = build([row], [rowProof(row)]).signalPacket.contextItems.find((item) => item.id === contextIdOf(row))!;
+  assert.match(item.statement, /not a transcribed client statement/);
+  assert.match(item.statement, /Simulated response/);
+  assert.doesNotMatch(item.statement, /Declared response basis: transcribed/);
+});
+
+test("canonical mapping preserves readiness refusal on wrong tenant and stale source or content", () => {
+  const row = businessRows[0];
+  for (const change of [
+    { client_key: "wrong-tenant", tenant_id: "wrong-tenant" },
+    { source_hash: "obsolete-source" },
+    { content_hash: "obsolete-content" },
+    { retrievability: "not_indexed" },
+    { cited_render_verified_at: null },
+  ]) {
+    const packet = build([row], [rowProof(row, change)]).signalPacket;
+    assert.deepEqual(packet.enterpriseIdentity, { businessModel: null, industry: null, revenue: null, employeeCount: null });
+    assert.ok(!JSON.stringify(packet).includes("Integrated operating business"));
+  }
+});
+
+test("two admitted records with one normalized context ID fail closed", () => {
+  const first = projectionRow("business_unit_profile", "enterprise_profile", "PROFILE/A", { business_model: "First record" });
+  const second = projectionRow("business_unit_profile", "enterprise_profile", "PROFILE-A", { business_model: "Second record" });
+  assert.equal(contextIdOf(first), contextIdOf(second));
+  assert.throws(() => build([first, second], [rowProof(first), rowProof(second)]), /context IDs are ambiguous/);
+});
+
+test("bounded context retains nontechnical families and every admitted signal citation", () => {
+  const technical = Array.from({ length: 950 }, (_, index) => projectionRow("data_assets_integrations", "data_analytics_workload", `BULK-${index}`, {
+    workload_name: `Workload ${index}`, function: "Recorded function", technology_name: "Recorded technology", workload_count: 1,
+  }));
+  const rows = [...technical, ...businessRows];
+  const proofs = [...rows.map((row) => rowProof(row)), ...signalProofs(rows)];
+  const packet = build(rows, proofs).signalPacket;
+  const rowIds = new Set(rows.map(contextIdOf));
+  const context = packet.contextItems.filter((item) => rowIds.has(item.id));
+  assert.equal(context.length, 900);
+  for (const row of businessRows) assert.ok(context.some((item) => item.id === contextIdOf(row)), row.row_type);
+  const available = new Set(packet.contextItems.map((item) => item.id));
+  for (const signal of packet.signals) for (const ref of signal.evidenceRefs) assert.ok(available.has(ref), ref);
+  const reordered = build([...rows].reverse(), rows.map((row) => rowProof(row))).signalPacket.contextItems.filter((item) => rowIds.has(item.id));
+  const unproved = build(rows, rows.map((row) => rowProof(row))).signalPacket.contextItems.filter((item) => rowIds.has(item.id));
+  assert.deepEqual(reordered, unproved);
 });
