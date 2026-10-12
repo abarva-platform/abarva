@@ -25,6 +25,9 @@ it("uses the policy's conservative readiness floor and does not promote source r
   expect(result.bundle.agentReadyCount).toBe(0);
   expect(result.bundle.usable[0].agent_readiness_status).toBe("not_reviewed");
   expect(result.bundle.usable[0].retrievability).toBe("committed_not_indexed");
+  expect(result.decisionGuard).toContain(
+    "Every supplied company source is provisional",
+  );
 });
 
 it("excludes every blocked source, including ungovernable session context", () => {
@@ -86,6 +89,18 @@ it("never sends blocked sources or ungated supplemental data to Claude", async (
       output += delta;
     expect(input).toBeDefined();
     expect(`${input!.system}\n${input!.user}`).not.toContain("SECRET_MARKER");
+    expect(input!.system).toContain(
+      "EVIDENCE RULE FOR THIS ANSWER",
+    );
+    expect(input!.system).toContain("These rules bind EVERY visible field");
+    expect(input!.system).toContain("even when a supplied source contains them");
+    expect(input!.system).toContain("User-requested option counts");
+    expect(input!.system).toContain("incremental annual benefit covers all annualized");
+    expect(input!.system).toContain("ONE capability in the opening and exhibit title");
+    expect(input!.system.indexOf("EVIDENCE RULE FOR THIS ANSWER")).toBeGreaterThan(
+      input!.system.indexOf("EXHIBIT PROTOCOL"),
+    );
+    expect(input!.user).not.toContain("EVIDENCE RULE FOR THIS ANSWER");
     expect(output).toBe("Validate first.\n\nKeep the original prose.");
   } finally {
     if (previous === undefined) delete process.env.ANTHROPIC_API_KEY;
