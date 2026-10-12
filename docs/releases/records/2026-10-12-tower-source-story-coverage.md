@@ -41,10 +41,10 @@ Release lane: `global-control-lane`.
 
 ## QA / Validation
 
-- PASS: 16 Tower command-center test suites, 121 tests, including missing work-area links, source expected-kind categories, count-only usage across the Adoption lens, Tools table, and suggested questions, partial financial states, absent Finance amount flags, and zero claim coverage.
-- PASS: Tower test ratchet after updating the source-inspection assertion; 1,876 of 1,884 tests passed with the same six failing suites in the committed baseline and no new failure.
+- PASS after rebasing onto the plain-language Tower change: 16 Tower command-center test suites, 128 tests, including missing work-area links, source expected-kind categories, count-only usage across the Adoption lens, Tools table, and suggested questions, partial financial states, absent Finance amount flags, and zero claim coverage.
+- PASS: Tower test ratchet; 1,883 of 1,891 tests passed with the same six failing suites in the committed baseline and no new failure.
 - PASS: TypeScript no-emit check, changed-file ESLint, and all 11 release gates.
-- PASS: `git diff --check` on the amended PR head.
+- PASS: `git diff --check` on the rebased PR head.
 - NOT RUN: signed-in Tower review; it is required after main deployment to confirm the selected assessment's rendered tabs and drawers.
 
 ## Rollout Plan
