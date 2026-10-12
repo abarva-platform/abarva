@@ -3294,6 +3294,46 @@ describe("MovesPhaseStandaloneClient", () => {
         String(input).includes("/assumptions"),
       );
 
+    it("uses the server register read on step pages without fetching it again", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          phaseStepPagesEnabled
+          initialP2RegisterRows={[]}
+          assumptionRegister={null}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={discoverMove()}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(registerFetches()).toEqual([]);
+    });
+
+    it("uses the server sign-off readback without a second artifact request", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          phaseStepPagesEnabled
+          initialSignOffReadable={false}
+          assumptionRegister={null}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={discoverMove()}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(
+        (global.fetch as jest.Mock).mock.calls.filter(([input]) =>
+          String(input).includes("/artifacts"),
+        ),
+      ).toEqual([]);
+    });
+
     it("moves_assumption_register_v1 OFF: no register panel and no register read", () => {
       render(
         <MovesPhaseStandaloneClient

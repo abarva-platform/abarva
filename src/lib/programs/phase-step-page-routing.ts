@@ -13,6 +13,28 @@ const DEDICATED_STEP_PAGE_VIEWS = [
   "rom-estimate",
 ] as const satisfies readonly StepPageView[];
 
+const GATE_DOCUMENT_VIEWS = new Set<StepPageView>([
+  "p0-approve",
+  "p1-charter-gate",
+  "p2-gate",
+  "gate",
+  "p4-gate",
+]);
+
+/** Only gate pages need the server's document and sign-off read set. */
+export function needsGateDocumentRead(input: {
+  view: StepPageView | null;
+  enabled: boolean;
+  legacy: boolean;
+}): boolean {
+  return (
+    !input.enabled ||
+    input.legacy ||
+    input.view === null ||
+    GATE_DOCUMENT_VIEWS.has(input.view)
+  );
+}
+
 // GateReadinessStep is mounted for the last workflow step in every phase.
 // Derive those views from the workflow instead of maintaining a second gate list.
 export const EXISTING_STEP_PAGE_VIEWS: readonly StepPageView[] = [

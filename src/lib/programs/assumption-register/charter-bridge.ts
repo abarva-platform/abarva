@@ -300,15 +300,20 @@ export async function bridgeCharterAssumptions(args: {
   programId: string;
   modules: readonly CharterCaptureModuleState[];
   write: boolean;
+  /** Share an already completed page read with the bridge. Null means that read failed. */
+  records?: AssumptionRecord[] | null;
+  onRows?: (rows: AssumptionRecord[]) => void;
 }): Promise<CharterBridgeOutcome> {
   let records: AssumptionRecord[];
   try {
-    records = await listAssumptions(args.ctx, args.programId);
+    if (args.records === null) return { status: "unavailable" };
+    records = args.records ?? (await listAssumptions(args.ctx, args.programId));
   } catch {
     return { status: "unavailable" };
   }
   const standing = charterRegisterStanding(args.modules, records);
   if (!args.write || standing.missing.length === 0) {
+    args.onRows?.(records);
     return {
       status: "ok",
       created: 0,
@@ -347,6 +352,7 @@ export async function bridgeCharterAssumptions(args: {
     }
   }
   const after = charterRegisterStanding(args.modules, records);
+  args.onRows?.(records);
   return {
     status: "ok",
     created,

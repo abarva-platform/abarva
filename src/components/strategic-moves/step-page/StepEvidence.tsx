@@ -15,6 +15,7 @@ import { getPhaseLabel } from "@/lib/programs/phase-labels";
 import {
   decideMoveEvidence,
   fetchMoveEvidence,
+  hasCompleteMoveEvidenceLists,
   uploadMoveEvidence,
 } from "@/lib/programs/move-evidence-client";
 import type { StepPageRow } from "./MovesStepPage";
@@ -129,7 +130,7 @@ export function useStepEvidence({
         : [];
       setPending(queue);
       setApprovedCount(reviewed.length);
-      setReadable(readback.queueIsCurrent);
+      setReadable(readback.queueIsCurrent && hasCompleteMoveEvidenceLists(body));
     } catch {
       setReadable(false);
     }

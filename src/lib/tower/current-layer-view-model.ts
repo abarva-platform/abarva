@@ -359,6 +359,22 @@ export interface TowerMartAiPortfolioCounts {
   attributedSpendUsd: number;
 }
 
+export interface TowerMartCostDetail {
+  id: string;
+  label: string;
+  amountUsd: number;
+  sourceFile: string;
+  sourceRow: number;
+  sourceSha256: string;
+}
+
+export interface TowerMartCostLens {
+  modeledAnnualSpendUsd: number;
+  sourceNarrativeDifferenceUsd: number | null;
+  categories: TowerMartCostDetail[];
+  contractExposure: TowerMartCostDetail[];
+}
+
 export interface TowerMartCommandViewModel {
   generatedFrom: "cio_tower_mart" | "tower_schema" | "ecl_serving";
   headline: string;
@@ -371,4 +387,5 @@ export interface TowerMartCommandViewModel {
   evidenceLineage: TowerMartEvidenceLineage[];
   requiredFieldGaps: TowerMartRequiredFieldGap[];
   aiPortfolioCounts?: TowerMartAiPortfolioCounts;
+  costLens?: TowerMartCostLens | null;
 }
