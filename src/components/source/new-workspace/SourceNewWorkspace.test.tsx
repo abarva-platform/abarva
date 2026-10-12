@@ -1993,6 +1993,7 @@ describe("SourceNewWorkspace", () => {
     expect(
       within(region).getByText("Synthetic Registry Supplier LLC"),
     ).toBeTruthy();
+    fireEvent.click(within(region).getByText("Registry matches (1)"));
     expect(
       within(region).getAllByText(/Suggested for review/).length,
     ).toBeGreaterThan(0);

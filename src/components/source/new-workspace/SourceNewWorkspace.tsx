@@ -1432,110 +1432,9 @@ function SourceNewStage04VendorPanelView({
       <p className="snw-eyebrow">Stage 04 · Vendor panel</p>
       <h3>{posture}</h3>
       <p>
-        This panel separates accepted candidates the organization is
-        already under contract with from those it is not, and names selected
-        respondents only when human selection evidence is recorded. It sends
-        nothing, contacts nobody, and selects no respondent.
+        Accepted candidates are not selected respondents. No supplier is
+        contacted from this panel.
       </p>
-      <SourceNewProspectiveSupplierForm
-        eventId={event.id}
-        requestVersionId={event.requestAuthorityVersionId ?? null}
-        canOriginate={
-          event.requestVersionApproval === "accepted" &&
-          panel.suggestions.status !== "blocked"
-        }
-      />
-      <div className="snw-known">
-        <h4>Suggested for review</h4>
-        {panel.suggestions.status === "blocked" ? (
-          <ul className="snw-blockers">
-            {panel.suggestions.blockers.map((blocker) => (
-              <li key={blocker}>{blocker}</li>
-            ))}
-          </ul>
-        ) : panel.suggestions.status === "empty" ? (
-          <p>
-            No governed candidate matches the accepted category and archetype.
-            Registry coverage must be added before Source can suggest a
-            supplier.
-          </p>
-        ) : (
-          <ul className="snw-panel-rows">
-            {panel.suggestions.rows.map((row) => (
-              <li key={row.supplierId}>
-                <strong>{row.legalName}</strong>
-                {" — "}
-                {row.label}
-                {row.existingContractVendor
-                  ? ". Existing-contract vendor, shown separately from fresh candidates"
-                  : ". Not recorded as an existing-contract vendor"}
-                {`. Eligibility: ${eligibilityLabel(row.eligibility)}`}
-                {`. Contact policy: ${contactPolicyLabel(row.contactPolicy)}`}
-                {`. Contact readiness: ${row.contactReadiness.replaceAll("_", " ")}`}
-                {`. Source: ${row.sourceReference}.`}
-                {panel.rows.some((accepted) => accepted.legalEntityId === row.supplierId) ? (
-                  <p className="snw-note">Accepted on this event.</p>
-                ) : event.requestAuthorityVersionId &&
-                event.requestVersionApproval === "accepted" ? (
-                  <form
-                    className="snw-inline-form"
-                    action={`/api/v1/source/${encodeURIComponent(event.id)}/candidate-suppliers/accept`}
-                    method="post"
-                  >
-                    <input
-                      type="hidden"
-                      name="supplierId"
-                      value={row.supplierId}
-                    />
-                    <input
-                      type="hidden"
-                      name="categoryId"
-                      value={row.acceptedCategoryId}
-                    />
-                    <input
-                      type="hidden"
-                      name="archetypeId"
-                      value={row.acceptedArchetypeId}
-                    />
-                    <input
-                      type="hidden"
-                      name="eventVersionId"
-                      value={event.requestAuthorityVersionId}
-                    />
-                    <input
-                      type="hidden"
-                      name="sourceReference"
-                      value={row.sourceReference}
-                    />
-                    <label>
-                      <span>Rationale</span>
-                      <input
-                        name="rationale"
-                        minLength={12}
-                        required
-                        placeholder="Why this supplier belongs on the panel"
-                      />
-                    </label>
-                    <button className="snw-primary" type="submit">
-                      Accept candidate
-                    </button>
-                  </form>
-                ) : (
-                  <p className="snw-note">
-                    The current Request version must be readable and accepted
-                    before this supplier can be accepted.
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-        <p className="snw-note">
-          Suggestions are registry matches only. A named procurement user must
-          separately accept a supplier onto the event panel. No contact action
-          is available here.
-        </p>
-      </div>
       <dl className="snw-facts">
         <div>
           <dt>Accepted, not under contract</dt>
@@ -1554,6 +1453,120 @@ function SourceNewStage04VendorPanelView({
           <dd>{panel.asOf}</dd>
         </div>
       </dl>
+      <SourceNewProspectiveSupplierForm
+        eventId={event.id}
+        requestVersionId={event.requestAuthorityVersionId ?? null}
+        canOriginate={
+          event.requestVersionApproval === "accepted" &&
+          panel.suggestions.status !== "blocked"
+        }
+      />
+      <details
+        className="snw-registry-detail"
+        open={panel.suggestions.status === "blocked"}
+      >
+        <summary>
+          {panel.suggestions.status === "blocked"
+            ? "Registry unavailable"
+            : `Registry matches (${panel.suggestions.rows.length})`}
+        </summary>
+        <div className="snw-known">
+          <h4>Suggested for review</h4>
+          {panel.suggestions.status === "blocked" ? (
+            <ul className="snw-blockers">
+              {panel.suggestions.blockers.map((blocker) => (
+                <li key={blocker}>{blocker}</li>
+              ))}
+            </ul>
+          ) : panel.suggestions.status === "empty" ? (
+            <p>
+              No governed candidate matches the accepted category and archetype.
+              Registry coverage must be added before Source can suggest a
+              supplier.
+            </p>
+          ) : (
+            <ul className="snw-panel-rows">
+              {panel.suggestions.rows.map((row) => (
+                <li key={row.supplierId}>
+                  <strong>{row.legalName}</strong>
+                  {" — "}
+                  {row.label}
+                  {row.existingContractVendor
+                    ? ". Existing-contract vendor, shown separately from fresh candidates"
+                    : ". Not recorded as an existing-contract vendor"}
+                  {`. Eligibility: ${eligibilityLabel(row.eligibility)}`}
+                  {`. Contact policy: ${contactPolicyLabel(row.contactPolicy)}`}
+                  {`. Contact readiness: ${row.contactReadiness.replaceAll("_", " ")}`}
+                  <details className="snw-audit-detail">
+                    <summary>Registry source</summary>
+                    <p>{row.sourceReference}</p>
+                  </details>
+                  {panel.rows.some(
+                    (accepted) => accepted.legalEntityId === row.supplierId,
+                  ) ? (
+                    <p className="snw-note">Accepted on this event.</p>
+                  ) : event.requestAuthorityVersionId &&
+                    event.requestVersionApproval === "accepted" ? (
+                    <form
+                      className="snw-inline-form"
+                      action={`/api/v1/source/${encodeURIComponent(event.id)}/candidate-suppliers/accept`}
+                      method="post"
+                    >
+                      <input
+                        type="hidden"
+                        name="supplierId"
+                        value={row.supplierId}
+                      />
+                      <input
+                        type="hidden"
+                        name="categoryId"
+                        value={row.acceptedCategoryId}
+                      />
+                      <input
+                        type="hidden"
+                        name="archetypeId"
+                        value={row.acceptedArchetypeId}
+                      />
+                      <input
+                        type="hidden"
+                        name="eventVersionId"
+                        value={event.requestAuthorityVersionId}
+                      />
+                      <input
+                        type="hidden"
+                        name="sourceReference"
+                        value={row.sourceReference}
+                      />
+                      <label>
+                        <span>Rationale</span>
+                        <input
+                          name="rationale"
+                          minLength={12}
+                          required
+                          placeholder="Why this supplier belongs on the panel"
+                        />
+                      </label>
+                      <button className="snw-primary" type="submit">
+                        Accept candidate
+                      </button>
+                    </form>
+                  ) : (
+                    <p className="snw-note">
+                      The current Request version must be readable and accepted
+                      before this supplier can be accepted.
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="snw-note">
+            Suggestions are registry matches only. A named procurement user must
+            separately accept a supplier onto the event panel. No contact action
+            is available here.
+          </p>
+        </div>
+      </details>
       {panel.status === "blocked" ? (
         <ul className="snw-blockers">
           {panel.blockers.map((blocker) => (
@@ -1567,26 +1580,34 @@ function SourceNewStage04VendorPanelView({
               <strong>{row.legalName}</strong>
               {" — "}
               {vendorPanelGroupLabel(row.group)}
-              {". Accepted by "}
-              {row.acceptedByName}
-              {" on "}
-              {row.acceptedAt.slice(0, 10)}
-              {row.selectedByName && row.selectedAt
-                ? `. Selected by ${row.selectedByName} on ${row.selectedAt.slice(0, 10)}`
-                : ""}
-              {row.selectionEvidenceReference
-                ? `. Selection evidence: ${row.selectionEvidenceReference}`
-                : ""}
-              {". Eligibility: "}
-              {eligibilityLabel(row.eligibility)}
-              {". Contact policy: "}
-              {contactPolicyLabel(row.contactPolicy)}
-              {row.contactBlocker ? ` (${row.contactBlocker})` : ""}
-              {". Active contacts: "}
-              {row.activeContactCount ?? 0}
-              {". Sources: "}
-              {sourceReferencesLabel(row)}
-              {"."}
+              <p>
+                {"Eligibility: "}
+                {eligibilityLabel(row.eligibility)}
+                {". Contact policy: "}
+                {contactPolicyLabel(row.contactPolicy)}
+                {row.contactBlocker ? ` (${row.contactBlocker})` : ""}
+                {". Active contacts: "}
+                {row.activeContactCount ?? 0}
+                {"."}
+              </p>
+              <details className="snw-audit-detail">
+                <summary>Acceptance and sources</summary>
+                <p>
+                  {"Accepted by "}
+                  {row.acceptedByName}
+                  {" on "}
+                  {row.acceptedAt.slice(0, 10)}
+                  {row.selectedByName && row.selectedAt
+                    ? `. Selected by ${row.selectedByName} on ${row.selectedAt.slice(0, 10)}`
+                    : ""}
+                  {row.selectionEvidenceReference
+                    ? `. Selection evidence: ${row.selectionEvidenceReference}`
+                    : ""}
+                  {". Sources: "}
+                  {sourceReferencesLabel(row)}
+                  {"."}
+                </p>
+              </details>
             </li>
           ))}
         </ul>
@@ -1627,8 +1648,9 @@ function SourceNewStage05NdaReadiness({
       <p className="snw-eyebrow">Stage 05 · NDA readiness</p>
       <h3>Supplier NDA coverage</h3>
       <p>
-        This check summarizes recorded NDA evidence. A completed signing envelope does not
-        grant coverage; a named reviewer must record the executed document or Legal waiver.
+        This check summarizes recorded NDA evidence. A completed signing
+        envelope does not grant coverage; a named reviewer must record the
+        executed document or Legal waiver.
       </p>
       <dl className="snw-facts">
         <div>
@@ -1668,7 +1690,12 @@ function SourceNewStage05NdaReadiness({
           <dd>{posture}</dd>
         </div>
       </dl>
-      <SourceNewNdaCapture eventId={eventId} clientKey={clientKey} files={files} coverage={coverage} />
+      <SourceNewNdaCapture
+        eventId={eventId}
+        clientKey={clientKey}
+        files={files}
+        coverage={coverage}
+      />
       {coverage.suppliers.length > 0 ? (
         <div
           className="snw-nda-suppliers"
@@ -1690,21 +1717,24 @@ function SourceNewStage05NdaReadiness({
                 </span>
               </div>
               <p>{supplier.reason}</p>
-              <dl>
-                <div>
-                  <dt>Candidate evidence</dt>
-                  <dd>{supplier.evidenceReference}</dd>
-                </div>
-                <div>
-                  <dt>NDA authority</dt>
-                  <dd>{supplier.authorityReference ?? "Not recorded"}</dd>
-                </div>
-              </dl>
-              {supplier.evidenceCaveats.map((caveat) => (
-                <p className="snw-note" key={caveat}>
-                  {caveat}
-                </p>
-              ))}
+              <details className="snw-audit-detail">
+                <summary>Evidence and review notes</summary>
+                <dl>
+                  <div>
+                    <dt>Candidate evidence</dt>
+                    <dd>{supplier.evidenceReference}</dd>
+                  </div>
+                  <div>
+                    <dt>NDA authority</dt>
+                    <dd>{supplier.authorityReference ?? "Not recorded"}</dd>
+                  </div>
+                </dl>
+                {supplier.evidenceCaveats.map((caveat) => (
+                  <p className="snw-note" key={caveat}>
+                    {caveat}
+                  </p>
+                ))}
+              </details>
             </article>
           ))}
         </div>
