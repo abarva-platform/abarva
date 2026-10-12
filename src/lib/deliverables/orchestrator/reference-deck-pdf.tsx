@@ -103,10 +103,11 @@ function PdfBlock({ block }: { block: ReferenceBlock }) {
       {block.rows.map((row, index) => <View key={index} style={{ flexDirection: "row", marginBottom: 8 }}><Text style={{ width: 130, fontSize: 10, color: ink }}>{row.label}</Text>{block.quarters.map((_, q) => <View key={q} style={{ flex: 1, height: 18, backgroundColor: q >= row.from && q <= row.to ? ink : "#EFEEEA", marginRight: 4 }} />)}{row.cost && <Text style={{ width: 85, fontSize: 10, textAlign: "right" }}>{row.cost.display}</Text>}</View>)}
     </View>
   );
-  if (block.kind === "gap") return <View style={{ marginTop: 18, minHeight: 255, backgroundColor: "#EFEEEA", borderLeftWidth: 6, borderLeftColor: accent, padding: 25 }}>
-    <Text style={{ fontSize: 22, fontFamily: "Times-Roman", color: ink }}>{block.title}</Text>
-    <Text style={{ fontSize: 14, color: ink, marginTop: 22 }}>{block.detail}</Text>
-    <Text style={{ fontSize: 11, color: accent, marginTop: 68 }}>TO CONFIRM  {block.nextAction}</Text>
+  if (block.kind === "gap") return <View style={{ marginTop: block.compact ? 12 : 18, minHeight: block.compact ? 120 : 255,
+    backgroundColor: "#EFEEEA", borderLeftWidth: 6, borderLeftColor: accent, padding: block.compact ? 14 : 25 }}>
+    <Text style={{ fontSize: block.compact ? 17 : 22, fontFamily: "Times-Roman", color: ink }}>{block.title}</Text>
+    <Text style={{ fontSize: block.compact ? 11 : 14, color: ink, marginTop: block.compact ? 10 : 22 }}>{block.detail}</Text>
+    <Text style={{ fontSize: block.compact ? 9.5 : 11, color: accent, marginTop: block.compact ? 16 : 68 }}>TO CONFIRM  {block.nextAction}</Text>
   </View>;
   return <View style={{ marginTop: 13 }}>{block.lines.map((line, index) => <Text key={index} style={{ fontSize: 13, color: ink, marginBottom: 9 }}>{line}</Text>)}</View>;
 }

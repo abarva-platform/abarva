@@ -75,6 +75,43 @@ describe("reference-deck words", () => {
     expect(modelWordRule({ ...safeWords.words[0]!, title: "The annual case counts {{value.annual.plan}} on its current basis" }, "investment", slots, "one_page")).toBe("malformed_slot");
   });
 
+  it.each(["releases", "shared_foundation", "rom_hours"] as const)("accepts the governed estimate token for %s while refusing visible internal wording", (archetype) => {
+    const entry = {
+      title: "The delivery estimate is {rom.total.plan} on its approved basis",
+      answer: "Confirm the delivery scope before comparing the estimate with value.",
+      notes: "The point: review {rom.total.plan}. How to read: inspect the source line.",
+    };
+    expect(modelWordRule(entry, "investment", slots, archetype)).toBeNull();
+    expect(modelWordRule({ ...entry, answer: "Review the ROM before deciding." }, "investment", slots, archetype)).toBe("internal_client_word");
+    expect(modelWordRule({ ...entry, title: entry.title.replace("rom.total.plan", "rom.unapproved.plan") }, "investment", slots, archetype)).toBe("unknown_slot");
+    expect(modelWordRule(entry, "validation", slots, archetype)).toBe("edition_slot");
+  });
+
+  it("identifies the blocked vocabulary in an audited repair without replaying model prose", async () => {
+    const rejected = { ...safeWords.words[0]!, title: "Move from the evidence to the next decision" };
+    const repaired = { ...safeWords.words[0]!, title: "The evidence identifies the next decision for review" };
+    const create = jest.fn()
+      .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [rejected] }) }] })
+      .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [repaired] }) }] });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    const result = await draftEditionWords({ ...input, archetypes: ["contents"] });
+    expect(result).toMatchObject({ status: "ok", fallbackSlides: [], words: [repaired] });
+    const repair = JSON.parse(create.mock.calls[1][0].messages[0].content);
+    expect(repair.rejectedSlides[0]).toMatchObject({ rejectedRule: "internal_client_word", blockedClientTerm: "Move" });
+    expect(JSON.stringify(repair)).not.toContain(rejected.title);
+    expect(JSON.stringify(repair)).not.toContain("$12,000");
+  });
+
+  it("keeps a visible unavailable marker when the vocabulary repair is still rejected", async () => {
+    const rejected = { ...safeWords.words[0]!, title: "Move from the evidence to the next decision" };
+    const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({ words: [rejected] }) }] });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    const result = await draftEditionWords({ ...input, archetypes: ["contents"] });
+    expect(result).toMatchObject({ status: "unavailable", reason: "slide_rejected", rule: "internal_client_word", slide: 1, fallbackSlides: [1] });
+    expect(result.words[0]?.answer).toContain("Draft words unavailable.");
+    expect(create).toHaveBeenCalledTimes(2);
+  });
+
   it("uses the mandated validation-cover words without counting a model disclosure as fallback", async () => {
     const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({ words: [{
       title: "A solution plan should follow this validation review",
