@@ -908,6 +908,7 @@
     "tower:registered-intake:preflight-job": "node scripts/tower/run-registered-candidate-aca-job.mjs preflight",
     "tower:registered-intake:promote-job": "node scripts/tower/run-registered-candidate-aca-job.mjs promote",
     "tower:registered-intake:verify-job": "node scripts/tower/run-registered-candidate-aca-job.mjs verify",
+    "tower:delegated-proof:stage-job": "node scripts/tower/stage-delegated-approval-proof-job.mjs",
     "test:tower-registered-intake-promotion": "node --test scripts/tower/__tests__/operate-registered-intake-candidate.test.mjs",
     "test:tower-registered-intake-aca-job": "node --test scripts/tower/__tests__/run-registered-candidate-aca-job.test.mjs",
     "ops:aca-job": "node scripts/ops/submit-aca-operator-job.mjs",
