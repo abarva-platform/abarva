@@ -73,7 +73,12 @@ export function normalizeUsageSourceRow(
     metric_name: first(row, "metric_name") || "workspace_entitlement",
     unit:
       first(row, "unit") || (row.entitled_seats !== undefined ? "seats" : ""),
-    annual_opportunity_usd: first(row, "annual_opportunity_usd"),
+    source_annual_opportunity_usd: first(
+      row,
+      "source_annual_opportunity_usd",
+      "annual_opportunity_usd",
+    ),
+    annual_opportunity_usd: "",
     source_file_id: first(row, "source_file_id") || fallbackFileId,
   };
 }
@@ -83,4 +88,19 @@ export function preserveSourceFile(
   fallbackFileId: string,
 ): string {
   return first(row, "source_file_id") || fallbackFileId;
+}
+
+export function normalizeBatchSourceRow(row: CsvRecord): CsvRecord {
+  const result = { ...row };
+  for (const field of [
+    "failed_jobs",
+    "late_completion_count",
+    "manual_restarts",
+  ]) {
+    const value = declared(row, field);
+    if (value && (!Number.isSafeInteger(Number(value)) || Number(value) < 0))
+      throw new Error("Invalid batch count");
+    result[field] = value;
+  }
+  return result;
 }

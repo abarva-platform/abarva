@@ -480,7 +480,8 @@ function main() {
     registry.activeTenants.some(
       (t) =>
         t.tenantKey === config.tenant_key &&
-        t.packets.some((p) => p.classification === "synthetic-demo"),
+        t.packets.length > 0 &&
+        t.packets.every((p) => p.classification === "synthetic-demo"),
     ),
     "Registry-declared synthetic tenant required",
   );

@@ -13,7 +13,7 @@ import {
 } from "../../src/lib/source/contract-depth-package/adapter";
 import { projectContractDepthPackage } from "../../src/lib/source/contract-depth-package/projection";
 import type { CsvRecord } from "../../src/lib/source/contract-depth-package/projection";
-import { normalizeSpendSourceRow, normalizeUsageSourceRow, preserveSourceFile } from "../../src/lib/source/contract-depth-package/source-row-normalization";
+import { normalizeSpendSourceRow, normalizeUsageSourceRow, normalizeBatchSourceRow, preserveSourceFile } from "../../src/lib/source/contract-depth-package/source-row-normalization";
 import { performanceMeasureFromSource } from "../../src/lib/source/contract-intelligence/performance-units";
 import { postgresClientOptions } from "../../src/scripts/postgres-client-options";
 import {
@@ -560,10 +560,7 @@ function readSourceFiles(
       source_file_id: preserveSourceFile(row, "EVID-02"),
     })),
     batchJobVolumetrics: rawBatch.map((row) => ({
-      ...row,
-      failed_jobs: "0",
-      late_completion_count: "0",
-      manual_restarts: "0",
+      ...normalizeBatchSourceRow(row),
       source_file_id: preserveSourceFile(row, "EVID-03"),
       vendor_ref: stringValue(
         contractById.get(stringValue(row, "contract_id")) ?? {},

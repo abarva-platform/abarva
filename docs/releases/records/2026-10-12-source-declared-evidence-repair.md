@@ -10,11 +10,11 @@ Candidate. Local validation is not deployment, a database apply, or signed-in ac
 
 ## Plain-English Summary
 
-The contract package adapter preserves declared invoice identities, source files, payment amounts and usage quantities instead of replacing them with defaults. The contract briefing labels monetary spend as spend, not measured consumption. Incomplete monetary rows withhold comparisons rather than becoming zero.
+The contract package adapter preserves declared invoice identities, source files, payment amounts, usage quantities and measured batch counts instead of replacing them with defaults. Written-in opportunity amounts remain source payload rather than becoming financial facts. The contract briefing labels monetary spend as spend, not measured consumption. Incomplete monetary rows withhold comparisons rather than becoming zero.
 
 A deterministic subscription scenario generator produces explicitly synthetic, unreviewed documents, invoices, payments, usage, service observations and an unsized candidate action. A declared minimum quantity constrains the renewal diagnostic. The package is an offline candidate, not a loaded client record, reviewed legal agreement, savings calculation, or connected source-system extract.
 
-An internal operator job can repair only sealed document-origin metadata. Exact approval, manifest, tenant, contract, current before-images, content hashes, load runs and affected counts are mandatory. Mutations require separately approved code and digest-pinned runtime identity. A private backup precedes updates, and guarded restore refuses newer edits.
+An internal operator job supports an exact sealed document-origin metadata repair. Raw private authority and decision bytes must match release-controlled independent pins, not a self-issued receipt. It reads proof bodies only through authenticated, bounded private Blob paths, never plain environment payloads. Exact manifest, tenant, contract, current before-images, content hashes, load runs and affected counts are mandatory. Mutations require a separately certified operator/helper/dependency closure, current native main-runtime proof and a sealed manager-reviewed execution request. Initial code certification is absent, so mutations refuse. A private startup and before-image proof precede writes, and guarded restore refuses newer edits.
 
 ## Layer Impact
 
@@ -45,10 +45,14 @@ Release lanes: `global-control-lane` for adapter and product behavior; `internal
 
 - Red-first real-loader test observed replacement invoice references and source files before the hook; fixed loader passed.
 - Red-first render tests observed spend being asserted as consumption and incomplete totals being displayed.
-- Node suites: 40 passing assertions, zero skips, including eight real disposable-Postgres subtests for no-write preflight, exact metadata updates, restore, count rollback, drift refusal, private backup failure, non-metadata side effects and post-commit proof failure.
+- Node suites: 49 passing assertions, zero skips, including eight real disposable-Postgres subtests for no-write preflight, exact metadata updates, restore, count rollback, drift refusal, private backup failure, non-metadata side effects and post-commit proof failure.
 - Focused Jest: 56 passing assertions across four suites, including the existing suite-owner guard.
-- Full contract workspace plus adapter and loader: 44 suites / 447 passing assertions, using exact test paths so route-group parentheses cannot silently omit the UI suites.
+- Full contract workspace plus adapter and loader: 44 suites / 450 passing assertions, using exact test paths so route-group parentheses cannot silently omit the UI suites. Nonzero batch measurements are also checked through the real historical loader, not just its helper.
 - Mutation proof: relaxing the SQL affected-count guard failed the rollback test; restoring payment-from-spend failed four assertions. Both mutations restored before validation.
+- Two additional mutations that promoted an authored amount or stamped batch measurements as zero failed their dedicated assertions; restored before publishing.
+- Independent authority tests reject matching self-issued receipts, tampered exact bytes, revoked/future grants and invalid private proof paths. Removing the certified-decision byte check failed its tamper assertion. The actual immutable private conditional grant was also verified locally against its released-pin candidate; no execution or apply approval is inferred.
+- Code-certificate, full native runtime invariant and exact mode/run/idempotency/scope/code binding assertions pass. Their native network collection still needs an ACA read-only preflight; this is not runtime acceptance.
+- Historical package regression plans: four rich packages pass both gates; the baseline package retains eight named missing managed-service inputs and is refused. No historical package is applied.
 - Offline package plan passed both adapter and projection quality gates with an invalid database URL: no connection opened. Expected 71 adapter rows, 68 canonical fact assertions and 14 invoice facts. The opportunity remains unsized with a blocked calculation, not a priced result.
 - TypeScript and focused lint passed. Manifest governance passed with the existing warning that engineering attribution is not personal load approval. No personal review attribution was invented.
 - CI coverage census matches the committed shape; tests are placed outside another owner's suite-declaration region.
@@ -57,7 +61,7 @@ Release lanes: `global-control-lane` for adapter and product behavior; `internal
 
 Squash merge the reviewed candidate. Only the repo-owned ACA main workflow builds and promotes the image. The operator script is available afterward but does not run automatically. Its exact sealed approval must also bind the released code and approved runtime, then a serialized private ACA Job must capture fresh native before-images, private Blob proof and independent readback.
 
-The new subscription package has no load approval. Before any apply, resolve the existing canonical writers that hard-code reviewed state, obtain an exact delegated package decision, archive current native rows, test transactional rollback and prove affected projections. Do not run a full historical package reload to repair metadata.
+The new subscription package has no load approval. Before any apply, resolve the existing canonical writers that hard-code reviewed state, obtain an exact delegated package decision, archive current native rows, test transactional rollback and prove affected projections. Do not run a full historical package reload to repair metadata. Operator code certification and exact private execution binding are distinct from the conditional metadata grant; neither may authorize itself. Certificate pin containers are separate from the measured code closure to avoid self-hashing.
 
 ## Deployment Authority
 
@@ -79,4 +83,4 @@ Private operator decision, sealed hashes, transaction tests, plan reports, priva
 
 ## Known Gaps
 
-No shared database mutation, deployment or signed-in proof yet. Canonical term, scope, consumption and performance writers have review-state behavior that must be resolved before the new synthetic package applies. A loaded row does not prove client review, indexing, retrieval, citation rendering, commercial validity or Finance-confirmed value. The offline diagnostic is not yet an executable persisted opportunity-sizing rule.
+No shared database mutation, deployment or signed-in proof yet. The native Source runtime/proof collection and code certification remain outstanding; the fresh browser session reached sign-in. Canonical term, scope, consumption and performance writers have review-state behavior that must be resolved before the new synthetic package applies. A loaded row does not prove client review, indexing, retrieval, citation rendering, commercial validity or Finance-confirmed value. The offline diagnostic is not yet an executable persisted opportunity-sizing rule.

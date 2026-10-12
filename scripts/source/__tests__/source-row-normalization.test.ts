@@ -2,17 +2,16 @@ import {
   normalizeSpendSourceRow,
   normalizeUsageSourceRow,
   preserveSourceFile,
+  normalizeBatchSourceRow,
 } from "../../../src/lib/source/contract-depth-package/source-row-normalization";
 import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
 import ts from "typescript";
+import Papa from "papaparse";
 
-function readThroughLoader() {
-  const file = path.resolve(
-    __dirname,
-    "../load-contract-depth-package.ts",
-  );
+function readThroughLoader(packageDirectory?: string, tenantKey?: string, datasetVersion?: string) {
+  const file = path.resolve(__dirname, "../load-contract-depth-package.ts");
   const parsed = ts.createSourceFile(
     file,
     fs.readFileSync(file, "utf8"),
@@ -32,18 +31,62 @@ function readThroughLoader() {
     normalizeSpendSourceRow,
     normalizeUsageSourceRow,
     preserveSourceFile,
+    normalizeBatchSourceRow,
   });
-  const dir = path.resolve(
+  const dir = packageDirectory ?? path.resolve(
     __dirname,
     "../../../datasets/source/contract-depth/demo-subscription-contract-evidence-20261012",
   );
-  const summary = JSON.parse(
-    fs.readFileSync(path.join(dir, "package-summary.json"), "utf8"),
-  );
-  return read(dir, summary.binding.tenant_key, summary.dataset_version);
+  const summary = !tenantKey ? JSON.parse(fs.readFileSync(path.join(dir, "package-summary.json"), "utf8")) : null;
+  return read(dir, tenantKey ?? summary.binding.tenant_key, datasetVersion ?? summary.dataset_version);
 }
 
 describe("contract depth source row normalization", () => {
+  it("preserves nonzero batch measurements through the actual historical loader", () => {
+    const dir = path.resolve(__dirname, "../../../datasets/source/contract-depth/meridian-laams-new-event-rich-v2-20260908");
+    const raw = Papa.parse<Record<string, string>>(fs.readFileSync(path.join(dir, "source-files/batch_job_volumetrics.csv"), "utf8"), { header: true, skipEmptyLines: true });
+    expect(raw.errors).toHaveLength(0);
+    const measured = raw.data.find(r => Number(r.failed_jobs) > 0 || Number(r.late_completion_count) > 0 || Number(r.manual_restarts) > 0);
+    expect(measured).toBeDefined();
+    const loaded = readThroughLoader(dir, "meridian-health", "meridian-laams-new-event-rich-v2-20260908").batchJobVolumetrics.find((r: Record<string, string>) => r.source_row_id === measured!.source_row_id);
+    expect(loaded).toMatchObject({ failed_jobs: measured!.failed_jobs, late_completion_count: measured!.late_completion_count, manual_restarts: measured!.manual_restarts, source_file_id: measured!.source_file_id });
+  });
+  it("retains authored opportunity amounts as source payload, not financial facts", () => {
+    expect(
+      normalizeUsageSourceRow(
+        {
+          entitled_quantity: "100",
+          active_quantity: "75",
+          annual_opportunity_usd: "1957800",
+        },
+        "F1",
+      ),
+    ).toMatchObject({
+      annual_opportunity_usd: "",
+      source_annual_opportunity_usd: "1957800",
+    });
+  });
+  it("preserves measured batch counts and does not convert absent counts to zero", () => {
+    expect(
+      normalizeBatchSourceRow({
+        failed_jobs: "2",
+        late_completion_count: "3",
+        manual_restarts: "0",
+      }),
+    ).toMatchObject({
+      failed_jobs: "2",
+      late_completion_count: "3",
+      manual_restarts: "0",
+    });
+    expect(normalizeBatchSourceRow({})).toMatchObject({
+      failed_jobs: "",
+      late_completion_count: "",
+      manual_restarts: "",
+    });
+    expect(() => normalizeBatchSourceRow({ failed_jobs: "bad" })).toThrow(
+      /Invalid/,
+    );
+  });
   it("reaches the real loader with financial identity, zero payments and usage intact", () => {
     const loaded = readThroughLoader();
     expect(loaded.monthlySpend[11]).toMatchObject({

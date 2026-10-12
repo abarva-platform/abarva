@@ -10,6 +10,7 @@ import { performanceMeasureFromSource } from "../../../src/lib/source/contract-i
 import {
   normalizeSpendSourceRow,
   normalizeUsageSourceRow,
+  normalizeBatchSourceRow,
   preserveSourceFile,
 } from "../../../src/lib/source/contract-depth-package/source-row-normalization";
 
@@ -38,6 +39,7 @@ function optimizationWriter() {
       path,
       normalizeSpendSourceRow,
       normalizeUsageSourceRow,
+      normalizeBatchSourceRow,
       preserveSourceFile,
       SOURCE_SYSTEM: "source_contract_depth_package_loader",
     },

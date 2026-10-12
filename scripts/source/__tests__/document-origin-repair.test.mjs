@@ -5,6 +5,11 @@ import {
   validateOriginRepairPlan,
   compareOriginBeforeImages,
   originRepairInputs,
+  verifyOriginDelegationBytes,
+  originPrivateProofLocation,
+  verifyOriginCodeCertificate,
+  verifyOriginRuntimeWitness,
+  verifyOriginExecutionBinding,
 } from "../document-origin-repair.mjs";
 
 const before = {
@@ -188,6 +193,296 @@ function approvedEnv() {
 }
 test("binds exact approval, manifest declarations and reviewed code/runtime before DB use", () => {
   assert.equal(originRepairInputs(approvedEnv()).plan.targets.length, 1);
+});
+
+function certifiedFixture() {
+  const hash = (value) =>
+    crypto.createHash("sha256").update(value).digest("hex");
+  const authorityBytes = Buffer.from(
+    JSON.stringify({
+      contract_version: "nexus-delegated-approval-authority/v1",
+      authority_id: "authority-test",
+      status: "active",
+      source_message_independently_read: true,
+      actor: { kind: "delegated_agent", session_id: "manager-test" },
+      human_authorization_reference: {
+        thread_id: "manager-test",
+        text_sha256: hash("fixture authorization"),
+      },
+      human_authorization_text: "fixture authorization",
+      valid_from: "2026-01-01T00:00:00Z",
+      expires_at: null,
+      scope: { allowed_operations: ["metadata_repair"] },
+    }),
+  );
+  const decisionBytes = Buffer.from(
+    JSON.stringify({
+      decisionId: "decision-test",
+      status: "approved_with_execution_conditions",
+      decidedAt: "2026-01-02T00:00:00Z",
+      independentClientOrFinanceAttestation: false,
+    }),
+  );
+  const trust = {
+    contract_version: "source-document-origin-trust/v1",
+    status: "active",
+    authority_id: "authority-test",
+    authority_sha256: hash(authorityBytes),
+    decision_id: "decision-test",
+    decision_sha256: hash(decisionBytes),
+  };
+  return {
+    authorityBytes,
+    decisionBytes,
+    trust,
+    now: Date.parse("2026-01-03T00:00:00Z"),
+  };
+}
+test("verifies exact independently pinned authority and conditional decision bytes", () => {
+  const f = certifiedFixture();
+  assert.equal(
+    verifyOriginDelegationBytes(
+      f.authorityBytes,
+      f.decisionBytes,
+      f.trust,
+      f.now,
+    ).decision.decisionId,
+    "decision-test",
+  );
+});
+test("matching self-issued metadata receipt cannot certify its own authority", () => {
+  const f = certifiedFixture();
+  assert.throws(
+    () => verifyOriginDelegationBytes(f.authorityBytes, f.decisionBytes),
+    /byte hash/,
+  );
+});
+for (const field of ["authorityBytes", "decisionBytes"])
+  test(`refuses tampered ${field} even when its JSON meaning is unchanged`, () => {
+    const f = certifiedFixture();
+    f[field] = Buffer.concat([f[field], Buffer.from("\n")]);
+    assert.throws(
+      () =>
+        verifyOriginDelegationBytes(
+          f.authorityBytes,
+          f.decisionBytes,
+          f.trust,
+          f.now,
+        ),
+      /byte hash/,
+    );
+  });
+test("refuses revoked trust and future decisions", () => {
+  const f = certifiedFixture();
+  assert.throws(
+    () =>
+      verifyOriginDelegationBytes(
+        f.authorityBytes,
+        f.decisionBytes,
+        { ...f.trust, status: "revoked" },
+        f.now,
+      ),
+    /current/i,
+  );
+  assert.throws(
+    () =>
+      verifyOriginDelegationBytes(
+        f.authorityBytes,
+        f.decisionBytes,
+        f.trust,
+        Date.parse("2026-01-01T00:00:00Z"),
+      ),
+    /current/i,
+  );
+});
+test("restricts raw proof reads to authenticated private account/path without inline credentials", () => {
+  const base =
+    "https://stabarvaprivatedplab001.blob.core.windows.net/ecl-synthetic-intake/operator-proof/source-origin-repair/abc/plan.json";
+  assert.ok(originPrivateProofLocation(base, "data").endsWith("plan.json"));
+  for (const uri of [
+    base + "?sig=secret",
+    base.replace("stabarvaprivatedplab001", "otheraccount"),
+    base.replace("/source-origin-repair/", "/other/"),
+    base.replace("/abc/", "/%2e%2e/"),
+    base.replace("https:", "http:"),
+  ])
+    assert.throws(() => originPrivateProofLocation(uri, "data"));
+});
+
+test("code certification is independently pinned and covers every declared helper/dependency fingerprint", () => {
+  const hash = (value) =>
+    crypto.createHash("sha256").update(value).digest("hex");
+  const fingerprints = {
+    "operator.mjs": "a".repeat(64),
+    "helper.json": "b".repeat(64),
+    "package-lock.json": "c".repeat(64),
+  };
+  const grant = {
+    authority_sha256: "d".repeat(64),
+    decision_sha256: "e".repeat(64),
+  };
+  const bytes = Buffer.from(
+    JSON.stringify({
+      contract_version: "source-origin-code-certificate/v1",
+      status: "active",
+      review_id: "review-test",
+      ...grant,
+      runtime_policy: "repo_owned_current_main",
+      fingerprints,
+    }),
+  );
+  const trust = {
+    contract_version: "source-origin-execution-trust/v1",
+    status: "active",
+    certificate_sha256: hash(bytes),
+  };
+  assert.equal(
+    verifyOriginCodeCertificate(bytes, trust, fingerprints, grant).review_id,
+    "review-test",
+  );
+  assert.throws(
+    () =>
+      verifyOriginCodeCertificate(
+        bytes,
+        { ...trust, status: "not_certified" },
+        fingerprints,
+        grant,
+      ),
+    /certification/,
+  );
+  assert.throws(
+    () =>
+      verifyOriginCodeCertificate(
+        Buffer.concat([bytes, Buffer.from(" ")]),
+        trust,
+        fingerprints,
+        grant,
+      ),
+    /certification/,
+  );
+  assert.throws(
+    () =>
+      verifyOriginCodeCertificate(
+        bytes,
+        trust,
+        { ...fingerprints, "helper.json": "f".repeat(64) },
+        grant,
+      ),
+    /closure/,
+  );
+});
+test("requires actual main template, serving revision, both workers and operator execution at one digest", () => {
+  const meta = {
+    imageDigest: `sha256:${"a".repeat(64)}`,
+    gitSha: "b".repeat(40),
+    runId: "run-test",
+  };
+  const image = `acrabarvalab001.azurecr.io/abarva/web@${meta.imageDigest}`;
+  const witness = {
+    templateImage: image,
+    revisionImage: image,
+    operatorImage: image,
+    trafficWeight: 100,
+    trafficRevisionCount: 1,
+    healthState: "Healthy",
+    active: true,
+    revisionName: "web--mbbbbbbbb",
+    mainCommitSha: meta.gitSha,
+    mainDeploySucceeded: true,
+    operatorExecutionName: "execution-test",
+    operatorRunId: meta.runId,
+    workerImages: {
+      "job-abarva-deliv-worker": image,
+      "job-abarva-deliv-worker-event": image,
+    },
+  };
+  assert.equal(verifyOriginRuntimeWitness(witness, meta), witness);
+  for (const patch of [
+    { templateImage: "tag" },
+    { revisionImage: "tag" },
+    { operatorImage: "tag" },
+    { trafficWeight: 90 },
+    { trafficRevisionCount: 2 },
+    { healthState: "Unhealthy" },
+    { active: false },
+    { mainDeploySucceeded: false },
+    { mainCommitSha: "f".repeat(40) },
+    { operatorRunId: "other" },
+    { workerImages: { "job-abarva-deliv-worker": image } },
+  ])
+    assert.throws(
+      () => verifyOriginRuntimeWitness({ ...witness, ...patch }, meta),
+      /invariant/,
+    );
+});
+test("sealed execution request cannot change mode, run, idempotency, scope or reviewed code", () => {
+  const hash = (value) =>
+    crypto.createHash("sha256").update(value).digest("hex");
+  const e = approvedEnv();
+  const inputs = originRepairInputs(e);
+  inputs.delegationProof = {
+    authoritySha256: "a".repeat(64),
+    decisionSha256: "b".repeat(64),
+  };
+  const code = { "entry.mjs": "c".repeat(64) };
+  const certificateHash = "d".repeat(64);
+  const binding = {
+    contract_version: "source-origin-execution-binding/v1",
+    state: "manager_reviewed",
+    decision_sha256: inputs.delegationProof.decisionSha256,
+    authority_sha256: inputs.delegationProof.authoritySha256,
+    plan_sha256: inputs.planSha256,
+    manifest_sha256: inputs.plan.proposedManifestSha256,
+    code_certificate_sha256: certificateHash,
+    code_fingerprints: code,
+    tenant_key: inputs.plan.tenant_key,
+    contract_id: inputs.plan.contract_id,
+    dataset_version: inputs.plan.dataset_version,
+    target_count: 1,
+    git_sha: inputs.meta.gitSha,
+    image_digest: inputs.meta.imageDigest,
+    job_name: inputs.meta.jobName,
+    run_id: inputs.meta.runId,
+    idempotency_key: inputs.meta.idempotencyKey,
+    mode: inputs.mode,
+    actor_session_id: "01a11323-f628-7870-95b6-d8c00b50bd27",
+    preflight_proof_uri:
+      "https://stabarvaprivatedplab001.blob.core.windows.net/ecl-synthetic-intake/operator-proof/source-origin-repair/fixture/preflight.json",
+    preflight_proof_sha256: "e".repeat(64),
+  };
+  const bytes = Buffer.from(JSON.stringify(binding));
+  assert.equal(
+    verifyOriginExecutionBinding(
+      bytes,
+      hash(bytes),
+      inputs,
+      certificateHash,
+      code,
+    ).target_count,
+    1,
+  );
+  for (const patch of [
+    { mode: "restore" },
+    { run_id: "other" },
+    { idempotency_key: "other" },
+    { contract_id: "other" },
+    { target_count: 2 },
+    { code_fingerprints: {} },
+    { image_digest: `sha256:${"f".repeat(64)}` },
+  ]) {
+    const altered = Buffer.from(JSON.stringify({ ...binding, ...patch }));
+    assert.throws(
+      () =>
+        verifyOriginExecutionBinding(
+          altered,
+          hash(altered),
+          inputs,
+          certificateHash,
+          code,
+        ),
+      /binding/,
+    );
+  }
 });
 for (const [label, mutate] of [
   [

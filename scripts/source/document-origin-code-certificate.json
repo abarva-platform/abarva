@@ -1,0 +1,9 @@
+{
+  "contract_version": "source-origin-code-certificate/v1",
+  "status": "not_certified",
+  "review_id": null,
+  "authority_sha256": "e4fefd276e57c09d8742084005793b37ace90dc9167e17a46e2ae5f3076b5136",
+  "decision_sha256": "550966ea02bef3cfaa3fe5fb68eef1c096bcbcca6b4460604c6257e128ef9537",
+  "runtime_policy": "repo_owned_current_main",
+  "fingerprints": {}
+}
