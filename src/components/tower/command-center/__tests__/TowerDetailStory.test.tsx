@@ -69,6 +69,7 @@ describe("Tower detail proof states", () => {
     const rollout: TowerAiView = {
       ...view.allInitiatives[0]!,
       sourceFile: "23_ai_tool_rollout.csv",
+      populationKind: "tool_rollout",
       aiSpendLoaded: false,
       financeValidatedUsd: 0,
       financeApprovalEvents: [],

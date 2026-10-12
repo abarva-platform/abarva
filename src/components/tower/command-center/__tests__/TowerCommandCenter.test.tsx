@@ -451,6 +451,7 @@ describe("TowerCommandCenter", () => {
           id: "TOOL-DETAIL",
           name: "Power BI Copilot",
           sourceFile: "23_ai_tool_rollout.csv",
+          populationKind: "tool_rollout",
           aiAmountBasis: "annualized_tool_cost",
           usageHeadline: "Usage evidence exists",
           usageBars: [

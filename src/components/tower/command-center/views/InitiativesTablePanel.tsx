@@ -28,6 +28,7 @@ const KIND_LABEL: Record<TowerAiKind, string> = {
   candidate: "Candidate",
   governance: "Governance",
   platform: "Platform",
+  unknown: "Unknown",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -117,7 +118,7 @@ export function InitiativesTablePanel({
   );
   const chips: FilterKey[] = [
     "all",
-    ...(["funded", "embedded", "platform", "governance", "candidate"] as TowerAiKind[])
+    ...(["funded", "embedded", "platform", "governance", "candidate", "unknown"] as TowerAiKind[])
       .filter((kind) => cases.some((item) => item.kind === kind)),
   ];
   const rows = useMemo(() => {
@@ -261,8 +262,8 @@ export function InitiativesTablePanel({
         ))}
       </div>
       <p style={{ margin: 0, fontSize: 14, color: "var(--canon-gray-500)" }}>
-        Case and tool counts use the current source-template markers. {unclassifiedPortfolioCount(view.allInitiatives)}
-        rows have no recognized marker and remain unclassified. Tool rollouts are shown on the Tools tab.
+        Case and tool counts use declared page and canonical object identity. {unclassifiedPortfolioCount(view.allInitiatives)}
+        rows lack that identity and remain unclassified. Tool rollouts are shown on the Tools tab.
         Readiness is not used as a proxy for outcome.
         Loaded readiness: {cases.filter((item) => item.readinessScoreLoaded).length} cases.
       </p>

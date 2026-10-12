@@ -242,7 +242,7 @@ export function aiDisplayBucketFor(item: {
     };
   }
   return {
-    displayBucket: "platform",
+    displayBucket: "unknown",
     displayBucketBasis: "fallback_default",
     mappingPolicyVersion: TOWER_AI_DISPLAY_BUCKET_POLICY_VERSION,
     originalItemKind,
@@ -264,12 +264,14 @@ export function aiKindFor(
  */
 export function postureFor(item: {
   valueScore: number;
-  // Nullable at source: a case may simply not carry a readiness score. Bucketing treats an
-  // absent score as the lowest band, which is why the score itself is reported separately with
-  // a `readinessScoreLoaded` flag rather than rendered as a bare 0.
+  valueScoreLoaded?: boolean;
   readinessScore: number | null;
   towerClaimAllowed: string;
 }): string {
+  if (item.valueScoreLoaded === false || !Number.isFinite(item.valueScore) ||
+      item.valueScore < 0 || item.valueScore > 100 || item.readinessScore === null ||
+      !Number.isFinite(item.readinessScore) || item.readinessScore < 0 ||
+      item.readinessScore > 100) return "Needs evidence";
   const value = num(item.valueScore);
   const readiness = num(item.readinessScore);
   if (value >= 50 && readiness >= 50) return "Scale";
@@ -426,6 +428,7 @@ function toAiView(item: TowerMartAiPortfolioItem, n: number): TowerAiView {
   return {
     n,
     id: item.aiPortfolioKey,
+    populationKind: item.populationKind ?? "unknown",
     name: item.itemName,
     originalItemKind: bucket.originalItemKind,
     kind,
@@ -436,8 +439,9 @@ function toAiView(item: TowerMartAiPortfolioItem, n: number): TowerAiView {
     vendor: trimOrNull(item.vendorName),
     system: trimOrNull(item.systemName),
     valueScore: Math.max(0, Math.min(100, num(item.valueScore))),
+    valueScoreLoaded: item.valueScoreLoaded ?? true,
     readinessScore: Math.max(0, Math.min(100, num(item.readinessScore))),
-    readinessScoreLoaded: item.readinessScore !== null,
+    readinessScoreLoaded: item.readinessScore !== null && item.readinessScore >= 0 && item.readinessScore <= 100,
     riskScore: Math.max(0, Math.min(100, num(item.riskScore))),
     riskScoreLoaded: item.riskScore !== null,
     gatingConstraint: item.gatingConstraint ?? null,
@@ -1439,15 +1443,18 @@ export function buildTowerCommandCenterView(
     mart.programLanes.map((row, i) => [row.laneKey, programs[i]] as const),
   );
 
-  const aiAll = mart.aiPortfolio.map((item, i) => toAiView(item, i + 1));
-  const ai = aiAll.filter((item) => item.kind !== "candidate");
-  const candidateAll = aiAll.filter((item) => item.kind === "candidate");
+  const mappedAiRows = mart.aiPortfolio.map((item, i) => toAiView(item, i + 1));
+  const usageObservations = mappedAiRows.filter((item) => item.populationKind === "usage_observation");
+  const aiAll = mappedAiRows.filter((item) => item.populationKind !== "usage_observation");
+  const assetRows = aiAll.filter((item) => item.populationKind === "ai_case" || item.populationKind === "tool_rollout");
+  const ai = assetRows.filter((item) => item.kind !== "candidate");
+  const candidateAll = assetRows.filter((item) => item.kind === "candidate");
   const totalCandidateCount = Math.max(
     num(command.candidateAiOpportunities),
     mart.aiPortfolioCounts?.candidate ?? 0,
     candidateAll.length,
   );
-  const candidates: TowerCandidateView[] = aiAll
+  const candidates: TowerCandidateView[] = assetRows
     .filter((item) => item.kind === "candidate")
     .sort(
       (a, b) =>
@@ -1487,7 +1494,7 @@ export function buildTowerCommandCenterView(
   const promisedBenefitUsd = command.promisedValueFy26 ?? null;
   const promised = num(promisedBenefitUsd);
 
-  const concentration = vendorConcentrationPct(mart.aiPortfolio);
+  const concentration = vendorConcentrationPct(mart.aiPortfolio.filter((item) => item.populationKind === "ai_case" || item.populationKind === "tool_rollout"));
   if (concentration === null) unknownSlots.push("Top-3 vendor concentration");
 
   // The command centre reports an AI-tagged total, but `mart_ai_portfolio` may
@@ -1498,7 +1505,7 @@ export function buildTowerCommandCenterView(
   // page must say so rather than draw an empty chart under a headline figure.
   const portfolioSpendUsd =
     mart.aiPortfolioCounts?.attributedSpendUsd ??
-    mart.aiPortfolio.reduce((sum, item) => sum + num(item.aiTaggedSpendUsd), 0);
+    mart.aiPortfolio.filter((item) => item.populationKind === "ai_case" || item.populationKind === "tool_rollout").reduce((sum, item) => sum + num(item.aiTaggedSpendUsd), 0);
   const totalAiTaggedUsd = num(command.aiTaggedSpendFy26NonAdditive);
   const aiUnallocatedSpendUsd = Math.max(
     0,
@@ -1524,11 +1531,12 @@ export function buildTowerCommandCenterView(
     mart.aiPortfolioCounts?.total ?? 0,
     mart.aiPortfolio.length,
   );
-  const eligibleItemCount = ai.length + candidateAll.length;
-  const excludedItemCount = Math.max(0, martItemCount - eligibleItemCount);
+  const eligibleItemCount = assetRows.length;
+  const observationCount = usageObservations.length;
+  const excludedItemCount = Math.max(0, martItemCount - eligibleItemCount - observationCount);
   const exclusionReasons = [
     excludedItemCount > 0
-      ? `Runtime reader returned ${eligibleItemCount} of ${martItemCount} mart rows`
+      ? `Runtime reader could not classify ${excludedItemCount} of ${martItemCount} mart rows`
       : null,
     totalCandidateCount > candidates.length
       ? `Candidate pipeline preview limited to ${candidates.length} of ${totalCandidateCount}`
@@ -1606,7 +1614,7 @@ export function buildTowerCommandCenterView(
     materialProgramCount: command.materialProgramCount ?? programs.length,
     boardScopeProgramCount: command.boardScopeProgramCount ?? programs.length,
     economicReviewQueueCount: command.economicReviewQueueCount ?? 0,
-    aiInitiativeCount: command.aiInitiativeCount ?? ai.length,
+    aiInitiativeCount: assetRows.length,
     candidateAiCount: totalCandidateCount,
     watchPressureSignals: num(command.watchPressureSignals),
 
@@ -1678,11 +1686,13 @@ export function buildTowerCommandCenterView(
     candidates,
     // Uncapped — see TowerCommandCenterView.allInitiatives.
     allInitiatives: aiAll,
+    usageObservations,
     portfolioCounts: {
       sourceItemCount: null,
       canonicalItemCount: null,
       martItemCount,
       eligibleItemCount,
+      observationCount,
       displayCandidateCount: candidates.length,
       totalCandidateCount,
       plottedItemCount: ai.length,

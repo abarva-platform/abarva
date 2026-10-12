@@ -23,13 +23,14 @@ export type TowerUsageStatus = "strong" | "weak" | "none";
 /** Finance-validation strength. Derived — see `derive.ts`. */
 export type TowerFinanceStatus = "validated" | "partial" | "none";
 
-/** The design's five AI spend types. Mapped from `itemKind` / `aiSpendType`. */
+/** AI spend types plus an explicit unknown when the source provides no basis. */
 export type TowerAiKind =
   | "funded"
   | "embedded"
   | "candidate"
   | "governance"
-  | "platform";
+  | "platform"
+  | "unknown";
 
 export type TowerAiDisplayBucketBasis =
   | "ai_spend_category"
@@ -55,6 +56,7 @@ export interface TowerPortfolioCountReconciliation {
   canonicalItemCount: number | null;
   martItemCount: number;
   eligibleItemCount: number;
+  observationCount: number;
   displayCandidateCount: number;
   totalCandidateCount: number;
   plottedItemCount: number;
@@ -324,6 +326,7 @@ export interface TowerAiView {
   name: string;
   /** Original mart business meaning; never overwritten by visual grouping. */
   originalItemKind: string;
+  populationKind: "ai_case" | "tool_rollout" | "usage_observation" | "unknown";
   kind: TowerAiKind;
   displayBucket: TowerAiKind;
   displayBucketBasis: TowerAiDisplayBucketBasis;
@@ -333,6 +336,8 @@ export interface TowerAiView {
   system: string | null;
   /** 0–100, mart `value_score`. Bubble Y axis. */
   valueScore: number;
+  /** False when no source-backed value score was recorded. */
+  valueScoreLoaded: boolean;
   /** 0–100, mart `readiness_score`. Bubble X axis. */
   readinessScore: number;
   /** False when the source recorded no readiness score — render a gap, not the 0. */
@@ -617,6 +622,8 @@ export interface TowerCommandCenterView {
    * this so the full portfolio is always available behind search and filters.
    */
   allInitiatives: readonly TowerAiView[];
+  /** Use-case usage-feed rows are observations, not additional portfolio assets. */
+  usageObservations: readonly TowerAiView[];
   portfolioCounts: TowerPortfolioCountReconciliation;
   spendLens: readonly TowerSpendLensRow[];
   /** Active governed annual spend breakdown. Contract exposure is a separate population. */

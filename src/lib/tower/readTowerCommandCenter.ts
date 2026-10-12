@@ -900,6 +900,17 @@ function valueObservationMonths(
 
 function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
   const refs = sourceRefs(row);
+  const declaredPage = nullableText(displayPayload(row).page_key);
+  const canonicalUseCaseId = nullableText(payload(row).use_case_object_id);
+  const canonicalToolId = nullableText(payload(row).tool_object_id);
+  const populationKind =
+    declaredPage === "ai_portfolio" && canonicalUseCaseId
+      ? "ai_case"
+      : declaredPage === "adoption_lens" && canonicalUseCaseId
+        ? "usage_observation"
+        : declaredPage === "adoption_lens" && canonicalToolId
+          ? "tool_rollout"
+          : "unknown";
   const licensedUsersRaw = payloadNullableNumberFrom(row, [
     "licensed_users",
     "rollout_target_users",
@@ -922,6 +933,8 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     approvedFundingRaw ?? (monthlyCostRaw !== null ? monthlyCostRaw * 12 : 0);
   const aiSpendLoaded = aiAmountBasis !== "unknown";
   const promisedValueUsd = reconciledAnnualBenefit(row);
+  const recordedValueScore = payloadNullableNumberFrom(row, ["value_score"]);
+  const valueScoreLoaded = recordedValueScore !== null && recordedValueScore >= 0 && recordedValueScore <= 100;
   const adoptionRatePct =
     payloadNullableNumberFrom(row, [
       "adoption_rate_percent",
@@ -942,16 +955,15 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     aiPortfolioKey: row.row_key,
     itemName: payloadText(row, "use_case_name", row.title) ?? row.row_key,
     itemKind:
-      payloadTextFrom(row, ["item_kind", "itemKind"]) ?? "usage_benefit",
+      payloadTextFrom(row, ["item_kind", "itemKind"]) ?? "unknown",
+    populationKind,
     vendorName: payloadText(row, "tool_name", row.summary),
     systemName: payloadText(row, "tool_name", row.summary),
-    aiSpendType: payloadTextFrom(row, ["ai_spend_type"]) ?? "usage",
+    aiSpendType: payloadTextFrom(row, ["ai_spend_type"]),
     aiSpendCategory:
-      payloadTextFrom(row, ["ai_spend_category", "business_value_type"]) ??
-      "tool",
+      payloadTextFrom(row, ["ai_spend_category", "business_value_type"]),
     fundingStatus:
-      payloadTextFrom(row, ["funding_status", "finance_status"]) ??
-      row.review_state,
+      payloadTextFrom(row, ["funding_status", "finance_status"]),
     decisionLane: decisionLane(payloadTextFrom(row, ["decision_lane"])),
     approvedFundingUsd,
     aiTaggedSpendUsd,
@@ -991,12 +1003,8 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     linkedBusinessCaseCount: payloadNullableNumberFrom(row, [
       "linked_business_case_count",
     ]),
-    valueScore:
-      promisedValueUsd !== null && promisedValueUsd > 0
-        ? 70
-        : payloadNumber(row, "usage_events") > 0
-          ? 55
-          : 20,
+    valueScore: valueScoreLoaded ? recordedValueScore : 0,
+    valueScoreLoaded,
     // Readiness is a declared 0-100 score. It previously fell back to the adoption rate and then
     // to a literal 25 — substituting a different metric, and then an invented one, for a missing
     // value. Both are the "missing rendered as a number" failure this product exists to prevent.
@@ -1444,6 +1452,10 @@ export async function readTowerCommandCenter(args: {
       ]).map(
         mapAiItem,
       );
+      const aiAssets = aiPortfolio.filter(
+        (row) => row.populationKind === "ai_case" || row.populationKind === "tool_rollout",
+      );
+      const aiCandidates = aiAssets.filter((row) => /candidate/i.test(row.itemKind));
       const sourceFiles = uniqueSourceFiles(allRows);
       const tenantDisplayName =
         canonicalClientDisplayName({
@@ -1558,8 +1570,8 @@ export async function readTowerCommandCenter(args: {
           unmeasuredProgramCount: activeDecisionRows.filter(
             (row) => payloadText(row, "claim_gate_status") !== "claimable",
           ).length,
-          aiInitiativeCount: aiPortfolio.length,
-          candidateAiOpportunities: aiPortfolio.length,
+          aiInitiativeCount: aiAssets.length,
+          candidateAiOpportunities: aiCandidates.length,
           watchPressureSignals: activeRiskRows.length + activeEvidenceRows.length,
           runRatio: null,
           changeRatio: null,
@@ -1580,16 +1592,18 @@ export async function readTowerCommandCenter(args: {
         aiPortfolio,
         aiPortfolioCounts: {
           total: aiPortfolio.length,
-          candidate: aiPortfolio.length,
-          active: aiPortfolio.length,
-          funded: aiPortfolio.filter(
+          candidate: aiCandidates.length,
+          active: aiAssets.length - aiCandidates.length,
+          funded: aiAssets.filter(
             (row) =>
               row.aiAmountBasis === "approved_funding" &&
               row.approvedFundingUsd > 0,
           )
             .length,
-          embeddedOrUsage: aiPortfolio.length,
-          attributedSpendUsd: aiPortfolio.reduce(
+          embeddedOrUsage: aiAssets.filter(
+            (row) => ["embedded_platform", "usage_benefit"].includes(row.itemKind),
+          ).length,
+          attributedSpendUsd: aiAssets.reduce(
             (sum, row) => sum + row.aiTaggedSpendUsd,
             0,
           ),

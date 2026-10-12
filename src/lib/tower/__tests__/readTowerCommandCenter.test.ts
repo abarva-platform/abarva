@@ -285,6 +285,8 @@ describe("readTowerCommandCenter", () => {
         servingRow({
           row_key: "ai-1",
           page_key: "ai_portfolio",
+          use_case_object_id: "use-case-1",
+          display_payload_json: { page_key: "ai_portfolio", title: "Case one" },
           use_case_name: "Claims denial triage",
           tool_name: "Azure OpenAI",
           licensed_users: "100",
@@ -312,6 +314,9 @@ describe("readTowerCommandCenter", () => {
         servingRow({
           row_key: "adoption-1",
           page_key: "adoption_lens",
+          use_case_object_id: "use-case-1",
+          tool_object_id: "tool-1",
+          display_payload_json: { page_key: "adoption_lens", title: "Usage observation" },
         }),
       ],
     });
@@ -324,6 +329,14 @@ describe("readTowerCommandCenter", () => {
     });
 
     expect(mart?.generatedFrom).toBe("ecl_serving");
+    expect(mart?.aiPortfolio.map((row) => row.populationKind)).toEqual(["ai_case", "usage_observation"]);
+    expect(mart?.aiPortfolio[0]?.valueScoreLoaded).toBe(false);
+    expect(view?.summary.aiInitiativeCount).toBe(1);
+    expect(view?.allInitiatives[0]?.valueScoreLoaded).toBe(false);
+    expect(view?.allInitiatives[0]?.posture).toBe("Needs evidence");
+    expect(view?.usageObservations).toHaveLength(1);
+    expect(view?.allInitiatives).toHaveLength(1);
+    expect(view?.portfolioCounts.excludedItemCount).toBe(0);
     expect(mart?.command.sourceStandard).toContain(
       "Governed Tower read from finance, program, contract, and control evidence",
     );
