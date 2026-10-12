@@ -21,6 +21,61 @@
     "source_set_hash": "11d0f3f92b0c1da9cd4ca2bf369d0a90587b2deac15f4108262b1d154f829c40",
     "release_record": "docs/releases/records/2026-10-12-tower-registered-source-fields.md"
   },
-  "serving_approval": null,
-  "notes": "The named declaration and exact load approval authorize only a private physical stage of this candidate. They do not review individual rows, approve Finance values, authorize Tower serving, or assert signed-in product proof."
+  "serving_approval": {
+    "approved_by": "Codex integrated manager",
+    "approved_at": "2026-10-12",
+    "assessment_id": "tower-registry-candidate-a70df3b56bffc9be",
+    "source_set_hash": "11d0f3f92b0c1da9cd4ca2bf369d0a90587b2deac15f4108262b1d154f829c40",
+    "release_record": "docs/releases/records/2026-10-12-tower-source-fields-serving-promotion.md",
+    "surface": "tower",
+    "delegated_decision": {
+      "contract_version": "nexus-delegated-approval-decision/v1",
+      "authority_id": "integrated-manager-anand-20261012",
+      "decision_id": "delegated-tower-source-fields-serving-20261012-001",
+      "authorizer": "Anand Sundaram",
+      "actor": {
+        "kind": "delegated_agent",
+        "identity": "Codex integrated manager",
+        "session_id": "01a11323-f628-7870-95b6-d8c00b50bd27"
+      },
+      "human_authorization_reference": {
+        "thread_id": "01a11323-f628-7870-95b6-d8c00b50bd27",
+        "message_id": "01a12ff3-843c-7cc2-9558-469efd03a191",
+        "text_sha256": "f903f7c80edf662f7b27fac96f1a41a85aaa6641157f183a0a3cb025c8194162"
+      },
+      "scope": {
+        "operation": "serve",
+        "dataset_id": "tower-registered-intake-source-fields-20261012",
+        "tenant_key": "meridian-health",
+        "assessment_id": "tower-registry-candidate-a70df3b56bffc9be",
+        "source_set_hash": "11d0f3f92b0c1da9cd4ca2bf369d0a90587b2deac15f4108262b1d154f829c40",
+        "object_count": 237,
+        "ingestion_method": "operator_aca_job",
+        "release_record": "docs/releases/records/2026-10-12-tower-source-fields-serving-promotion.md",
+        "surface": "tower",
+        "extra_bindings": {
+          "build_version": "tower-registered-intake-source-fields/v1",
+          "candidate_sha256": "bc04b5bbd56115272c41973bafea26bf5e76834467f76f934fc48272d9889c14",
+          "prior_assessment_id": "tower-registry-candidate-11d0f3f92b0c1da9",
+          "prior_projection_version": 4,
+          "private_bundle_sha256": "c5d694f7d975d4148fe40e0eb88a295eb6b4d7070e070819e654e0ef594cff7a",
+          "projection_version": 5,
+          "stage_receipt_sha256": "a3c23dae007bbb03153adcacd69c6419767fb66d2c9d56c9e356d5505bef6cb5"
+        }
+      },
+      "decided_at": "2026-10-12T12:10:50.638642+00:00",
+      "expires_at": null,
+      "independent_human_attestation": false,
+      "independent_finance_attestation": false,
+      "authority_proof": {
+        "uri": "https://stabarvaprivatedplab001.blob.core.windows.net/ecl-synthetic-intake/operator-proof/delegated-approvals/integrated-manager-anand-20261012/e4fefd276e57c09d8742084005793b37ace90dc9167e17a46e2ae5f3076b5136/authority.json",
+        "sha256": "e4fefd276e57c09d8742084005793b37ace90dc9167e17a46e2ae5f3076b5136"
+      },
+      "decision_proof": {
+        "uri": "https://stabarvaprivatedplab001.blob.core.windows.net/ecl-synthetic-intake/operator-proof/delegated-approvals/integrated-manager-anand-20261012/ebb0891e9fd0f118425c8c9e401c0124aee19d4d0cdffb0f3834ca666a7b9f16/decision.json",
+        "sha256": "ebb0891e9fd0f118425c8c9e401c0124aee19d4d0cdffb0f3834ca666a7b9f16"
+      }
+    }
+  },
+  "notes": "The named load approval authorized the private physical stage. The recorded Tower-only delegated serving decision requires its exact private proof bytes, a fresh zero-gap preflight, guarded selector promotion, and signed-in verification. It does not attest an approved budget, Finance result, realized benefit, or independent client review."
 }
