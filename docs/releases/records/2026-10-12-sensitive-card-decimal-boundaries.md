@@ -10,13 +10,13 @@
 
 ## Plain-English Summary
 
-Do not classify either component of a decimal quantity as a payment-card number merely because its digits satisfy the card checksum. Continue detecting complete card numbers before uploaded documents are stored or indexed.
+Do not classify the fractional digits of a decimal quantity as a payment-card number merely because they satisfy the card checksum. Continue detecting complete card numbers before uploaded documents are stored or indexed, including a complete card followed by a decimal suffix.
 
 ## Layer Impact
 
 - Release lane: `global-control-lane`.
 - Layer 1: original intake bytes, formulas and classifications are preserved.
-- Layer 2: the deterministic pre-ingest scanner respects decimal boundaries in decoded document text. Parser output and source lineage are unchanged.
+- Layer 2: the deterministic pre-ingest scanner excludes fractional digits in decoded document text. Parser output and source lineage are unchanged.
 - Layer 3: no canonical record, identity, permission or approval is changed by this repair.
 - Layer 4: the normal upload path continues to use the same pre-storage decision. Product projections receive no new authority.
 
@@ -30,16 +30,17 @@ Do not classify either component of a decimal quantity as a payment-card number 
 
 ## Changes Included
 
-- Add decimal boundaries to candidate payment-card matching, retaining the existing 13–19 digit range and Luhn check.
-- Add regressions for decimal quantities, complete card numbers with spaces, hyphens or no separator, sentence punctuation, and mixed spreadsheet content.
+- Exclude fractional digits from candidate payment-card matching, retaining the existing 13–19 digit range and Luhn check.
+- Add regressions for decimal fractions, complete card numbers with spaces, hyphens or no separator, decimal suffixes, sentence punctuation, and mixed spreadsheet content.
 - Exercise the existing upload guard and upload write-stage contract.
 
 ## QA / Validation
 
 - Red before repair: the new scanner and decoded-spreadsheet cases reproduce the decimal false positive; nine assertions fail across two suites.
-- Pass after repair: four owning scanner, upload guard, decoded-document and upload write-stage suites; 42 tests on Node 24.19.
+- Additional positive regression: an initial candidate incorrectly discarded complete card numbers before a decimal suffix. Seven scanner/upload cases failed before correction; auto-merge was disabled before merge. The corrected rule excludes only fractional digits.
+- Pass after correction: four owning scanner, upload guard, decoded-document and upload write-stage suites; 49 tests on Node 24.19.
 - Pass: offline reproduction using the unchanged frozen workbook bytes, the exact serving parser source, and the candidate scanner. The original source reproduces one high-severity card finding and 78 medium-severity phone flags. The candidate removes only the decimal card finding and allows the normal guard decision. The 78 medium-severity flags remain.
-- Complete fabricated cards with 13, 15, 16 and 19 digits still quarantine, including beside decimal quantities. Existing PHI, SSN, bank-account and declared-regulated-classification contracts still pass.
+- Complete fabricated cards with 13, 15, 16 and 19 digits still quarantine, including beside decimal quantities and before a decimal suffix. Existing PHI, SSN, bank-account and declared-regulated-classification contracts still pass.
 - Pass: scoped ESLint, typecheck with Node 24.19 and an 8GB heap, all 11 release-control gates, context/corpus governance, and current-source census verification. An initial typecheck exhausted Node's default 4GB heap; the 8GB rerun passes. Existing manifest attribution warnings remain unchanged.
 - Exact-head CI and signed-in upload acceptance remain pending the canonical runtime release.
 

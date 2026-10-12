@@ -84,25 +84,28 @@ describe("assessMoveUploadSensitivity", () => {
     );
   });
 
-  it("still stops a complete card beside a spreadsheet percentage before storage", async () => {
-    const result = await assessMoveUploadSensitivity(
-      {
-        filename: "aggregate-baseline.xlsx",
-        mimeType: XLSX,
-        buffer: Buffer.from([0x50, 0x4b, 0x03, 0x04]),
-      },
-      extractReturning(
-        "Worksheet: Summary\nRate | 0.1494468085106383\nCard | 4111 1111 1111 1111",
-      ),
-    );
+  it.each(["4111 1111 1111 1111", "4111111111111111.00"])(
+    "still stops a complete card beside a spreadsheet percentage before storage: %s",
+    async (card) => {
+      const result = await assessMoveUploadSensitivity(
+        {
+          filename: "aggregate-baseline.xlsx",
+          mimeType: XLSX,
+          buffer: Buffer.from([0x50, 0x4b, 0x03, 0x04]),
+        },
+        extractReturning(
+          `Worksheet: Summary\nRate | 0.1494468085106383\nCard | ${card}`,
+        ),
+      );
 
-    expect(result.decision).toBe("quarantine");
-    expect(result.storageAllowed).toBe(false);
-    expect(result.indexingAllowed).toBe(false);
-    expect(result.matchedRules).toContainEqual(
-      expect.objectContaining({ ruleId: "financial.card", count: 1 }),
-    );
-  });
+      expect(result.decision).toBe("quarantine");
+      expect(result.storageAllowed).toBe(false);
+      expect(result.indexingAllowed).toBe(false);
+      expect(result.matchedRules).toContainEqual(
+        expect.objectContaining({ ruleId: "financial.card", count: 1 }),
+      );
+    },
+  );
 
   it("quarantines on a declared regulated classification whatever the content", async () => {
     const result = await assessMoveUploadSensitivity(

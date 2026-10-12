@@ -59,14 +59,30 @@ describe("pre-ingest sensitive scanner", () => {
     );
   });
 
-  it("does not classify a component of a decimal as a payment card", () => {
+  it("does not classify fractional digits as a payment card", () => {
     const result = scanPreIngestSensitiveText(
-      "Rate: 0.1494468085106383\nRatio: -0.4111111111111111\nAmount: 4111111111111111.00",
+      "Rate: 0.1494468085106383\nRatio: -0.4111111111111111",
     );
 
     expect(result.requiresQuarantine).toBe(false);
     expect(result.findings.map((finding) => finding.ruleId)).not.toContain(
       "financial.card",
+    );
+  });
+
+  it.each([
+    "4111111111111111",
+    "4111 1111 1111 1111",
+    "4111-1111-1111-1111",
+    "4222222222222",
+    "378282246310005",
+    "4000000000000000006",
+  ])("quarantines a fabricated complete card with a decimal suffix: %s", (card) => {
+    const result = scanPreIngestSensitiveText(`Card: ${card}.00`);
+
+    expect(result.requiresQuarantine).toBe(true);
+    expect(result.findings).toContainEqual(
+      expect.objectContaining({ ruleId: "financial.card", count: 1 }),
     );
   });
 
