@@ -186,7 +186,10 @@ function costDetail(row: TowerServingRow, expectedFile: string): TowerMartCostDe
   const sourceSha256 = nullableText(ref?.source_sha256);
   if (!sourceFile || !Number.isSafeInteger(amountUsd) || amountUsd === null || amountUsd < 0 ||
       !label || sourceRow === null || !sourceSha256 ||
-      !payloadText(row, "canonical_measure_id") || row.row_type !== "cost_exposure" ||
+      !payloadText(row, "canonical_measure_id") ||
+      payloadText(row, "measure_id") !== payloadText(row, "canonical_measure_id") ||
+      payloadNullableNumber(row, "measure_value_number") !== amountUsd ||
+      row.row_type !== "cost_exposure" ||
       row.value_state !== "estimated") return null;
   return { id: row.row_key, label, amountUsd, sourceFile, sourceRow, sourceSha256 };
 }
@@ -204,6 +207,8 @@ function activeCostLens(rows: readonly TowerServingRow[]): TowerMartCostLens | n
       modeledAnnualSpendUsd < 0 || aggregate.row_type !== "cost_exposure" ||
       aggregate.value_state !== "estimated" ||
       !payloadText(aggregate, "canonical_measure_id") ||
+      payloadText(aggregate, "measure_id") !== payloadText(aggregate, "canonical_measure_id") ||
+      payloadNullableNumber(aggregate, "measure_value_number") !== modeledAnnualSpendUsd ||
       payloadText(aggregate, "money_population") !== "modeled_it_spend" ||
       payloadText(aggregate, "amount_role") !== "aggregate" ||
       payloadText(aggregate, "period_basis") !== "annual_unspecified_year" ||

@@ -1047,6 +1047,8 @@ describe("readTowerCommandCenter", () => {
         row_key: key,
         page_key: "cost_lens",
         display_payload_json: { title, value, canonical_measure_id: `measure:${key}`, ...extras },
+        measure_id: `measure:${key}`,
+        measure_value_number: value,
       }),
       row_type: "cost_exposure",
       value_state: "estimated",
@@ -1091,5 +1093,12 @@ describe("readTowerCommandCenter", () => {
     });
     const mismatched = await readTowerCommandCenter({ tenantKeyCandidates: ["meridian-health"] });
     expect(mismatched?.costLens).toBeNull();
+
+    mockServingRows({
+      tower_command_center: [{ ...servingRow({ row_key: "executive_summary", page_key: "command_center" }), projection_version: 4 }],
+      tower_cost_lens: [rows[0], { ...rows[1], payload_json: { ...rows[1].payload_json, measure_value_number: 5_000_000 } }, rows[2], rows[3]],
+    });
+    const canonicalMismatch = await readTowerCommandCenter({ tenantKeyCandidates: ["meridian-health"] });
+    expect(canonicalMismatch?.costLens).toBeNull();
   });
 });
