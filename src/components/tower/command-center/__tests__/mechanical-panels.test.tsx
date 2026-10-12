@@ -9,7 +9,7 @@
  */
 
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 
 import { designFixtureMart } from "@/lib/tower/command-center/__fixtures__/design-fixture";
 import type {
@@ -32,7 +32,7 @@ import { InitiativesDistributionPanel } from "../views/InitiativesDistributionPa
 import { InitiativesTablePanel } from "../views/InitiativesTablePanel";
 import { QueueOwnerPanel } from "../views/QueueOwnerPanel";
 import { ToolsTablePanel } from "../views/ToolsTablePanel";
-import { ToolsVendorPanel } from "../views/ToolsVendorPanel";
+import { ToolsVendorPanel, buildToolVendorRows } from "../views/ToolsVendorPanel";
 
 jest.mock("recharts", () => {
   const actual = jest.requireActual("recharts");
@@ -316,9 +316,9 @@ describe("mechanical Tower Command Center panels", () => {
       />,
     );
 
-    expect(document.body.textContent).toMatch(/distribution is only partially loaded/);
+    expect(document.body.textContent).toMatch(/Expected benefit kinds and the financial breakdown are not loaded/);
     expect(document.body.textContent).not.toMatch(/leads value type/);
-    expect(document.body.textContent).toMatch(/Approved AI funding by benefit type/);
+    expect(document.body.textContent).toMatch(/Approved AI funding by recorded value category/);
     expect(document.body.textContent).not.toMatch(/By AI spend category/);
   });
 
@@ -367,6 +367,7 @@ describe("mechanical Tower Command Center panels", () => {
               usageBars: [
                 { label: "Adoption", valueText: "55%", pct: 55, tone: "amber" },
               ],
+              adoptionActualPct: 55,
               adoptionTargetPct: 70,
             }),
           ],
@@ -540,6 +541,7 @@ describe("mechanical Tower Command Center panels", () => {
               populationKind: "tool_rollout",
               usageHeadline: "Usage evidence exists",
               usageBars: [],
+              adoptionActualPct: null,
               readinessScore: 88,
               readinessScoreLoaded: true,
             }),
@@ -556,8 +558,87 @@ describe("mechanical Tower Command Center panels", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: /Adoption lens/i }));
 
-    expect(document.body.textContent).toContain("Unknown");
+    expect(document.body.textContent).toContain("Adoption rate not loaded");
     expect(document.body.textContent).not.toContain("88%");
+  });
+
+  it("keeps a usage count separate from an explicitly recorded adoption rate", () => {
+    render(
+      <AiPortfolioContractView
+        view={viewWith({
+          allInitiatives: [
+            initiative({
+              id: "TOOL-COUNT",
+              name: "Count-only rollout",
+              populationKind: "tool_rollout",
+              usageHeadline: "Active users · 120",
+              usageBars: [{ label: "Active users", valueText: "120", pct: 100, tone: "teal" }],
+              adoptionActualPct: null,
+              aiSpendUsd: 10 * M,
+            }),
+            initiative({
+              id: "TOOL-RATE",
+              name: "Rate-recorded rollout",
+              populationKind: "tool_rollout",
+              usageHeadline: "Active users · 50",
+              usageBars: [
+                { label: "Active users", valueText: "50", pct: 100, tone: "teal" },
+                { label: "Adoption", valueText: "42%", pct: 42, tone: "amber" },
+              ],
+              adoptionActualPct: 42,
+            }),
+            initiative({
+              id: "TOOL-LABEL",
+              name: "Count named adoption",
+              populationKind: "tool_rollout",
+              usageHeadline: "Adoption · 70",
+              usageBars: [{ label: "Adoption", valueText: "70", pct: 100, tone: "teal" }],
+              adoptionActualPct: null,
+            }),
+          ],
+          actions: [],
+          gaps: [],
+          pipelineGaps: [],
+        })}
+        onOpenAi={jest.fn()}
+        onOpenAction={jest.fn()}
+        onOpenGap={jest.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: /Adoption lens/i }));
+
+    const countOnly = screen.getByRole("row", { name: /Count-only rollout/ });
+    const recorded = screen.getByRole("row", { name: /Rate-recorded rollout/ });
+    const countNamedAdoption = screen.getByRole("row", { name: /Count named adoption/ });
+    expect(within(countOnly).getByText("Adoption rate not loaded")).toBeInTheDocument();
+    expect(within(countOnly).queryByText("100%")).not.toBeInTheDocument();
+    expect(within(countNamedAdoption).getByText("Adoption rate not loaded")).toBeInTheDocument();
+    expect(within(countNamedAdoption).queryByText("100%")).not.toBeInTheDocument();
+    expect(within(recorded).getByText("42%")).toBeInTheDocument();
+    expect(recorded.compareDocumentPosition(countOnly) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("keeps count-only usage out of the tools adoption bar and target comparison", () => {
+    render(<ToolsTablePanel view={viewWith({
+      allInitiatives: [initiative({
+        id: "TOOL-NAMED-ADOPTION-COUNT",
+        name: "Count-only tool",
+        populationKind: "tool_rollout",
+        usageHeadline: "Adoption · 70",
+        usageBars: [{ label: "Adoption", valueText: "70", pct: 100, tone: "teal" }],
+        adoptionActualPct: null,
+        adoptionTargetPct: 80,
+      })],
+    })} />);
+
+    const text = document.body.textContent ?? "";
+    expect(text).toContain("Recorded usage");
+    expect(text).toContain("Adoption · 70");
+    expect(text).toContain("Not loaded vs 80% target");
+    expect(text).toContain("adoption rates are not loaded for target comparison");
+    expect(text).not.toContain("100% vs 80% target");
+    expect(text).not.toContain("1 of 1 rollouts sit below their own adoption target");
   });
 
   it("keeps business cases out of the tool-rollout adoption lens", () => {
@@ -689,5 +770,105 @@ describe("mechanical Tower Command Center panels", () => {
     expect(text).not.toContain("Usage telemetry connection");
     expect(text).not.toContain("Vendor leverage review");
     expect(text).not.toContain("1Assets");
+  });
+
+  it("does not call generic usage events active users or imply summed tool users are unique", () => {
+    const view = viewWith({
+      allInitiatives: [
+        initiative({
+          id: "TOOL-EVENTS",
+          populationKind: "tool_rollout",
+          usageHeadline: "Usage events · 1,000",
+          usageBars: [{ label: "Usage events", valueText: "1,000", pct: 100, tone: "teal" }],
+          monthlyActiveUsers: 1_000,
+        }),
+        initiative({
+          id: "TOOL-USERS-A",
+          populationKind: "tool_rollout",
+          usageHeadline: "Monthly active users · 120",
+          usageBars: [{ label: "Monthly active users", valueText: "120", pct: 100, tone: "teal" }],
+          monthlyActiveUsers: 120,
+        }),
+        initiative({
+          id: "TOOL-USERS-B",
+          populationKind: "tool_rollout",
+          usageHeadline: "Active users · 30",
+          usageBars: [{ label: "Active users", valueText: "30", pct: 100, tone: "teal" }],
+          monthlyActiveUsers: 30,
+        }),
+      ],
+    });
+
+    expect(buildToolVendorRows(view)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ vendor: "Vendor Alpha", activeUsers: 150, toolCount: 3 }),
+    ]));
+    render(<ToolsVendorPanel view={view} />);
+    expect(document.body.textContent).toContain("Active-user counts across tools by vendor");
+    expect(document.body.textContent).toContain("one person using two tools can be counted twice");
+    expect(document.body.textContent).toContain("Rollout counts here cover only tool rows with a usage metric");
+    expect(document.body.textContent).not.toContain("1,150");
+  });
+
+  it("withholds an incomplete foundation benefit total and names its counting basis", () => {
+    render(<FoundationsPanel view={viewWith({
+      allInitiatives: [
+        initiative({ id: "FOUNDATION-A", category: "Platform foundation", aiAmountBasis: "approved_funding", promisedBenefitLoaded: true, promisedUsd: 2 * M }),
+        initiative({ id: "FOUNDATION-B", category: "Platform foundation", aiAmountBasis: "approved_funding", promisedBenefitLoaded: false, promisedUsd: 0 }),
+      ],
+    })} />);
+
+    const tile = screen.getByText("Projected direct benefit").parentElement;
+    expect(tile?.textContent).toContain("Partial — total withheld");
+    expect(tile?.textContent).not.toContain("$2M");
+    expect(document.body.textContent).toContain("recorded for 1 of 2 foundation rows");
+  });
+
+  it("describes a missing budget split as missing, not as present fields", () => {
+    render(<BudgetShapePanel view={viewWith({ summary: { budgetUsd: null, runUsd: null, changeUsd: null } })} />);
+    expect(document.body.textContent).toContain("No budget split is loaded");
+    expect(document.body.textContent).not.toContain("Budget fields are present");
+  });
+
+  it("separates the source's benefit plan and funding category in both AI tables", () => {
+    const caseRow = initiative({
+      id: "CASE-PLAN",
+      expectedValueArchetype: "cost_productivity_or_cycle_time",
+      businessValueType: null,
+      category: null,
+      kind: "funded",
+      displayBucket: "funded",
+      aiAmountBasis: "unknown",
+    });
+    const view = viewWith({ allInitiatives: [caseRow], actions: [], gaps: [], pipelineGaps: [] });
+    render(
+      <>
+        <InitiativesTablePanel view={view} />
+        <AiPortfolioContractView view={view} onOpenAi={jest.fn()} onOpenAction={jest.fn()} onOpenGap={jest.fn()} />
+      </>,
+    );
+    expect(screen.getByRole("button", { name: "Funding group" })).toBeInTheDocument();
+    expect(document.body.textContent).toContain("display grouping from intake labels; it is not proof of approved funding");
+    expect(document.body.textContent).toContain("Save time, improve productivity, or shorten a process");
+    expect(document.body.textContent).toContain("Source category: Not recorded");
+    expect(document.body.textContent).toContain("Tower group: funding group");
+    expect(document.body.textContent).toContain("Amount basis not verified");
+    expect(screen.queryByRole("columnheader", { name: "Value type" })).not.toBeInTheDocument();
+  });
+
+  it("shows Finance status separately from a missing validated amount", () => {
+    render(<InitiativesTablePanel view={viewWith({
+      allInitiatives: [initiative({
+        id: "CASE-STATUS-ONLY",
+        name: "Status-only case",
+        financeStatus: "finance_validated_actual",
+        financeValidatedUsd: 0,
+        financeValidatedAmountLoaded: undefined,
+        financeApprovalEvents: [],
+      })],
+    })} />);
+
+    expect(document.body.textContent).toContain("Source Finance status: Validated actual");
+    expect(document.body.textContent).toContain("Amount not verified");
+    expect(document.body.textContent).not.toContain("$0M");
   });
 });
