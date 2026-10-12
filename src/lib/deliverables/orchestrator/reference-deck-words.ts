@@ -79,7 +79,7 @@ const INVESTMENT_TITLE_SLOTS: Partial<Record<ReferenceArchetype, string>> = {
 const FALLBACK_ANSWERS: Partial<Record<ReferenceArchetype, string>> = {
   one_page: "The case can advance when its value basis and open questions are agreed.",
   big_number_context: "Confirm the value basis before drawing a conclusion.",
-  one_step_value: "The annual value matters only if the counted step is agreed.",
+  one_step_value: "Confirm the counted step and its value basis before drawing a conclusion.",
   three_year_value: "The timing of value changes what the case can support.",
   assumptions: "The team should resolve the assumptions that could change the decision.",
   rom_hours: "Confirm the delivery basis and working hours before using the estimate.",
@@ -178,6 +178,7 @@ export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, sl
 
 const TITLE_REQUIREMENTS = { minimumWords: 5, maximumSentences: 1 } as const;
 const RULE_REQUIREMENTS: Record<string, string> = {
+  missing_title_slot: "Copy requiredTitleSlot exactly, including its single braces, into the title. Keep this binding token even when evidence is unavailable; the server renders the missing-input qualifier. Never substitute a value or an invented fact.",
   title_format: "Write a title with at least five words and only one sentence. Do not return a short section label.",
   active_count_as_open: "The active assumption count includes open, confirmed and corrected items. Only the open-count token may describe open items.",
   unavailable_value_claim: "No counted value is available for this exhibit. State the evidence still needed; do not refer to an existing figure or total.",

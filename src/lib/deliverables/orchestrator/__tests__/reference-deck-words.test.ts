@@ -49,6 +49,29 @@ const stateSlot = (key: string, display: string | null): ReferenceSlotTable[stri
 });
 
 describe("reference-deck words", () => {
+  it.each([[false, false], [true, false], [false, true], [true, true]])("gives concrete binding requirements to the existing title-slot retry; persistent rejection %s, missing value %s", async (persistent, missing) => {
+    const rejected = { ...safeWords.words[0]!, title: "The annual case needs a reviewed basis" };
+    const repaired = { ...rejected, title: "The annual case counts {value.annual.plan} on its current basis" };
+    const create = jest.fn()
+      .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [rejected] }) }] })
+      .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [persistent ? rejected : repaired] }) }] });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    const result = await draftEditionWords({ ...input, edition: "investment",
+      slots: missing ? { ...slots, "value.annual.plan": stateSlot("value.annual.plan", null) } : slots });
+    const retry = JSON.parse(create.mock.calls[1][0].messages[0].content);
+    expect(retry.rejectedSlides[0]).toMatchObject({ rejectedRule: "missing_title_slot",
+      requiredTitleSlot: "{value.annual.plan}", evidence: { valueAvailable: !missing },
+      ruleRequirements: expect.stringContaining("requiredTitleSlot") });
+    expect(JSON.stringify(retry)).not.toContain(rejected.title);
+    expect(JSON.stringify(create.mock.calls)).not.toContain("$12,000");
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(mockPreflight.mock.calls[1][0].workflow).toBe("moves:reference-deck:preview:words:repair");
+    if (persistent) {
+      expect(result).toMatchObject({ status: "unavailable", reason: "slide_rejected", rule: "missing_title_slot", fallbackSlides: [1] });
+      expect(result.words[0]?.answer).toContain("Draft words unavailable.");
+    } else expect(result).toMatchObject({ status: "ok", fallbackSlides: [], words: [repaired] });
+  });
+
   it("states concrete title requirements in the audited divider retry", async () => {
     const rejected = { ...safeWords.words[0]!, title: "Evidence for discussion",
       notes: "The point: the evidence needs review. How to read: inspect the supporting exhibit." };

@@ -10,6 +10,8 @@ const mockRender = jest.fn();
 const mockInspect = jest.fn();
 const mockJudge = jest.fn();
 const mockPdfInspect = jest.fn();
+const mockValidate = jest.fn();
+const mockWorkbook = jest.fn();
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -26,13 +28,17 @@ jest.mock("@/lib/deliverables/orchestrator/reference-deck-edition", () => ({
 }));
 jest.mock("@/lib/deliverables/orchestrator/reference-deck-words", () => ({
   draftEditionWords: (...args: unknown[]) => mockWords(...args),
+  unavailableEditionWords: () => [],
 }));
 jest.mock("@/lib/deliverables/orchestrator/reference-deck-slots", () => ({
   buildReferenceSlotTable: () => ({}),
 }));
 jest.mock("@/lib/deliverables/orchestrator/reference-deck-model", () => ({
-  validateReferenceDeck: jest.fn(() => []),
+  ...jest.requireActual("@/lib/deliverables/orchestrator/reference-deck-model"),
+  validateReferenceDeck: (...args: unknown[]) => mockValidate(...args),
 }));
+jest.mock("@/lib/deliverables/orchestrator/reference-deck-workbook", () => ({ buildReferenceWorkbook: (...args: unknown[]) => mockWorkbook(...args) }));
+jest.mock("@/lib/pricing/moves-workflow/rom-workbook", () => ({ ROM_WORKBOOK_CONTENT_TYPE: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
 jest.mock("@/lib/deliverables/orchestrator/reference-deck-renderer", () => ({
   renderReferenceDeck: (...args: unknown[]) => mockRender(...args),
 }));
@@ -50,6 +56,8 @@ jest.mock("@/lib/deliverables/orchestrator/reference-deck-pdf-inspection", () =>
 
 import { NextRequest } from "next/server";
 import { GET } from "../route";
+import { GET as workbookGET } from "../../workbook/route";
+import { ReferenceDeckLineageRefusal } from "@/lib/deliverables/orchestrator/reference-deck-model";
 
 const params = (edition = "validation") => ({ params: Promise.resolve({ programId: "synthetic-move", edition }) });
 const request = (format = "pptx") => new NextRequest(`https://example.invalid/api/v1/programs/synthetic-move/decks/validation/preview?format=${format}`);
@@ -66,9 +74,83 @@ beforeEach(() => {
   mockInspect.mockResolvedValue({ slideCount: 1 });
   mockJudge.mockReturnValue({ fidelityScore: 85, findings: [] });
   mockPdfInspect.mockResolvedValue([]);
+  mockValidate.mockReturnValue([]);
+  mockWorkbook.mockResolvedValue(Buffer.from("PK synthetic workbook"));
 });
 
 describe("read-only reference deck preview", () => {
+  it.each(["preview", "workbook"])("retains typed lineage codes without private wording in the %s refusal", async (format) => {
+    mockBuild.mockImplementationOnce(() => { throw new ReferenceDeckLineageRefusal([
+      { slide: 8, code: "unsupported_narrative", message: "private source detail", blocking: true },
+    ]); });
+    const result = await (format === "preview" ? GET : workbookGET)(request(), params());
+    expect(result.status).toBe(422);
+    expect(result.headers.get("X-AbarVa-Deck-Fidelity-Score")).toBeNull();
+    expect(result.headers.get("X-AbarVa-Deck-Request-Id")).toMatch(/^[0-9a-f-]{36}$/);
+    const body = await result.json();
+    expect(body).toMatchObject({ error: "figure_lineage_refusal", findings: [{ kind: "reference_lineage", code: "unsupported_narrative", detailCode: "unsupported_narrative", slide: 8 }] });
+    expect(JSON.stringify(body)).not.toContain("private source detail");
+    expect(mockRender).not.toHaveBeenCalled();
+    expect(mockWorkbook).not.toHaveBeenCalled();
+  });
+
+  it.each(["pptx", "pdf"])("retains known wording context and unknown score for an early %s lineage refusal", async (format) => {
+    mockWords.mockResolvedValueOnce({ status: "unavailable", reason: "slide_rejected", rule: "missing_title_slot", slide: 9, fallbackSlides: [9], words: [] });
+    mockBuild.mockImplementationOnce(() => { throw new Error("reference_deck_lineage_refusal: 8:unsupported_narrative; private source detail"); });
+    const result = await GET(request(format), params());
+    expect(result.status).toBe(422);
+    expect(result.headers.get("X-AbarVa-Deck-Request-Id")).toMatch(/^[0-9a-f-]{36}$/);
+    expect(result.headers.get("X-AbarVa-Deck-Words-Rule")).toBe("missing_title_slot");
+    expect(result.headers.get("X-AbarVa-Deck-Fallback-Count")).toBe("1");
+    expect(result.headers.get("X-AbarVa-Deck-Fidelity-Score")).toBeNull();
+    expect(result.headers.get("Cache-Control")).toContain("no-store");
+    expect(JSON.stringify(await result.json())).not.toContain("private source detail");
+    expect(mockRender).not.toHaveBeenCalled();
+  });
+
+  it("returns only safe lineage codes and slides before physical rendering", async () => {
+    mockValidate.mockReturnValueOnce([{ code: "figure_ledger", slide: 8, blocking: true, message: "private source value" }]);
+    const result = await GET(request(), params());
+    expect(result.status).toBe(422);
+    expect(result.headers.get("X-AbarVa-Deck-Request-Id")).toMatch(/^[0-9a-f-]{36}$/);
+    const body = await result.json();
+    expect(body).toMatchObject({ error: "figure_lineage_refusal", findings: [{ kind: "reference_lineage", detailCode: "figure_ledger", slide: 8 }] });
+    expect(JSON.stringify(body)).not.toContain("private source value");
+    expect(mockRender).not.toHaveBeenCalled();
+  });
+
+  it("classifies a companion workbook lineage refusal without turning it into a server failure", async () => {
+    mockBuild.mockImplementationOnce(() => { throw new Error("reference_deck_lineage_refusal: 8:unsupported_narrative; private source detail"); });
+    const result = await workbookGET(request(), params());
+    expect(result.status).toBe(422);
+    expect(result.headers.get("X-AbarVa-Deck-Request-Id")).toMatch(/^[0-9a-f-]{36}$/);
+    expect(result.headers.get("Cache-Control")).toContain("no-store");
+    expect(await result.json()).toMatchObject({ error: "figure_lineage_refusal" });
+    expect(mockWorkbook).not.toHaveBeenCalled();
+  });
+
+  it("keeps approved-estimate mismatch and unexpected workbook errors as distinct refusals", async () => {
+    mockWorkbook.mockRejectedValueOnce(new Error("reference_rom_workbook_mismatch"));
+    const mismatch = await workbookGET(request(), params("investment"));
+    expect(mismatch.status).toBe(409);
+    expect(await mismatch.json()).toMatchObject({ error: "rom_workbook_mismatch" });
+    mockWorkbook.mockRejectedValueOnce(new Error("private provider detail"));
+    const failed = await workbookGET(request(), params());
+    expect(failed.status).toBe(500);
+    expect(JSON.stringify(await failed.json())).not.toContain("private provider detail");
+  });
+
+  it("fences the companion workbook and returns no persisted artifact", async () => {
+    mockFlag.mockReturnValueOnce(false);
+    expect((await workbookGET(request(), params())).status).toBe(404);
+    expect(mockAssemble).not.toHaveBeenCalled();
+    const result = await workbookGET(request(), params());
+    expect(result.status).toBe(200);
+    expect(result.headers.get("Cache-Control")).toContain("no-store");
+    expect(result.headers.get("X-AbarVa-Preview")).toBe("not-persisted");
+    expect(Buffer.from(await result.arrayBuffer()).toString()).toBe("PK synthetic workbook");
+  });
+
   it("refuses a clipped or unreadable native table before returning either format", async () => {
     mockJudge.mockReturnValue({ fidelityScore: 90, findings: [{ kind: "reference_layout", slide: 10, detailCode: "table_text_overflow" }] });
     const response = await GET(request("pdf"), params());

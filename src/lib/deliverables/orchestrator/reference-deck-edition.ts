@@ -9,7 +9,7 @@ import { referenceArchitectureLabel } from "./reference-deck-layout";
 import {
   type ReferenceArchetype, type ReferenceBlock, type ReferenceCell,
   type ReferenceDeckSpec, type ReferenceFigure, type ReferenceSection,
-  type ReferenceSlide, validateReferenceDeck,
+  type ReferenceSlide, validateReferenceDeck, ReferenceDeckLineageRefusal,
   clientCopyIssue,
 } from "./reference-deck-model";
 
@@ -498,6 +498,6 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
     sources, figureLedger, slides,
   };
   const blocking = validateReferenceDeck(spec).filter((finding) => finding.blocking);
-  if (blocking.length) throw new Error(`reference_deck_lineage_refusal: ${blocking.map((item) => `${item.slide}:${item.code}`).join(",")}`);
+  if (blocking.length) throw new ReferenceDeckLineageRefusal(blocking);
   return spec;
 }
