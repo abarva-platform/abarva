@@ -775,6 +775,13 @@ test.each([
 test("refuses changed signed text even when its saved-plan definition block is still present", async () => {
   mockTables.deliverable_versions[0].content +=
     "<p>Changed signed narrative.</p>";
+  (
+    mockTables.deliverables_v2[0].structured_data as Record<string, unknown>
+  ).approvedReviewReceipt = captureReviewedDeliverableVersion(
+    2,
+    mockTables.deliverable_versions[0],
+    true,
+  );
   const response = await get();
   expect(response.status).toBe(409);
   expect((await response.json()).error).toBe("contract_plan_stale");
@@ -787,6 +794,9 @@ test("refuses a contract whose hash receipt exists but whose text omits the save
   const metadata = version.structured_data as Record<string, unknown>;
   const proof = metadata.p5MeasurementContractPlan as Record<string, unknown>;
   proof.contentHash = p5Hash(version.content);
+  (
+    mockTables.deliverables_v2[0].structured_data as Record<string, unknown>
+  ).approvedReviewReceipt = captureReviewedDeliverableVersion(2, version, true);
   const response = await get();
   expect(response.status).toBe(409);
   expect((await response.json()).error).toBe("contract_plan_stale");
