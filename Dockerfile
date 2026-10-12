@@ -73,6 +73,10 @@ COPY . .
 # Do not copy full client workspaces into the runtime image.
 RUN node -e "const fs=require('fs');const path=require('path');const out='runtime-tenant-boundaries';fs.rmSync(out,{recursive:true,force:true});fs.mkdirSync(out,{recursive:true});if(fs.existsSync('clients')){for(const tenant of fs.readdirSync('clients')){const src=path.join('clients',tenant,'18-phase2b3c-azure-lab-implementation','00-implementation-charter','APPROVED_BOUNDARY_SNAPSHOT.json');if(fs.existsSync(src)){const dest=path.join(out,tenant,'APPROVED_BOUNDARY_SNAPSHOT.json');fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest);}}}"
 
+# Operator validation checks that every approved dataset manifest names an
+# existing release record. Package only those referenced records at runtime.
+RUN node scripts/ops/package-approved-release-records.mjs
+
 # Build the Next.js app. No secrets are required for `next build` other than
 # build-time NEXT_PUBLIC_* vars, which the orchestrator may inject via
 # --build-arg if a downstream image needs them embedded. By default we do
@@ -127,6 +131,7 @@ COPY --from=build --chown=node:node /app/docs/architecture/ecl-retired-code-refe
 COPY --from=build --chown=node:node /app/docs/architecture/sql-drafts ./docs/architecture/sql-drafts
 COPY --from=build --chown=node:node /app/docs/governance/dataset-manifests ./docs/governance/dataset-manifests
 COPY --from=build --chown=node:node /app/docs/governance/data-repairs ./docs/governance/data-repairs
+COPY --from=build --chown=node:node /app/runtime-approved-release-records ./docs/releases/records
 COPY --from=build --chown=node:node /app/docs/releases/records/2026-10-11-enterprise-integrated-insight-candidates.md ./docs/releases/records/2026-10-11-enterprise-integrated-insight-candidates.md
 COPY --from=build --chown=node:node /app/docs/source/skyharbor-v4 ./docs/source/skyharbor-v4
 COPY --from=build --chown=node:node /app/runtime-tenant-boundaries ./runtime-tenant-boundaries

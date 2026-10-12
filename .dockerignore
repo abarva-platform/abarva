@@ -14,6 +14,7 @@ out
 # Coverage and reports
 coverage
 reports/
+runtime-approved-release-records/
 
 # Runtime Knowledge/Home active mode reads the promoted Active Tenant Access
 # records. Keep the rest of reports/ out of the image, but ship this narrow
@@ -85,6 +86,7 @@ docs/releases/*
 !docs/releases/records/
 docs/releases/records/*
 !docs/releases/records/2026-10-11-enterprise-integrated-insight-candidates.md
+!docs/releases/records/**
 !docs/source/
 docs/source/*
 !docs/source/skyharbor-v4/
