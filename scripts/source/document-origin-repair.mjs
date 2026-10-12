@@ -169,7 +169,7 @@ async function nativeRuntimeWitness(env, meta, credential) {
   );
   check(own.length === 1, "Exact native operator execution witness required");
   const gh = await fetch(
-    `https://api.github.com/repos/abarva-platform/abarva/actions/workflows/aca-main-deploy.yml/runs?head_sha=${encodeURIComponent(meta.gitSha)}&event=push&status=success&per_page=5`,
+    `https://api.github.com/repos/abarva-platform/abarva/actions/workflows/aca-main-deploy.yml/runs?head_sha=${encodeURIComponent(meta.gitSha)}&status=success&per_page=10`,
     {
       headers: {
         Accept: "application/vnd.github+json",
@@ -197,7 +197,7 @@ async function nativeRuntimeWitness(env, meta, credential) {
       (r) =>
         r.head_sha === meta.gitSha &&
         r.head_branch === "main" &&
-        r.event === "push" &&
+        ["push", "workflow_dispatch"].includes(r.event) &&
         r.conclusion === "success",
     ),
     observedAt: new Date().toISOString(),
