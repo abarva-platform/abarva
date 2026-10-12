@@ -25,6 +25,8 @@ test("v6 keeps the exact source set and distinguishes unverified assertions from
   assert.equal(report.quality_gate_status, "pass");
   assert.deepEqual(report.source_assertion_coverage, {
     program_expected_value_rows: 38, outcome_finance_amount_rows: 7, benefit_finance_amount_rows: 18,
+    benefit_funded_spend_rows: 18, benefit_actual_spend_ytd_rows: 18,
+    usage_promise_rows: 18, usage_finance_amount_rows: 18, outcome_feed_finance_amount_rows: 18,
   });
   assert.equal(report.gates.find((gate) => gate.id === "source_assertion_field_coverage")?.status, "pass");
   assert.equal(report.gates.find((gate) => gate.id === "foundation_declared_identity")?.status, "pass");
@@ -52,8 +54,8 @@ test("v6 physical plan ties each asserted amount to one exact source record and 
   assert.equal(plan.sourceFiles.length, 17);
   assert.equal(plan.sourceRecords.length, 3775);
   assert.equal(plan.objects.length, 1394);
-  assert.equal(plan.measures.length, 1338);
-  assert.equal(plan.projectionMeasureRefs.length, 486);
+  assert.equal(plan.measures.length, 1410);
+  assert.equal(plan.projectionMeasureRefs.length, 558);
   assert.equal(Object.values(viewCounts).reduce((sum, count) => sum + count, 0), 352);
   assert.ok(plan.projectionManifests.every((row) => row.projection_version === 6));
   assert.equal(plan.measures.filter((row) => row.metric_key === "program_source_expected_value_usd").length, 38);
@@ -62,6 +64,8 @@ test("v6 physical plan ties each asserted amount to one exact source record and 
   assert.equal(plan.measures.filter((row) => row.metric_key.startsWith("spend_source_")).length, 81);
   assert.equal(plan.measures.filter((row) => row.metric_key.startsWith("ai_outcome_feed_")).length, 72);
   assert.equal(plan.measures.filter((row) => ["usage_feed_power_users", "usage_feed_usage_events"].includes(row.metric_key)).length, 36);
+  assert.equal(plan.measures.filter((row) => ["benefit_feed_source_funded_spend_usd", "benefit_feed_source_actual_spend_ytd_usd",
+    "usage_feed_source_promised_value_usd", "usage_feed_source_finance_assertion_usd"].includes(row.metric_key)).length, 72);
   assert.ok(plan.measures.filter((row) => row.metric_key.endsWith("finance_assertion_usd"))
     .every((row) => row.source_record_id && row.attributes_json.source_assertion_only === true &&
       row.attributes_json.claimable_value_usd === null));
@@ -100,11 +104,13 @@ test("v6 physical gate rejects altered spend, usage and separate outcome-feed fi
   spend.display_payload_json.source_forecast_next_year_usd += 1;
   usage.display_payload_json.usage_events += 1;
   claim.display_payload_json.outcome_feed_actual += 1;
+  claim.display_payload_json.usage_feed_source_finance_assertion_usd += 1;
   const gate = validatePhysicalPlan(report, plan, viewCounts);
   assert.equal(gate.status, "fail");
   assert.ok(gate.errors.some((error) => error.includes("spend source field differs")));
   assert.ok(gate.errors.some((error) => error.includes("usage source field differs")));
   assert.ok(gate.errors.some((error) => error.includes("outcome feed field differs")));
+  assert.ok(gate.errors.some((error) => error.includes("separate money source field differs")));
 });
 
 test("v6 physical gate rejects changed Foundation facts and raw relationship source records", () => {

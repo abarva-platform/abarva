@@ -353,6 +353,11 @@ function addCanonicalRows(plan, report) {
         claim_status_feed_missing: claim.claim_status_feed_missing,
         ...(candidateConfig(report).sourceAssertions ? {
           source_asserted_finance_value_usd: claim.source_asserted_finance_value_usd,
+          benefit_feed_source_funded_spend_usd: claim.benefit_feed_source_funded_spend_usd,
+          benefit_feed_source_actual_spend_ytd_usd: claim.benefit_feed_source_actual_spend_ytd_usd,
+          usage_feed_source_promised_value_usd: claim.usage_feed_source_promised_value_usd,
+          usage_feed_source_finance_assertion_usd: claim.usage_feed_source_finance_assertion_usd,
+          usage_feed_source_claim_status: claim.usage_feed_source_claim_status,
           source_finance_validation_status: claim.source_finance_validation_status,
           source_value_claim_status: claim.source_value_claim_status,
           source_tower_claim_allowed: claim.source_tower_claim_allowed,
@@ -402,6 +407,18 @@ function addCanonicalRows(plan, report) {
         source_field: "finance_validated_value_usd", source_finance_validation_status: claim.source_finance_validation_status,
         source_evidence_id: claim.source_evidence_id, cross_feed_conflict: claim.finance_feed_conflict,
         evidence_reference_registered: claim.evidence_reference_registered });
+    if (candidateConfig(report).sourceAssertions) {
+      for (const [metric, value, sourceField, sourceRef] of [
+        ["benefit_feed_source_funded_spend_usd", claim.benefit_feed_source_funded_spend_usd, "funded_spend_usd", benefitRef],
+        ["benefit_feed_source_actual_spend_ytd_usd", claim.benefit_feed_source_actual_spend_ytd_usd, "actual_spend_ytd_usd", benefitRef],
+        ["usage_feed_source_promised_value_usd", claim.usage_feed_source_promised_value_usd, "promised_value_usd", ref],
+        ["usage_feed_source_finance_assertion_usd", claim.usage_feed_source_finance_assertion_usd, "finance_validated_value_usd", ref],
+      ]) addMeasure(plan, report, id, metric, value, "USD", sourceRef, "estimated", {
+        source_field: sourceField, source_assertion_only: true,
+        approved_fy_budget_usd: null, claimable_value_usd: null,
+        do_not_sum_across_feeds: true, cross_feed_conflict: claim.finance_feed_conflict,
+      });
+    }
     if (candidateConfig(report).sourceAssertions) {
       const outcomeRef = claim.source_refs.find((item) => item.source_file.startsWith("SA11_"));
       for (const [metric, value, unit, sourceField] of [
@@ -627,8 +644,13 @@ function addProjectionRows(plan, report, views) {
           measure.source_record_id === sourceRowId(report, outcomeRef) &&
           measure.metric_key.startsWith("ai_outcome_feed_"));
         if (outcomeMeasures.length !== 4) throw new Error(`Outcome feed lacks canonical measures: ${row.row_key}`);
-        canonicalMeasureRefs = [assertion, ...outcomeMeasures];
+        const moneyMeasures = plan.measures.filter((measure) => measure.subject_object_id === canonicalObjectId &&
+          ["benefit_feed_source_funded_spend_usd", "benefit_feed_source_actual_spend_ytd_usd",
+            "usage_feed_source_promised_value_usd", "usage_feed_source_finance_assertion_usd"].includes(measure.metric_key));
+        if (moneyMeasures.length !== 4) throw new Error(`Separate source money fields lack canonical measures: ${row.row_key}`);
+        canonicalMeasureRefs = [assertion, ...outcomeMeasures, ...moneyMeasures];
         payload.outcome_feed_measure_refs = Object.fromEntries(outcomeMeasures.map((measure) => [measure.metric_key, measure.id]));
+        payload.source_money_measure_refs = Object.fromEntries(moneyMeasures.map((measure) => [measure.metric_key, measure.id]));
         payload.source_finance_assertion_measure_id = assertion.id;
       } else if (sourceAssertions && page === "adoption_lens") {
         canonicalObjectId = objectId(report, "ai_use_case", row.row_key);
@@ -800,6 +822,10 @@ export function buildPhysicalPlan(report) {
       ["program_source_expected_value_usd", "Source-stated program expected value", "Planning source assertion with period, approval and realization unverified; never an approved or claimable amount.", "USD", "point_in_time", "none"],
       ["outcome_source_finance_assertion_usd", "Outcome-feed Finance assertion", "Exact source-stated amount only; independent Finance and evidence approval have not been verified for Tower.", "USD", "point_in_time", "none"],
       ["benefit_feed_source_finance_assertion_usd", "Benefit-feed Finance assertion", "Exact source-stated amount only; conflicting feeds and unapproved evidence prevent a claimable value.", "USD", "point_in_time", "none"],
+      ["benefit_feed_source_funded_spend_usd", "Benefit-feed source funded spend", "Source-stated funded spend without an approved fiscal basis; not approved Tower funding.", "USD", "point_in_time", "none"],
+      ["benefit_feed_source_actual_spend_ytd_usd", "Benefit-feed source YTD spend", "Source-stated spend for an unverified period; not realized value.", "USD", "point_in_time", "none"],
+      ["usage_feed_source_promised_value_usd", "Usage-feed source promise", "Source-specific planning promise; do not add to benefit-feed promise.", "USD", "point_in_time", "none"],
+      ["usage_feed_source_finance_assertion_usd", "Usage-feed Finance assertion", "Source-specific assertion that conflicts with other feeds; no approved claimable amount.", "USD", "point_in_time", "none"],
     ] : []),
   ];
   plan.metricDefinitions = metricDefinitions.map(([metric_key, metric_name, definition, unit, cadence, aggregation_rule]) => ({
@@ -1187,6 +1213,25 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
       }
     }
     for (const row of rowsForPage(plan, "value_proof").filter((item) => !item.row_key.startsWith("metric:"))) {
+      for (const [metric, payloadField, sourceField, sourcePrefix] of [
+        ["benefit_feed_source_funded_spend_usd", "benefit_feed_source_funded_spend_usd", "funded_spend_usd", "SA08_"],
+        ["benefit_feed_source_actual_spend_ytd_usd", "benefit_feed_source_actual_spend_ytd_usd", "actual_spend_ytd_usd", "SA08_"],
+        ["usage_feed_source_promised_value_usd", "usage_feed_source_promised_value_usd", "promised_value_usd", "SA09_"],
+        ["usage_feed_source_finance_assertion_usd", "usage_feed_source_finance_assertion_usd", "finance_validated_value_usd", "SA09_"],
+      ]) {
+        const ref = row.source_refs_json.find((item) => item.source_file.startsWith(sourcePrefix));
+        const sourceId = ref && sourceRowId(report, ref);
+        const rawMoney = sourceRecordsById.get(sourceId)?.payload_json;
+        const measure = measuresById.get(row.display_payload_json.source_money_measure_refs?.[metric]);
+        if (!rawMoney || row.display_payload_json[payloadField] !== Number(rawMoney[sourceField]) ||
+            !measure || measure.value_number !== Number(rawMoney[sourceField]) ||
+            measure.source_record_id !== sourceId || measure.subject_object_id !== row.primary_object_id ||
+            measure.attributes_json.source_assertion_only !== true ||
+            measure.attributes_json.claimable_value_usd !== null ||
+            !plan.projectionMeasureRefs.some((item) => item.projection_entry_id === row.projection_entry_id && item.measure_id === measure.id)) {
+          errors.push(`separate money source field differs from exact intake and canonical measure: ${row.row_key}:${metric}`);
+        }
+      }
       const outcomeRef = row.source_refs_json.find((ref) => ref.source_file.startsWith("SA11_"));
       const raw = outcomeRef && sourceRecordsById.get(sourceRowId(report, outcomeRef))?.payload_json;
       for (const [metric, payloadField, sourceField] of [
@@ -1219,7 +1264,9 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
         plan.measures.filter((row) => row.metric_key === "benefit_feed_source_finance_assertion_usd").length !== 18 ||
         plan.measures.filter((row) => row.metric_key.startsWith("spend_source_")).length !== 81 ||
         plan.measures.filter((row) => row.metric_key.startsWith("ai_outcome_feed_")).length !== 72 ||
-        plan.measures.filter((row) => ["usage_feed_power_users", "usage_feed_usage_events"].includes(row.metric_key)).length !== 36) {
+        plan.measures.filter((row) => ["usage_feed_power_users", "usage_feed_usage_events"].includes(row.metric_key)).length !== 36 ||
+        plan.measures.filter((row) => ["benefit_feed_source_funded_spend_usd", "benefit_feed_source_actual_spend_ytd_usd",
+          "usage_feed_source_promised_value_usd", "usage_feed_source_finance_assertion_usd"].includes(row.metric_key)).length !== 72) {
       errors.push("source assertion measure coverage differs from declared source fields");
     }
   }

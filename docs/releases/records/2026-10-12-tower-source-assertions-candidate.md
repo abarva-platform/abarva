@@ -34,7 +34,7 @@ Release lane: `client-data-lane`.
 - Adds a versioned candidate mapping while preserving the existing active assessment and earlier candidate variants.
 - Retains the program source's expected value separately from its planning budget.
 - Retains source-reported spend history, forecast and savings opportunity, program dates and progress, outcome source context, usage periods and events, and risk/contract context without promoting them into an approved headline.
-- Retains outcome-feed and benefit-feed Finance-labeled amounts and statuses as source assertions with record lineage and plain-language caveats. Conflicting feeds remain separate.
+- Retains outcome, benefit, and usage feed Finance-labeled amounts, benefit-feed spend, source promises, and statuses as separate source assertions with record lineage and plain-language caveats. Conflicting feeds remain separate.
 - Loads declared-ID Foundation records as individual objects. Raw relationship and maturity rows remain in Layer 2; neither becomes a graph edge or an inferred maturity object. Evidence register content remains excluded because approval is absent.
 - Requires full source-to-canonical-to-projection parity for mapped fields and refuses an unsupported claimable or approved amount.
 - Adds a manifest with `load_approval` and `serving_approval` null.

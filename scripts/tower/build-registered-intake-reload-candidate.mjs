@@ -425,6 +425,11 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
         claimable_value_usd: null,
         ...(sourceAssertionsEnabled ? {
           source_asserted_finance_value_usd: amount(b.finance_validated_value_usd),
+          benefit_feed_source_funded_spend_usd: amount(b.funded_spend_usd),
+          benefit_feed_source_actual_spend_ytd_usd: amount(b.actual_spend_ytd_usd),
+          usage_feed_source_promised_value_usd: amount(u?.promised_value_usd),
+          usage_feed_source_finance_assertion_usd: amount(u?.finance_validated_value_usd),
+          usage_feed_source_claim_status: u?.value_claim_status || null,
           source_finance_validation_status: b.finance_validation_status || null,
           source_value_claim_status: b.value_claim_status || null,
           source_tower_claim_allowed: b.tower_claim_allowed || null,
@@ -593,6 +598,11 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
         evidence_reference_registered: item.evidence_reference_registered,
         ...(sourceAssertionsEnabled ? {
           source_asserted_finance_value_usd: item.source_asserted_finance_value_usd,
+          benefit_feed_source_funded_spend_usd: item.benefit_feed_source_funded_spend_usd,
+          benefit_feed_source_actual_spend_ytd_usd: item.benefit_feed_source_actual_spend_ytd_usd,
+          usage_feed_source_promised_value_usd: item.usage_feed_source_promised_value_usd,
+          usage_feed_source_finance_assertion_usd: item.usage_feed_source_finance_assertion_usd,
+          usage_feed_source_claim_status: item.usage_feed_source_claim_status,
           outcome_feed_kpi_name: item.outcome_feed_kpi_name,
           outcome_feed_baseline: item.outcome_feed_baseline,
           outcome_feed_target: item.outcome_feed_target,
@@ -754,11 +764,17 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
         page.source_asserted_finance_value_usd === item.source_asserted_finance_value_usd &&
         page.source_finance_validation_status === raw.finance_validation_status &&
         page.source_value_claim_status === raw.value_claim_status &&
+        page.benefit_feed_source_funded_spend_usd === amount(raw.funded_spend_usd) &&
+        page.benefit_feed_source_actual_spend_ytd_usd === amount(raw.actual_spend_ytd_usd) &&
         page.source_evidence_id === raw.evidence_id &&
         page.claimable_value_usd === null && item.claimable_value_usd === null;
     }) && usage.every((raw) => {
       const page = pages.adoption_lens.find((row) => row.row_key === raw.ai_use_case_id);
-      return page && page.power_users === amount(raw.power_users) &&
+      const value = pages.value_proof.find((row) => row.row_key === raw.ai_use_case_id);
+      return page && value && value.usage_feed_source_promised_value_usd === amount(raw.promised_value_usd) &&
+        value.usage_feed_source_finance_assertion_usd === amount(raw.finance_validated_value_usd) &&
+        value.usage_feed_source_claim_status === (raw.value_claim_status || null) &&
+        value.claimable_value_usd === null && page.power_users === amount(raw.power_users) &&
         page.usage_events === amount(raw.usage_events) &&
         page.usage_period_start === (raw.usage_period_start || null) &&
         page.usage_period_end === (raw.usage_period_end || null) &&
@@ -886,6 +902,11 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
       program_expected_value_rows: programs.filter((row) => row.expected_value_usd.trim()).length,
       outcome_finance_amount_rows: metrics.filter((row) => row.finance_attested_value_usd.trim()).length,
       benefit_finance_amount_rows: benefits.filter((row) => row.finance_validated_value_usd.trim()).length,
+      benefit_funded_spend_rows: benefits.filter((row) => row.funded_spend_usd.trim()).length,
+      benefit_actual_spend_ytd_rows: benefits.filter((row) => row.actual_spend_ytd_usd.trim()).length,
+      usage_promise_rows: usage.filter((row) => row.promised_value_usd.trim()).length,
+      usage_finance_amount_rows: usage.filter((row) => row.finance_validated_value_usd.trim()).length,
+      outcome_feed_finance_amount_rows: kpis.filter((row) => row.finance_validated_value_usd.trim()).length,
     } } : {}),
     gates,
     coverage_gaps: coverageGaps,
