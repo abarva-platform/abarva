@@ -16,6 +16,7 @@ interface MockQueryBuilder {
   select: jest.Mock;
   eq: jest.Mock;
   is: jest.Mock;
+  in: jest.Mock;
   maybeSingle: jest.Mock;
   then: (
     resolve: (value: { data: unknown[]; error: null }) => unknown,
@@ -27,6 +28,7 @@ function makeBuilder(state: QueryState, rowsByTable: Record<string, unknown>) {
     select: jest.fn(() => builder),
     eq: jest.fn(() => builder),
     is: jest.fn(() => builder),
+    in: jest.fn(() => builder),
     maybeSingle: jest.fn(async () => {
       const value = rowsByTable[state.table];
       return {
@@ -47,8 +49,11 @@ function makeBuilder(state: QueryState, rowsByTable: Record<string, unknown>) {
 }
 
 function setupRows(rowsByTable: Record<string, unknown>) {
+  const participants = rowsByTable.engagement_participants;
+  const rows = { ...rowsByTable, engagements: rowsByTable.engagements ??
+    (Array.isArray(participants) ? participants.map((row) => ({ id: row.engagement_id })) : []) };
   fromMock.mockImplementation((table: string) =>
-    makeBuilder({ table }, rowsByTable),
+    makeBuilder({ table }, rows),
   );
 }
 
