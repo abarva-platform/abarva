@@ -1,0 +1,19 @@
+{
+  "dataset_id": "enterprise-integrated-insights-v1",
+  "title": "Integrated enterprise insight candidates",
+  "client_key": "meridian-health",
+  "tenant_scope": "canonical_tenant",
+  "source_layer": "signal",
+  "classification": "confidential",
+  "owner": "Enterprise context operations",
+  "source_basis": "Version-pinned canonical objects, declared relationships and deterministic measures; admitted Cube measure links retain lineage.",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "postgres_fts",
+  "retrieval_proof_required": true,
+  "expected_object_count": null,
+  "approved_by": "Pending human approval",
+  "approved_at": "2026-10-11",
+  "load_approval": null,
+  "serving_approval": null,
+  "notes": "Declaration only. No load is authorized. Read-only planning must establish the exact assessment, candidate count and load version hash first. The approval source_set_hash binds canonical inputs, rules and result together. Loaded candidates remain not_reviewed and are not wired to any product or agent."
+}

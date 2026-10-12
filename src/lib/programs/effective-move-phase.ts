@@ -94,25 +94,31 @@ export async function resolveEffectiveMovePhase(
 
   let effectivePhase = evidenceEffectivePhase;
   if (effectivePhase > 1) {
-    const gateReadinessByPhase = new Map<number, boolean>();
-    for (let priorPhase = 1; priorPhase < effectivePhase; priorPhase += 1) {
-      try {
-        const gate = await deps.evaluateGate(
-          ctx,
-          move.id,
-          priorPhase,
-          priorPhase + 1,
-          { allowHistoricalPhase: true },
-        );
-        gateReadinessByPhase.set(
-          priorPhase,
-          !gate.failedChecks.some((check) => check.severity === "hard"),
-        );
-      } catch {
-        // A gate that cannot be evaluated has not been shown to hold.
-        gateReadinessByPhase.set(priorPhase, false);
-      }
-    }
+    const priorPhases = Array.from(
+      { length: effectivePhase - 1 },
+      (_, index) => index + 1,
+    );
+    const gateReadiness = await Promise.all(
+      priorPhases.map(async (priorPhase) => {
+        try {
+          const gate = await deps.evaluateGate(
+            ctx,
+            move.id,
+            priorPhase,
+            priorPhase + 1,
+            { allowHistoricalPhase: true },
+          );
+          return [
+            priorPhase,
+            !gate.failedChecks.some((check) => check.severity === "hard"),
+          ] as const;
+        } catch {
+          // A gate that cannot be evaluated has not been shown to hold.
+          return [priorPhase, false] as const;
+        }
+      }),
+    );
+    const gateReadinessByPhase = new Map<number, boolean>(gateReadiness);
     effectivePhase = effectivePhaseAfterGateValidation(
       effectivePhase,
       gateReadinessByPhase,
