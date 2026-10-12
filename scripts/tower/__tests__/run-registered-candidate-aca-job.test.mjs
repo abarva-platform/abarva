@@ -121,6 +121,20 @@ test("serving readback rejects stale view rows even when physical rows match", (
   assert.throws(() => validateServingPage("command_center", rows, [], priorRows, config, receipt, reviewed), /Serving page readback differs/);
 });
 
+test("candidate and serving fingerprints use the preflight row ordering", () => {
+  const config = { assessment };
+  const receipt = { projection_version: 4 };
+  const rows = [{ row_key: "z", source_hash: sha("z") }, { row_key: "a", source_hash: sha("a") }];
+  const sorted = [rows[1], rows[0]];
+  const priorRows = [{ row_key: "prior", source_hash: sha("prior") }];
+  const reviewed = { physical_view_counts: { command_center: 2 },
+    physical_view_fingerprints: { command_center: sha(JSON.stringify(sorted)) },
+    prior_view_fingerprints: { command_center: { rows: 1, fingerprint_sha256: sha(JSON.stringify(priorRows)) } } };
+  const served = rows.map((row) => ({ assessment_id: assessment, projection_version: 4, ...row }));
+  assert.equal(validateServingPage("command_center", rows, served.reverse(), priorRows,
+    config, receipt, reviewed).fingerprint, reviewed.physical_view_fingerprints.command_center);
+});
+
 test("serving value view includes only checked value and cost populations", () => {
   const config = { assessment };
   const receipt = { projection_version: 4 };

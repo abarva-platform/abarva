@@ -26,6 +26,10 @@ const PAGE_TABLE = Object.freeze({
 });
 const sha = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
 const jsonBytes = (value) => Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
+const pageFingerprint = (rows) => sha(JSON.stringify(rows
+  .map(({ row_key, source_hash }) => ({ row_key, source_hash }))
+  .sort((left, right) => left.row_key.localeCompare(right.row_key) ||
+    left.source_hash.localeCompare(right.source_hash))));
 
 function required(env, key) {
   const value = env[key];
@@ -202,8 +206,8 @@ function runOperator(mode, candidatePath, receiptPath, outPath, config, reviewed
 
 export function validateServingPage(page, rows, served, priorRows, config, receipt, reviewed) {
   const count = rows.length;
-  const fingerprint = sha(JSON.stringify(rows));
-  const servedFingerprint = sha(JSON.stringify(served.map(({ row_key, source_hash }) => ({ row_key, source_hash }))));
+  const fingerprint = pageFingerprint(rows);
+  const servedFingerprint = pageFingerprint(served);
   const prior = { rows: priorRows.length, fingerprint_sha256: sha(JSON.stringify(priorRows)) };
   if (count !== reviewed.physical_view_counts[page] ||
       fingerprint !== reviewed.physical_view_fingerprints[page] ||
@@ -224,7 +228,7 @@ export function servingRowsForPage(page, allRows, config, receipt, reviewed) {
   }
   if (page === "value_proof") {
     const costRows = allRows.filter((row) => row.page_key === "cost_lens");
-    const costFingerprint = sha(JSON.stringify(costRows.map(({ row_key, source_hash }) => ({ row_key, source_hash }))));
+    const costFingerprint = pageFingerprint(costRows);
     if (costRows.length !== reviewed.physical_view_counts.cost_lens ||
         costFingerprint !== reviewed.physical_view_fingerprints.cost_lens) {
       throw new Error("Serving value view cost population differs");
