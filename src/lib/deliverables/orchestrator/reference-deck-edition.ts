@@ -1,6 +1,7 @@
 import { factTokens } from "./numeric-lineage-tokens";
 import { formatConsultantCents, formatConsultantPercent } from "@/lib/programs/value-engine/format-money";
 import { parseOperatingAdoption } from "@/lib/programs/operating-adoption";
+import { ROM_DRIVER_LABELS, type RomDriver } from "@/lib/pricing/moves-workflow/rom-drivers";
 import type { EditionInputs } from "./reference-deck-inputs";
 import type { EditionWords } from "./reference-deck-words";
 import { buildReferenceSlotTable, type ReferenceSlotTable } from "./reference-deck-slots";
@@ -385,7 +386,7 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
             if (!unit) return [];
             const ref = `rom:${rom.id}:unit_hours:${driver}`;
             const bound = bind(ref, unit.source, `${unit.value} h`);
-            return [[safeRead(driver), "Unit-hour driver", bound, unit.confidence, GAP, GAP, GAP, ref] as ReferenceCell[]];
+            return [[ROM_DRIVER_LABELS[driver as RomDriver] ?? safeRead(driver), "Unit-hour driver", bound, unit.confidence, GAP, GAP, GAP, "Approved delivery estimate"] as ReferenceCell[]];
           }) : [];
         return unitRows.length ? [table(["Driver", "Basis", "Unit hours", "Confidence", "Low", "Plan", "High", "Source"], unitRows)]
           : [gapPanel("The delivery hours still need an approved basis")];

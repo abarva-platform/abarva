@@ -15,6 +15,7 @@ import "server-only";
 // The second governs.
 
 import type { InspectedDeck, InspectedSlide } from "./deck-inspection";
+import { referenceCellTextHeight } from "./reference-deck-layout";
 import { answerIsCountDump, clientCopyIssue, coverUsesEditionRule, figuresOnSlide, visibleFiguresOnSlide, referenceArchetypeGaps, referenceSourceLine, type ReferenceDeckSpec } from "./reference-deck-model";
 
 /**
@@ -46,7 +47,7 @@ export type DeckFinding =
   | { kind: "empty_table"; slide: number; message: string }
   | { kind: "slide_count"; message: string }
   | { kind: "canvas"; message: string }
-  | { kind: "reference_structure" | "reference_source" | "reference_edition" | "reference_editability" | "reference_client_copy" | "reference_gap" | "reference_count_dump" | "reference_flow_label" | "fallback_words"; slide: number; message: string; detailCode?: string };
+  | { kind: "reference_structure" | "reference_source" | "reference_edition" | "reference_editability" | "reference_client_copy" | "reference_layout" | "reference_gap" | "reference_count_dump" | "reference_flow_label" | "fallback_words"; slide: number; message: string; detailCode?: string };
 
 export interface DeckVerdict {
   ok: boolean;
@@ -82,7 +83,7 @@ function judgeReferenceSlide(
   if (!expected) return;
   const names = slide.objectNames ?? [];
   const named = slide.namedText ?? {};
-  const add = (kind: "reference_structure" | "reference_source" | "reference_edition" | "reference_editability" | "reference_client_copy" | "reference_gap" | "reference_count_dump" | "reference_flow_label", message: string, detailCode?: string) =>
+  const add = (kind: "reference_structure" | "reference_source" | "reference_edition" | "reference_editability" | "reference_client_copy" | "reference_layout" | "reference_gap" | "reference_count_dump" | "reference_flow_label", message: string, detailCode?: string) =>
     findings.push({ kind, slide: slide.index, message, ...(detailCode ? { detailCode } : {}) });
   if (slide.pictureCount > names.filter((name) => name.startsWith("ref:logo:picture")).length)
     add("reference_editability", `slide ${slide.index}: raster picture outside the logo is not editable.`);
@@ -103,6 +104,12 @@ function judgeReferenceSlide(
   if ((visibleText.match(/Gap —[^.;]+/g) ?? []).length > 1)
     add("reference_gap", `slide ${slide.index}: an empty-state message repeats in the exhibit.`, "repeated_empty_state");
   if (expected.archetype === "cover" || expected.archetype === "divider") return;
+  for (const cell of slide.tableText ?? []) {
+    if (!Number.isFinite(cell.fontSize) || cell.fontSize < 10)
+      add("reference_layout", `slide ${slide.index}: table text is below the readable type floor.`, "table_type_size");
+    else if (cell.heightIn + 0.01 < referenceCellTextHeight(cell.text, cell.widthIn, cell.fontSize))
+      add("reference_layout", `slide ${slide.index}: a table text box cannot hold its wrapped content.`, "table_text_overflow");
+  }
   for (const gap of referenceArchetypeGaps(expected, spec.edition))
     add("reference_structure", `slide ${slide.index}: ${expected.archetype} ${gap}.`);
   const actionMarker = `ref:action:${expected.archetype}:${expected.section ?? ""}`;
