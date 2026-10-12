@@ -9,6 +9,23 @@ export interface ReviewedDeliverableVersion {
   planHash: string | null;
 }
 
+export function reviewedDeliverableVersionMatches(
+  expected: ReviewedDeliverableVersion,
+  actual: unknown,
+): boolean {
+  if (!actual || typeof actual !== "object" || Array.isArray(actual))
+    return false;
+  return (
+    [
+      "version",
+      "versionId",
+      "contentHash",
+      "planBindingHash",
+      "planHash",
+    ] as const
+  ).every((key) => expected[key] === (actual as Record<string, unknown>)[key]);
+}
+
 export class DeliverableReviewChanged extends Error {
   readonly code = "deliverable_review_changed";
   readonly status = 409;

@@ -32,6 +32,10 @@ import {
 import type { TenancyCtx } from "./types.db";
 import type { ValueCaseResult, LeverResult } from "./value-engine/types";
 import { assertP5MeasurementContractPlanCurrent } from "./p5-measurement-contract";
+import {
+  captureReviewedDeliverableVersion,
+  reviewedDeliverableVersionMatches,
+} from "./deliverable-review-receipt";
 
 interface ContractRow {
   id: string;
@@ -319,7 +323,7 @@ export async function loadP5HandoffBasis(
   const contract = contracts[0];
   const versionRead = await sb
     .from("deliverable_versions")
-    .select("content, structured_data")
+    .select("id, content, structured_data")
     .eq("deliverable_id", contract.id)
     .eq("version", contract.current_version);
   if (versionRead.error || !Array.isArray(versionRead.data))
@@ -329,6 +333,7 @@ export async function loadP5HandoffBasis(
       503,
     );
   const versions = versionRead.data as Array<{
+    id: string;
     content: string;
     structured_data: unknown;
   }>;
@@ -348,6 +353,26 @@ export async function loadP5HandoffBasis(
     content: versions[0].content,
     structuredData: versions[0].structured_data,
   });
+  const approvedReceipt = contract.structured_data?.approvedReviewReceipt;
+  if (!approvedReceipt)
+    throw new P5HandoffRefusal(
+      "contract_review_binding_absent",
+      "The signed measurement contract has no verified approval receipt. Review a governed new version; the existing signed bytes are preserved.",
+    );
+  if (
+    !reviewedDeliverableVersionMatches(
+      captureReviewedDeliverableVersion(
+        contract.current_version,
+        versions[0],
+        true,
+      ),
+      approvedReceipt,
+    )
+  )
+    throw new P5HandoffRefusal(
+      "contract_review_binding_stale",
+      "The recorded approval does not match this measurement version, content and plan. Review the current governed contract before accepting a handoff.",
+    );
   const binding: P5HandoffBinding = {
     tenantKey,
     clientId: ctx.clientId,

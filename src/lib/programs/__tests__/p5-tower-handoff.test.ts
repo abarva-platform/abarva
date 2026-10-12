@@ -179,6 +179,7 @@ import {
   captureP5MeasurementContractPlan,
   renderP5MeasurementContractPlanHtml,
 } from "../p5-measurement-contract";
+import { captureReviewedDeliverableVersion } from "../deliverable-review-receipt";
 const lit = (value: number) => ({
   kind: "literal" as const,
   value,
@@ -359,6 +360,7 @@ beforeEach(() => {
   const signedContent = `Synthetic signed measurement contract${renderP5MeasurementContractPlanHtml(contractPlan)}`;
   mockTables.deliverable_versions = [
     {
+      id: "44444444-4444-4444-a444-444444444444",
       deliverable_id: contractId,
       version: 2,
       content: signedContent,
@@ -371,6 +373,13 @@ beforeEach(() => {
       },
     },
   ];
+  (
+    mockTables.deliverables_v2[0].structured_data as Record<string, unknown>
+  ).approvedReviewReceipt = captureReviewedDeliverableVersion(
+    2,
+    mockTables.deliverable_versions[0],
+    true,
+  );
   mockTables.outcome_ledger = [];
   mockTransaction.mockImplementation(async (_url, work) => {
     const prior = [...mockTables.outcome_ledger];
@@ -727,6 +736,41 @@ test("refuses a signed version without an immutable plan binding", async () => {
   expect((await post(reviewed)).status).toBe(409);
   expect(mockTables.outcome_ledger).toHaveLength(0);
 });
+
+test("refuses a signed contract whose verified approval receipt is absent", async () => {
+  delete (
+    mockTables.deliverables_v2[0].structured_data as Record<string, unknown>
+  ).approvedReviewReceipt;
+  const response = await get();
+  expect(response.status).toBe(409);
+  expect((await response.json()).error).toBe("contract_review_binding_absent");
+  expect(mockTables.outcome_ledger).toHaveLength(0);
+});
+
+test.each([
+  "version",
+  "versionId",
+  "contentHash",
+  "planBindingHash",
+  "planHash",
+])(
+  "refuses stale approval receipt %s even with a valid generated contract",
+  async (field) => {
+    const receipt = (
+      mockTables.deliverables_v2[0].structured_data as Record<string, unknown>
+    ).approvedReviewReceipt as Record<string, unknown>;
+    receipt[field] =
+      field === "version"
+        ? 1
+        : field === "versionId"
+          ? "unreviewed-version"
+          : "a".repeat(64);
+    const response = await get();
+    expect(response.status).toBe(409);
+    expect((await response.json()).error).toBe("contract_review_binding_stale");
+    expect(mockTables.outcome_ledger).toHaveLength(0);
+  },
+);
 
 test("refuses changed signed text even when its saved-plan definition block is still present", async () => {
   mockTables.deliverable_versions[0].content +=

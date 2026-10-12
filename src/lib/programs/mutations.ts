@@ -731,6 +731,7 @@ export async function signOffDeliverable(
     currentVersion;
   const {
     captureReviewedDeliverableVersion,
+    reviewedDeliverableVersionMatches,
     DeliverableReviewChanged,
     DeliverableReviewUnavailable,
   } = await import("./deliverable-review-receipt");
@@ -750,15 +751,7 @@ export async function signOffDeliverable(
       opts.reviewedVersion.planHash !== null,
     );
     if (
-      (
-        [
-          "version",
-          "versionId",
-          "contentHash",
-          "planBindingHash",
-          "planHash",
-        ] as const
-      ).some((key) => currentReceipt[key] !== opts.reviewedVersion![key])
+      !reviewedDeliverableVersionMatches(currentReceipt, opts.reviewedVersion)
     )
       throw new DeliverableReviewChanged();
     if (opts.reviewedVersion.planHash) {

@@ -16,6 +16,8 @@ Generation captures a copy of the saved measurement plan before authoring starts
 
 The shared document sign-off route carries the reviewed version ID, content hash and applicable plan receipt into the real mutation. The mutation verifies that receipt and compares the current-version pointer in the final update. Concurrent generation refuses approval instead of signing a newer version with an older review or restoring an older pointer. The durable approval records the verified receipt.
 
+P5 readback also verifies that durable approval receipt against the current signed version ID, content and plan. A signed status alone cannot substitute for a verified review of that version; an absent or stale approval receipt refuses the handoff.
+
 P5 completion requires current publication readback when the new flag is enabled. The acceptance and decision-trace links open a scoped Programs page at `/strategic-moves/[moveId]/tower-handoff`, which reads only the already-authorized exact-Move ledger projection. Tower also exposes the same planned readback through `?moveId=` under its existing module permission. The decision trace distinguishes unavailable state from an absent publication, and the baseline projection withholds prior Move rows while another Move loads or fails.
 
 ## Layer Impact
@@ -51,7 +53,7 @@ P5 completion requires current publication readback when the new flag is enabled
 - PASS: baseline identity regressions fail before the fix and pass afterward; removing the identity key kills both regressions.
 - PASS: four isolated stale-plan regressions fail before the currency check and pass afterward. Source, comparator, participant and cadence edits retain the signed version unchanged and refuse review/acceptance.
 - PASS: signed-plan repair run, 1046 tests across 23 suites and 54 of 55 mutation probes killed. The redundant passive-clear survivor remains protected by the render-time Move guard. This is historical local proof before the final sign-off version fence; actual saved files remain pending.
-- PASS: both actual-mutation version-race regressions fail before the guard and pass afterward. The route-to-real-mutation fixture covers both interleavings, changed content, changed saved plan, changed plan receipt and unavailable reads. The focused sign-off run passes 47 tests across two suites without database or runtime writes.
+- PASS: both actual-mutation version-race regressions fail before the guard and pass afterward. The route-to-real-mutation fixture covers both interleavings, changed content, changed saved plan, changed plan receipt and unavailable reads. The final focused handoff/sign-off run passes 128 tests across three suites without database or runtime writes, including the matching durable approval receipt requirement.
 - PENDING: current full combined suite, final invariant mutation probes and complete local QA after the reviewed-version fence and current-main reconciliation.
 - PASS: real component renders at 1440 and 390 pixels, light and dark, with saved control selections and no horizontal overflow. Local synthetic fixtures do not establish runtime acceptance.
 - PENDING: final changed-file lint, orphan/reachability checks, coverage and tenancy censuses, manual/check, all six context/corpus validators, Node 24 typecheck and release check. There is still exactly one new persistent test file.
