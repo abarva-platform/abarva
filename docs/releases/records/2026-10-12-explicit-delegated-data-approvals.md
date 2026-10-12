@@ -46,6 +46,9 @@ coverage. Existing clause-provenance schema work is not replaced or incorporated
 - Home ratchet: 749/777, 12 baselined suites, no movement; no baseline rewrite.
 - Exact locally retained certified authority and decision bytes pass hash verification against
   committed trust anchors. This is not proof of private Blob upload or serving.
+- The 21 delegated security regressions run in the required behavior coverage sweep. Local full
+  sweep: 215 suites / 2,274 tests passed; lines/statements 90.03%, functions 72.12%, branches 73.13%.
+  Thresholds and collection scope are unchanged. Current-head CI rechecks the reconciled main tree.
 - Current-head CI records final integration and Postgres 16 results before merge.
 
 ## Rollout Plan

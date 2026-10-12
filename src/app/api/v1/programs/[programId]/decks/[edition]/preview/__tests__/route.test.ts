@@ -69,6 +69,14 @@ beforeEach(() => {
 });
 
 describe("read-only reference deck preview", () => {
+  it("refuses a clipped or unreadable native table before returning either format", async () => {
+    mockJudge.mockReturnValue({ fidelityScore: 90, findings: [{ kind: "reference_layout", slide: 10, detailCode: "table_text_overflow" }] });
+    const response = await GET(request("pdf"), params());
+    expect(response.status).toBe(422);
+    expect(await response.json()).toMatchObject({ error: "deck_render_refusal", findings: [{ kind: "reference_layout", slide: 10, detailCode: "table_text_overflow" }] });
+    expect(mockPdfInspect).not.toHaveBeenCalled();
+  });
+
   it("refuses a defective PDF after the PPTX checks pass", async () => {
     mockPdfInspect.mockResolvedValueOnce([{ kind: "reference_source", slide: 2, detailCode: "bound_figure_missing" }]);
     const result = await GET(request("pdf"), params());

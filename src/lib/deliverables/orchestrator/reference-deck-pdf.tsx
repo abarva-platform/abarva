@@ -3,6 +3,7 @@ import "server-only";
 import { Document, Page, Path, Svg, Text, View, type DocumentProps } from "@react-pdf/renderer";
 import { Fragment, type ReactElement } from "react";
 import { COLORS } from "@/lib/design/design-tokens";
+import { layoutReferenceTable, REFERENCE_TABLE_PADDING_X, REFERENCE_TABLE_PADDING_Y } from "./reference-deck-layout";
 import { referenceSourceLine, type ReferenceBlock, type ReferenceCell, type ReferenceDeckSpec } from "./reference-deck-model";
 
 const ink = COLORS.deckInk;
@@ -27,22 +28,27 @@ function PdfContents({ block }: { block: Extract<ReferenceBlock, { kind: "table"
   })}</View>;
 }
 
-function PdfBlock({ block }: { block: ReferenceBlock }) {
-  if (block.kind === "table") return (
-    <View style={{ marginTop: 12, borderWidth: 0.5, borderColor: rule }}>
-      {[block.columns, ...block.rows].map((row, index) => (
-        <View key={index} style={{ flexDirection: "row", backgroundColor: index === 0 ? ink : block.decisiveRows?.includes(index - 1) ? "#EFEEEA" : "#FFFFFF" }}>
+function PdfBlock({ block, sharedBody = false }: { block: ReferenceBlock; sharedBody?: boolean }) {
+  if (block.kind === "table") {
+    const layout = layoutReferenceTable(block, 870 / 72);
+    return <View wrap={false} style={{ marginTop: 12, borderWidth: 0.5, borderColor: rule }}>
+      {layout.cells.map((row, index) => (
+        <View key={index} style={{ flexDirection: "row", height: layout.rowHeights[index]! * 72,
+          backgroundColor: index === 0 ? ink : block.decisiveRows?.includes(index - 1) ? "#EFEEEA" : "#FFFFFF" }}>
           {row.map((cell, column) => (
-            <Text key={column} style={{ flex: 1, padding: 6, minHeight: 29, fontSize: row.length > 6 ? 8 : 10,
+            <Text key={column} hyphenationCallback={(word) => [word]} style={{ width: layout.columnWidths[column]! * 72,
+              paddingHorizontal: REFERENCE_TABLE_PADDING_X * 72, paddingVertical: REFERENCE_TABLE_PADDING_Y * 72,
+              fontSize: index === 0 ? layout.headerFontSize : layout.fontSize, lineHeight: 1.28,
+              fontFamily: index === 0 || block.decisiveRows?.includes(index - 1) ? "Helvetica-Bold" : "Helvetica",
               borderRightWidth: column < row.length - 1 ? 0.5 : 0, borderBottomWidth: 0.5,
               borderColor: rule, color: index === 0 ? "#FFFFFF" : ink }}>
-              {display(cell)}
+              {cell}
             </Text>
           ))}
         </View>
       ))}
-    </View>
-  );
+    </View>;
+  }
   if (block.kind === "metrics") return (
     <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
       {block.items.map((item, index) => (
@@ -63,7 +69,7 @@ function PdfBlock({ block }: { block: ReferenceBlock }) {
     const row = (items: { node: string; index: number }[], reverse = false) => <View style={{ flexDirection: "row", alignItems: "center", marginTop: 8 }}>
       {reverse && items.length < columns && <View style={{ flex: columns - items.length }} />}
       {items.map(({ node, index }, position) => <Fragment key={index}>
-        <View style={{ flex: 1, backgroundColor: "#EFEEEA", padding: 12, minHeight: 70 }}>
+        <View style={{ flex: 1, backgroundColor: "#EFEEEA", padding: sharedBody ? 9 : 12, minHeight: sharedBody ? 64 : 70 }}>
           {twoRows && <Text style={{ fontSize: 8, color: accent }}>{String(index + 1).padStart(2, "0")}</Text>}
           <Text hyphenationCallback={(word) => [word]} style={{ fontSize: 11, color: ink, marginTop: 5 }}>{node}</Text>
         </View>
@@ -103,7 +109,7 @@ function PdfBlock({ block }: { block: ReferenceBlock }) {
       {block.rows.map((row, index) => <View key={index} style={{ flexDirection: "row", marginBottom: 8 }}><Text style={{ width: 130, fontSize: 10, color: ink }}>{row.label}</Text>{block.quarters.map((_, q) => <View key={q} style={{ flex: 1, height: 18, backgroundColor: q >= row.from && q <= row.to ? ink : "#EFEEEA", marginRight: 4 }} />)}{row.cost && <Text style={{ width: 85, fontSize: 10, textAlign: "right" }}>{row.cost.display}</Text>}</View>)}
     </View>
   );
-  if (block.kind === "gap") return <View style={{ marginTop: block.compact ? 12 : 18, minHeight: block.compact ? 120 : 255,
+  if (block.kind === "gap") return <View style={{ marginTop: block.compact ? 12 : 18, minHeight: block.compact ? 100 : 255,
     backgroundColor: "#EFEEEA", borderLeftWidth: 6, borderLeftColor: accent, padding: block.compact ? 14 : 25 }}>
     <Text style={{ fontSize: block.compact ? 17 : 22, fontFamily: "Times-Roman", color: ink }}>{block.title}</Text>
     <Text style={{ fontSize: block.compact ? 11 : 14, color: ink, marginTop: block.compact ? 10 : 22 }}>{block.detail}</Text>
@@ -151,7 +157,7 @@ export function buildReferenceDeckPdf(spec: ReferenceDeckSpec): ReactElement<Doc
           </View>
           <Text style={{ fontSize: 24, color: ink, marginTop: 15, fontFamily: "Times-Roman" }}>{slide.actionTitle}</Text>
           {slide.blocks.map((block, blockIndex) => slide.archetype === "contents" && block.kind === "table"
-            ? <PdfContents key={blockIndex} block={block} /> : <PdfBlock key={blockIndex} block={block} />)}
+            ? <PdfContents key={blockIndex} block={block} /> : <PdfBlock key={blockIndex} block={block} sharedBody={slide.blocks.length > 1} />)}
           <View style={{ position: "absolute", bottom: 48, left: 45, right: 45, minHeight: 42, padding: 10, backgroundColor: ink }}>
             <Text style={{ fontSize: 11, color: "#FFFFFF" }}>{slide.answerLabel?.toUpperCase() ?? "THE ANSWER"}: {slide.answer}</Text>
           </View>
