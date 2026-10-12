@@ -78,9 +78,10 @@ export default async function IntelligencePage({
   const requestedDebug = firstSearchValue(resolvedSearchParams?.debug);
   const homeContextToken = firstSearchValue(resolvedSearchParams?.homeContext);
   const productProvider = resolveEclProductProvider(requestedProvider);
-  const requestedClient = (await hasLockedTenantSession())
-    ? rawRequestedClient
-    : null;
+  const requestedClient =
+    homeContextToken || (await hasLockedTenantSession())
+      ? rawRequestedClient
+      : null;
   const [client, tenant] = await Promise.all([
     getActiveClientRow(requestedClient).catch(() => null),
     resolveTenant({ requestedClient }).catch(() => null),

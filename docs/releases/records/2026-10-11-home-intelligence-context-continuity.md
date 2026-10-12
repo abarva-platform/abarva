@@ -37,7 +37,7 @@ Release lane: `global-control-lane`.
 
 ## QA / Validation
 
-PASS: 30 focused suites / 299 tests plus four shared-resolver tests, covering Home selection, mounted UI, route guards, source isolation, tenant fences and existing advisor behavior. PASS: TypeScript, focused ESLint, all 11 release gates and all five context-corpus checks (existing manifest warnings remain unchanged). PASS: Home ratchet has no baseline movement (730/758 tests, 12 previously baselined suites). New isolation tests and the provisional-evidence validator run in PR CI. Signed-in continuation and changed-version refusal are not run until deploy; no live claim is made here.
+PASS: 32 focused suites / 306 tests, covering Home selection, shared resolver, mounted UI, route guards, server-page tenant resolution, source isolation, tenant fences and existing advisor behavior. PASS: TypeScript (8 GB heap after reconciliation with main), focused ESLint, all 11 release gates and all five context-corpus checks (existing manifest warnings remain unchanged). PASS: Home ratchet has no baseline movement (730/758 tests, 12 previously baselined suites). New isolation tests and the provisional-evidence validator run in PR CI. Signed-in continuation and changed-version refusal are not run until deploy; no live claim is made here.
 
 ## Rollout Plan
 
