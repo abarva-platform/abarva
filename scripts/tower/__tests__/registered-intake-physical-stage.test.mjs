@@ -157,7 +157,7 @@ test("write preflight recognizes exact approval and requires private job identit
   }
 });
 
-test("source-field write refuses the prior approval before any database connection", () => {
+test("source-field write recognizes its own approval but still requires private job identity", () => {
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), "tower-source-fields-refusal-"));
   try {
     const result = spawnSync(process.execPath, [
@@ -166,10 +166,10 @@ test("source-field write refuses the prior approval before any database connecti
       "--out-dir", outDir, "--write", "--job-run-id", "test-refusal",
     ], { cwd: ROOT, encoding: "utf8", env: { ...process.env, DATABASE_URL: "" } });
     assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /Refusing stage\/proof/);
+    assert.match(result.stderr, /ACA job identity, build\/input version/);
     assert.equal(fs.existsSync(path.join(outDir, "stage-receipt.json")), false);
     const preflight = JSON.parse(fs.readFileSync(path.join(outDir, "stage-preflight.json"), "utf8"));
-    assert.equal(preflight.load_approval_status, "missing_or_mismatched");
+    assert.equal(preflight.load_approval_status, "approved");
     assert.equal(preflight.physical_quality_gate_status, "pass");
     assert.equal(preflight.projection_version, 5);
   } finally {
