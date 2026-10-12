@@ -30,6 +30,7 @@ const PAGES = [
   "command_center", "decision_lanes", "recommended_actions", "value_proof",
   "cost_lens", "evidence", "risk_lens", "ai_portfolio", "adoption_lens",
 ];
+const SOURCE_FIELDS_VARIANT = "source-fields-v1";
 
 function sha256(bytes) {
   return crypto.createHash("sha256").update(bytes).digest("hex");
@@ -168,7 +169,8 @@ function addPage(pages, key, id, title, text, value, refs, extras = {}) {
   });
 }
 
-export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey, outDir }) {
+export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey, outDir, variant = null }) {
+  if (variant !== null && variant !== SOURCE_FIELDS_VARIANT) throw new Error(`Unknown candidate variant: ${variant}`);
   if (!tenantKey) throw new Error("--tenant-key is required; tenancy must be declared in the active registry");
   const registry = JSON.parse(fs.readFileSync(path.join(repoRoot, REGISTRY), "utf8"));
   const tenant = registry.activeTenants?.find((entry) => entry.tenantKey === tenantKey);
@@ -214,6 +216,18 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
   const caseIds = [...caseIndex.result.keys()].sort();
   const benefitIds = [...benefitIndex.result.keys()].sort();
   const programIds = new Set(programs.map((row) => row.program_id).filter(Boolean));
+  const affectedFunctionsByProgram = new Map();
+  if (variant === SOURCE_FIELDS_VARIANT) {
+    for (const row of relationships) {
+      if (row.from_object_type !== "program" || row.relationship_type !== "impacts" ||
+          row.to_object_type !== "function" || !programIds.has(row.from_object_id) ||
+          !row.to_object_id?.trim() || !row.to_object_name?.trim()) continue;
+      const current = affectedFunctionsByProgram.get(row.from_object_id) || [];
+      current.push({ function_id: row.to_object_id, function_name: row.to_object_name,
+        source_ref: sourceRef("12_relationships.csv", row, sourceManifest) });
+      affectedFunctionsByProgram.set(row.from_object_id, current);
+    }
+  }
   const claimProgramIds = [...new Set(benefits.map((row) => row.ai_program_id).filter(Boolean))].sort();
   const unlinkedClaimProgramIds = claimProgramIds.filter((id) =>
     !isDeclaredProgramLink(id, programIds));
@@ -290,7 +304,14 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
       row_sum_difference_usd: sourceNarrativeModelTotal === null || modeledAnnualSpend === null ? null : modeledAnnualSpend - sourceNarrativeModelTotal,
       source_refs: spend.map((row) => sourceRef("08_spend_value.csv", row, sourceManifest)),
     },
-    programs: programs.map((row) => ({ id: row.program_id, name: row.program_name, planning_budget_usd: amount(row.budget_usd), approved_fy_budget_usd: null, source_ref: sourceRef("09_programs_initiatives.csv", row, sourceManifest) })),
+    programs: programs.map((row) => ({ id: row.program_id, name: row.program_name, planning_budget_usd: amount(row.budget_usd), approved_fy_budget_usd: null, source_ref: sourceRef("09_programs_initiatives.csv", row, sourceManifest),
+      ...(variant === SOURCE_FIELDS_VARIANT ? {
+        business_sponsor_role: row.business_sponsor || null,
+        technology_owner_role: row.technology_owner || null,
+        source_program_status: row.status || null,
+        source_program_phase: row.phase || null,
+        affected_functions: affectedFunctionsByProgram.get(row.program_id) || [],
+      } : {}) })),
     ai_use_cases: caseIds.map((id) => {
       const row = caseIndex.result.get(id);
       return {
@@ -298,6 +319,12 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
         name: row.use_case_name,
         status: row.current_status,
         sponsor_role: row.sponsor_role,
+        ...(variant === SOURCE_FIELDS_VARIANT ? {
+          business_function: row.business_function || null,
+          business_segment_key: row.business_segment_key || null,
+          operational_owner_role: row.operational_owner_role || null,
+          expected_value_archetype: row.expected_value_archetype || null,
+        } : {}),
         planning_promise_usd: null,
         active_users: null,
         claimable_value_usd: null,
@@ -392,12 +419,31 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
   for (const program of canonical.programs) {
     addPage(pages, "decision_lanes", program.id, program.name,
       "Planning budget only. The amount has no approved fiscal-year basis in this extract.",
-      program.planning_budget_usd, [program.source_ref], { fiscal_year: null, approval_state: "not_verified" });
+      program.planning_budget_usd,
+      [program.source_ref, ...(program.affected_functions || []).map((item) => item.source_ref)],
+      { fiscal_year: null, approval_state: "not_verified",
+        ...(variant === SOURCE_FIELDS_VARIANT ? {
+          business_sponsor_role: program.business_sponsor_role,
+          technology_owner_role: program.technology_owner_role,
+          source_program_status: program.source_program_status,
+          source_program_phase: program.source_program_phase,
+          affected_functions: program.affected_functions.map(({ function_id, function_name }) => ({ function_id, function_name })),
+          affected_function_name: program.affected_functions.length === 1 ? program.affected_functions[0].function_name : null,
+          domain_name: null,
+        } : {}) });
   }
   for (const item of canonical.ai_use_cases) {
     addPage(pages, "ai_portfolio", item.id, item.name,
       "This use case has no declared link to the benefit or usage records. Its money and adoption remain unknown.",
-      null, item.source_refs, { claimable_value_usd: null });
+      null, item.source_refs, { claimable_value_usd: null,
+        ...(variant === SOURCE_FIELDS_VARIANT ? {
+          business_function: item.business_function,
+          business_segment_key: item.business_segment_key,
+          source_case_status: item.status,
+          business_sponsor_role: item.sponsor_role,
+          operational_owner_role: item.operational_owner_role,
+          expected_value_archetype: item.expected_value_archetype,
+        } : {}) });
     addPage(pages, "evidence", item.id, item.name, "Evidence has not been approved for loading or cited proof.", null, item.source_refs,
       { next_step: "Approve and reconcile evidence" });
     addPage(pages, "recommended_actions", item.id, item.name, "Reconcile source amounts and get Finance and evidence sign-off.", null, item.source_refs);
@@ -501,12 +547,16 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
       `User-detail extract is ${rawUsageValidation.detail_available ? "present" : "absent"}; declared use-case join: ${rawUsageValidation.declared_use_case_join}; source-system join: ${rawUsageValidation.declared_source_system_join}; matching period: ${rawUsageValidation.compatible_period}; aggregate user-count reconciliation: ${rawUsageValidation.aggregate_user_count_reconciled}. A file hash or structural join cannot validate the claim usage feed.`),
   ];
   const fingerprint = sha256(JSON.stringify(sourceManifest));
+  const assessmentId = variant === SOURCE_FIELDS_VARIANT
+    ? `tower-registry-candidate-${sha256(`${fingerprint}|${SOURCE_FIELDS_VARIANT}`).slice(0, 16)}`
+    : `tower-registry-candidate-${fingerprint.slice(0, 16)}`;
   const report = {
     contract_version: "tower-registered-intake-candidate/v1",
     tenant_key: tenantKey,
     input_root: tenant.canonicalInputRoot,
     input_fingerprint_sha256: fingerprint,
-    assessment_id: `tower-registry-candidate-${fingerprint.slice(0, 16)}`,
+    assessment_id: assessmentId,
+    ...(variant === SOURCE_FIELDS_VARIANT ? { candidate_rules_version: SOURCE_FIELDS_VARIANT } : {}),
     build_state: "dry_run_only",
     runtime_eligible: false,
     physical_write_ready: false,
@@ -549,8 +599,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   };
   const tenantKey = read("--tenant-key");
   const outDir = read("--out-dir") || path.join(REPO_ROOT, "reports/tower-registered-intake-candidate", tenantKey || "unknown");
+  const variant = read("--candidate-variant");
   try {
-    const report = buildRegisteredIntakeCandidate({ tenantKey, outDir });
+    const report = buildRegisteredIntakeCandidate({ tenantKey, outDir, variant });
     process.stdout.write(`${JSON.stringify({ assessment_id: report.assessment_id, quality_gate_status: report.quality_gate_status, view_counts: report.view_counts, out_dir: outDir })}\n`);
     if (report.quality_gate_status !== "pass") process.exitCode = 2;
   } catch (error) {

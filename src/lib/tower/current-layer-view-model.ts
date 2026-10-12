@@ -136,6 +136,11 @@ export interface TowerMartProgramLane {
   ownerRole: string | null;
   /** The business domain, from the loader's `domain_name`. Not the sponsor. */
   domainName?: string | null;
+  /** Functions explicitly marked as affected by this program; not a funding-domain classification. */
+  affectedFunctions?: Array<{ functionId: string; functionName: string }>;
+  technologyOwnerRole?: string | null;
+  sourceProgramStatus?: string | null;
+  sourceProgramPhase?: string | null;
   financeOwnerRole: string | null;
   decisionLane: "fund" | "fix" | "freeze" | "stop" | "unclassified";
   decisionRationale: string;
@@ -287,6 +292,11 @@ export interface TowerMartAiPortfolioItem {
   /** Whether the source asserted anything for the blocker — `none` included. */
   controlBlockerReviewed?: boolean;
   sponsorRole?: string | null;
+  businessFunction?: string | null;
+  businessSegmentKey?: string | null;
+  sourceCaseStatus?: string | null;
+  operationalOwnerRole?: string | null;
+  expectedValueArchetype?: string | null;
   duplicateRisk: string | null;
   valueClaimStatus: string;
   towerClaimAllowed: string;

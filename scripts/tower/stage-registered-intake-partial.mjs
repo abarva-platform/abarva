@@ -9,7 +9,6 @@ import { buildRegisteredIntakeCandidate, csvRows } from "./build-registered-inta
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const DATASET_ID = "tower-registered-intake-partial-20261011";
-const MANIFEST_PATH = path.join(ROOT, "docs/governance/dataset-manifests", `${DATASET_ID}.json`);
 const IDENTITY_PATH = path.join(ROOT, "scripts/tower/registered-intake-identity-contract.json");
 const RELEASE_RECORD = "docs/releases/records/2026-10-11-tower-category-measure-basis.md";
 const PAGE_TABLE = {
@@ -26,6 +25,20 @@ const PAGE_TABLE = {
 const PAGE_KEYS = Object.keys(PAGE_TABLE);
 const PROJECTION_VERSION = 4;
 const BUILD_VERSION = "tower-registered-intake-partial/v2";
+const SOURCE_FIELDS_VARIANT = "source-fields-v1";
+
+function candidateConfig(report) {
+  const sourceFields = report.candidate_rules_version === SOURCE_FIELDS_VARIANT;
+  const datasetId = sourceFields ? "tower-registered-intake-source-fields-20261012" : DATASET_ID;
+  return {
+    datasetId,
+    manifestPath: path.join(ROOT, "docs/governance/dataset-manifests", `${datasetId}.json`),
+    releaseRecord: sourceFields ? "docs/releases/records/2026-10-12-tower-registered-source-fields.md" : RELEASE_RECORD,
+    projectionVersion: sourceFields ? 5 : PROJECTION_VERSION,
+    buildVersion: sourceFields ? "tower-registered-intake-source-fields/v1" : BUILD_VERSION,
+    sourceFields,
+  };
+}
 const IDENTITY = JSON.parse(fs.readFileSync(IDENTITY_PATH, "utf8"));
 const SPEND_METRIC_KEY = IDENTITY.aggregate_spend_metric.object_key;
 
@@ -56,6 +69,7 @@ function args() {
   };
   return {
     tenantKey: value("--tenant-key") || process.env.TOWER_RELOAD_TENANT_KEY,
+    candidateVariant: value("--candidate-variant") || process.env.TOWER_RELOAD_CANDIDATE_VARIANT || null,
     outDir: value("--out-dir") || process.env.TOWER_RELOAD_OUT_DIR,
     write: process.argv.includes("--write"),
     reattest: process.argv.includes("--reattest"),
@@ -220,14 +234,30 @@ function addCanonicalRows(plan, report) {
   for (const program of report.canonical.programs) {
     const id = addObject(plan, report, "program", program.id, program.name, program.source_ref,
       { budget_basis: "planning_period_unapproved", fiscal_year: null,
-        funding_approval_status: "not_verified" });
+        funding_approval_status: "not_verified",
+        ...(candidateConfig(report).sourceFields ? {
+          business_sponsor_role: program.business_sponsor_role,
+          technology_owner_role: program.technology_owner_role,
+          source_program_status: program.source_program_status,
+          source_program_phase: program.source_program_phase,
+          affected_functions: program.affected_functions.map(({ function_id, function_name }) => ({ function_id, function_name })),
+          primary_funding_domain: null,
+        } : {}) });
     addMeasure(plan, report, id, "program_planning_budget_usd", program.planning_budget_usd, "USD", program.source_ref,
       "estimated", { approved_fy_budget_usd: null, fiscal_year: null,
         funding_approval_status: "not_verified", period_basis: "unspecified" });
   }
   for (const item of report.canonical.ai_use_cases) {
     addObject(plan, report, "ai_use_case", item.id, item.name, item.source_refs[0],
-      { source_population: "use_case_intake", claimable_value_usd: null });
+      { source_population: "use_case_intake", claimable_value_usd: null,
+        ...(candidateConfig(report).sourceFields ? {
+          business_function: item.business_function,
+          business_segment_key: item.business_segment_key,
+          source_case_status: item.status,
+          business_sponsor_role: item.sponsor_role,
+          operational_owner_role: item.operational_owner_role,
+          expected_value_archetype: item.expected_value_archetype,
+        } : {}) });
   }
   for (const claim of report.canonical.ai_claims) {
     const ref = claim.source_refs.find((item) => item.source_file.startsWith("SA09_"));
@@ -318,14 +348,15 @@ function physicalPreviewRows(report) {
 }
 
 function addProjectionRows(plan, report, views) {
+  const { projectionVersion, buildVersion, sourceFields } = candidateConfig(report);
   const snapshotId = plan.snapshot.id;
   for (const page of PAGE_KEYS) {
     const table = PAGE_TABLE[page];
-    const manifestId = uuid("projection_manifest", report.tenant_key, report.assessment_id, page, PROJECTION_VERSION);
+    const manifestId = uuid("projection_manifest", report.tenant_key, report.assessment_id, page, projectionVersion);
     plan.projectionManifests.push({
       id: manifestId, tenant_key: report.tenant_key, assessment_id: report.assessment_id,
       snapshot_id: snapshotId, projection_key: `tower_${page}`,
-      projection_version: PROJECTION_VERSION,
+      projection_version: projectionVersion,
       rebuild_command: "npm run tower:registered-intake:stage",
       source_hash: report.input_fingerprint_sha256,
       projection_hash: hash(stable(views[page])), row_count: views[page].length,
@@ -334,7 +365,7 @@ function addProjectionRows(plan, report, views) {
       proof_uri: "private:stage-receipt",
     });
     for (const row of views[page]) {
-      const payload = { ...row, page_key: page, layer4_build_version: BUILD_VERSION,
+      const payload = { ...row, page_key: page, layer4_build_version: buildVersion,
         input_source_version: report.input_fingerprint_sha256 };
       let canonicalMeasure = null;
       let canonicalObjectId = null;
@@ -370,12 +401,12 @@ function addProjectionRows(plan, report, views) {
         canonicalMeasure = measures.find((measure) => measure.scenario === "actual") || null;
       }
       const refs = row.source_refs || [];
-      const entryId = uuid("projection_entry", report.tenant_key, report.assessment_id, page, row.row_key, PROJECTION_VERSION);
+      const entryId = uuid("projection_entry", report.tenant_key, report.assessment_id, page, row.row_key, projectionVersion);
       const contentHash = hash(stable(payload));
       plan.projectionEntries.push({
         id: entryId, tenant_key: report.tenant_key, assessment_id: report.assessment_id,
         snapshot_id: snapshotId, projection_manifest_id: manifestId,
-        projection_version: PROJECTION_VERSION, surface_key: table,
+        projection_version: projectionVersion, surface_key: table,
         row_key: `${page}:${row.row_key}`, row_type: page === "command_center" ? "portfolio_summary" : "source_record",
         source_hash: contentHash, refs_content_hash: hash(stable(refs)),
         refs_cache_json: { source_refs: refs }, display_cache_json: payload,
@@ -401,7 +432,7 @@ function addProjectionRows(plan, report, views) {
         id: uuid(table, report.tenant_key, report.assessment_id, page, row.row_key),
         tenant_key: report.tenant_key, assessment_id: report.assessment_id,
         snapshot_id: snapshotId, projection_manifest_id: manifestId,
-        projection_entry_id: entryId, projection_version: PROJECTION_VERSION,
+        projection_entry_id: entryId, projection_version: projectionVersion,
         row_key: row.row_key, source_refs_json: refs, display_payload_json: payload,
         source_hash: contentHash,
       };
@@ -420,7 +451,7 @@ function addProjectionRows(plan, report, views) {
           usage_supported_value_usd: null, finance_validated_value_usd: null,
           claimable_value_usd: null, blocked_value_usd: null,
           proof_maturity_score: null, risk_pressure_score: null,
-          usage_strength_score: null, owner_role: null, handoff_module: "Tower",
+          usage_strength_score: null, owner_role: sourceFields && page === "decision_lanes" ? row.business_sponsor_role : null, handoff_module: "Tower",
           value_state: "unknown", quality_state: "warning", metric_keys_json: [], gap_flags_json: ["unapproved_financial_basis"],
         });
       } else if (table === "tower_value_chain") {
@@ -470,15 +501,16 @@ function addProjectionRows(plan, report, views) {
         plan.aiRows.push({ ...common,
           use_case_object_id: objectId(report, "ai_use_case", row.row_key),
           tool_object_id: null, function_object_id: null,
-          use_case_name: row.title, tool_name: claim?.tool_name || row.title,
-          business_function: null, licensed_users: null,
+          use_case_name: row.title, tool_name: claim?.tool_name || (sourceFields ? "" : row.title),
+          business_function: sourceFields && !isAdoption ? row.business_function : null, licensed_users: null,
           active_users: isAdoption ? row.value : null,
           usage_events: null, monthly_cost_usd: null, adoption_rate_percent: null,
           value_state: isAdoption ? "known" : "unknown", quality_state: "warning",
           review_state: "not_reviewed", metric_keys_json: isAdoption ? ["usage_feed_active_users"] : [],
           gap_flags_json: isAdoption && !report.raw_usage_validation.validates_claim_usage ?
             ["value_attribution_unapproved", "raw_detail_not_validated"] :
-            ["value_attribution_unapproved"],
+            sourceFields && !isAdoption ? ["value_attribution_unapproved", "tool_identity_not_declared"] :
+              ["value_attribution_unapproved"],
         });
       }
     }
@@ -494,11 +526,11 @@ export function buildPhysicalPlan(report) {
     metricDefinitions: [], projectionManifests: [], projectionEntries: [], projectionMeasureRefs: [],
     projectionSourceRefs: [], commandRows: [], valueRows: [], evidenceRows: [], aiRows: [],
     snapshot: {
-      id: uuid("snapshot", report.tenant_key, report.assessment_id, BUILD_VERSION),
+      id: uuid("snapshot", report.tenant_key, report.assessment_id, candidateConfig(report).buildVersion),
       tenant_key: report.tenant_key, assessment_id: report.assessment_id,
       snapshot_key: "registered_intake_partial", snapshot_type: "projection_source",
       source_hash: report.input_fingerprint_sha256,
-      context_hash: hash(stable(report.canonical)), created_by_job: BUILD_VERSION,
+      context_hash: hash(stable(report.canonical)), created_by_job: candidateConfig(report).buildVersion,
       quality_state: "warning", proof_uri: "private:stage-receipt",
     },
   };
@@ -544,7 +576,9 @@ function fingerprintRows(rows) {
 
 export function validatePhysicalPlan(report, plan, viewCounts) {
   const errors = [];
-  if (plan.sourceFiles.length !== 17 || plan.sourceRecords.length !== 299) errors.push("source rows changed");
+  const expectedSourceRecords = 299 + (candidateConfig(report).sourceFields ?
+    report.canonical.programs.reduce((count, program) => count + program.affected_functions.length, 0) : 0);
+  if (plan.sourceFiles.length !== 17 || plan.sourceRecords.length !== expectedSourceRecords) errors.push("source rows changed");
   if (plan.objects.length !== 237) errors.push("canonical object count changed");
   const fileById = new Map(plan.sourceFiles.map((row) => [row.id, row.file_name]));
   const userDetailRecordCount = plan.sourceRecords.filter((row) =>
@@ -579,6 +613,59 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
       if (sourceFiles.get(ref.source_file) !== ref.source_sha256) errors.push(`source hash mismatch for ${row.row_key}`);
       if (Number.isInteger(ref.source_row) && !sourceIds.has(sourceRowId(report, ref))) errors.push(`missing source row for ${row.row_key}`);
       if (ref.source_file === "13_evidence_sources.csv" && ref.scope !== "register_coverage_only") errors.push("unapproved evidence cited");
+    }
+  }
+  if (candidateConfig(report).sourceFields) {
+    for (const row of rowsForPage(plan, "decision_lanes")) {
+      const source = sourceRecordsById.get(sourceRowId(report, row.source_refs_json[0]));
+      const raw = source?.payload_json;
+      const display = row.display_payload_json;
+      const fields = [
+        ["business_sponsor_role", "business_sponsor"],
+        ["technology_owner_role", "technology_owner"],
+        ["source_program_status", "status"],
+        ["source_program_phase", "phase"],
+      ];
+      if (!raw || fileById.get(source.source_file_id) !== "09_programs_initiatives.csv" ||
+          raw.program_id !== row.row_key || row.owner_role !== (raw.business_sponsor || null) ||
+          display.domain_name !== null ||
+          fields.some(([target, input]) => display[target] !== (raw[input] || null))) {
+        errors.push(`program source fields differ from intake: ${row.row_key}`);
+      }
+      const relationRefs = row.source_refs_json.slice(1);
+      const affected = display.affected_functions;
+      if (!Array.isArray(affected) || affected.length !== relationRefs.length ||
+          relationRefs.some((ref, index) => {
+            const relation = sourceRecordsById.get(sourceRowId(report, ref));
+            const edge = relation?.payload_json;
+            return !edge || fileById.get(relation.source_file_id) !== "12_relationships.csv" ||
+              edge.from_object_type !== "program" || edge.from_object_id !== row.row_key ||
+              edge.relationship_type !== "impacts" || edge.to_object_type !== "function" ||
+              edge.to_object_id !== affected[index]?.function_id ||
+              edge.to_object_name !== affected[index]?.function_name;
+          }) ||
+          display.affected_function_name !== (affected.length === 1 ? affected[0].function_name : null)) {
+        errors.push(`affected function differs from declared relationship: ${row.row_key}`);
+      }
+    }
+    for (const row of rowsForPage(plan, "ai_portfolio")) {
+      const source = sourceRecordsById.get(sourceRowId(report, row.source_refs_json[0]));
+      const raw = source?.payload_json;
+      const display = row.display_payload_json;
+      const fields = [
+        ["business_function", "business_function"],
+        ["business_segment_key", "business_segment_key"],
+        ["source_case_status", "current_status"],
+        ["business_sponsor_role", "sponsor_role"],
+        ["operational_owner_role", "operational_owner_role"],
+        ["expected_value_archetype", "expected_value_archetype"],
+      ];
+      if (!raw || fileById.get(source.source_file_id) !== "10_ai_automation_use_cases.csv" ||
+          raw.use_case_id !== row.row_key || row.business_function !== (raw.business_function || null) ||
+          row.tool_object_id !== null || row.tool_name !== "" ||
+          fields.some(([target, input]) => display[target] !== (raw[input] || null))) {
+        errors.push(`AI case source fields differ from intake: ${row.row_key}`);
+      }
     }
   }
   const evidencePageRows = rowsForPage(plan, "evidence");
@@ -1015,7 +1102,7 @@ async function writeProgress(report, jobRunId, outDir, status, detail = {}) {
     contract_version: "tower-physical-stage-progress/v1", status,
     recorded_at: new Date().toISOString(), tenant_key: report.tenant_key,
     assessment_id: report.assessment_id, job_run_id: jobRunId,
-    build_version: BUILD_VERSION, input_source_version: report.input_fingerprint_sha256,
+    build_version: candidateConfig(report).buildVersion, input_source_version: report.input_fingerprint_sha256,
     idempotency_key: `${report.assessment_id}:${report.input_fingerprint_sha256}`,
     ...detail,
   };
@@ -1046,7 +1133,9 @@ async function main() {
   if (options.write && options.reattest) throw new Error("--write and --reattest are mutually exclusive");
   fs.mkdirSync(options.outDir, { recursive: true });
   const startedAt = new Date().toISOString();
-  const report = buildRegisteredIntakeCandidate({ repoRoot: ROOT, tenantKey: options.tenantKey });
+  const report = buildRegisteredIntakeCandidate({ repoRoot: ROOT, tenantKey: options.tenantKey,
+    variant: options.candidateVariant });
+  const config = candidateConfig(report);
   const candidateBytes = Buffer.from(`${JSON.stringify(report, null, 2)}\n`);
   const candidateHash = hash(candidateBytes);
   fs.writeFileSync(path.join(options.outDir, "candidate.json"), candidateBytes);
@@ -1054,16 +1143,16 @@ async function main() {
   const quality = validatePhysicalPlan(report, plan, viewCounts);
   const identityContractHash = hash(fs.readFileSync(IDENTITY_PATH));
   const fingerprints = viewFingerprints(plan);
-  const manifestFiles = fs.readdirSync(path.dirname(MANIFEST_PATH)).filter((file) => file.endsWith(".json"));
+  const manifestFiles = fs.readdirSync(path.dirname(config.manifestPath)).filter((file) => file.endsWith(".json"));
   const manifestEntries = manifestFiles.map((file) => ({
-    file: path.join(path.dirname(MANIFEST_PATH), file),
-    raw: JSON.parse(fs.readFileSync(path.join(path.dirname(MANIFEST_PATH), file), "utf8")),
+    file: path.join(path.dirname(config.manifestPath), file),
+    raw: JSON.parse(fs.readFileSync(path.join(path.dirname(config.manifestPath), file), "utf8")),
   }));
-  const manifest = manifestEntries.find((entry) => entry.file === MANIFEST_PATH)?.raw;
-  if (!manifest) throw new Error("Dataset manifest is absent");
-  if (manifest.dataset_id !== DATASET_ID) throw new Error("Dataset manifest ID mismatch");
+  const manifest = manifestEntries.find((entry) => entry.file === config.manifestPath)?.raw;
+  if (!manifest && !config.sourceFields) throw new Error("Dataset manifest is absent");
+  if (manifest && manifest.dataset_id !== config.datasetId) throw new Error("Dataset manifest ID mismatch");
   const binding = {
-    dataset_id: DATASET_ID,
+    dataset_id: config.datasetId,
     tenant_key: report.tenant_key,
     assessment_id: report.assessment_id,
     source_set_hash: report.input_fingerprint_sha256,
@@ -1071,20 +1160,23 @@ async function main() {
     ingestion_method: "operator_aca_job",
   };
   const { resolveLoadApproval, validateManifest, validateManifestRegistry } = await import("../../src/lib/governance/dataset-manifest.ts");
-  const validation = validateManifest(manifest);
-  if (!validation.ok) throw new Error(`Dataset manifest is invalid: ${validation.errors.join("; ")}`);
+  if (manifest) {
+    const validation = validateManifest(manifest);
+    if (!validation.ok) throw new Error(`Dataset manifest is invalid: ${validation.errors.join("; ")}`);
+  }
   const registryErrors = validateManifestRegistry(manifestEntries, (relative) => fs.existsSync(path.join(ROOT, relative)));
   if (registryErrors.length) throw new Error(`Dataset manifest registry is invalid: ${registryErrors.join("; ")}`);
-  const decision = resolveLoadApproval(manifestEntries.map((entry) => entry.raw), binding);
-  const releaseRecordMatch = !decision.approved || decision.approval.release_record === RELEASE_RECORD;
+  const decision = manifest ? resolveLoadApproval(manifestEntries.map((entry) => entry.raw), binding) :
+    { approved: false, reasons: ["new dataset manifest and named review are required before loading"] };
+  const releaseRecordMatch = !decision.approved || decision.approval.release_record === config.releaseRecord;
   const preflight = {
     contract_version: "tower-physical-stage-preflight/v1",
     tenant_key: report.tenant_key, assessment_id: report.assessment_id,
-    dataset_id: DATASET_ID, input_fingerprint_sha256: report.input_fingerprint_sha256,
+    dataset_id: config.datasetId, input_fingerprint_sha256: report.input_fingerprint_sha256,
     candidate_sha256: candidateHash, object_count: plan.objects.length,
     identity_contract_sha256: identityContractHash,
-    ingestion_method: "operator_aca_job", build_version: BUILD_VERSION,
-    projection_version: PROJECTION_VERSION, view_counts: viewCounts, view_fingerprints: fingerprints,
+    ingestion_method: "operator_aca_job", build_version: config.buildVersion,
+    projection_version: config.projectionVersion, view_counts: viewCounts, view_fingerprints: fingerprints,
     load_approval_status: decision.approved && releaseRecordMatch ? "approved" : "missing_or_mismatched",
     load_approval_reasons: decision.approved ? releaseRecordMatch ? [] : ["approval release record does not match this build"] : decision.reasons,
     physical_quality_gate_status: quality.status,
@@ -1129,7 +1221,7 @@ async function main() {
       !Number.isInteger(job.retry_count) || job.retry_count < 0 ||
       !Number.isInteger(job.timeout_seconds) || job.timeout_seconds < 1 ||
       job.input_source_version !== report.input_fingerprint_sha256 ||
-      job.declared_build_version !== BUILD_VERSION ||
+      job.declared_build_version !== config.buildVersion ||
       job.declared_idempotency_key !== `${report.assessment_id}:${report.input_fingerprint_sha256}` ||
       !process.env.TOWER_RELOAD_PROOF_BLOB_ACCOUNT || !process.env.TOWER_RELOAD_PROOF_BLOB_CONTAINER) {
     throw new Error("ACA job identity, build/input version, idempotency key, digest, retry/timeout, and private Blob proof destination are required");
@@ -1163,17 +1255,17 @@ async function main() {
   const receipt = {
     contract_version: "tower-physical-stage-receipt/v1",
     tenant_key: report.tenant_key, assessment_id: report.assessment_id,
-    dataset_id: DATASET_ID, input_fingerprint_sha256: report.input_fingerprint_sha256,
+    dataset_id: config.datasetId, input_fingerprint_sha256: report.input_fingerprint_sha256,
     candidate_sha256: candidateHash, identity_contract_sha256: identityContractHash,
     object_count: plan.objects.length,
     source_file_count: plan.sourceFiles.length, source_record_count: plan.sourceRecords.length,
-    ingestion_method: "operator_aca_job", projection_version: PROJECTION_VERSION,
+    ingestion_method: "operator_aca_job", projection_version: config.projectionVersion,
     quality_gate_status: "pass", runtime_eligible: true,
     stage_status: "staged_pending_independent_readback", job_run_id: stageJobRunId,
     re_attestation_job_run_id: options.reattest ? options.jobRunId : null,
-    build_version: BUILD_VERSION, idempotency_key: `${report.assessment_id}:${report.input_fingerprint_sha256}`,
+    build_version: config.buildVersion, idempotency_key: `${report.assessment_id}:${report.input_fingerprint_sha256}`,
     view_counts: viewCounts, view_fingerprints: fingerprints,
-    release_record: RELEASE_RECORD, started_at: startedAt, finished_at: new Date().toISOString(),
+    release_record: config.releaseRecord, started_at: startedAt, finished_at: new Date().toISOString(),
     status: "succeeded", retry_count: job.retry_count, timeout_seconds: job.timeout_seconds,
     job_name: job.job_name, operator_identity: job.operator_identity,
     git_sha: job.git_sha, image_digest: job.image_digest,
