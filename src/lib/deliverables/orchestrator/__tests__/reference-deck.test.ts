@@ -72,6 +72,58 @@ function spec(edition: ReferenceDeckSpec["edition"]): ReferenceDeckSpec {
 }
 
 describe("reference deck components", () => {
+  it.each([undefined, "The answer", "Review outcome"])("checks answer prose independently of the renderer label %s", async (label) => {
+    const draft = spec("validation");
+    const index = draft.slides.findIndex((entry) => entry.archetype === "three_year_value");
+    const target = draft.slides[index]!;
+    target.answerLabel = label;
+    target.actionTitle = "The value case still needs a confirmed basis";
+    target.answer = "Confirm the value basis before drawing a conclusion.";
+    target.narrativeEvidence = { valueAvailable: false };
+    expect(validateReferenceDeck(draft).filter((finding) => finding.blocking)).toEqual([]);
+    const rendered = await inspectDeck(await renderReferenceDeck(draft));
+    expect(rendered.slides[index]!.namedText!["ref:answer:text"]).toContain((label ?? "The answer").toUpperCase());
+    expect(judgeRenderedDeck(rendered, { referenceDeck: draft }).findings
+      .filter((finding) => finding.kind === "reference_client_copy")).toEqual([]);
+  });
+
+  it.each(["The answer", "Review outcome"])("still refuses unsupported answer claims with or without %s", async (label) => {
+    const draft = spec("validation");
+    const index = draft.slides.findIndex((entry) => entry.archetype === "three_year_value");
+    draft.slides[index]!.actionTitle = "The value case still needs a confirmed basis";
+    draft.slides[index]!.answer = "Confirm the value basis before drawing a conclusion.";
+    draft.slides[index]!.answerLabel = label;
+    draft.slides[index]!.narrativeEvidence = { valueAvailable: false };
+    const zip = await JSZip.loadAsync(await renderReferenceDeck(draft));
+    const path = `ppt/slides/slide${index + 1}.xml`;
+    const original = await zip.file(path)!.async("string");
+    for (const assertion of ["The annual value is confirmed before proceeding.", "Confirm this figure before proceeding."]) {
+      for (const withLabel of [true, false]) {
+        let damaged = original.replace(draft.slides[index]!.answer!, assertion);
+        if (!withLabel) damaged = damaged.replace(`${label.toUpperCase()}  `, "");
+        expect(damaged).not.toBe(original);
+        zip.file(path, damaged);
+        const verdict = judgeRenderedDeck(await inspectDeck(await zip.generateAsync({ type: "nodebuffer" })), { referenceDeck: draft });
+        expect(verdict.findings).toContainEqual(expect.objectContaining({
+          kind: "reference_client_copy", slide: index + 1, detailCode: "unavailable_value_claim",
+        }));
+      }
+    }
+  });
+
+  it("checks factual assertions inside an authored answer label", async () => {
+    const draft = spec("validation");
+    const index = draft.slides.findIndex((entry) => entry.archetype === "three_year_value");
+    draft.slides[index]!.actionTitle = "The value case still needs a confirmed basis";
+    draft.slides[index]!.answer = "Confirm the value basis before drawing a conclusion.";
+    draft.slides[index]!.answerLabel = "The annual value is confirmed";
+    draft.slides[index]!.narrativeEvidence = { valueAvailable: false };
+    const verdict = judgeRenderedDeck(await inspectDeck(await renderReferenceDeck(draft)), { referenceDeck: draft });
+    expect(verdict.findings).toContainEqual(expect.objectContaining({
+      kind: "reference_client_copy", slide: index + 1, detailCode: "unavailable_value_claim",
+    }));
+  });
+
   it("checks architecture label type, geometry, content and source notes in the physical file", async () => {
     const draft = spec("investment");
     const architecture = draft.slides[12]!.blocks[0]!;

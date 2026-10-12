@@ -96,7 +96,13 @@ function judgeReferenceSlide(
   if (coverUsesEditionRule(visibleText))
     add("reference_client_copy", `slide ${slide.index}: the edition rule appears in client-facing text.`, "edition_rule_visible");
   const actionName = `ref:action:${expected.archetype}:${expected.section ?? ""}`;
-  const unsupported = referenceNarrativeIssue(`${named[actionName] ?? expected.actionTitle}. ${named["ref:answer:text"] ?? ""}`, expected.narrativeEvidence);
+  const renderedAnswer = named["ref:answer:text"] ?? "";
+  const answerPrefix = `${(expected.answerLabel ?? "The answer").toUpperCase()}  `;
+  // Separate the exact rendered label so neither it nor the answer can mask a claim.
+  const hasAnswerLabel = renderedAnswer.startsWith(answerPrefix);
+  const answerProse = hasAnswerLabel ? renderedAnswer.slice(answerPrefix.length) : renderedAnswer;
+  const labelProse = hasAnswerLabel ? `${answerPrefix.trim()}. ` : "";
+  const unsupported = referenceNarrativeIssue(`${named[actionName] ?? expected.actionTitle}. ${labelProse}${answerProse}`, expected.narrativeEvidence);
   if (unsupported) add("reference_client_copy", `slide ${slide.index}: rendered interpretation violates its evidence basis.`, unsupported);
   if (expected.archetype === "cover") {
     if ((named["ref:cover:title"] ?? "") !== spec.useCase)

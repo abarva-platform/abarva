@@ -1,5 +1,5 @@
 import { buildReferenceEdition, INVESTMENT_SEQUENCE, VALIDATION_SEQUENCE } from "../reference-deck-edition";
-import { validateReferenceDeck } from "../reference-deck-model";
+import { validateReferenceDeck, ReferenceDeckLineageRefusal } from "../reference-deck-model";
 import { renderReferenceDeck } from "../reference-deck-renderer";
 import { inspectDeck } from "../deck-inspection";
 import { judgeRenderedDeck } from "../deck-quality";
@@ -50,6 +50,60 @@ function fixture(edition: EditionInputs["edition"]): EditionInputs {
 }
 
 describe("live-input reference edition", () => {
+  it("keeps unsupported wording blocked with source-free typed refusal metadata", () => {
+    const inputs = fixture("validation");
+    inputs.valueCase = { status: "empty", detail: "Synthetic value evidence is unavailable." };
+    const authored = words(VALIDATION_SEQUENCE.length);
+    authored[7]!.answer = "The annual value is confirmed before proceeding.";
+    try {
+      buildReferenceEdition(inputs, authored);
+      throw new Error("Expected a lineage refusal");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ReferenceDeckLineageRefusal);
+      expect((error as ReferenceDeckLineageRefusal).findings).toContainEqual({
+        kind: "reference_lineage", slide: 8, code: "unsupported_narrative", detailCode: "unavailable_value_claim",
+      });
+      expect(JSON.stringify(error)).not.toContain(authored[7]!.answer);
+    }
+  });
+
+  it.each([
+    ["validation", "empty"], ["investment", "empty"],
+    ["validation", "failed"], ["investment", "failed"],
+  ] as const)("renders unavailable words without a value case in %s when the read is %s", async (edition, status) => {
+    const inputs = fixture(edition);
+    inputs.valueCase = { status, detail: "Synthetic value evidence is unavailable." };
+    const sequence = edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
+    const spec = buildReferenceEdition(inputs, unavailableEditionWords(edition, sequence));
+    expect(validateReferenceDeck(spec).filter((finding) => finding.blocking)).toEqual([]);
+    expect(spec.figureLedger.some((figure) => figure.sourceId.startsWith("engine:"))).toBe(false);
+    expect(spec.slides.find((entry) => entry.archetype === "one_step_value")?.answer).toContain("Draft words unavailable.");
+    expect(JSON.stringify(spec.slides.map((entry) => entry.blocks))).toContain("To confirm");
+    const pptx = await renderReferenceDeck(spec);
+    const verdict = judgeRenderedDeck(await inspectDeck(pptx), {
+      referenceDeck: spec, fallbackWordSlides: sequence.map((_, index) => index + 1),
+    });
+    expect(verdict.findings.filter((finding) => finding.kind === "reference_client_copy")).toEqual([]);
+    expect(verdict.findings.filter((finding) => finding.kind === "fallback_words")).toHaveLength(sequence.length);
+    expect(verdict.fidelityScore).toBeLessThan(90);
+    const bytes = await buildReferenceWorkbook(inputs, spec);
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(bytes as unknown as Parameters<typeof workbook.xlsx.load>[0]);
+    expect(workbook.getWorksheet("Value Case")?.getCell("A2").value).toBe("Gap — value-case figures unavailable");
+    expect(workbook.getWorksheet("Value Case")?.getCell("B2").value).toBe("");
+    for (const figure of spec.figureLedger) {
+      const [sheet, cell] = figure.workbookCell.split("!");
+      expect(workbook.getWorksheet(sheet!)?.getCell(cell!).value).toBe(figure.display);
+    }
+    if (process.env.REFERENCE_DECK_VISUAL_OUTPUT) {
+      const prefix = `${process.env.REFERENCE_DECK_VISUAL_OUTPUT}-${edition}-${status}-unavailable`;
+      fs.writeFileSync(`${prefix}.pptx`, pptx);
+      fs.writeFileSync(`${prefix}.xlsx`, bytes);
+      fs.writeFileSync(`${prefix}-spec.json`, JSON.stringify(spec));
+      fs.writeFileSync(`${prefix}-score.json`, JSON.stringify(verdict, null, 2));
+    }
+  }, 60_000);
+
   it("binds active and open assumption counts to distinct governed sources", () => {
     const inputs = fixture("validation");
     if (inputs.register.status !== "ready") throw new Error("fixture unavailable");
