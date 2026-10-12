@@ -72,18 +72,20 @@ async function main() {
   const priorVersionText = arg("--prior-projection-version");
   const priorVersion = priorVersionText === null ? null : Number(priorVersionText);
   const privateBundleSha = arg("--private-bundle-sha256");
-  const extraBindings = priorAssessment !== null && priorVersion !== null && Number.isInteger(priorVersion) &&
-      privateBundleSha !== null && /^[a-f0-9]{64}$/.test(privateBundleSha)
-    ? {
-        build_version: receipt.build_version,
-        candidate_sha256: sha(candidateBytes),
-        prior_assessment_id: priorAssessment,
-        prior_projection_version: priorVersion,
-        private_bundle_sha256: privateBundleSha,
-        projection_version: receipt.projection_version,
-        stage_receipt_sha256: sha(receiptBytes),
-      }
-    : {};
+  const extraBindings: Record<string, string | number> = {};
+  if (priorAssessment !== null && priorVersion !== null && Number.isInteger(priorVersion) &&
+      privateBundleSha !== null && /^[a-f0-9]{64}$/.test(privateBundleSha) &&
+      typeof receipt.build_version === "string" && Number.isInteger(receipt.projection_version)) {
+    Object.assign(extraBindings, {
+      build_version: receipt.build_version,
+      candidate_sha256: sha(candidateBytes),
+      prior_assessment_id: priorAssessment,
+      prior_projection_version: priorVersion,
+      private_bundle_sha256: privateBundleSha,
+      projection_version: receipt.projection_version,
+      stage_receipt_sha256: sha(receiptBytes),
+    });
+  }
   const decision = resolveServingApproval(manifests, {
     dataset_id: receipt.dataset_id,
     tenant_key: candidate.tenant_key,
