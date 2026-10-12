@@ -21,13 +21,25 @@ const PAGE_TABLE = {
   risk_lens: "tower_evidence_queue",
   ai_portfolio: "tower_ai_portfolio",
   adoption_lens: "tower_ai_portfolio",
+  foundations: "tower_command_center",
 };
-const PAGE_KEYS = Object.keys(PAGE_TABLE);
+const LEGACY_PAGE_KEYS = Object.keys(PAGE_TABLE).filter((page) => page !== "foundations");
+function pageKeys(report) {
+  return candidateConfig(report).sourceAssertions ? Object.keys(PAGE_TABLE) : LEGACY_PAGE_KEYS;
+}
 const PROJECTION_VERSION = 4;
 const BUILD_VERSION = "tower-registered-intake-partial/v2";
 const SOURCE_FIELDS_VARIANT = "source-fields-v1";
 const SOURCE_ASSERTIONS_VARIANT = "source-assertions-v1";
 const FOUNDATION_MEASURES = {
+  enterprise_profile: [["revenue_usd", "enterprise_source_revenue_usd", "USD"],
+    ["employee_count", "enterprise_source_employee_count", "people"]],
+  business_function: [["annual_budget_usd", "function_source_annual_budget_usd", "USD"],
+    ["fte_count", "function_source_fte_count", "FTE"],
+    ["headcount_fte", "function_source_headcount_fte", "FTE"],
+    ["cost_to_serve_usd", "function_source_cost_to_serve_usd", "USD"]],
+  workforce_role: [["role_count", "workforce_source_role_count", "people"]],
+  managed_service_scope: [["run_cost_usd", "managed_service_source_run_cost_usd", "USD"]],
   organization: [["budget_authority_usd", "organization_source_budget_authority_usd", "USD"]],
   application: [["annual_cost_usd", "application_source_annual_cost_usd", "USD"]],
   data_flow: [],
@@ -40,6 +52,14 @@ const FOUNDATION_MEASURES = {
     ["cost_per_transaction", "process_source_cost_per_transaction", "source_unit"]],
 };
 const SOURCE_ASSERTION_SCENARIOS = {
+  enterprise_source_revenue_usd: "candidate",
+  enterprise_source_employee_count: "candidate",
+  function_source_annual_budget_usd: "candidate",
+  function_source_fte_count: "candidate",
+  function_source_headcount_fte: "candidate",
+  function_source_cost_to_serve_usd: "candidate",
+  workforce_source_role_count: "candidate",
+  managed_service_source_run_cost_usd: "candidate",
   program_source_expected_value_usd: "planned",
   spend_source_prior_year_actual_usd: "actual",
   spend_source_forecast_next_year_usd: "forecast",
@@ -228,7 +248,7 @@ function sourceTypeFor(file) {
 
 function addSourceRows(plan, report) {
   const refs = new Map();
-  for (const page of PAGE_KEYS) {
+  for (const page of pageKeys(report)) {
     for (const row of report.views[page]) {
       for (const ref of sourceRefsFor(row)) {
         const key = `${ref.source_file}:${ref.source_row}`;
@@ -246,6 +266,7 @@ function addSourceRows(plan, report) {
     for (const [file, expectedRows] of [
       ["12_relationships.csv", report.canonical.foundations.relationship_census.source_rows],
       ["19_data_analytics_platform_maturity.csv", report.canonical.foundations.no_declared_row_id.row_count],
+      ["01b_business_segments.csv", report.canonical.foundations.segment_source_rows_mapping_pending],
     ]) {
       const metadata = report.source_manifest[file];
       const bytes = fs.readFileSync(path.join(ROOT, metadata.source_path));
@@ -261,7 +282,7 @@ function addSourceRows(plan, report) {
     }
   }
   for (const file of Object.keys(report.source_manifest).sort()) {
-    if (file.startsWith("extracts/")) continue;
+    if (file.startsWith("extracts/") || report.source_manifest[file].content_disposition === "hash_count_only") continue;
     const metadata = report.source_manifest[file];
     plan.sourceFiles.push({
       id: uuid("source_file", report.tenant_key, report.assessment_id, file, metadata.sha256),
@@ -272,7 +293,8 @@ function addSourceRows(plan, report) {
       quality_state: file === "13_evidence_sources.csv" ? "blocked" : "partial",
       metadata_json: { source_path: metadata.source_path, row_count: metadata.row_count,
         content_loaded: file !== "13_evidence_sources.csv" && [...refs.values()].some((ref) => ref.source_file === file),
-        canonical_identity_unresolved: file === "19_data_analytics_platform_maturity.csv" },
+        canonical_identity_unresolved: file === "19_data_analytics_platform_maturity.csv",
+        canonical_mapping_pending: file === "01b_business_segments.csv" },
       origin: "synthetic_generator",
     });
   }
@@ -280,6 +302,9 @@ function addSourceRows(plan, report) {
   for (const ref of refs.values()) {
     if (ref.source_file === "13_evidence_sources.csv") continue;
     const metadata = report.source_manifest[ref.source_file];
+    if (metadata?.content_disposition === "hash_count_only") {
+      throw new Error(`Hash-count-only source content cannot be staged: ${ref.source_file}`);
+    }
     if (!metadata || metadata.sha256 !== ref.source_sha256) throw new Error("Source reference hash does not match manifest");
     if (!parsedFiles.has(ref.source_file)) {
       const bytes = fs.readFileSync(path.join(ROOT, metadata.source_path));
@@ -292,10 +317,12 @@ function addSourceRows(plan, report) {
       id: sourceRowId(report, ref), tenant_key: report.tenant_key, assessment_id: report.assessment_id,
       source_file_id: uuid("source_file", report.tenant_key, report.assessment_id, ref.source_file, ref.source_sha256),
       native_id: ref.source_record_id || `${ref.source_file}#${ref.source_row}`,
-      record_type: recordTypeFor(ref.source_file), row_number: ref.source_row,
+      record_type: ref.source_file === "01b_business_segments.csv" ? "segment_source_record_mapping_pending" :
+        recordTypeFor(ref.source_file), row_number: ref.source_row,
       payload_json: payload, parse_state: "parsed",
       parse_notes: ref.source_file === "19_data_analytics_platform_maturity.csv" ?
-        "source_row_only_identity_unresolved_no_canonical_object" : null,
+        "source_row_only_identity_unresolved_no_canonical_object" :
+        ref.source_file === "01b_business_segments.csv" ? "source_row_only_mapping_pending_no_canonical_object" : null,
     });
   }
 }
@@ -552,7 +579,8 @@ function addCanonicalRows(plan, report) {
     const id = addObject(plan, report, item.object_type, item.id, item.name, item.source_ref,
       { ...item.source_fields, source_semantic_type: item.object_type === "data_flow" ?
         "declared_data_asset_integration" : item.object_type,
-      source_population: "registered_foundation_intake", no_inferred_relationships: true });
+      source_population: "registered_foundation_intake", no_inferred_relationships: true,
+      segment_identity_status: item.segment_attribution_status ?? null });
     for (const [sourceField, metric, unit] of FOUNDATION_MEASURES[item.object_type]) {
       const raw = item.source_fields[sourceField];
       const value = raw === null ? null : Number(raw);
@@ -569,8 +597,8 @@ function addCanonicalRows(plan, report) {
 }
 
 function physicalPreviewRows(report) {
-  const result = Object.fromEntries(PAGE_KEYS.map((page) => [page, []]));
-  for (const page of PAGE_KEYS) {
+  const result = Object.fromEntries(pageKeys(report).map((page) => [page, []]));
+  for (const page of pageKeys(report)) {
     result[page] = report.views[page];
   }
   result.decision_lanes = result.decision_lanes.map((row) => ({ ...row,
@@ -610,7 +638,7 @@ function physicalPreviewRows(report) {
 function addProjectionRows(plan, report, views) {
   const { projectionVersion, buildVersion, sourceFields, sourceAssertions } = candidateConfig(report);
   const snapshotId = plan.snapshot.id;
-  for (const page of PAGE_KEYS) {
+  for (const page of pageKeys(report)) {
     const table = PAGE_TABLE[page];
     const manifestId = uuid("projection_manifest", report.tenant_key, report.assessment_id, page, projectionVersion);
     plan.projectionManifests.push({
@@ -663,6 +691,18 @@ function addProjectionRows(plan, report, views) {
         }
         canonicalMeasureRefs = [assertion];
         payload.source_expected_value_measure_id = assertion.id;
+      } else if (sourceAssertions && page === "foundations") {
+        const ref = sourceRefsFor(row)[0];
+        canonicalObjectId = objectId(report, row.object_type, row.source_object_id);
+        const object = plan.objects.find((item) => item.id === canonicalObjectId);
+        if (!ref || !object || object.source_record_id !== sourceRowId(report, ref) ||
+            object.object_key !== row.source_object_id || object.object_type !== row.object_type) {
+          throw new Error(`Foundation projection lacks exact canonical identity: ${row.row_key}`);
+        }
+        canonicalMeasureRefs = plan.measures.filter((measure) =>
+          measure.subject_object_id === canonicalObjectId && measure.source_record_id === object.source_record_id);
+        payload.canonical_source_record_id = object.source_record_id;
+        payload.canonical_measure_refs = Object.fromEntries(canonicalMeasureRefs.map((measure) => [measure.metric_key, measure.id]));
       } else if (page === "value_proof" && row.row_key.startsWith("metric:")) {
         canonicalObjectId = objectId(report, "metric", row.row_key.slice(7));
         const measures = plan.measures.filter((measure) => measure.subject_object_id === canonicalObjectId &&
@@ -753,21 +793,24 @@ function addProjectionRows(plan, report, views) {
       };
       const primaryRef = sourceRefsFor(row)[0];
       if (table === "tower_command_center") {
+        const isFoundation = page === "foundations";
+        const isSummary = page === "command_center";
         plan.commandRows.push({ ...common, page_key: page,
-          row_type: page === "command_center" ? "portfolio_summary" : page === "decision_lanes" ? "program" : "recommended_action",
-          primary_object_id: page === "decision_lanes" ? objectId(report, "program", row.row_key) : null,
-          claim_id: page === "command_center" ? null : row.row_key,
-          claim_gate_status: page === "command_center" ? "not_applicable" : "gated",
-          claim_gate_reason_code: page === "command_center" ? null : "source_approval_needed",
-          claim_gate_reason_detail: page === "command_center" ? null : row.plain_language,
-          next_gate: page === "command_center" ? null : "owner_review",
-          evidence_needed_json: page === "command_center" ? [] : ["Finance or source-owner approval"],
+          row_type: isSummary ? "portfolio_summary" : isFoundation ? "foundation_record" : page === "decision_lanes" ? "program" : "recommended_action",
+          primary_object_id: isFoundation ? canonicalObjectId : page === "decision_lanes" ? objectId(report, "program", row.row_key) : null,
+          claim_id: isSummary || isFoundation ? null : row.row_key,
+          claim_gate_status: isSummary || isFoundation ? "not_applicable" : "gated",
+          claim_gate_reason_code: isSummary || isFoundation ? null : "source_approval_needed",
+          claim_gate_reason_detail: isSummary || isFoundation ? null : row.plain_language,
+          next_gate: isSummary || isFoundation ? null : "owner_review",
+          evidence_needed_json: isSummary || isFoundation ? [] : ["Finance or source-owner approval"],
           funded_amount_usd: null, promised_value_usd: null,
           usage_supported_value_usd: null, finance_validated_value_usd: null,
           claimable_value_usd: null, blocked_value_usd: null,
           proof_maturity_score: null, risk_pressure_score: null,
           usage_strength_score: null, owner_role: sourceFields && page === "decision_lanes" ? row.business_sponsor_role : null, handoff_module: "Tower",
-          value_state: "unknown", quality_state: "warning", metric_keys_json: [], gap_flags_json: ["unapproved_financial_basis"],
+          value_state: "unknown", quality_state: "warning", metric_keys_json: [],
+          gap_flags_json: isFoundation ? ["source_not_independently_verified", "relationship_not_promoted"] : ["unapproved_financial_basis"],
         });
       } else if (table === "tower_value_chain") {
         const isCost = page === "cost_lens";
@@ -889,7 +932,7 @@ export function buildPhysicalPlan(report) {
   addCanonicalRows(plan, report);
   const views = physicalPreviewRows(report);
   addProjectionRows(plan, report, views);
-  const viewCounts = Object.fromEntries(PAGE_KEYS.map((page) => [page, views[page].length]));
+  const viewCounts = Object.fromEntries(pageKeys(report).map((page) => [page, views[page].length]));
   if (Object.values(viewCounts).some((count) => count < 1)) throw new Error("A physical Tower view would be empty");
   const expectedObjects = 237 + (report.canonical.foundations.source_objects?.length || 0);
   if (plan.objects.length !== expectedObjects) throw new Error(`Canonical object count changed: ${plan.objects.length}`);
@@ -904,7 +947,8 @@ function rowsForPage(plan, page) {
 }
 
 export function viewFingerprints(plan) {
-  return Object.fromEntries(PAGE_KEYS.map((page) => [page, fingerprintRows(rowsForPage(plan, page))]));
+  return Object.fromEntries(plan.projectionManifests.map((manifest) => manifest.projection_key.slice(6))
+    .map((page) => [page, fingerprintRows(rowsForPage(plan, page))]));
 }
 
 function fingerprintRows(rows) {
@@ -916,16 +960,23 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
   const errors = [];
   const expectedSourceRecords = 299 + (candidateConfig(report).sourceAssertions ?
     report.canonical.foundations.relationship_census.source_rows +
-      report.canonical.foundations.no_declared_row_id.row_count : candidateConfig(report).sourceFields ?
+      report.canonical.foundations.no_declared_row_id.row_count +
+      report.canonical.foundations.segment_source_rows_mapping_pending : candidateConfig(report).sourceFields ?
       report.canonical.programs.reduce((count, program) => count + program.affected_functions.length, 0) : 0) +
     (report.canonical.foundations.source_objects?.length || 0);
-  if (plan.sourceFiles.length !== 17 || plan.sourceRecords.length !== expectedSourceRecords) errors.push("source rows changed");
+  const expectedFiles = Object.entries(report.source_manifest).filter(([file, metadata]) =>
+    !file.startsWith("extracts/") && metadata.content_disposition !== "hash_count_only").length;
+  if (plan.sourceFiles.length !== expectedFiles || plan.sourceRecords.length !== expectedSourceRecords) errors.push("source rows changed");
   if (plan.objects.length !== 237 + (report.canonical.foundations.source_objects?.length || 0)) errors.push("canonical object count changed");
   const fileById = new Map(plan.sourceFiles.map((row) => [row.id, row.file_name]));
   const userDetailRecordCount = plan.sourceRecords.filter((row) =>
     fileById.get(row.source_file_id)?.startsWith("extracts/") || row.record_type.includes("user_detail")).length;
   if (plan.sourceFiles.some((row) => row.file_name.startsWith("extracts/")) || userDetailRecordCount > 0) {
     errors.push("user-detail extract entered physical source rows");
+  }
+  if (plan.sourceFiles.some((row) => report.source_manifest[row.file_name]?.content_disposition === "hash_count_only") ||
+      plan.sourceRecords.some((row) => report.source_manifest[fileById.get(row.source_file_id)]?.content_disposition === "hash_count_only")) {
+    errors.push("hash-count-only evidence content entered physical source rows");
   }
   const unapprovedEvidenceRecordCount = plan.sourceRecords.filter((row) => row.record_type === "13_evidence_sources" ||
       fileById.get(row.source_file_id) === "13_evidence_sources.csv").length;
@@ -936,7 +987,7 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
       plan.valueRows.some((row) => row.claimable_value_usd !== null || row.blocked_value_usd !== null)) {
     errors.push("unknown financial amounts must be null");
   }
-  for (const page of PAGE_KEYS) {
+  for (const page of pageKeys(report)) {
     if (rowsForPage(plan, page).length !== viewCounts[page] || viewCounts[page] < 1) errors.push(`${page} count mismatch`);
   }
   const objectIds = new Set(plan.objects.map((row) => row.id));
@@ -975,6 +1026,14 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
         plan.objects.some((row) => row.source_record_id && maturityRows.some((source) => source.id === row.source_record_id))) {
       errors.push("raw maturity identity-unresolved coverage differs");
     }
+    const segmentRows = plan.sourceRecords.filter((row) =>
+      fileById.get(row.source_file_id) === "01b_business_segments.csv");
+    if (segmentRows.length !== report.canonical.foundations.segment_source_rows_mapping_pending ||
+        segmentRows.some((row) => row.record_type !== "segment_source_record_mapping_pending" ||
+          row.parse_notes !== "source_row_only_mapping_pending_no_canonical_object") ||
+        plan.objects.some((row) => row.source_record_id && segmentRows.some((source) => source.id === row.source_record_id))) {
+      errors.push("raw segment mapping-pending coverage differs");
+    }
   }
   if (objectIds.size !== plan.objects.length || sourceIds.size !== plan.sourceRecords.length ||
       measureIds.size !== plan.measures.length) errors.push("duplicate identity");
@@ -983,6 +1042,9 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
     if (row.use_case_object_id && !objectIds.has(row.use_case_object_id)) errors.push(`missing use case for ${row.row_key}`);
     for (const ref of row.source_refs_json) {
       if (ref.source_file.startsWith("extracts/")) errors.push(`user-detail extract cited by ${row.row_key}`);
+      if (report.source_manifest[ref.source_file]?.content_disposition === "hash_count_only") {
+        errors.push(`hash-count-only evidence cited by ${row.row_key}`);
+      }
       if (sourceFiles.get(ref.source_file) !== ref.source_sha256) errors.push(`source hash mismatch for ${row.row_key}`);
       if (Number.isInteger(ref.source_row) && !sourceIds.has(sourceRowId(report, ref))) errors.push(`missing source row for ${row.row_key}`);
       if (ref.source_file === "13_evidence_sources.csv" && ref.scope !== "register_coverage_only") errors.push("unapproved evidence cited");
@@ -1055,7 +1117,7 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
   if (candidateConfig(report).sourceAssertions) {
     const foundation = report.canonical.foundations.source_objects || [];
     const objectsById = new Map(plan.objects.map((row) => [row.id, row]));
-    if (foundation.length !== 1157) errors.push("Foundation declared-ID object coverage differs");
+    if (foundation.length !== 1242) errors.push("Foundation declared-ID object coverage differs");
     for (const item of foundation) {
       const sourceId = sourceRowId(report, item.source_ref);
       const source = sourceRecordsById.get(sourceId);
@@ -1079,7 +1141,25 @@ export function validatePhysicalPlan(report, plan, viewCounts) {
           errors.push(`Foundation measure differs from exact source row: ${item.source_ref.source_file}:${item.source_ref.source_row}:${sourceField}`);
         }
       }
+      const projected = rowsForPage(plan, "foundations").find((row) =>
+        row.row_key === `foundation:${item.object_type}:${item.id}`);
+      const display = projected?.display_payload_json;
+      if (!projected || projected.primary_object_id !== object?.id || projected.row_type !== "foundation_record" ||
+          projected.source_refs_json.length !== 1 ||
+          projected.source_refs_json[0].source_sha256 !== item.source_ref.source_sha256 ||
+          projected.source_refs_json[0].source_row !== item.source_ref.source_row ||
+          display.canonical_source_record_id !== sourceId ||
+          display.source_object_id !== item.id || display.object_type !== item.object_type ||
+          stable(display.source_fields) !== stable(item.source_fields) ||
+          display.segment_identity_status !== (item.segment_attribution_status ?? null) ||
+          object.attributes_json.segment_identity_status !== (item.segment_attribution_status ?? null) ||
+          display.source_review_state !== "not_reviewed" || display.relationship_status !== "not_promoted" ||
+          display.approved_fy_budget_usd !== null || display.claimable_value_usd !== null ||
+          Buffer.byteLength(JSON.stringify(display)) > 8192) {
+        errors.push(`Foundation projection differs from exact canonical source: ${item.source_ref.source_file}:${item.source_ref.source_row}`);
+      }
     }
+    if (rowsForPage(plan, "foundations").length !== foundation.length) errors.push("Foundation projection count differs");
   }
   const spendAggregate = plan.measures.find((measure) => measure.metric_key === SPEND_METRIC_KEY);
   const spendCategories = plan.measures.filter((measure) => measure.metric_key === "modeled_annual_spend_category_usd");
@@ -1403,6 +1483,28 @@ async function writePlan(report, plan) {
       select 1 from pg_constraint where conrelid = 'ecl_projection.tower_value_chain'::regclass
         and conname = 'tower_value_chain_unknown_amounts_check'`);
     if (unknownCheck.rows.length !== 1) throw new Error("Unknown-amount schema check is absent");
+    if (candidateConfig(report).sourceAssertions) {
+      const foundationCheck = await client.query(`
+        select pg_get_constraintdef(oid) as definition from pg_constraint
+         where conrelid = 'ecl_projection.tower_command_center'::regclass
+           and conname = 'tower_command_center_page_key_check'`);
+      if (foundationCheck.rows.length !== 1 || !foundationCheck.rows[0].definition.includes("foundations")) {
+        throw new Error("Foundations page-key schema migration has not been applied and read back");
+      }
+      const objectTypeCheck = await client.query(`
+        select pg_get_constraintdef(oid) as definition from pg_constraint
+         where conrelid = 'ecl_context.object'::regclass and conname = 'object_type_check'`);
+      if (objectTypeCheck.rows.length !== 1 ||
+          ["enterprise_profile", "data_flow", "workforce_role", "managed_service_scope"]
+            .some((type) => !objectTypeCheck.rows[0].definition.includes(type))) {
+        throw new Error("Foundation object-type schema migration has not been applied and read back");
+      }
+      const catalog = await client.query(`
+        select object_type from ecl_context.object_type_catalog
+         where object_type = any($1::text[])`, [["enterprise_profile", "business_function",
+        "workforce_role", "managed_service_scope", "organization", "application", "data_flow", "infrastructure", "process"]]);
+      if (catalog.rows.length !== 9) throw new Error("Foundation object-type catalog is incomplete");
+    }
     const existingMetrics = await client.query(
       "select metric_key, metric_name, definition, unit, directionality, cadence, aggregation_rule from ecl_context.metric_definition where tenant_key = $1 and metric_key = any($2::text[])",
       [report.tenant_key, plan.metricDefinitions.map((row) => row.metric_key)],
@@ -1435,7 +1537,7 @@ async function writePlan(report, plan) {
     const readback = { view_counts: {}, view_fingerprints: {},
       active_before: { assessment_id: declared.rows[0].assessment_id,
         projection_version: Number(declared.rows[0].projection_version) } };
-    for (const page of PAGE_KEYS) {
+    for (const page of pageKeys(report)) {
       const pagePredicate = PAGE_TABLE[page] === "tower_ai_portfolio" ? "display_payload_json ->> 'page_key' = $3" : "page_key = $3";
       const rows = await client.query(
         `select row_key, source_hash from ecl_projection.${PAGE_TABLE[page]} where tenant_key = $1 and assessment_id = $2 and ${pagePredicate} order by row_key`,
@@ -1445,7 +1547,7 @@ async function writePlan(report, plan) {
       readback.view_fingerprints[page] = fingerprintRows(rows.rows);
     }
     const expected = viewFingerprints(plan);
-    for (const page of PAGE_KEYS) {
+    for (const page of pageKeys(report)) {
       if (readback.view_counts[page] !== rowsForPage(plan, page).length || readback.view_fingerprints[page] !== expected[page]) {
         throw new Error(`Transaction readback differs for ${page}`);
       }
@@ -1586,7 +1688,7 @@ async function reattestPlan(report, plan, expectedProofUri) {
       active_before: { assessment_id: active.rows[0].assessment_id,
         projection_version: Number(active.rows[0].projection_version) } };
     const expectedFingerprints = viewFingerprints(plan);
-    for (const page of PAGE_KEYS) {
+    for (const page of pageKeys(report)) {
       const pagePredicate = PAGE_TABLE[page] === "tower_ai_portfolio" ? "display_payload_json ->> 'page_key' = $3" : "page_key = $3";
       const rows = await client.query(
         `select row_key, source_hash, display_payload_json from ecl_projection.${PAGE_TABLE[page]} where tenant_key = $1 and assessment_id = $2 and ${pagePredicate}`,

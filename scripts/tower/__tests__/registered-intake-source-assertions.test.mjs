@@ -15,12 +15,21 @@ const registry = JSON.parse(fs.readFileSync(path.join(ROOT, "datasets/tenant-inp
 const tenantKey = registry.activeTenants.find((tenant) => tenant.packets?.some((packet) => packet.classification === "synthetic-demo"))?.tenantKey;
 const build = (variant) => buildRegisteredIntakeCandidate({ repoRoot: ROOT, tenantKey, variant });
 
-test("v6 keeps the exact source set and distinguishes unverified assertions from claimable value", () => {
+test("v6 expands the registered source set and distinguishes unverified assertions from claimable value", () => {
   const prior = build("source-fields-v1");
   const report = build("source-assertions-v1");
   assert.equal(crypto.createHash("sha256").update(`${JSON.stringify(prior, null, 2)}\n`).digest("hex"),
     "bc04b5bbd56115272c41973bafea26bf5e76834467f76f934fc48272d9889c14");
-  assert.equal(report.input_fingerprint_sha256, prior.input_fingerprint_sha256);
+  assert.notEqual(report.input_fingerprint_sha256, prior.input_fingerprint_sha256);
+  assert.equal(Object.entries(report.source_manifest).filter(([file, entry]) =>
+    !file.startsWith("extracts/") && entry.content_disposition !== "hash_count_only").length, 22);
+  for (const file of ["00_enterprise_profile.csv", "01_business_functions.csv", "01b_business_segments.csv",
+    "03_workforce_roles.csv", "17_service_scope_managed_services.csv"]) assert.ok(report.source_manifest[file]);
+  assert.equal(report.source_manifest["SA10_AI_Value_Interview_Evidence.csv"].content_disposition, "hash_count_only");
+  assert.equal(report.source_manifest["SA10_AI_Value_Interview_Evidence.csv"].row_count, 996);
+  assert.equal(report.source_manifest["SA10_AI_Value_Interview_Evidence.csv"].content_loaded, false);
+  assert.equal(report.source_manifest["extracts/ms365-copilot-usage-user-detail.csv"].content_disposition, "hash_count_only");
+  assert.equal(report.source_manifest["extracts/ms365-copilot-usage-user-detail.csv"].content_loaded, false);
   assert.notEqual(report.assessment_id, prior.assessment_id);
   assert.equal(report.quality_gate_status, "pass");
   assert.deepEqual(report.source_assertion_coverage, {
@@ -31,7 +40,11 @@ test("v6 keeps the exact source set and distinguishes unverified assertions from
   assert.equal(report.gates.find((gate) => gate.id === "source_assertion_field_coverage")?.status, "pass");
   assert.equal(report.gates.find((gate) => gate.id === "foundation_declared_identity")?.status, "pass");
   assert.equal(report.gates.find((gate) => gate.id === "relationship_source_census")?.status, "pass");
-  assert.equal(report.canonical.foundations.source_objects.length, 1157);
+  assert.equal(report.canonical.foundations.source_objects.length, 1242);
+  assert.equal(report.canonical.foundations.segment_source_rows_mapping_pending, 4);
+  assert.equal(report.canonical.foundations.function_segment_keys_unresolved, 0);
+  assert.equal(report.views.foundations.length, 1242);
+  assert.equal(report.gates.find((gate) => gate.id === "segment_mapping_not_inferred")?.status, "pass");
   const executive = report.views.command_center.find((row) => row.row_key === "executive_summary");
   assert.equal(executive.foundations.source_objects, undefined);
   assert.equal(executive.foundations.application_rows, report.canonical.foundations.application_rows);
@@ -56,12 +69,13 @@ test("v6 physical plan ties each asserted amount to one exact source record and 
   const report = build("source-assertions-v1");
   const { plan, viewCounts } = buildPhysicalPlan(report);
   assert.equal(validatePhysicalPlan(report, plan, viewCounts).status, "pass");
-  assert.equal(plan.sourceFiles.length, 17);
-  assert.equal(plan.sourceRecords.length, 3775);
-  assert.equal(plan.objects.length, 1394);
-  assert.equal(plan.measures.length, 1410);
-  assert.equal(plan.projectionMeasureRefs.length, 558);
-  assert.equal(Object.values(viewCounts).reduce((sum, count) => sum + count, 0), 352);
+  assert.equal(plan.sourceFiles.length, 22);
+  assert.equal(plan.sourceRecords.length, 3864);
+  assert.equal(plan.objects.length, 1479);
+  assert.equal(plan.measures.length, 1568);
+  assert.equal(plan.projectionMeasureRefs.length, 1494);
+  assert.equal(Object.values(viewCounts).reduce((sum, count) => sum + count, 0), 1594);
+  assert.equal(viewCounts.foundations, 1242);
   assert.ok(plan.projectionManifests.every((row) => row.projection_version === 6));
   assert.equal(plan.measures.filter((row) => row.metric_key === "program_source_expected_value_usd").length, 38);
   assert.equal(plan.measures.filter((row) => row.metric_key === "outcome_source_finance_assertion_usd").length, 7);
@@ -79,7 +93,10 @@ test("v6 physical plan ties each asserted amount to one exact source record and 
   assert.equal(plan.sourceRecords.filter((row) => row.record_type === "13_evidence_sources").length, 0);
   assert.equal(plan.sourceRecords.filter((row) => row.record_type === "12_relationships").length, 2302);
   assert.equal(plan.sourceRecords.filter((row) => row.record_type === "maturity_source_record_identity_unresolved").length, 17);
-  assert.equal(plan.objects.filter((row) => row.attributes_json.source_population === "registered_foundation_intake").length, 1157);
+  assert.equal(plan.sourceRecords.filter((row) => row.record_type === "segment_source_record_mapping_pending").length, 4);
+  assert.equal(plan.sourceFiles.filter((row) => row.file_name === "SA10_AI_Value_Interview_Evidence.csv").length, 0);
+  assert.equal(plan.objects.filter((row) => row.attributes_json.source_population === "registered_foundation_intake").length, 1242);
+  assert.equal(plan.commandRows.filter((row) => row.page_key === "foundations").length, 1242);
   assert.equal(plan.sourceFiles.filter((row) => row.file_name.startsWith("extracts/")).length, 0);
 });
 
@@ -173,7 +190,8 @@ test("v6 physical gate rejects altered spend, usage and separate outcome-feed fi
 test("v6 physical gate rejects changed Foundation facts and raw relationship source records", () => {
   const report = build("source-assertions-v1");
   const { plan, viewCounts } = buildPhysicalPlan(report);
-  const foundation = plan.objects.find((row) => row.attributes_json.source_population === "registered_foundation_intake");
+  const foundation = plan.objects.find((row) => row.object_type === "organization" &&
+    row.attributes_json.source_population === "registered_foundation_intake");
   const relationshipFile = plan.sourceFiles.find((row) => row.file_name === "12_relationships.csv");
   const relationship = plan.sourceRecords.find((row) => row.source_file_id === relationshipFile.id);
   foundation.attributes_json.decision_rights = "forged";
@@ -182,6 +200,60 @@ test("v6 physical gate rejects changed Foundation facts and raw relationship sou
   assert.equal(gate.status, "fail");
   assert.ok(gate.errors.some((error) => error.includes("Foundation object differs")));
   assert.ok(gate.errors.some((error) => error.includes("source record differs from exact intake")));
+});
+
+test("v6 Foundation page links every declared object to one raw source record and rejects display drift", () => {
+  const report = build("source-assertions-v1");
+  const { plan, viewCounts } = buildPhysicalPlan(report);
+  const objectById = new Map(plan.objects.map((row) => [row.id, row]));
+  const recordsById = new Map(plan.sourceRecords.map((row) => [row.id, row]));
+  const foundationRows = plan.commandRows.filter((row) => row.page_key === "foundations");
+  assert.equal(foundationRows.length, 1242);
+  for (const row of foundationRows) {
+    const object = objectById.get(row.primary_object_id);
+    const source = recordsById.get(row.display_payload_json.canonical_source_record_id);
+    assert.equal(row.row_key, `foundation:${object.object_type}:${object.object_key}`);
+    assert.equal(object.source_record_id, source.id);
+    assert.equal(row.source_refs_json.length, 1);
+    assert.equal(source.row_number, row.source_refs_json[0].source_row);
+    assert.equal(row.display_payload_json.approved_fy_budget_usd, null);
+    assert.equal(row.display_payload_json.claimable_value_usd, null);
+    assert.ok(Buffer.byteLength(JSON.stringify(row.display_payload_json)) <= 8192);
+  }
+  foundationRows[0].display_payload_json.source_fields = { invented: "fact" };
+  const gate = validatePhysicalPlan(report, plan, viewCounts);
+  assert.equal(gate.status, "fail");
+  assert.ok(gate.errors.some((error) => error.includes("Foundation projection differs")));
+});
+
+test("hash-count-only interview evidence cannot enter a source record or projection", () => {
+  const report = build("source-assertions-v1");
+  const file = "SA10_AI_Value_Interview_Evidence.csv";
+  report.views.risk_lens[0].source_refs.push({ source_file: file,
+    source_sha256: report.source_manifest[file].sha256, source_row: 2, source_record_id: null });
+  assert.throws(() => buildPhysicalPlan(report), /Hash-count-only source content cannot be staged/);
+});
+
+test("segment fixture regeneration preserves corrected function and AI case rows byte for byte", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "tower-segment-source-"));
+  const sourceRoot = path.join(ROOT, registry.activeTenants.find((tenant) => tenant.tenantKey === tenantKey).canonicalInputRoot);
+  const targetRoot = path.join(root, "datasets/tenant-inputs/active", tenantKey, "current");
+  try {
+    fs.mkdirSync(targetRoot, { recursive: true });
+    for (const file of ["00_enterprise_profile.csv", "01_business_functions.csv", "01b_business_segments.csv",
+      "02_org_ownership.csv", "10_ai_automation_use_cases.csv"]) {
+      fs.copyFileSync(path.join(sourceRoot, file), path.join(targetRoot, file));
+    }
+    const run = spawnSync(process.execPath,
+      [path.join(ROOT, "scripts/data/fixtures/add-segment-taxonomy.mjs"), "--write"],
+      { cwd: root, encoding: "utf8" });
+    assert.equal(run.status, 0, run.stderr);
+    for (const file of ["01_business_functions.csv", "01b_business_segments.csv", "10_ai_automation_use_cases.csv"]) {
+      assert.deepEqual(fs.readFileSync(path.join(targetRoot, file)), fs.readFileSync(path.join(sourceRoot, file)), file);
+    }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test("v6 write refuses absent exact approval before opening a database", () => {

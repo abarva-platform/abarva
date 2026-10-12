@@ -138,16 +138,23 @@ const num = (v) => {
   return Number.isFinite(n) ? n : 0;
 };
 
-function classify(name, fallbackSegment) {
-  for (const [pattern, segment, office, type] of FUNCTION_RULES) {
-    if (pattern.test(name)) return { segment: segment ?? fallbackSegment, office, type };
+export function classify(name, fallbackSegment, allowedSegments) {
+  // A shared-services growth function can be customer-facing without being an airline segment.
+  if (allowedSegments?.has("health_plan") && /marketing|growth/i.test(name)) {
+    return { segment: "shared_enterprise", office: "front", type: "non_clinical" };
   }
-  return { segment: "shared_enterprise", office: "back", type: "non_clinical" };
+  for (const [pattern, segment, office, type] of FUNCTION_RULES) {
+    if (pattern.test(name) && (!allowedSegments || allowedSegments.has(segment ?? fallbackSegment))) {
+      return { segment: segment ?? fallbackSegment, office, type };
+    }
+  }
+  return { segment: fallbackSegment, office: "back", type: "non_clinical" };
 }
 
 const summary = [];
 
 for (const [tenantKey, segments] of Object.entries(SEGMENTS)) {
+  const allowedSegments = new Set(segments.map((segment) => segment.key));
   const dir = path.join(ACTIVE, tenantKey, "current");
   if (!fs.existsSync(dir)) continue;
   const load = (f) => {
@@ -198,7 +205,7 @@ for (const [tenantKey, segments] of Object.entries(SEGMENTS)) {
   const fnIndex = new Map();
   if (functions) {
     functions.rows.forEach((f) => {
-      const c = classify(f.function_name, "shared_enterprise");
+      const c = classify(f.function_name, "shared_enterprise", allowedSegments);
       const seg = segments.find((s) => s.key === c.segment);
       f.business_segment = seg?.name ?? "Shared Enterprise Services";
       f.business_segment_key = c.segment;
@@ -226,7 +233,7 @@ for (const [tenantKey, segments] of Object.entries(SEGMENTS)) {
     };
     useCases.rows.forEach((u) => {
       const fn = fnIndex.get(u.business_function);
-      const c = fn ? null : classify(u.business_function || u.use_case_name, "shared_enterprise");
+      const c = fn ? null : classify(u.business_function || u.use_case_name, "shared_enterprise", allowedSegments);
       const office = fn?.office_lens_abarva ?? c?.office ?? "back";
       const segKey = fn?.business_segment_key ?? c?.segment ?? "shared_enterprise";
       const seg = segments.find((s) => s.key === segKey);
