@@ -63,13 +63,15 @@ their notes and figure ledger.
   and workflow-plus-gap cases have 22 pages, with no extraction findings.
 - Node.js 24 typecheck and changed-file lint: pass.
 - Manual, coverage census and tenancy census genuinely regenerated: pass.
-  Covered-test-file count is 2849 versus main 2848, exactly one new covered
+  Covered-test-file count is 2852 versus main 2851, exactly one new covered
   layout suite reached by the existing orchestrator CI sweep.
 - Library orphan, route/export reachability and manual/census/fence checks:
   pass. Release checks: pass; all 11 gates ran.
-- Actual main `d75ca628f02f4c2087f7ed571d8df313ffb0a654` merged before
-  publication. Its changes are Tower release records only; product and generated
-  baselines remain unchanged. Documentation and censuses genuinely regenerated.
+- Actual main `025fbcfeb098c0f2c6efe00f9f9751c9cec5daf4` merged before
+  publication, including Home admission and operator packaging. The deck product
+  and test files remain unchanged across reconciliation. Documentation and
+  censuses genuinely regenerated; the affected tests, typecheck, reachability
+  and all 11 release gates passed again after reconciliation.
 - Exact-head CI, fetched-ref collision guard, deployment and authenticated
   populated-case acceptance: pending.
 
