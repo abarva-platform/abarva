@@ -80,6 +80,14 @@ docs/governance/*
 !docs/governance/dataset-manifests/**
 !docs/governance/data-repairs/
 !docs/governance/data-repairs/**
+!docs/releases/
+docs/releases/*
+!docs/releases/records/
+docs/releases/records/*
+!docs/releases/records/2026-10-04-source-nda-lab-contact-intake.md
+!docs/releases/records/2026-10-06-moves-gdf-evidence-domain-regen.md
+!docs/releases/records/2026-10-10-moves-demo-register-seed.md
+!docs/releases/records/2026-10-11-tower-category-measure-basis.md
 !docs/source/
 docs/source/*
 !docs/source/skyharbor-v4/
