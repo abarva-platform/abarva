@@ -50,6 +50,75 @@ function fixture(edition: EditionInputs["edition"]): EditionInputs {
 }
 
 describe("live-input reference edition", () => {
+  it.each(["validation", "investment"] as const)("renders long %s workshop answers and assumptions without shrinking table type", async (edition) => {
+    const inputs = fixture(edition);
+    const statement = "The accountable operations owner checks supporting documentation and the timing basis before deciding how the reviewed exception should be resolved and monitored.";
+    inputs.register = { status: "ready", value: { figuresRedacted: false, assumptions: Array.from({ length: 4 }, (_, index) => ({
+      registerId: `V${index + 1}`, statement, workingFigure: "$1,200", source: "Synthetic working assumption",
+      ownerRole: "Operations improvement and evidence review lead", status: "open",
+    })) } };
+    inputs.capture[1] = { status: "ready", value: {
+      sponsor_commitment: "The sponsor reviews the business outcome and appoints an accountable operations owner to resolve disputed evidence before the team proceeds with delivery.",
+      scope_boundary: statement,
+      success_criteria: "The agreed measure reflects complete source evidence and timely review of exceptions by the accountable operations owner before the decision is reported.",
+    } };
+    inputs.capture[2] = { status: "ready", value: { current_state_findings: statement,
+      process_handoffs: "Intake reviews evidence; Operations checks eligibility; The analyst examines documentation; The owner assesses the exception; Finance checks timing; The lead monitors the outcome" } };
+    if (edition === "investment") {
+      const at = "2026-10-10T10:00:00Z";
+      const unitHours = { data_source_count: { value: 8, source: "Synthetic unit-hour benchmark", confidence: "medium" as const },
+        source_table_count: { value: 12, source: "Synthetic table benchmark", confidence: "medium" as const } };
+      const releases = [{ code: "First delivery", name: "First delivery", hours: 8, weeks: 1, lowCents: 80_000, planCents: 100_000, highCents: 150_000 },
+        { code: "Later delivery", name: "Later delivery", hours: 12, weeks: 1, lowCents: 120_000, planCents: 150_000, highCents: 200_000 }];
+      inputs.rom = { status: "ready", value: { id: "synthetic-approved-estimate", approvedAt: at, workbookHref: "https://example.invalid/approved-estimate",
+        result: { version: 1, approvedBy: "synthetic-reviewer", approvedAt: at, inputsFingerprint: "synthetic-fingerprint", unitHours, releases, foundation: null,
+          combined: { hours: 20, weeks: 2, lowCents: 200_000, planCents: 250_000, highCents: 350_000 } },
+        workbookStructure: { useCases: [{ code: "Case", name: "Synthetic scope", counts: { data_source_count: 1, source_table_count: 1 } }], unitHours,
+          releases: releases.map((release) => ({ code: release.code, name: release.name, designStatus: "not_designed", useCaseCodes: ["Case"] })),
+          pod: { templateCode: "Synthetic pod", locationCode: "US", rateBasis: "loaded_cost" },
+          friction: { value: 1.1, source: "Synthetic workshop" }, productiveShare: { value: 0.7, source: "Synthetic workshop" }, hoursPerFteWeek: { value: 40, source: "Synthetic workshop" } },
+      } };
+    }
+    const sequence = edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
+    const spec = buildReferenceEdition(inputs, words(sequence.length));
+    const bytes = await renderReferenceDeck(spec);
+    const rendered = await inspectDeck(bytes);
+    expect(rendered.slides.flatMap((slide) => slide.tableText ?? []).every((cell) => cell.fontSize >= 10)).toBe(true);
+    expect(judgeRenderedDeck(rendered, { referenceDeck: spec }).findings.filter((finding) =>
+      ["reference_layout", "off_canvas", "reference_source", "reference_edition", "reference_client_copy"].includes(finding.kind))).toEqual([]);
+    expect(rendered.slides[9]?.textRuns).toContain(statement);
+    if (edition === "investment") {
+      expect(rendered.slides[19]?.textRuns).toContain("Approved delivery estimate");
+      expect(rendered.slides[19]?.textRuns).toContain("Data sources");
+      expect(rendered.slides[19]?.textRuns.join(" ")).not.toContain("rom:synthetic-approved-estimate");
+      expect(rendered.slides[19]?.notesText).toContain("rom:synthetic-approved-estimate:unit_hours:data_source_count");
+    }
+    if (process.env.REFERENCE_DECK_VISUAL_OUTPUT) {
+      fs.writeFileSync(`${process.env.REFERENCE_DECK_VISUAL_OUTPUT}-long-${edition}.pptx`, bytes);
+      fs.writeFileSync(`${process.env.REFERENCE_DECK_VISUAL_OUTPUT}-long-${edition}-spec.json`, JSON.stringify(spec));
+    }
+  });
+
+  it("keeps an eight-stage flow and its missing evidence panel inside the investment body", async () => {
+    const inputs = fixture("investment");
+    inputs.capture[2] = { status: "ready", value: { process_handoffs: "Intake reviews evidence; Operations checks eligibility; The analyst examines documentation; The owner assesses the exception; The reviewer confirms the basis; Finance checks timing; The team records the decision; The lead monitors the outcome" } };
+    const authored = words(INVESTMENT_SEQUENCE.length);
+    authored[6]!.title = "The workflow spans several accountable teams whose supporting evidence must be confirmed before leaders can rely on the proposed outcome";
+    const spec = buildReferenceEdition(inputs, authored);
+    const flow = spec.slides[6]!;
+    expect(flow.blocks[0]).toMatchObject({ kind: "flow", nodes: expect.any(Array) });
+    expect(flow.blocks[1]).toMatchObject({ kind: "gap", compact: true });
+    const rendered = await inspectDeck(await renderReferenceDeck(spec));
+    expect(rendered.slideCount).toBe(22);
+    expect(rendered.slides[6]?.objectNames).toContain("ref:body:governed-gap");
+    expect(rendered.slides[6]?.namedText?.["ref:body:flow-label:7"]).toBe("The lead monitors the outcome");
+    expect(rendered.slides[6]?.offCanvas).toEqual([]);
+    if (process.env.REFERENCE_DECK_VISUAL_OUTPUT) {
+      fs.writeFileSync(`${process.env.REFERENCE_DECK_VISUAL_OUTPUT}-flow-gap-investment.pptx`, await renderReferenceDeck(spec));
+      fs.writeFileSync(`${process.env.REFERENCE_DECK_VISUAL_OUTPUT}-flow-gap-investment-spec.json`, JSON.stringify(spec));
+    }
+  });
+
   it("renders an investment summary with working assumptions and an unavailable financial basis", async () => {
     const inputs = fixture("investment");
     inputs.valueCase = { status: "empty", detail: "The value basis still needs confirmation." };

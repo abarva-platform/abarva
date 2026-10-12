@@ -2,6 +2,7 @@ import "server-only";
 
 import type PptxGenJS from "pptxgenjs";
 import { COLORS } from "@/lib/design/design-tokens";
+import { layoutReferenceTable, REFERENCE_TABLE_PADDING_X, REFERENCE_TABLE_PADDING_Y } from "./reference-deck-layout";
 import {
   figuresOnSlide,
   referenceSourceLine,
@@ -144,36 +145,40 @@ function addChrome(slide: Slide, spec: ReferenceDeckSpec, content: ReferenceSlid
   });
 }
 
-function addBlock(slide: Slide, block: ReferenceBlock, y: number): number {
+function addBlock(slide: Slide, block: ReferenceBlock, y: number, sharedBody = false): number {
   const x = 0.72;
   const w = 11.9;
   switch (block.kind) {
     case "table": {
-      const rows = block.rows.map((row) => row.map(display));
-      const rowH = block.columns.length >= 6 && rows.length >= 5
-        ? 0.4 : Math.min(0.48, 3.95 / Math.max(1, rows.length + 1));
-      const cells = [block.columns, ...rows];
-      const colW = w / block.columns.length;
-      cells.forEach((row, rowIndex) => row.forEach((value, colIndex) => {
-        const xx = x + colIndex * colW;
-        const yy = y + rowIndex * rowH;
-        const decisive = rowIndex > 0 && block.decisiveRows?.includes(rowIndex - 1);
-        slide.addShape("rect", {
-          x: xx, y: yy, w: colW, h: rowH,
-          line: { color: C.rule, width: 0.45 },
-          fill: { color: rowIndex === 0 ? C.ink : decisive ? C.panel : C.white },
-          objectName: `ref:body:table-cell:${rowIndex}:${colIndex}`,
+      const layout = layoutReferenceTable(block, w);
+      let yy = y;
+      layout.cells.forEach((row, rowIndex) => {
+        const rowH = layout.rowHeights[rowIndex]!;
+        let xx = x;
+        row.forEach((value, colIndex) => {
+          const colW = layout.columnWidths[colIndex]!;
+          const decisive = rowIndex > 0 && block.decisiveRows?.includes(rowIndex - 1);
+          slide.addShape("rect", {
+            x: xx, y: yy, w: colW, h: rowH,
+            line: { color: C.rule, width: 0.45 },
+            fill: { color: rowIndex === 0 ? C.ink : decisive ? C.panel : C.white },
+            objectName: `ref:body:table-cell:${rowIndex}:${colIndex}`,
+          });
+          slide.addText(value, {
+            x: xx + REFERENCE_TABLE_PADDING_X, y: yy + REFERENCE_TABLE_PADDING_Y,
+            w: colW - REFERENCE_TABLE_PADDING_X * 2, h: rowH - REFERENCE_TABLE_PADDING_Y * 2,
+            fontFace: "Arial", fontSize: rowIndex === 0 ? layout.headerFontSize : layout.fontSize,
+            margin: 0, valign: "top", lineSpacingMultiple: 1.28, paraSpaceAfter: 0,
+            bold: rowIndex === 0 || Boolean(decisive),
+            color: rowIndex === 0 ? C.white : C.ink,
+            fit: "none",
+            objectName: `ref:body:table-text:${rowIndex}:${colIndex}`,
+          });
+          xx += colW;
         });
-        slide.addText(value, {
-          x: xx + 0.08, y: yy + 0.06, w: colW - 0.16, h: rowH - 0.11,
-          fontFace: BODY, fontSize: rowIndex === 0 ? 10 : 11,
-          bold: rowIndex === 0 || Boolean(decisive),
-          color: rowIndex === 0 ? C.white : C.ink,
-          fit: "shrink",
-          objectName: `ref:body:table-text:${rowIndex}:${colIndex}`,
-        });
-      }));
-      return y + rowH * (rows.length + 1) + 0.12;
+        yy += rowH;
+      });
+      return y + layout.height + 0.12;
     }
     case "metrics": {
       const count = block.items.length;
@@ -199,19 +204,20 @@ function addBlock(slide: Slide, block: ReferenceBlock, y: number): number {
       const columns = twoRows ? Math.ceil(count / 2) : count;
       const arrowW = 0.44;
       const itemW = (w - (columns - 1) * arrowW) / columns;
-      const rowH = twoRows ? 1.13 : 1.35;
+      const rowH = twoRows ? sharedBody ? 1 : 1.13 : 1.35;
+      const stride = sharedBody ? 1.21 : 1.38;
       block.nodes.forEach((node, i) => {
         const row = twoRows && i >= columns ? 1 : 0;
         const column = row === 0 ? i : columns - 1 - (i - columns);
         const xx = x + column * (itemW + arrowW);
-        const yy = y + row * 1.38;
+        const yy = y + row * stride;
         slide.addShape("rect", { x: xx, y: yy, w: itemW, h: rowH,
           line: { color: C.rule, width: 0.7 }, fill: { color: C.panel }, objectName: "ref:body:flow" });
         if (twoRows) slide.addText(String(i + 1).padStart(2, "0"), {
           x: xx + 0.12, y: yy + 0.1, w: 0.34, h: 0.2, fontFace: BODY,
           fontSize: 9, bold: true, color: C.accent,
         });
-        slide.addText(node, { x: xx + 0.12, y: yy + (twoRows ? 0.25 : 0.2), w: itemW - 0.24, h: twoRows ? 0.74 : 0.95,
+        slide.addText(node, { x: xx + 0.12, y: yy + (twoRows ? 0.25 : 0.2), w: itemW - 0.24, h: twoRows ? rowH - 0.34 : 0.95,
           fontFace: BODY, fontSize: twoRows ? 12.5 : 13.5, color: C.ink, align: "center", fit: "shrink",
           objectName: `ref:body:flow-label:${i}` });
         if (i < count - 1 && (!twoRows || (row === 0 && i < columns - 1) || (row === 1 && i < count - 1))) {
@@ -220,11 +226,12 @@ function addBlock(slide: Slide, block: ReferenceBlock, y: number): number {
             fontFace: BODY, fontSize: 18, color: C.accent, align: "center" });
         }
       });
-      if (twoRows) slide.addText("↓", { x: x + w - itemW / 2 - 0.18, y: y + 1.11, w: 0.36, h: 0.28,
+      if (twoRows) slide.addText("↓", { x: x + w - itemW / 2 - 0.18, y: y + rowH - 0.02, w: 0.36, h: 0.23,
         fontFace: BODY, fontSize: 17, color: C.accent, align: "center" });
-      if (block.annotation) slide.addText(block.annotation, { x, y: y + (twoRows ? 2.61 : 1.47), w, h: 0.38,
+      const flowHeight = twoRows ? stride + rowH + 0.1 : 1.5;
+      if (block.annotation) slide.addText(block.annotation, { x, y: y + flowHeight, w, h: 0.38,
         fontFace: BODY, fontSize: 12, color: C.muted });
-      return y + (twoRows ? block.annotation ? 3.08 : 2.61 : block.annotation ? 2.0 : 1.5);
+      return y + flowHeight + (block.annotation ? 0.47 : 0);
     }
     case "architecture": {
       const count = block.layers.length;
@@ -346,7 +353,7 @@ export async function renderReferenceDeck(spec: ReferenceDeckSpec): Promise<Buff
       addChrome(slide, spec, content, index);
       let y = 1.83;
       for (const block of content.blocks) y = content.archetype === "contents" && block.kind === "table"
-        ? addContents(slide, block, y) : addBlock(slide, block, y);
+        ? addContents(slide, block, y) : addBlock(slide, block, y, content.blocks.length > 1);
       if (y > 6.16) throw new Error(`reference_deck_body_overflow: slide ${index + 1}`);
     }
     if (content.speakerNotes) {
