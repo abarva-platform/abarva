@@ -59,6 +59,53 @@ describe("pre-ingest sensitive scanner", () => {
     );
   });
 
+  it("does not classify fractional digits as a payment card", () => {
+    const result = scanPreIngestSensitiveText(
+      "Rate: 0.1494468085106383\nRatio: -0.4111111111111111",
+    );
+
+    expect(result.requiresQuarantine).toBe(false);
+    expect(result.findings.map((finding) => finding.ruleId)).not.toContain(
+      "financial.card",
+    );
+  });
+
+  it.each([
+    "4111111111111111",
+    "4111 1111 1111 1111",
+    "4111-1111-1111-1111",
+    "4222222222222",
+    "378282246310005",
+    "4000000000000000006",
+  ])("quarantines a fabricated complete card with a decimal suffix: %s", (card) => {
+    const result = scanPreIngestSensitiveText(`Card: ${card}.00`);
+
+    expect(result.requiresQuarantine).toBe(true);
+    expect(result.findings).toContainEqual(
+      expect.objectContaining({ ruleId: "financial.card", count: 1 }),
+    );
+  });
+
+  it.each([
+    "4111111111111111",
+    "4111 1111 1111 1111",
+    "4111-1111-1111-1111",
+    "4222222222222",
+    "378282246310005",
+    "4000000000000000006",
+  ])("still quarantines a fabricated complete card number: %s", (card) => {
+    const result = scanPreIngestSensitiveText(
+      `Rate: 0.1494468085106383. Card.${card}. End.`,
+    );
+
+    expect(result.requiresQuarantine).toBe(true);
+    expect(result.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ ruleId: "financial.card", count: 1 }),
+      ]),
+    );
+  });
+
   it("flags business contact details without forcing quarantine", () => {
     const result = scanPreIngestSensitiveText(
       "Owner: cfo@example.com\nPhone: 312-555-0199\nRenewal: Salesforce",

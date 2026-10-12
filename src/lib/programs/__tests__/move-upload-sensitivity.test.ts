@@ -9,6 +9,8 @@ const CLEAN_TEXT =
 
 const DOCX =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+const XLSX =
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
 type Extract = NonNullable<Parameters<typeof assessMoveUploadSensitivity>[1]>;
 
@@ -64,6 +66,46 @@ describe("assessMoveUploadSensitivity", () => {
       expect(result.storageAllowed).toBe(true);
     }
   });
+
+  it("allows decoded spreadsheet percentages that resemble card digits", async () => {
+    const result = await assessMoveUploadSensitivity(
+      {
+        filename: "aggregate-baseline.xlsx",
+        mimeType: XLSX,
+        buffer: Buffer.from([0x50, 0x4b, 0x03, 0x04]),
+      },
+      extractReturning("Worksheet: Summary\nDenial rate | 0.1494468085106383"),
+    );
+
+    expect(result.decision).toBe("allow");
+    expect(result.storageAllowed).toBe(true);
+    expect(result.matchedRules.map((rule) => rule.ruleId)).not.toContain(
+      "financial.card",
+    );
+  });
+
+  it.each(["4111 1111 1111 1111", "4111111111111111.00"])(
+    "still stops a complete card beside a spreadsheet percentage before storage: %s",
+    async (card) => {
+      const result = await assessMoveUploadSensitivity(
+        {
+          filename: "aggregate-baseline.xlsx",
+          mimeType: XLSX,
+          buffer: Buffer.from([0x50, 0x4b, 0x03, 0x04]),
+        },
+        extractReturning(
+          `Worksheet: Summary\nRate | 0.1494468085106383\nCard | ${card}`,
+        ),
+      );
+
+      expect(result.decision).toBe("quarantine");
+      expect(result.storageAllowed).toBe(false);
+      expect(result.indexingAllowed).toBe(false);
+      expect(result.matchedRules).toContainEqual(
+        expect.objectContaining({ ruleId: "financial.card", count: 1 }),
+      );
+    },
+  );
 
   it("quarantines on a declared regulated classification whatever the content", async () => {
     const result = await assessMoveUploadSensitivity(

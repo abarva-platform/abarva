@@ -29,12 +29,13 @@ Release lane: `internal-admin`. The job writes two audit files in the private op
 - `scripts/tower/stage-delegated-approval-proof-job.mjs` checks exact input bytes and stores content-addressed authority and decision JSON in private Blob storage with create-only conditions and readback.
 - `package.json` exposes the helper to the standard ACA operator-job wrapper.
 - Focused tests cover changed bytes, reviewer provenance, claimed independent attestation, and pre-existing Blob content.
+- The runtime image includes this operator release record so the job can verify its declared release identity.
 
 ## QA / Validation
 
-- PASS: focused Node tests (3/3), changed-file ESLint, and `git diff --check`.
-- PASS: `npm run release:check` after this record is finalized.
-- NOT RUN: protected PR checks and the private ACA proof job; record their status and the ACA execution, digest, two Blob URIs and SHA-256 values, and readback marker during rollout. No private approval contents are printed.
+- PASS: focused Node tests (3/3), changed-file ESLint, and `git diff --check` for the helper release.
+- PASS: `npm run release:check` for the helper release.
+- The first private ACA execution refused the missing runtime release record before writing proof files. Its wrapper returned the shared job to idle and removed the temporary secret references. This image-packaging update addresses that exact refusal; its protected checks, deployment, and retry readback are pending.
 
 ## Rollout Plan
 
