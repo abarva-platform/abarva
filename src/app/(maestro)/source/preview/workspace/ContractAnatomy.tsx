@@ -26,14 +26,14 @@ const FACET_ORDER: readonly ContractFacetKey[] = [
   "Optimize",
 ];
 
-const FACET_QUESTION: Record<ContractFacetKey, string> = {
-  Story: "The plain-English summary, in ten seconds",
-  Scope: "What this pays for — and what it excludes",
-  Economics: "Value, term, pricing, auto-renew, notice",
-  Performance: "Service levels attained; credits against claims",
-  Relationship: "Business and contract owners, named",
-  Evidence: "Source documents and exports, always cited",
-  Optimize: "Recoverable, avoidable, or negotiable",
+const FACET_SIGNAL: Record<ContractFacetKey, string> = {
+  Story: "Contract type mapped",
+  Scope: "Scope rows available",
+  Economics: "Spend rows available",
+  Performance: "Performance observations available",
+  Relationship: "Scope associations available; owners not validated",
+  Evidence: "Document passages available; citation review separate",
+  Optimize: "Opportunity records available; calculation proof separate",
 };
 
 const INPUTS = [
@@ -462,7 +462,7 @@ export function ContractAnatomy({
                 <span className="sw-c3-facet-main">
                   <span className="sw-c3-facet-name">{facet}</span>
                   <span className="sw-c3-facet-question">
-                    {FACET_QUESTION[facet]}
+                    {FACET_SIGNAL[facet]}
                   </span>
                 </span>
                 <span className="sw-c3-facet-mark">

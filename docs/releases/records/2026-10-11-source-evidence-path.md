@@ -38,8 +38,8 @@ Design reference: `docs/design/source/SOURCE_OPTIMIZE_CONTRACT_CLAUDE_DESIGN_HAN
 ## QA / Validation
 
 - Red-first rendered cases failed on the original implementation before the relevant changes: source-flow disclosure, required input details, provenance, the empty-document overclaim and zero-heavy missing inputs.
-- Focused baseline: 19 tests pass before and after mutation proof. Eleven deliberate mutations were killed by assertion failures, including document and observation tenant/contract fences, synthetic origin labelling, internal-loader rejection, selection, count basis and empty-document overclaims.
-- Adjacent Source behavior command is taken from the existing CI workflow's exact named 18-suite step: 167 tests pass, with no pending or todo cases.
+- Focused baseline: 20 tests pass before and after mutation proof. Twelve deliberate mutations were killed by assertion failures, including document and observation tenant/contract fences, synthetic origin labelling, internal-loader rejection, selection, count basis and empty-document overclaims.
+- Adjacent Source behavior command is taken from the existing CI workflow's exact named 18-suite step: 168 tests pass, with no pending or todo cases.
 - TypeScript passes on Node 24 with a 12 GB heap. The initial default-runtime 4 GB run exhausted heap; it was not treated as a code verdict.
 - Focused ESLint has zero errors; one unchanged unused-parameter warning exists elsewhere in the large shell file.
 - Desktop and narrow local browser QA uses the actual edited component and synthetic fixtures. This is not authenticated product acceptance. Recorded lineage disclosure, input selection and absent-input states were exercised.

@@ -255,6 +255,28 @@ describe("ContractAnatomy", () => {
     expect(screen.getByText(/View coverage: 5 of 7\./)).toBeTruthy();
   });
 
+  it("labels the view signals as availability rather than validated owners or citations", () => {
+    const { container } = render(
+      <ContractAnatomy
+        coverage={coverage({ opportunity_rows: 4 })}
+        scopeRowCount={4}
+        vm={vmWith({ performanceRequired: true })}
+      />,
+    );
+    expect(facet(container, "Story")?.textContent).toContain(
+      "Contract type mapped",
+    );
+    expect(facet(container, "Relationship")?.textContent).toContain(
+      "owners not validated",
+    );
+    expect(facet(container, "Evidence")?.textContent).not.toContain(
+      "always cited",
+    );
+    expect(facet(container, "Optimize")?.textContent).toContain(
+      "calculation proof separate",
+    );
+  });
+
   it("does not claim Story is answered on an unmapped archetype", () => {
     const { container } = render(
       <ContractAnatomy
