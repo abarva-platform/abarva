@@ -161,6 +161,121 @@ describe("answerHomeAvaQuestion", () => {
     mockGetAuditedAnthropicClient.mockReset();
   });
 
+  it("answers visible family row counts without asking a model", async () => {
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: "test-tenant",
+      question:
+        "How many Vendor Contracts and Data Assets & Integrations are in the record on screen?",
+    });
+    expect(mockGetAuditedAnthropicClient).not.toHaveBeenCalled();
+    expect(answer.status).toBe("answered");
+    expect(answer.directAnswer).toBe(
+      "Vendor Contracts: 230; Data Assets & Integrations: 1710.",
+    );
+    expect(answer.artifacts[0]).toMatchObject({
+      rows: [
+        { family: "Vendor Contracts", rows: 230 },
+        { family: "Data Assets & Integrations", rows: 1710 },
+      ],
+    });
+    expect(answer.caveats[0].detail).toContain("not unique vendors");
+    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+  });
+
+  it("keeps missing families unknown rather than manufacturing zero", async () => {
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS },
+      tenantKey: "test-tenant",
+      question: "How many vendor contracts are in the record?",
+    });
+    expect(mockGetAuditedAnthropicClient).not.toHaveBeenCalled();
+    expect(answer.status).toBe("no_data");
+    expect(answer.directAnswer).toContain("not supplied");
+    expect(answer.gaps[0].detail).toContain("unknown, not zero");
+    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+  });
+
+  it("does not treat unique vendors or spend as family row counts", async () => {
+    mockClaudeJson({
+      status: "no_data",
+      direct_answer: "Unknown",
+      cited_claim_tags: [],
+      visual: { type: "none" },
+      caveats: ["No unique vendor basis."],
+    });
+    await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: "test-tenant",
+      question:
+        "How many unique vendors are represented by the vendor contracts?",
+    });
+    expect(mockGetAuditedAnthropicClient).toHaveBeenCalled();
+  });
+
+  it("does not answer a filtered count with the whole family total", async () => {
+    mockClaudeJson({
+      status: "no_data",
+      direct_answer: "Unknown",
+      cited_claim_tags: [],
+      visual: { type: "none" },
+      caveats: ["Criticality is not established."],
+    });
+    await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: "test-tenant",
+      question:
+        "How many critical vendor contracts are in the record on screen?",
+    });
+    expect(mockGetAuditedAnthropicClient).toHaveBeenCalled();
+  });
+
+  it("preserves separate structured key points and their citations", async () => {
+    mockClaudeJson({
+      status: "partial",
+      direct_answer: "Focus on integration dependence and value proof.",
+      prose: "Do not repeat this paragraph when structured points exist.",
+      key_points: [
+        "Epic Hyperspace Production integrates with 80 other systems.",
+        "Only 23 of 50 tracked metrics are claimable or ready.",
+        "Finance attestation does not cover every value claim.",
+      ],
+      cited_claim_tags: ["TD-K1", "PV-K1"],
+      visual: { type: "none" },
+      caveats: ["Source-owner confirmation is still required."],
+    });
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: "test-tenant",
+      question: "Give me three concise bullets about technology and value.",
+    });
+    expect(answer.prose?.match(/^-/gm)).toHaveLength(3);
+    expect(answer.prose).not.toContain("Do not repeat");
+    expect(answer.citations.map((citation) => citation.id)).toEqual([
+      "TD-K1",
+      "PV-K1",
+    ]);
+    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+  });
+
+  it("does not collapse a legacy single-newline bullet list during sanitization", async () => {
+    mockClaudeJson({
+      status: "answered",
+      direct_answer: "Check value proof.",
+      prose:
+        "- Only 23 of 50 tracked metrics are claimable or ready.\n- Finance attestation does not cover every value claim.",
+      cited_claim_tags: ["PV-K1"],
+      visual: { type: "none" },
+      caveats: [],
+    });
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: "test-tenant",
+      question: "Summarize the available proof.",
+    });
+    expect(answer.prose?.match(/^-/gm)).toHaveLength(2);
+  });
+
   it("packages a grounded answer, resolving a cited tag to its real claim text", async () => {
     mockClaudeJson({
       status: "answered",
