@@ -330,7 +330,10 @@ describe("readTowerCommandCenter", () => {
 
     expect(mart?.generatedFrom).toBe("ecl_serving");
     expect(mart?.aiPortfolio.map((row) => row.populationKind)).toEqual(["ai_case", "usage_observation"]);
+    expect(mart?.aiPortfolio[0]?.valueScoreLoaded).toBe(false);
     expect(view?.summary.aiInitiativeCount).toBe(1);
+    expect(view?.allInitiatives[0]?.valueScoreLoaded).toBe(false);
+    expect(view?.allInitiatives[0]?.posture).toBe("Needs evidence");
     expect(view?.usageObservations).toHaveLength(1);
     expect(view?.allInitiatives).toHaveLength(1);
     expect(view?.portfolioCounts.excludedItemCount).toBe(0);

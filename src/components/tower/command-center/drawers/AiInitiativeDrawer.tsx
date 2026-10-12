@@ -200,9 +200,11 @@ export function AiInitiativeDrawer({
           <span className={styles.drTrust}>
             <Dot
               tone={
-                a && a.readinessScoreLoaded && a.readinessScore >= 60
-                  ? "teal"
-                  : "amber"
+                !a || a.posture === "Needs evidence"
+                  ? "gray"
+                  : a.readinessScoreLoaded && a.readinessScore >= 60
+                    ? "teal"
+                    : "amber"
               }
             />
             {a?.posture ?? ""}
@@ -225,9 +227,9 @@ export function AiInitiativeDrawer({
               label={
                 isToolRollout(a) ? "Adoption potential" : "Value potential"
               }
-              value={`${a.valueScore}/100`}
+              value={a.valueScoreLoaded ? `${a.valueScore}/100` : "Not scored"}
               small
-              tone="vTeal"
+              tone={a.valueScoreLoaded ? "vTeal" : undefined}
             />
             <DrawerStat
               label="Readiness"
@@ -238,9 +240,11 @@ export function AiInitiativeDrawer({
               }
               small
               tone={
-                a.readinessScoreLoaded && a.readinessScore >= 60
-                  ? "vTeal"
-                  : "vAmber"
+                !a.readinessScoreLoaded
+                  ? undefined
+                  : a.readinessScore >= 60
+                    ? "vTeal"
+                    : "vAmber"
               }
             />
           </div>

@@ -264,12 +264,14 @@ export function aiKindFor(
  */
 export function postureFor(item: {
   valueScore: number;
-  // Nullable at source: a case may simply not carry a readiness score. Bucketing treats an
-  // absent score as the lowest band, which is why the score itself is reported separately with
-  // a `readinessScoreLoaded` flag rather than rendered as a bare 0.
+  valueScoreLoaded?: boolean;
   readinessScore: number | null;
   towerClaimAllowed: string;
 }): string {
+  if (item.valueScoreLoaded === false || !Number.isFinite(item.valueScore) ||
+      item.valueScore < 0 || item.valueScore > 100 || item.readinessScore === null ||
+      !Number.isFinite(item.readinessScore) || item.readinessScore < 0 ||
+      item.readinessScore > 100) return "Needs evidence";
   const value = num(item.valueScore);
   const readiness = num(item.readinessScore);
   if (value >= 50 && readiness >= 50) return "Scale";
@@ -437,8 +439,9 @@ function toAiView(item: TowerMartAiPortfolioItem, n: number): TowerAiView {
     vendor: trimOrNull(item.vendorName),
     system: trimOrNull(item.systemName),
     valueScore: Math.max(0, Math.min(100, num(item.valueScore))),
+    valueScoreLoaded: item.valueScoreLoaded ?? true,
     readinessScore: Math.max(0, Math.min(100, num(item.readinessScore))),
-    readinessScoreLoaded: item.readinessScore !== null,
+    readinessScoreLoaded: item.readinessScore !== null && item.readinessScore >= 0 && item.readinessScore <= 100,
     riskScore: Math.max(0, Math.min(100, num(item.riskScore))),
     riskScoreLoaded: item.riskScore !== null,
     gatingConstraint: item.gatingConstraint ?? null,

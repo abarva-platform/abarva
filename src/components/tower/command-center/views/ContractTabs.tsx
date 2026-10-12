@@ -694,7 +694,7 @@ function aiAmountLabel(item: TowerAiView): string {
 
 function aiBenefitLabel(item: TowerAiView): string {
   if (!item.promisedBenefitLoaded) {
-    return item.financeStatus === null
+    return item.populationKind === "tool_rollout"
       ? "No tool-level benefit claim loaded"
       : "No case-level benefit claim loaded";
   }

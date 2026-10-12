@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Tower now distinguishes AI use cases, tool rollouts, and use-case usage observations using the declared projection page and canonical object IDs. Counts and charts use the relevant population. A usage observation is no longer presented as a second asset, and missing Finance status remains unknown.
+Tower now distinguishes AI use cases, tool rollouts, and use-case usage observations using the declared projection page and canonical object IDs. Counts and charts use the relevant population. A usage observation is no longer presented as a second asset. Missing Finance status and unscored AI posture remain unknown.
 
 ## Layer Impact
 
@@ -28,7 +28,7 @@ Tower now distinguishes AI use cases, tool rollouts, and use-case usage observat
 
 ## Changes Included
 
-- Tower serving reader, command-center view model, case and rollout selectors, executive and portfolio views, and focused tests.
+- Tower serving reader, command-center view model, case and rollout selectors, executive and portfolio views, source-backed AI scoring, and focused tests.
 - No migration, loader, private data, or runtime configuration change.
 
 ## QA / Validation

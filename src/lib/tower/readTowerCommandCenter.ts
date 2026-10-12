@@ -933,6 +933,8 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     approvedFundingRaw ?? (monthlyCostRaw !== null ? monthlyCostRaw * 12 : 0);
   const aiSpendLoaded = aiAmountBasis !== "unknown";
   const promisedValueUsd = reconciledAnnualBenefit(row);
+  const recordedValueScore = payloadNullableNumberFrom(row, ["value_score"]);
+  const valueScoreLoaded = recordedValueScore !== null && recordedValueScore >= 0 && recordedValueScore <= 100;
   const adoptionRatePct =
     payloadNullableNumberFrom(row, [
       "adoption_rate_percent",
@@ -1001,12 +1003,8 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     linkedBusinessCaseCount: payloadNullableNumberFrom(row, [
       "linked_business_case_count",
     ]),
-    valueScore:
-      promisedValueUsd !== null && promisedValueUsd > 0
-        ? 70
-        : payloadNumber(row, "usage_events") > 0
-          ? 55
-          : 20,
+    valueScore: valueScoreLoaded ? recordedValueScore : 0,
+    valueScoreLoaded,
     // Readiness is a declared 0-100 score. It previously fell back to the adoption rate and then
     // to a literal 25 — substituting a different metric, and then an invented one, for a missing
     // value. Both are the "missing rendered as a number" failure this product exists to prevent.

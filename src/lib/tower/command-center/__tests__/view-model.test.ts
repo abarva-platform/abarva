@@ -769,6 +769,12 @@ describe("aiDisplayBucketFor", () => {
 });
 
 describe("postureFor", () => {
+  it("withholds a quadrant when a source score is absent or invalid", () => {
+    const base = { towerClaimAllowed: "partial", valueScore: 80, readinessScore: 70 };
+    expect(postureFor({ ...base, valueScoreLoaded: false })).toBe("Needs evidence");
+    expect(postureFor({ ...base, readinessScore: null })).toBe("Needs evidence");
+    expect(postureFor({ ...base, valueScore: 120 })).toBe("Needs evidence");
+  });
   it("labels the four quadrants of value × readiness", () => {
     const base = { towerClaimAllowed: "partial" };
     expect(postureFor({ ...base, valueScore: 92, readinessScore: 80 })).toBe(

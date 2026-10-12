@@ -7,6 +7,8 @@ import { designFixtureMart } from "@/lib/tower/command-center/__fixtures__/desig
 import type { TowerAiView, TowerCommandCenterView } from "@/lib/tower/command-center/types";
 import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-model";
 import { FoundationsPanel } from "../views/FoundationsPanel";
+import { AiInitiativeDrawer } from "../drawers/AiInitiativeDrawer";
+import { CommandCenterView } from "../views/CommandCenterView";
 import { InitiativesTablePanel } from "../views/InitiativesTablePanel";
 import { QueueOwnerPanel } from "../views/QueueOwnerPanel";
 import { VerdictPanel } from "../views/VerdictPanel";
@@ -60,6 +62,44 @@ describe("Tower story denominators", () => {
     expect(document.body.textContent).toContain("Where 1 AI use case stands");
     expect(document.body.textContent).toContain("1 of 1 AI use case has no Finance status loaded");
     expect(document.body.textContent).not.toContain("Where 0 AI use cases stand");
+  });
+
+  it("shows an unscored case as needing evidence in its detail", () => {
+    render(<AiInitiativeDrawer item={item({
+      populationKind: "ai_case",
+      valueScore: 0,
+      valueScoreLoaded: false,
+      readinessScore: 0,
+      readinessScoreLoaded: false,
+      posture: "Needs evidence",
+    })} onClose={() => {}} />);
+    expect(document.body.textContent).toContain("Needs evidence");
+    expect(document.body.textContent).toContain("Not scored");
+    expect(document.body.textContent).not.toContain("0/100");
+  });
+
+  it("keeps the executive asset count separate from programs and usage observations", () => {
+    const cases = Array.from({ length: 18 }, (_, index) => item({
+      id: `case-${index}`,
+      populationKind: "ai_case",
+    }));
+    const observations = Array.from({ length: 18 }, (_, index) => item({
+      id: `observation-${index}`,
+      populationKind: "usage_observation",
+    }));
+    const sample = base();
+    const view = {
+      ...sample,
+      allInitiatives: cases,
+      usageObservations: observations,
+      programs: Array.from({ length: 38 }, (_, index) => ({ ...sample.programs[0], id: `program-${index}` })),
+      summary: { ...sample.summary, aiInitiativeCount: 18 },
+    };
+    render(<CommandCenterView view={view} onOpenGap={() => {}} onGoToFunnel={() => {}} onGoToAi={() => {}} onGoToActions={() => {}} />);
+    expect(document.body.textContent).toContain("18 AI use cases + 0 tool rollouts");
+    expect(document.body.textContent).toContain("18 separate usage observations");
+    expect(document.body.textContent).not.toContain("36 assets");
+    expect(document.body.textContent).not.toContain("38 AI business cases");
   });
 
   it("does not turn a Finance validation status into a zero dollar amount", () => {

@@ -74,7 +74,7 @@ function openClaimCount(view: TowerCommandCenterView): number {
 }
 
 function aiToolRolloutCount(view: TowerCommandCenterView): number {
-  return Math.max(0, view.allInitiatives.length - view.programs.length);
+  return view.allInitiatives.filter(isToolRollout).length;
 }
 
 function toolCostGap(view: TowerCommandCenterView): string {

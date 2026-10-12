@@ -336,6 +336,8 @@ export interface TowerAiView {
   system: string | null;
   /** 0–100, mart `value_score`. Bubble Y axis. */
   valueScore: number;
+  /** False when no source-backed value score was recorded. */
+  valueScoreLoaded: boolean;
   /** 0–100, mart `readiness_score`. Bubble X axis. */
   readinessScore: number;
   /** False when the source recorded no readiness score — render a gap, not the 0. */
