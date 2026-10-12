@@ -1,0 +1,35 @@
+{
+  "dataset_version": "demo-subscription-contract-evidence-20261012",
+  "binding": {
+    "tenant_key": "meridian-health",
+    "contract_id": "CTR-04CDB4D49D",
+    "vendor_ref": "VEN-b39deec135",
+    "source_record_id": "vendors_contracts:zelis_healthcare:48"
+  },
+  "reporting_cutoff": "2026-09-30",
+  "assumption_basis": "Authored synthetic quantities, minimum, unit rate and performance history. The rate/quantity model reconciles to the planning register annual baseline but is not evidence that actual invoices, activity or legal rights were observed. No executed document, signature, client review or savings is claimed.",
+  "source_basis": "synthetic_modelled",
+  "review_state": "not_reviewed",
+  "data_plane_loaded_verified": false,
+  "row_counts": {
+    "contracts": 1,
+    "cmdb_applications": 1,
+    "cmdb_application_scope": 1,
+    "monthly_spend": 12,
+    "saas_usage": 12,
+    "invoice_line_detail": 12,
+    "sla_performance": 12,
+    "contract_clauses": 7,
+    "optimization_opportunities": 1,
+    "evidence_manifest": 6,
+    "contract_page_text": 6,
+    "change_orders": 0,
+    "ticket_volumetrics": 0,
+    "resource_model": 0,
+    "pricing_bridge": 0,
+    "batch_job_volumetrics": 0,
+    "qbr_scorecards": 0,
+    "negotiation_findings": 0,
+    "negotiation_levers": 0
+  }
+}

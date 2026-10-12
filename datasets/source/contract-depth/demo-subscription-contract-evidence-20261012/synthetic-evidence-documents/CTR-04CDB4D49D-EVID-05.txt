@@ -1,0 +1,2 @@
+Synthetic scenario: monthly platform availability target is 99.9%; no credit formula is declared.
+Synthetic scenario only. No real agreement execution, approval or signature is asserted.

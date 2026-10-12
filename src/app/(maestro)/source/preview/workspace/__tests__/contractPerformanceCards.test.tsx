@@ -183,7 +183,7 @@ describe("ContractPerformanceCards", () => {
 
     expect(
       screen.getByText(
-        "No committed amount is recorded, so pace cannot be computed.",
+        "Complete spend and monetary commitment are needed for this comparison.",
       ),
     ).toBeTruthy();
   });

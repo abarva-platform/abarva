@@ -1,0 +1,30 @@
+{
+  "tenant_key": "meridian-health",
+  "dataset_version": "demo-subscription-contract-evidence-20261012",
+  "contract_id": "CTR-04CDB4D49D",
+  "vendor_ref": "VEN-b39deec135",
+  "vendor_name": "Zelis Healthcare",
+  "contract_name": "Zelis Healthcare Statement of Work",
+  "source_record_id": "vendors_contracts:zelis_healthcare:48",
+  "binding_basis": "Native canonical contract/source-record readback; do not infer identity from the vendor name.",
+  "application_id": "SYS-ae9eff025c",
+  "application_name": "Zelis Claims Payment & Network Pricing",
+  "business_owner": "Director, Vendor & Contract Management",
+  "it_owner": "Director, Epic Tapestry Payer Applications",
+  "reporting_cutoff": "2026-09-30",
+  "first_month": "2025-10",
+  "start_date": "2024-10-01",
+  "end_date": "2028-12-31",
+  "notice_period_days": 120,
+  "archetype": "software_subscription",
+  "archetype_authority": "engineering_declared",
+  "entitled_seats": 2500,
+  "minimum_seats": 2200,
+  "monthly_unit_price": 219.2,
+  "active_seats": [
+    2100, 2075, 2050, 2025, 2000, 1975, 1950, 1925, 1900, 1850, 1825, 1800
+  ],
+  "synthetic_policy": "synthetic_demo_only_not_client_truth",
+  "assumption_basis": "Authored synthetic quantities, minimum, unit rate and performance history. The rate/quantity model reconciles to the planning register annual baseline but is not evidence that actual invoices, activity or legal rights were observed. No executed document, signature, client review or savings is claimed.",
+  "generator_version": "subscription-evidence-v1"
+}

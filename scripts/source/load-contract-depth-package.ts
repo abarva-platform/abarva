@@ -13,6 +13,7 @@ import {
 } from "../../src/lib/source/contract-depth-package/adapter";
 import { projectContractDepthPackage } from "../../src/lib/source/contract-depth-package/projection";
 import type { CsvRecord } from "../../src/lib/source/contract-depth-package/projection";
+import { normalizeSpendSourceRow, normalizeUsageSourceRow, preserveSourceFile } from "../../src/lib/source/contract-depth-package/source-row-normalization";
 import { performanceMeasureFromSource } from "../../src/lib/source/contract-intelligence/performance-units";
 import { postgresClientOptions } from "../../src/scripts/postgres-client-options";
 import {
@@ -548,7 +549,7 @@ function readSourceFiles(
         contractById.get(stringValue(row, "contract_id")) ?? {},
         "vendor_ref",
       ),
-      source_file_id: "EVID-01",
+      source_file_id: preserveSourceFile(row, "EVID-01"),
     })),
     invoiceLineDetail: rawInvoices.map((row) => ({
       ...row,
@@ -556,14 +557,14 @@ function readSourceFiles(
         contractById.get(stringValue(row, "contract_id")) ?? {},
         "vendor_ref",
       ),
-      source_file_id: "EVID-02",
+      source_file_id: preserveSourceFile(row, "EVID-02"),
     })),
     batchJobVolumetrics: rawBatch.map((row) => ({
       ...row,
       failed_jobs: "0",
       late_completion_count: "0",
       manual_restarts: "0",
-      source_file_id: "EVID-03",
+      source_file_id: preserveSourceFile(row, "EVID-03"),
       vendor_ref: stringValue(
         contractById.get(stringValue(row, "contract_id")) ?? {},
         "vendor_ref",
@@ -571,50 +572,30 @@ function readSourceFiles(
     })),
     qbrScorecards: rawQbr.map((row) => ({
       ...row,
-      source_file_id: "EVID-03",
+      source_file_id: preserveSourceFile(row, "EVID-03"),
       vendor_ref: stringValue(
         contractById.get(stringValue(row, "contract_id")) ?? {},
         "vendor_ref",
       ),
     })),
     monthlySpend: rawSpend.map((row) => ({
-      ...row,
+      ...normalizeSpendSourceRow(row, "EVID-03"),
       period_start:
         stringValue(row, "period_start") ||
         monthStart(stringValue(row, "month")),
       period_end:
         stringValue(row, "period_end") || monthEnd(stringValue(row, "month")),
-      committed_base_amount_usd:
-        stringValue(row, "committed_base_amount_usd") ||
-        stringValue(row, "commitment_run_rate_usd"),
-      invoice_amount_usd:
-        stringValue(row, "invoice_amount_usd") || stringValue(row, "spend_usd"),
-      paid_amount_usd:
-        stringValue(row, "paid_amount_usd") || stringValue(row, "spend_usd"),
-      actual_spend_usd:
-        stringValue(row, "actual_spend_usd") || stringValue(row, "spend_usd"),
-      currency: "USD",
-      invoice_ref: `DBX-${stringValue(row, "month")}`,
-      source_file_id: "EVID-03",
       vendor_ref: stringValue(
         contractById.get(stringValue(row, "contract_id")) ?? {},
         "vendor_ref",
       ),
     })),
     saasUsage: rawUsage.map((row) => ({
-      ...row,
-      source_file_id: "EVID-03",
+      ...normalizeUsageSourceRow(row, "EVID-03"),
       vendor_ref: stringValue(
         contractById.get(stringValue(row, "contract_id")) ?? {},
         "vendor_ref",
       ),
-      metric_name: "workspace_entitlement",
-      entitled_quantity: stringValue(row, "entitled_seats"),
-      active_quantity: stringValue(row, "active_seats"),
-      unused_quantity: "0",
-      utilization_pct: "",
-      unit: "seats",
-      annual_opportunity_usd: "",
     })),
     slaPerformance: rawPerformance.map((row) => ({
       ...row,

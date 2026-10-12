@@ -7,11 +7,21 @@ import { createHash } from "node:crypto";
 import vm from "node:vm";
 import ts from "typescript";
 import { performanceMeasureFromSource } from "../../../src/lib/source/contract-intelligence/performance-units";
+import {
+  normalizeSpendSourceRow,
+  normalizeUsageSourceRow,
+  preserveSourceFile,
+} from "../../../src/lib/source/contract-depth-package/source-row-normalization";
 
 function optimizationWriter() {
   const file = path.resolve(__dirname, "../load-contract-depth-package.ts");
   const source = fs.readFileSync(file, "utf8");
-  const parsed = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
+  const parsed = ts.createSourceFile(
+    file,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+  );
   // Execute the real writer and helpers without the CLI entry point or DB imports.
   const functions = parsed.statements
     .filter(ts.isFunctionDeclaration)
@@ -22,7 +32,15 @@ function optimizationWriter() {
   }).outputText;
   return vm.runInNewContext(
     `${compiled}\n({ upsertOptimizationSpine, expectedLayer3, layer3Readback, readSourceFiles })`,
-    { createHash, fs, path, SOURCE_SYSTEM: "source_contract_depth_package_loader" },
+    {
+      createHash,
+      fs,
+      path,
+      normalizeSpendSourceRow,
+      normalizeUsageSourceRow,
+      preserveSourceFile,
+      SOURCE_SYSTEM: "source_contract_depth_package_loader",
+    },
   );
 }
 
@@ -31,32 +49,43 @@ async function recordedOptimizationWrites() {
   const sourceFiles = {
     contracts: [{ contract_id: "contract-test", business_owner: "Buyer" }],
     monthlySpend: [],
-    optimizationOpportunities: [{
-      opportunity_id: "opportunity-test",
-      contract_id: "contract-test",
-      vendor_ref: "vendor-test",
-      opportunity_type: "avoided_cost",
-      annual_value_usd: "12345",
-      amount_low_usd: "10000",
-      amount_high_usd: "15000",
-      amount_state: "range",
-      stage: "quantified",
-      title: "Authored proposal",
-      recommended_action: "Review the cited usage with its owner.",
-      buyer_ask: "Reduce unused entitlements.",
-      evidence_rows: "usage-row-1;usage-row-2",
-      evidence_family: "usage_entitlement",
-    }],
+    optimizationOpportunities: [
+      {
+        opportunity_id: "opportunity-test",
+        contract_id: "contract-test",
+        vendor_ref: "vendor-test",
+        opportunity_type: "avoided_cost",
+        annual_value_usd: "12345",
+        amount_low_usd: "10000",
+        amount_high_usd: "15000",
+        amount_state: "range",
+        stage: "quantified",
+        title: "Authored proposal",
+        recommended_action: "Review the cited usage with its owner.",
+        buyer_ask: "Reduce unused entitlements.",
+        evidence_rows: "usage-row-1;usage-row-2",
+        evidence_family: "usage_entitlement",
+      },
+    ],
   };
   await optimizationWriter().upsertOptimizationSpine(
     { query },
-    { tenantKey: "tenant-test", datasetVersion: "version-test", loadRunId: "run-test" },
+    {
+      tenantKey: "tenant-test",
+      datasetVersion: "version-test",
+      loadRunId: "run-test",
+    },
     sourceFiles,
   );
   const insert = (table: string) => {
-    const calls = query.mock.calls.filter(([sql]) => sql.includes(`INSERT INTO source.${table} (`));
+    const calls = query.mock.calls.filter(([sql]) =>
+      sql.includes(`INSERT INTO source.${table} (`),
+    );
     expect(calls.length).toBeGreaterThan(0);
-    return calls.map(([sql, values]) => ({ sql: sql.replace(/\s+/g, " "), values }));
+    return calls.map(([sql, values]) => ({
+      sql: sql.replace(/\s+/g, " "),
+      values,
+    }));
   };
   return { insert };
 }
@@ -65,7 +94,11 @@ describe("Source contract depth package loader", () => {
   it("does not promote an authored opportunity amount into canonical sizing", async () => {
     const { insert } = await recordedOptimizationWrites();
     const opportunity = insert("optimization_opportunity")[0];
-    expect(opportunity.values.slice(6, 9)).toEqual(["signal", null, "not_sized"]);
+    expect(opportunity.values.slice(6, 9)).toEqual([
+      "signal",
+      null,
+      "not_sized",
+    ]);
     expect(opportunity.sql).toContain("'requires_sizing'");
     const payload = JSON.parse(opportunity.values[14]);
     expect(payload).toMatchObject({
@@ -119,20 +152,41 @@ describe("Source contract depth package loader", () => {
     expect(valuation.sql).toContain("'not_sized'");
     expect(valuation.sql).not.toContain("CURRENT_DATE");
     expect(insert("evidence_requirement")[0].sql).toContain("'sizing_method'");
-    expect(insert("opportunity_requirement_status")[0].sql).not.toContain("opportunity is quantified");
-    expect(insert("evidence_request")[0].sql).toContain("executable sizing rule");
+    expect(insert("opportunity_requirement_status")[0].sql).not.toContain(
+      "opportunity is quantified",
+    );
+    expect(insert("evidence_request")[0].sql).toContain(
+      "executable sizing rule",
+    );
   });
 
   it("reconciles blocked and unsized states, not just the number of imported rows", async () => {
     const sourceFiles = {
       contracts: [{ contract_id: "contract-test" }],
-      optimizationOpportunities: [{ contract_id: "contract-test", opportunity_id: "opportunity-test", evidence_rows: "row-1;row-2" }],
-      changeOrders: [], saasUsage: [], contractPageText: [], resourceModel: [],
-      pricingBridge: [], invoiceLineDetail: [], batchJobVolumetrics: [],
-      qbrScorecards: [], contractClauses: [], applicationScope: [],
-      monthlySpend: [], slaPerformance: [],
+      optimizationOpportunities: [
+        {
+          contract_id: "contract-test",
+          opportunity_id: "opportunity-test",
+          evidence_rows: "row-1;row-2",
+        },
+      ],
+      changeOrders: [],
+      saasUsage: [],
+      contractPageText: [],
+      resourceModel: [],
+      pricingBridge: [],
+      invoiceLineDetail: [],
+      batchJobVolumetrics: [],
+      qbrScorecards: [],
+      contractClauses: [],
+      applicationScope: [],
+      monthlySpend: [],
+      slaPerformance: [],
     };
-    const ownership = { canonical_contract_ids: ["contract-test"], evidence_only_contract_ids: [] };
+    const ownership = {
+      canonical_contract_ids: ["contract-test"],
+      evidence_only_contract_ids: [],
+    };
     const writer = optimizationWriter();
     const expected = writer.expectedLayer3(sourceFiles, [], ownership);
     expect(expected).toMatchObject({
@@ -144,34 +198,63 @@ describe("Source contract depth package loader", () => {
       unsized_valuation: 1,
     });
     const query = jest.fn().mockResolvedValue({ rows: [{}] });
-    await writer.layer3Readback({ query }, { tenantKey: "tenant-test", datasetVersion: "version-test", loadRunId: "run-test" }, sourceFiles, ownership);
+    await writer.layer3Readback(
+      { query },
+      {
+        tenantKey: "tenant-test",
+        datasetVersion: "version-test",
+        loadRunId: "run-test",
+      },
+      sourceFiles,
+      ownership,
+    );
     const sql = query.mock.calls[0][0].replace(/\s+/g, " ");
-    expect(sql).toContain("amount_state = 'not_sized' AND stage = 'signal' AND approval_state = 'requires_sizing'");
+    expect(sql).toContain(
+      "amount_state = 'not_sized' AND stage = 'signal' AND approval_state = 'requires_sizing'",
+    );
     expect(sql).toContain("run_state = 'blocked' AND completed_at IS NULL");
-    expect(sql).toContain("value_numeric IS NULL AND inclusion_state = 'pending_review'");
-    expect(sql).toContain("amount_usd IS NOT NULL) AS priced_calculation_output");
-    expect(sql).toContain("valuation_state = 'not_sized' AND effective_date IS NULL");
+    expect(sql).toContain(
+      "value_numeric IS NULL AND inclusion_state = 'pending_review'",
+    );
+    expect(sql).toContain(
+      "amount_usd IS NOT NULL) AS priced_calculation_output",
+    );
+    expect(sql).toContain(
+      "valuation_state = 'not_sized' AND effective_date IS NULL",
+    );
   });
 
   it("keeps time and backlog measures out of the percentage scale", () => {
-    expect(performanceMeasureFromSource("critical_incident_response_minutes", "35", "30")).toEqual({
+    expect(
+      performanceMeasureFromSource(
+        "critical_incident_response_minutes",
+        "35",
+        "30",
+      ),
+    ).toEqual({
       unit: "minutes",
       actual: 35,
       target: 30,
       actualText: "35 min",
       targetText: "30 min",
     });
-    expect(performanceMeasureFromSource("p1_p2_resolution_hours", "0.8", "8")).toMatchObject({
+    expect(
+      performanceMeasureFromSource("p1_p2_resolution_hours", "0.8", "8"),
+    ).toMatchObject({
       unit: "hours",
       actual: 0.8,
       actualText: "0.8 hr",
     });
-    expect(performanceMeasureFromSource("problem_backlog_older_30_days", "12", "12")).toMatchObject({
+    expect(
+      performanceMeasureFromSource("problem_backlog_older_30_days", "12", "12"),
+    ).toMatchObject({
       unit: "count",
       actual: 12,
       actualText: "12",
     });
-    expect(performanceMeasureFromSource("batch_completion_by_7am_pct", "0.98", "98")).toMatchObject({
+    expect(
+      performanceMeasureFromSource("batch_completion_by_7am_pct", "0.98", "98"),
+    ).toMatchObject({
       unit: "%",
       actual: 98,
       actualText: "98.0%",
@@ -179,9 +262,17 @@ describe("Source contract depth package loader", () => {
   });
 
   it("refuses unknown or contradictory source units", () => {
-    expect(() => performanceMeasureFromSource("unknown_sla", "4", "5")).toThrow(/unit/i);
-    expect(() => performanceMeasureFromSource("critical_incident_response_minutes", "35", "30", "%"))
-      .toThrow(/unit/i);
+    expect(() => performanceMeasureFromSource("unknown_sla", "4", "5")).toThrow(
+      /unit/i,
+    );
+    expect(() =>
+      performanceMeasureFromSource(
+        "critical_incident_response_minutes",
+        "35",
+        "30",
+        "%",
+      ),
+    ).toThrow(/unit/i);
   });
 
   it("persists the resolved unit and repairs it on a separately authorized reload", () => {
@@ -190,7 +281,10 @@ describe("Source contract depth package loader", () => {
       "utf8",
     );
     const start = loader.indexOf("async function upsertPerformance(");
-    const upsert = loader.slice(start, loader.indexOf("async function upsert", start + 1));
+    const upsert = loader.slice(
+      start,
+      loader.indexOf("async function upsert", start + 1),
+    );
     expect(upsert).toContain("performanceMeasureFromSource(");
     expect(upsert).toContain("measure.unit,");
     expect(upsert).toContain("unit = EXCLUDED.unit");
@@ -203,33 +297,49 @@ describe("Source contract depth package loader", () => {
       "utf8",
     );
     const main = loader.slice(loader.indexOf("async function main():"));
-    const validation = main.indexOf("for (const row of sourceFiles.slaPerformance)");
+    const validation = main.indexOf(
+      "for (const row of sourceFiles.slaPerformance)",
+    );
     expect(validation).toBeGreaterThan(0);
     expect(main.slice(validation)).toContain("performanceMeasureFromSource(");
-    expect(validation).toBeLessThan(main.indexOf("if (args.mode === \"plan\")"));
-    expect(validation).toBeLessThan(main.indexOf("const result = await withClient("));
+    expect(validation).toBeLessThan(main.indexOf('if (args.mode === "plan")'));
+    expect(validation).toBeLessThan(
+      main.indexOf("const result = await withClient("),
+    );
   });
 
   it("requires a declared unit in every performance fixture, including the alternate schema", () => {
-    const packages = path.resolve(__dirname, "../../../datasets/source/contract-depth");
+    const packages = path.resolve(
+      __dirname,
+      "../../../datasets/source/contract-depth",
+    );
     let checked = 0;
     for (const packageName of fs.readdirSync(packages)) {
-      const file = path.join(packages, packageName, "source-files/sla_performance.csv");
+      const file = path.join(
+        packages,
+        packageName,
+        "source-files/sla_performance.csv",
+      );
       if (!fs.existsSync(file)) continue;
-      const parsed = Papa.parse<Record<string, string>>(fs.readFileSync(file, "utf8"), {
-        header: true,
-        skipEmptyLines: true,
-      });
+      const parsed = Papa.parse<Record<string, string>>(
+        fs.readFileSync(file, "utf8"),
+        {
+          header: true,
+          skipEmptyLines: true,
+        },
+      );
       expect(parsed.errors).toEqual([]);
       expect(parsed.meta.fields).toContain("unit");
       for (const row of parsed.data) {
         expect(["%", "minutes", "hours", "count"]).toContain(row.unit);
-        expect(() => performanceMeasureFromSource(
-          row.metric_name || row.sla_metric,
-          row.actual_result_pct || row.actual_pct,
-          row.committed_threshold_pct || row.target_pct,
-          row.unit,
-        )).not.toThrow();
+        expect(() =>
+          performanceMeasureFromSource(
+            row.metric_name || row.sla_metric,
+            row.actual_result_pct || row.actual_pct,
+            row.committed_threshold_pct || row.target_pct,
+            row.unit,
+          ),
+        ).not.toThrow();
         checked += 1;
       }
     }
@@ -241,15 +351,59 @@ describe("Source contract depth package loader", () => {
     const sourceDir = path.join(root, "source-files");
     fs.mkdirSync(sourceDir);
     try {
-      fs.writeFileSync(path.join(sourceDir, "sla_performance.csv"), Papa.unparse([
-        { tenant_key: "tenant-test", dataset_version: "version-test", contract_id: "contract-test", month: "2026-01", sla_metric: "platform_uptime", target_pct: "99.95", actual_pct: "99.98", unit: "%" },
-        { tenant_key: "tenant-test", dataset_version: "version-test", contract_id: "contract-test", month: "2026-01", sla_metric: "critical_incident_response_minutes", target_pct: "30", actual_pct: "35", unit: "minutes" },
-      ]));
-      const rows = optimizationWriter().readSourceFiles(root, "tenant-test", "version-test").slaPerformance;
+      fs.writeFileSync(
+        path.join(sourceDir, "sla_performance.csv"),
+        Papa.unparse([
+          {
+            tenant_key: "tenant-test",
+            dataset_version: "version-test",
+            contract_id: "contract-test",
+            month: "2026-01",
+            sla_metric: "platform_uptime",
+            target_pct: "99.95",
+            actual_pct: "99.98",
+            unit: "%",
+          },
+          {
+            tenant_key: "tenant-test",
+            dataset_version: "version-test",
+            contract_id: "contract-test",
+            month: "2026-01",
+            sla_metric: "critical_incident_response_minutes",
+            target_pct: "30",
+            actual_pct: "35",
+            unit: "minutes",
+          },
+        ]),
+      );
+      const rows = optimizationWriter().readSourceFiles(
+        root,
+        "tenant-test",
+        "version-test",
+      ).slaPerformance;
       expect(rows).toHaveLength(2);
-      expect(rows[0]).toMatchObject({ metric_name: "platform_uptime", committed_threshold_pct: "99.95", actual_result_pct: "99.98", unit: "%", period_start: "2026-01-01", period_end: "2026-01-31" });
-      expect(rows[1]).toMatchObject({ metric_name: "critical_incident_response_minutes", committed_threshold_pct: "30", actual_result_pct: "35", unit: "minutes" });
-      expect(performanceMeasureFromSource(rows[1].metric_name, rows[1].actual_result_pct, rows[1].committed_threshold_pct, rows[1].unit).actualText).toBe("35 min");
+      expect(rows[0]).toMatchObject({
+        metric_name: "platform_uptime",
+        committed_threshold_pct: "99.95",
+        actual_result_pct: "99.98",
+        unit: "%",
+        period_start: "2026-01-01",
+        period_end: "2026-01-31",
+      });
+      expect(rows[1]).toMatchObject({
+        metric_name: "critical_incident_response_minutes",
+        committed_threshold_pct: "30",
+        actual_result_pct: "35",
+        unit: "minutes",
+      });
+      expect(
+        performanceMeasureFromSource(
+          rows[1].metric_name,
+          rows[1].actual_result_pct,
+          rows[1].committed_threshold_pct,
+          rows[1].unit,
+        ).actualText,
+      ).toBe("35 min");
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
@@ -279,15 +433,35 @@ describe("Source contract depth package loader", () => {
       "utf8",
     );
 
-    expect(loader).toContain(
-      'stringValue(row, "actual_spend_usd") || stringValue(row, "spend_usd")',
-    );
-    expect(loader).toContain(
-      'stringValue(row, "invoice_amount_usd") || stringValue(row, "spend_usd")',
-    );
-    expect(loader).toContain(
-      'stringValue(row, "committed_base_amount_usd") ||',
-    );
+    expect(loader).toContain('...normalizeSpendSourceRow(row, "EVID-03")');
+    expect(
+      normalizeSpendSourceRow(
+        {
+          actual_spend_usd: "0",
+          spend_usd: "90",
+          invoice_amount_usd: "80",
+          paid_amount_usd: "70",
+          committed_base_amount_usd: "100",
+        },
+        "EVID-03",
+      ),
+    ).toMatchObject({
+      actual_spend_usd: "0",
+      invoice_amount_usd: "80",
+      paid_amount_usd: "70",
+      committed_base_amount_usd: "100",
+    });
+    expect(
+      normalizeSpendSourceRow(
+        { spend_usd: "90", commitment_run_rate_usd: "100" },
+        "EVID-03",
+      ),
+    ).toMatchObject({
+      actual_spend_usd: "90",
+      invoice_amount_usd: "",
+      paid_amount_usd: "",
+      committed_base_amount_usd: "100",
+    });
   });
 
   it("preserves dense opportunity fields and supports legacy opportunity aliases", () => {
@@ -412,9 +586,7 @@ describe("Source contract depth package loader", () => {
     expect(loader).toContain("document.page_text_char_count");
     expect(loader).toContain("opportunity_evidence: opportunityEvidenceRows");
     expect(loader).toContain("opportunity_claim");
-    expect(loader).toContain(
-      "calculation_output: ownedOpportunities.length,",
-    );
+    expect(loader).toContain("calculation_output: ownedOpportunities.length,");
   });
 
   it("promotes the contract purpose into a governed canonical fact", () => {
