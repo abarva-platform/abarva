@@ -5,7 +5,6 @@ import {
   writeTransactionOutcome,
 } from '../postgresCompat';
 import { azureRead, createAzureReadClient } from '../azureRead';
-import type { SqlRunner } from '../read-adapters/azureSession';
 
 type Connection = Pick<import('pg').PoolClient, 'query' | 'release'>;
 
@@ -73,9 +72,11 @@ describe('Postgres compat write transaction', () => {
 
   it.each([false, true])('restores ordinary raw reads after an opted-in transaction (aborted=%s)', async (aborted) => {
     const db = transactionConnection();
-    const session = jest.fn(async <T>(work: (run: SqlRunner) => Promise<T>) =>
-      work(async <R>() => [{ id: 'independent-row' }] as R[]));
-    const read = createAzureReadClient(session);
+    const session = jest.fn();
+    const read = createAzureReadClient(async (work) => {
+      session();
+      return work(async <R>() => [{ id: 'independent-row' }] as R[]);
+    });
     const sql = 'SELECT id FROM phase_snapshots WHERE engagement_id = $1';
     const outcome = withAzureWriteTransaction('unused', async () => {
       expect(await read.query(sql, ['move-1'])).toEqual([{ id: 'seed-row' }]);
