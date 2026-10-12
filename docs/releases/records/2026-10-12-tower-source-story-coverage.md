@@ -33,14 +33,14 @@ Release lane: `global-control-lane`.
 - Use "loaded program rows" where the interface previously said "reviewed program rows" without a review record.
 - Show the source's expected benefit kind in the AI case table and distribution. Keep any separately classified value type visible and leave funding, yearly estimates, measured results, and Finance clearance under their own labels.
 - Show the source's expected benefit kind separately from its spend category in the full AI portfolio table. Identify Tower's funding display group as a grouping from intake labels, separate from recorded category and Finance approval.
-- In the adoption lens, show a percentage only when an adoption percentage is explicitly loaded; a usage count cannot become a 100% adoption claim.
+- In the adoption lens, Tools table, and Tower question suggestions, show and compare a percentage only when the source-backed adoption percentage is explicitly loaded; a usage count or a count labeled "Adoption" cannot become a 100% adoption claim. Label generic tool usage with its recorded metric rather than calling every count users.
 - In the vendor chart, include only metrics explicitly named as active users. Explain that counts added across tools are not unique people and that rollout denominators cover usage-linked tool rows only.
 - Withhold the Finance-case comparison and foundation benefit total when their inputs are missing. Draw zero claim coverage with an empty bar and describe missing budget split fields as missing.
 - Keep source codes and source references in existing detail and proof paths; no intake or serving data is rewritten.
 
 ## QA / Validation
 
-- PASS: 16 Tower command-center test suites, 116 tests, including missing work-area links, source expected-kind categories, count-only usage, partial financial states, and zero claim coverage.
+- PASS: 16 Tower command-center test suites, 118 tests, including missing work-area links, source expected-kind categories, count-only usage across the Adoption lens, Tools table, and suggested questions, partial financial states, and zero claim coverage.
 - PASS: TypeScript no-emit check, changed-file ESLint, and all 11 release gates.
 - PASS: `git diff --check` on the amended PR head.
 - NOT RUN: signed-in Tower review; it is required after main deployment to confirm the selected assessment's rendered tabs and drawers.

@@ -303,7 +303,7 @@ describe("TowerCommandCenter", () => {
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: /Adoption lens/ }));
     expect(
-      screen.getByText("Tool rollouts ranked by recorded usage evidence"),
+      screen.getByText("Tool rollouts with usage metrics; recorded adoption rates first"),
     ).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("tab", { name: /All initiatives\/tools/ }),

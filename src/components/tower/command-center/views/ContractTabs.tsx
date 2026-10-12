@@ -11,6 +11,7 @@ import {
   formatUsdM,
   gatingConstraintExplanation,
 } from "@/lib/tower/command-center/format";
+import { recordedAdoptionRate } from "@/lib/tower/command-center/adoption-rate";
 import type {
   TowerAiKind,
   TowerAiView,
@@ -133,7 +134,7 @@ function openClaimCount(view: TowerCommandCenterView): number {
 
 function emittingAiCount(view: TowerCommandCenterView): number {
   return view.allInitiatives.filter(
-    (item) => item.usageHeadline || item.usageBars.some((bar) => bar.pct > 0),
+    (item) => item.usageHeadline || item.usageBars.length > 0,
   ).length;
 }
 
@@ -718,13 +719,6 @@ function aiUsageLabel(item: TowerAiView): string {
   return "Usage metric not loaded";
 }
 
-function adoptionRate(item: TowerAiView): number | null {
-  const rate = item.usageBars.find((bar) => bar.label === "Adoption")?.pct;
-  return typeof rate === "number" && Number.isFinite(rate) && rate >= 0 && rate <= 100
-    ? rate
-    : null;
-}
-
 function controlOrGateCell(item: TowerAiView): {
   text: string;
   title: string;
@@ -818,8 +812,7 @@ function adoptionRows(view: TowerCommandCenterView): TowerAiView[] {
     )
     .sort(
       (a, b) =>
-        (adoptionRate(b) ?? -1) - (adoptionRate(a) ?? -1) ||
-        b.aiSpendUsd - a.aiSpendUsd ||
+        (recordedAdoptionRate(b) ?? -1) - (recordedAdoptionRate(a) ?? -1) ||
         a.name.localeCompare(b.name),
     )
     .slice(0, 20);
@@ -1057,7 +1050,7 @@ export function AiPortfolioContractView({
         <article className={cx(styles.contractCard, styles.contractFullCard)}>
           {cardTitle(
             "Adoption lens",
-            "Tool rollouts ranked by recorded usage evidence",
+            "Tool rollouts with usage metrics; recorded adoption rates first",
           )}
           <p>{formatCount(view.usageObservations.length)} separate adoption-source rows are loaded; {formatCount(view.usageObservations.filter((item) => item.usageHeadline || item.usageBars.length > 0).length)} carry a displayable usage metric. These rows do not establish tool rollout targets or vendor exposure.</p>
           <div className={styles.decisionLaneTableWrap}>
@@ -1085,9 +1078,9 @@ export function AiPortfolioContractView({
                     </td>
                     <td>{aiUsageLabel(item)}</td>
                     <td>
-                      {adoptionRate(item) === null
+                      {recordedAdoptionRate(item) === null
                         ? "Adoption rate not loaded"
-                        : formatPct(adoptionRate(item))}
+                        : formatPct(recordedAdoptionRate(item))}
                     </td>
                     <td>{aiBenefitLabel(item)}</td>
                   </tr>

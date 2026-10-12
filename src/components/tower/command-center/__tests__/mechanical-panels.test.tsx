@@ -367,6 +367,7 @@ describe("mechanical Tower Command Center panels", () => {
               usageBars: [
                 { label: "Adoption", valueText: "55%", pct: 55, tone: "amber" },
               ],
+              adoptionActualPct: 55,
               adoptionTargetPct: 70,
             }),
           ],
@@ -540,6 +541,7 @@ describe("mechanical Tower Command Center panels", () => {
               populationKind: "tool_rollout",
               usageHeadline: "Usage evidence exists",
               usageBars: [],
+              adoptionActualPct: null,
               readinessScore: 88,
               readinessScoreLoaded: true,
             }),
@@ -572,6 +574,7 @@ describe("mechanical Tower Command Center panels", () => {
               usageHeadline: "Active users · 120",
               usageBars: [{ label: "Active users", valueText: "120", pct: 100, tone: "teal" }],
               adoptionActualPct: null,
+              aiSpendUsd: 10 * M,
             }),
             initiative({
               id: "TOOL-RATE",
@@ -583,6 +586,14 @@ describe("mechanical Tower Command Center panels", () => {
                 { label: "Adoption", valueText: "42%", pct: 42, tone: "amber" },
               ],
               adoptionActualPct: 42,
+            }),
+            initiative({
+              id: "TOOL-LABEL",
+              name: "Count named adoption",
+              populationKind: "tool_rollout",
+              usageHeadline: "Adoption · 70",
+              usageBars: [{ label: "Adoption", valueText: "70", pct: 100, tone: "teal" }],
+              adoptionActualPct: null,
             }),
           ],
           actions: [],
@@ -599,9 +610,35 @@ describe("mechanical Tower Command Center panels", () => {
 
     const countOnly = screen.getByRole("row", { name: /Count-only rollout/ });
     const recorded = screen.getByRole("row", { name: /Rate-recorded rollout/ });
+    const countNamedAdoption = screen.getByRole("row", { name: /Count named adoption/ });
     expect(within(countOnly).getByText("Adoption rate not loaded")).toBeInTheDocument();
     expect(within(countOnly).queryByText("100%")).not.toBeInTheDocument();
+    expect(within(countNamedAdoption).getByText("Adoption rate not loaded")).toBeInTheDocument();
+    expect(within(countNamedAdoption).queryByText("100%")).not.toBeInTheDocument();
     expect(within(recorded).getByText("42%")).toBeInTheDocument();
+    expect(recorded.compareDocumentPosition(countOnly) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("keeps count-only usage out of the tools adoption bar and target comparison", () => {
+    render(<ToolsTablePanel view={viewWith({
+      allInitiatives: [initiative({
+        id: "TOOL-NAMED-ADOPTION-COUNT",
+        name: "Count-only tool",
+        populationKind: "tool_rollout",
+        usageHeadline: "Adoption · 70",
+        usageBars: [{ label: "Adoption", valueText: "70", pct: 100, tone: "teal" }],
+        adoptionActualPct: null,
+        adoptionTargetPct: 80,
+      })],
+    })} />);
+
+    const text = document.body.textContent ?? "";
+    expect(text).toContain("Recorded usage");
+    expect(text).toContain("Adoption · 70");
+    expect(text).toContain("Not loaded vs 80% target");
+    expect(text).toContain("adoption rates are not loaded for target comparison");
+    expect(text).not.toContain("100% vs 80% target");
+    expect(text).not.toContain("1 of 1 rollouts sit below their own adoption target");
   });
 
   it("keeps business cases out of the tool-rollout adoption lens", () => {
