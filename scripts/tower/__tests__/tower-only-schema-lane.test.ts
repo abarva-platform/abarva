@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 import {
+  assertUnknownAmountCheck,
   classifyLedger,
   parseMode,
   PRIOR_PAGE_KEYS,
@@ -42,6 +43,18 @@ test("mixed or hash-drifted target ledger states are refused", () => {
   assert.equal(classifyLedger(new Map(entries)), "applied");
   assert.throws(() => classifyLedger(new Map([entries[0]])), /Partial Tower/);
   assert.throws(() => classifyLedger(new Map([[entries[0][0], "incorrect"]])), /hash mismatch/);
+});
+
+test("approved unknown-amount check may remain NOT VALID while still protecting new rows", () => {
+  const migration = readFileSync(path.join(ROOT,
+    "supabase/migrations/20261011173000_tower_value_chain_unknown_amounts.sql"), "utf8");
+  assert.match(migration, /not valid;/i);
+  const definition = "CHECK (value_state NOT IN ('unknown', 'not_applicable') OR " +
+    "(claimable_value_usd IS NULL AND blocked_value_usd IS NULL)) NOT VALID";
+  assert.doesNotThrow(() => assertUnknownAmountCheck([{ definition, convalidated: false }]));
+  assert.doesNotThrow(() => assertUnknownAmountCheck([{ definition, convalidated: true }]));
+  assert.throws(() => assertUnknownAmountCheck([]), /absent or ambiguous/);
+  assert.throws(() => assertUnknownAmountCheck([{ definition: "CHECK (true)", convalidated: true }]), /lacks value_state/);
 });
 
 test("prior serving identity comes from the governed delegated scope", () => {
