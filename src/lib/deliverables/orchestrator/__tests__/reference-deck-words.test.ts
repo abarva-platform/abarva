@@ -43,7 +43,107 @@ const safeWords = { words: [{
 
 beforeEach(() => jest.clearAllMocks());
 
+const stateSlot = (key: string, display: string | null): ReferenceSlotTable[string] => ({
+  key, display, meaning: "Synthetic governed state", sourceId: display === null ? `gap:${key.replaceAll(".", "_")}` : "evidence:synthetic_state",
+  sourceLabel: "Synthetic governed state", missingPhrase: "unavailable", editions: ["validation", "investment"],
+});
+
 describe("reference-deck words", () => {
+  it("states concrete title requirements in the audited divider retry", async () => {
+    const rejected = { ...safeWords.words[0]!, title: "Evidence for discussion",
+      notes: "The point: the evidence needs review. How to read: inspect the supporting exhibit." };
+    const repaired = { ...rejected, title: "The evidence identifies the decision that needs review" };
+    const create = jest.fn()
+      .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [rejected] }) }] })
+      .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [repaired] }) }] });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    const result = await draftEditionWords({ ...input, archetypes: ["divider"] });
+    expect(result).toEqual({ status: "ok", fallbackSlides: [], words: [repaired] });
+    const retry = JSON.parse(create.mock.calls[1][0].messages[0].content);
+    expect(retry.rejectedSlides[0]).toMatchObject({ rejectedRule: "title_format",
+      titleRequirements: { minimumWords: 5, maximumSentences: 1 }, ruleRequirements: expect.stringContaining("at least five words") });
+    expect(JSON.stringify(retry)).not.toContain(rejected.title);
+    expect(mockPreflight.mock.calls[1][0].workflow).toBe("moves:reference-deck:preview:words:repair");
+  });
+
+  it("repairs an unavailable-value assertion using only read-state controls", async () => {
+    const missingSlots = { ...slots, "value.annual.base": stateSlot("value.annual.base", null) };
+    const rejected = { ...safeWords.words[0]!, answer: "That measured current-state figure is the basis for the decision." };
+    const repaired = { ...safeWords.words[0]!, answer: "Confirm the value basis and its source before drawing a conclusion." };
+    const create = jest.fn()
+      .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [rejected] }) }] })
+      .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [repaired] }) }] });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    const result = await draftEditionWords({ ...input, slots: missingSlots });
+    expect(result).toMatchObject({ status: "ok", words: [repaired], fallbackSlides: [] });
+    const retry = JSON.parse(create.mock.calls[1][0].messages[0].content);
+    expect(retry.rejectedSlides[0]).toMatchObject({ rejectedRule: "unavailable_value_claim", evidence: { valueAvailable: false } });
+    expect(JSON.stringify(create.mock.calls)).not.toContain("$12,000");
+  });
+
+  it("keeps a marker and reason when an unavailable-evidence retry still asserts a figure", async () => {
+    const rejected = { ...safeWords.words[0]!, answer: "This figure establishes the basis for a decision." };
+    const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({ words: [rejected] }) }] });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    const result = await draftEditionWords({ ...input, slots: { ...slots, "value.annual.base": stateSlot("value.annual.base", null) } });
+    expect(result).toMatchObject({ status: "unavailable", reason: "slide_rejected", rule: "unavailable_value_claim", fallbackSlides: [1] });
+    expect(result.words[0]?.answer).toContain("Draft words unavailable.");
+  });
+
+  it.each([
+    ["users_decisions", "owners.count.accepted", "0", "Each decision has been mapped to the user who holds authority for it.", "unaccepted_owner_claim"],
+    ["sources", "sources.count.approved", "0", "Every factual claim traces to an approved public citation.", "unavailable_public_source_claim"],
+    ["sources", "sources.count.approved", "0", "No source has been approved, so all figures remain provisional.", "public_source_scope"],
+    ["rom_hours", "rom.total.plan", null, "That figure represents the current plan-basis estimate.", "unavailable_estimate_claim"],
+    ["big_number_context", "baseline.current", null, "The measured current-state baseline is the basis for this review.", "unavailable_baseline_claim"],
+  ] as const)("refuses completed-evidence language for %s", (archetype, key, display, answer, rule) => {
+    const entry = { ...safeWords.words[0]!, title: archetype === "rom_hours"
+      ? "The delivery estimate is {rom.total.plan} on its current basis"
+      : archetype === "big_number_context" ? "The case counts {value.three_year.credited} on its current basis"
+        : "Reviewed evidence identifies the next decision for this case", answer };
+    const known = { ...slots, "value.three_year.credited": stateSlot("value.three_year.credited", "$12,000"), [key]: stateSlot(key, display) };
+    expect(modelWordRule(entry, "investment", known, archetype)).toBe(rule);
+  });
+
+  it("keeps active and open counts distinct without exposing their displays in the prompt", () => {
+    const counts = { ...slots, "register.count.active": stateSlot("register.count.active", "12"), "register.count.open": stateSlot("register.count.open", "3") };
+    const entry = { ...safeWords.words[0]!, answer: "The {register.count.active} open assumptions require review." };
+    expect(modelWordRule(entry, "validation", counts, "assumptions")).toBe("active_count_as_open");
+    expect(modelWordRule({ ...entry, answer: "Of {register.count.active} active assumptions, {register.count.open} remain open for review." }, "validation", counts, "assumptions")).toBeNull();
+  });
+
+  it("requires the open token even when active and open counts have equal displays", () => {
+    const counts = { ...slots, "register.count.active": stateSlot("register.count.active", "3"), "register.count.open": stateSlot("register.count.open", "3") };
+    const entry = { ...safeWords.words[0]!, answer: "The {register.count.active} open assumptions require review." };
+    expect(modelWordRule(entry, "validation", counts, "assumptions")).toBe("active_count_as_open");
+    expect(modelWordRule({ ...entry, answer: "The {register.count.open} open assumptions require review." }, "validation", counts, "assumptions")).toBeNull();
+  });
+
+  it("sends only coarse evidence flags rather than current count displays", async () => {
+    const counts = { ...slots, "register.count.active": stateSlot("register.count.active", "47"), "register.count.open": stateSlot("register.count.open", "19") };
+    const entry = { ...safeWords.words[0]!, answer: "Of {register.count.active} active assumptions, {register.count.open} remain open for review." };
+    const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({ words: [entry] }) }] });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    expect(await draftEditionWords({ ...input, slots: counts, archetypes: ["assumptions"] })).toMatchObject({ status: "ok", fallbackSlides: [] });
+    const payload = JSON.parse(create.mock.calls[0][0].messages[0].content);
+    expect(payload.slides[0].evidence).not.toHaveProperty("activeCount");
+    expect(payload.slides[0].evidence).not.toHaveProperty("openCount");
+    expect(JSON.stringify(payload)).not.toMatch(/47|19|\$12,000/);
+  });
+
+  it("does not promote an available public collection into universal case-fact coverage", () => {
+    const known = { ...slots, "sources.count.approved": stateSlot("sources.count.approved", "3") };
+    const entry = { ...safeWords.words[0]!, title: "Published sources explain which attributed claims can be checked",
+      answer: "Every factual claim traces to an approved public citation." };
+    expect(modelWordRule(entry, "investment", known, "sources")).toBe("public_source_scope");
+    expect(modelWordRule({ ...entry, answer: "Review the published claims against the citations attributed to them." }, "investment", known, "sources")).toBeNull();
+  });
+
+  it("keeps application source-access configuration out of client copy", () => {
+    const entry = { ...safeWords.words[0]!, answer: "Public source access is not available in this configuration." };
+    expect(modelWordRule(entry, "investment", slots, "sources")).toBe("internal_client_word");
+  });
+
   it("passes only slot names and coarse profile through audited egress", async () => {
     const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify(safeWords) }] });
     mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
