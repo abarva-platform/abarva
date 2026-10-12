@@ -48,6 +48,10 @@ on:
       - "src/config/tenants/CANONICAL_TENANTS.ts"
       - "src/lib/governance/context-corpus-policy.ts"
       - "src/lib/governance/dataset-manifest.ts"
+      - "src/lib/governance/approval-actor.ts"
+      - "src/lib/governance/delegated-approval.ts"
+      - "src/lib/governance/delegation-authority-roots.json"
+      - "src/lib/governance/delegation-trusted-decisions.json"
       - "supabase/migrations/20260831031000_ecl_substrate_baseline.sql"
       - "supabase/migrations/20261001183000_ecl_enterprise_context_admission.sql"
       - "supabase/migrations/20261002013000_home_active_assessment.sql"
@@ -74,6 +78,7 @@ on:
       - "src/lib/observability/structured-logger.ts"
       - "src/lib/tenant/aliases.ts"
       - "src/lib/tenant/declared-synthetic-tenant.ts"
+      - "src/lib/tenant/synthetic-tenant-declaration.ts"
       - "tsconfig.json"
   workflow_dispatch:
 
