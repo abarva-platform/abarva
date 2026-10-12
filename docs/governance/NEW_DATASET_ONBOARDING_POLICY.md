@@ -40,7 +40,7 @@ up front, in a manifest, and checked in CI.
 | `retrieval_proof_required`    | Whether live retrieval proof gates `agent_ready`.                           |
 | `pii_phi_handling`            | Required for sensitive classifications.                                     |
 | `approved_by` / `approved_at` | Human sign-off for declaring the dataset. It does not approve loading it.   |
-| `load_approval`               | Optional until a load is approved. A named person's approval for ONE exact version: `approved_by`, `approved_at`, `assessment_id`, `source_set_hash`, `release_record`. |
+| `load_approval`               | Optional until a load is approved. A named person's approval for ONE exact version, or the explicit narrow delegated branch below: `approved_by`, `approved_at`, `assessment_id`, `source_set_hash`, `release_record`. |
 | `serving_approval`            | Optional until that loaded version is approved for a product surface. The same fields plus `surface` (`home` or `tower`). Requires a `load_approval` for the same version. |
 
 ## Hard rules enforced by CI
@@ -51,7 +51,7 @@ up front, in a manifest, and checked in CI.
 - Sensitive (pii/phi/restricted) targeting `corpus_global` → **fail**.
 - Sensitive classification without `pii_phi_handling` → **fail**.
 - Unknown manifest fields (strict schema) → **fail**.
-- `load_approval.approved_by` or `serving_approval.approved_by` naming an agent, a team, a role or a delegation → **fail**.
+- `load_approval.approved_by` or `serving_approval.approved_by` naming an agent, a team, a role or a delegation without the explicit verified `delegated_decision` branch → **fail**. A strict delegated declaration can pass structural CI; execution still fails without independently verified private proof and release-controlled authority/decision trust pins.
 - A `release_record` in either approval that is not an existing `docs/releases/records/*.md` file → **fail**.
 - `serving_approval` without a `load_approval`, or for a different assessment or source-set hash than it → **fail**.
 - The manifest's own `approved_by` naming an agent, a team, a role or a delegation → **warn**.
@@ -83,7 +83,10 @@ covers the first. A data-plane load needs the second, recorded in the same manif
   approval names.
 - The check on `approved_by` refuses strings that plainly are not a person. It
   cannot prove who typed the name; the control is that the approval is a committed,
-  reviewed line. An agent must not write it on a person's behalf.
+  reviewed line. An agent must not write a person's name as though that person made
+  an independent decision. The optional delegated path records the actual actor
+  and the separate human authorizer; it does not impersonate the human or relax
+  any existing source, review, quality, security or release gate.
 - Approving a load is not reviewing its rows. Loaded rows stay `not_reviewed` until
   a review step says otherwise.
 
@@ -108,6 +111,21 @@ for a product surface is a third decision, recorded beside the load approval:
   reports the decision and changes nothing.
 - Retiring a served version, which returns the surface to what it served before,
   does not need it.
+
+## Explicit delegated exception
+
+[Explicit delegated data approvals](DELEGATED_DATA_APPROVALS.md) defines the narrow optional
+`delegated_decision` branch for registry-declared synthetic tenant inputs. The actual agent is
+`approved_by`; the named human authorizer, authorization-message reference and exact manager
+session are retained separately. The private authority and decision must match independently
+certified, release-controlled ID/hash trust pins. An arbitrary Blob receipt or environment flag
+cannot authorize itself. Exact native run scope, release record, count, version and additional
+operator observations must match; execution conditions and guarded preflight remain mandatory.
+
+The exception does not extend to real-client attestation, broad corpus or Move-registry approval.
+It never grants independent human review, Finance approval or `agent_ready`. Human-only manifests
+retain their existing behavior. A consumer that has not implemented authenticated proof loading
+continues to refuse delegated execution, even when structural CI passes.
 
 Enforced today by `resolveLoadApproval` and `resolveServingApproval` in
 `src/lib/governance/dataset-manifest.ts`: the synthetic enterprise context loader

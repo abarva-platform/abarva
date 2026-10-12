@@ -53,7 +53,8 @@ export const RETRIEVAL_PLANS = [
  * Approval to load ONE exact version of a dataset through the data plane.
  *
  * The manifest's own `approved_by` approves declaring the dataset; it does not
- * approve loading it. A load is approved separately, by a named person, and the
+ * approve loading it. A load is approved separately, by a named person or the
+ * explicit verified delegated branch, and the
  * approval names the assessment and the source-set hash it was given for, so it
  * cannot carry over to data that changed afterwards.
  */
@@ -94,7 +95,8 @@ export const SERVING_SURFACES = ["home", "tower"] as const;
  * Approval to serve ONE exact, already-loaded version on a product surface.
  *
  * Loading a version does not approve showing it to anyone. Selecting it for a
- * product surface is approved separately, by a named person, for the same
+ * product surface is approved separately, by a named person or the explicit
+ * verified delegated branch, for the same
  * assessment and source-set hash the load approval covers.
  */
 export const ServingApprovalSchema = LoadApprovalSchema.extend({
@@ -128,9 +130,9 @@ export const DatasetManifestSchema = z
     approved_at: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, "approved_at must be YYYY-MM-DD"),
-    /** Absent until a named person approves loading one exact version. */
+    /** Absent until a human or verified explicit delegate approves one exact version. */
     load_approval: LoadApprovalSchema.nullable().optional(),
-    /** Absent until a named person approves serving that loaded version on a surface. */
+    /** Separate exact-version product approval; delegation is never human attestation. */
     serving_approval: ServingApprovalSchema.nullable().optional(),
     notes: z.string().nullable().optional(),
   })
@@ -218,8 +220,7 @@ export function validateManifest(raw: unknown): ManifestValidation {
     );
   }
   // The dataset's own sign-off is free text today, so an agent, team, role or
-  // delegation in it is reported, not refused. In a load or serving approval it
-  // is refused.
+  // delegation in it is reported. Load/serving require a human or the explicit verified branch.
   if (NON_PERSON_APPROVER.test(m.approved_by)) {
     warnings.push(
       "approved_by names an agent, team, role or delegation, not a person",
