@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { EstimateModelEditor } from "@/components/strategic-moves/EstimateModelEditor";
 import { CaptureNotesFill } from "@/components/strategic-moves/CaptureNotesFill";
 import {
@@ -515,24 +515,40 @@ function EstimateBasis({
   );
 }
 
-function ValueCaseReadback({
-  moveId,
-  driverUnits,
-}: {
-  moveId: string;
-  driverUnits: Readonly<Record<string, string>>;
-}) {
+function useValueCaseReadback(moveId: string, modelText: string) {
   const [body, setBody] = useState<Record<string, unknown> | null>(null);
   const [status, setStatus] = useState("Reading the value case…");
+  const [retryKey, setRetryKey] = useState(0);
   useEffect(() => {
     let live = true;
-    fetch(
-      `/api/v1/programs/${encodeURIComponent(moveId)}/value-case?delivery=internal`,
-      { credentials: "include" },
-    )
+    setBody(null);
+    setStatus("Reading the value case…");
+    fetch(`/api/v1/programs/${encodeURIComponent(moveId)}/value-case`, {
+      credentials: "include",
+      cache: "no-store",
+    })
       .then(async (response) => {
-        if (!response.ok) throw new Error();
-        return response.json() as Promise<Record<string, unknown>>;
+        const value = (await response.json()) as Record<string, unknown>;
+        if (!response.ok || value.ok !== true) {
+          throw new Error(
+            typeof value.detail === "string"
+              ? value.detail
+              : "Value case unavailable. No engine result is being shown.",
+          );
+        }
+        if (
+          value.programId !== moveId ||
+          !value.case ||
+          typeof value.case !== "object" ||
+          !["evaluated", "blocked"].includes(String(value.status)) ||
+          (value.case as Record<string, unknown>).status !== value.status ||
+          typeof value.figuresRedacted !== "boolean"
+        ) {
+          throw new Error(
+            "The value-case readback could not be verified. Try again.",
+          );
+        }
+        return value;
       })
       .then((value) => {
         if (live) {
@@ -540,23 +556,60 @@ function ValueCaseReadback({
           setStatus("");
         }
       })
-      .catch(() => {
-        if (live)
-          setStatus("Value case unavailable. No engine result is being shown.");
+      .catch((error: unknown) => {
+        if (live) {
+          setStatus(
+            error instanceof Error
+              ? error.message
+              : "Value case unavailable. No engine result is being shown.",
+          );
+        }
       });
     return () => {
       live = false;
     };
-  }, [moveId]);
+  }, [moveId, modelText, retryKey]);
+  const result = body?.case as Record<string, unknown> | undefined;
+  const cost = body?.costBasis as Record<string, unknown> | undefined;
+  const ready =
+    body?.status === "evaluated" &&
+    body.readyForApproval === true &&
+    body.figuresRedacted === false &&
+    cost?.status === "resolved" &&
+    Array.isArray(result?.mustValidate) &&
+    result.mustValidate.length === 0;
+  return { body, status, ready, retry: () => setRetryKey((key) => key + 1) };
+}
+
+function ValueCaseReadback({
+  model,
+  read,
+}: {
+  model: ValueModelCapture | null;
+  read: ReturnType<typeof useValueCaseReadback>;
+}) {
+  const { body, status } = read;
   const result =
-    body?.result && typeof body.result === "object"
-      ? (body.result as Record<string, unknown>)
+    body?.case && typeof body.case === "object"
+      ? (body.case as Record<string, unknown>)
       : null;
   const levers = Array.isArray(result?.levers)
     ? (result.levers as Array<Record<string, unknown>>)
     : [];
+  const figuresVisible =
+    body?.figuresRedacted === false && result?.status === "evaluated";
+  const costBasis = body?.costBasis as Record<string, unknown> | undefined;
+  const blockedInputs = Array.isArray(body?.blockedInputs)
+    ? (body.blockedInputs as Array<{ key: string; detail: string }>)
+    : [];
+  const mustValidate = Array.isArray(result?.mustValidate)
+    ? (result.mustValidate as string[])
+    : [];
+  const driverUnits = Object.fromEntries(
+    model?.case.levers.map((lever) => [lever.id, lever.driver.unit]) ?? [],
+  );
   const economics =
-    result?.economics && typeof result.economics === "object"
+    figuresVisible && result?.economics && typeof result.economics === "object"
       ? (result.economics as Record<string, unknown>)
       : null;
   const npv =
@@ -582,23 +635,71 @@ function ValueCaseReadback({
     economics?.paybackMonth && typeof economics.paybackMonth === "object"
       ? (economics.paybackMonth as Record<string, unknown>)
       : null;
-  const breakeven = Array.isArray(result?.breakeven)
-    ? (result.breakeven as Array<Record<string, unknown>>)
-    : [];
-  const sensitivity = Array.isArray(result?.sensitivity)
-    ? (result.sensitivity as Array<Record<string, unknown>>)
-    : [];
+  const threeYearBases = economics?.threeYearBases as
+    | Record<string, Record<string, Record<string, unknown>>>
+    | null
+    | undefined;
+  const roi = threeYearBases?.base?.creditedPaid?.roi;
+  const breakeven =
+    figuresVisible && Array.isArray(result?.breakeven)
+      ? (result.breakeven as Array<Record<string, unknown>>)
+      : [];
+  const sensitivity =
+    figuresVisible && Array.isArray(result?.sensitivity)
+      ? (result.sensitivity as Array<Record<string, unknown>>)
+      : [];
   return (
     <div className={cx("field")}>
       <p role="status" className={cx("proposal")}>
         {status ||
           `Engine status: ${String(result?.status ?? "not evaluated")}.`}
       </p>
+      {!body && status !== "Reading the value case…" && (
+        <button type="button" className={cx("btn-ink")} onClick={read.retry}>
+          Try again
+        </button>
+      )}
+      {body?.figuresRedacted === true && (
+        <p className={cx("item-note")}>
+          {String(
+            body.figuresRedactedDetail ??
+              "Figures are withheld for your access level.",
+          )}
+        </p>
+      )}
+      {costBasis?.status === "resolved" && (
+        <SourceLine
+          source={{
+            kind: "est",
+            text: "Investment cost basis",
+            cite: String(costBasis.source ?? "Source unavailable"),
+          }}
+        />
+      )}
+      {costBasis?.status === "blocked" && (
+        <p role="alert" className={cx("item-note")}>
+          {String(costBasis.detail)}
+        </p>
+      )}
+      {blockedInputs.map((input) => (
+        <p key={input.key} className={cx("item-note")}>
+          {input.detail}
+        </p>
+      ))}
+      {mustValidate.map((input) => (
+        <p key={input} className={cx("item-note")}>
+          Validate before funding: {input}
+        </p>
+      ))}
+      <p className={cx("item-note")}>
+        The register budget is a ceiling. The approved estimate supplies the
+        investment cost.
+      </p>
       {levers.map((lever, index) => (
         <p key={String(lever.leverId ?? index)} className={cx("proposal")}>
           <strong>{String(lever.name ?? "Unnamed lever")}</strong> ·{" "}
           {String(lever.status ?? "unknown")}
-          {lever.status === "zero_no_release_path" ? (
+          {figuresVisible && lever.status === "zero_no_release_path" ? (
             <>
               {" "}
               · $0: no release path
@@ -635,6 +736,42 @@ function ValueCaseReadback({
           />
         </p>
       ) : null}
+      {typeof roi === "number" && Number.isFinite(roi) ? (
+        <p className={cx("proposal")}>
+          <strong>Three-year credited cash ROI</strong> · plan{" "}
+          {(roi * 100).toLocaleString("en-US", { maximumFractionDigits: 1 })}%
+          <SourceLine
+            source={{
+              kind: "est",
+              text: "Engine result · cash received within three years",
+              cite: caseSources,
+            }}
+          />
+        </p>
+      ) : economics ? (
+        <p className={cx("item-note")}>
+          Three-year credited cash ROI is not available for this case.
+        </p>
+      ) : null}
+      {body?.figuresRedacted !== true &&
+        model?.case.levers.map((lever) => (
+          <p key={`${lever.id}-timing`} className={cx("item-note")}>
+            {lever.name} · starts month {lever.timing.startMonth} · ramp{" "}
+            {lever.timing.rampMonths} months · cash lag{" "}
+            {lever.timing.paymentLagMonths} months.
+          </p>
+        ))}
+      {model?.case.levers.some((lever) =>
+        /(?:days?.*(?:ar|receivable)|(?:ar|receivable|dso).*days?)/i.test(
+          `${lever.name} ${lever.driver.name} ${lever.driver.unit}`,
+        ),
+      ) && (
+        <p className={cx("item-note")}>
+          Days-AR is a collection-timing measure. A day-level improvement does
+          not establish an integer-month cash shift or recurring revenue;
+          validate the collection comparator and receipt lineage before funding.
+        </p>
+      )}
       {breakeven.map((item, index) => (
         <p key={String(item.leverId ?? index)} className={cx("proposal")}>
           Breakeven · {String(item.leverId ?? "lever")} ·{" "}
@@ -661,25 +798,28 @@ function ValueCaseReadback({
           />
         </p>
       ))}
-      {levers.flatMap((lever) => {
-        const terms =
-          lever.terms && typeof lever.terms === "object"
-            ? (lever.terms as Record<string, unknown>)
-            : null;
-        return Array.isArray(terms?.base)
-          ? (terms.base as Array<Record<string, unknown>>).map(
-              (term, index) => (
-                <p
-                  key={`${String(lever.leverId)}-term-${index}`}
-                  className={cx("item-note")}
-                >
-                  Formula term · {String(term.label ?? term.role ?? "input")} ·{" "}
-                  {String(term.source ?? "source absent")}
-                </p>
-              ),
-            )
-          : [];
-      })}
+      {figuresVisible
+        ? levers.flatMap((lever) => {
+            const terms =
+              lever.terms && typeof lever.terms === "object"
+                ? (lever.terms as Record<string, unknown>)
+                : null;
+            return Array.isArray(terms?.base)
+              ? (terms.base as Array<Record<string, unknown>>).map(
+                  (term, index) => (
+                    <p
+                      key={`${String(lever.leverId)}-term-${index}`}
+                      className={cx("item-note")}
+                    >
+                      Formula term ·{" "}
+                      {String(term.label ?? term.role ?? "input")} ·{" "}
+                      {String(term.source ?? "source absent")}
+                    </p>
+                  ),
+                )
+              : [];
+          })
+        : null}
       <SourceLine
         source={{
           kind: "team",
@@ -973,75 +1113,68 @@ function P4EstimatePage({ host }: { host: StepPageHostProps }) {
   );
 }
 
+function P4ValuePage({ host }: { host: StepPageHostProps }) {
+  const raw = host.values.value_plan ?? "";
+  const value = useMemo(() => readValueModel(raw), [raw]);
+  const readback = useValueCaseReadback(host.move.id, raw);
+  return (
+    <CaptureStepPage
+      host={host}
+      view="p4-value"
+      title="Set the value plan and funding path"
+      intro="Confirm the value conversion rules and funding route before the business case gate."
+      fields={[
+        field(
+          "funding_governance",
+          "Funding governance",
+          "funding route",
+          "record the funding route",
+          "Name the funding decision, approval role and open conditions.",
+        ),
+      ]}
+      beforeRows={[
+        {
+          id: "VALUE",
+          rank: 0,
+          shortName: "value plan",
+          subject: "Structured value case",
+          state:
+            value.kind === "model" && readback.ready ? "settled" : "decision",
+          clause: "resolve the structured value plan",
+          wide: true,
+          middle: (
+            <>
+              <ValueCaseReadback
+                model={value.kind === "model" ? value.model : null}
+                read={readback}
+              />
+              {value.kind === "model" ? (
+                <ValueReferences
+                  model={value.model}
+                  onSave={(model) =>
+                    host.setValue("value_plan", serializeValueModel(model))
+                  }
+                />
+              ) : (
+                <p className={cx("item-note")}>
+                  No structured value model is recorded. Legacy text is not an
+                  engine result.
+                </p>
+              )}
+            </>
+          ),
+        },
+      ]}
+      checkIds={["business_case_approved", "funding_approval_recorded"]}
+      carry="The value case and funding decision, with unresolved assumptions named."
+    />
+  );
+}
+
 export const P4_STEP_PAGES: PhaseStepPageMap = {
   "p4-milestones": (host) => <P4MilestonesPage host={host} />,
   "p4-estimate": (host) => <P4EstimatePage host={host} />,
-  "p4-value": (host) => {
-    const value = readValueModel(host.values.value_plan ?? "");
-    return (
-      <CaptureStepPage
-        host={host}
-        view="p4-value"
-        title="Set the value plan and funding path"
-        intro="Confirm the value conversion rules and funding route before the business case gate."
-        fields={[
-          field(
-            "funding_governance",
-            "Funding governance",
-            "funding route",
-            "record the funding route",
-            "Name the funding decision, approval role and open conditions.",
-          ),
-        ]}
-        beforeRows={[
-          {
-            id: "VALUE",
-            rank: 0,
-            shortName: "value plan",
-            subject: "Structured value case",
-            state:
-              value.kind === "model" && value.model.case.levers.length > 0
-                ? "settled"
-                : "decision",
-            clause: "resolve the structured value plan",
-            wide: true,
-            middle: (
-              <>
-                <ValueCaseReadback
-                  moveId={host.move.id}
-                  driverUnits={
-                    value.kind === "model"
-                      ? Object.fromEntries(
-                          value.model.case.levers.map((lever) => [
-                            lever.id,
-                            lever.driver.unit,
-                          ]),
-                        )
-                      : {}
-                  }
-                />
-                {value.kind === "model" ? (
-                  <ValueReferences
-                    model={value.model}
-                    onSave={(model) =>
-                      host.setValue("value_plan", serializeValueModel(model))
-                    }
-                  />
-                ) : (
-                  <p className={cx("item-note")}>
-                    No structured value model is recorded. Legacy text is not an
-                    engine result.
-                  </p>
-                )}
-              </>
-            ),
-          },
-        ]}
-        checkIds={["business_case_approved", "funding_approval_recorded"]}
-        carry="The value case and funding decision, with unresolved assumptions named."
-      />
-    );
-  },
+  "p4-value": (host) => <P4ValuePage host={host} />,
   "p4-tower": (host) => (
     <CaptureStepPage
       host={host}
