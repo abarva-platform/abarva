@@ -122,7 +122,13 @@ jest.mock("@/lib/source/data-model/read-adapter", () => ({
   listVendorContractPortfolio: jest.fn(),
 }));
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -865,6 +871,26 @@ describe("Source workspace ECL browser-surface proof", () => {
     expect(screen.getByText("1 further action awaits sizing.")).toBeTruthy();
     expect(screen.getByText(/No candidate dollar total is established/)).toBeTruthy();
     expect(screen.queryByText(/\$0 in candidate value/)).toBeNull();
+    expect(
+      screen.queryByRole("heading", {
+        name: "Committed ahead of consumption. Notice is the constraint.",
+      }),
+    ).toBeNull();
+    expect(screen.getByText("Review required")).toBeTruthy();
+    expect(screen.getAllByText("Evidence review").length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("button", { name: "Review missing inputs" }),
+    ).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Review signal 1.*Evidence review/ }),
+    );
+    const drawer = screen.getByRole("complementary", {
+      name: "Action details",
+    });
+    expect(drawer.textContent).toContain("Value not quantified");
+    expect(
+      within(drawer).getByRole("button", { name: "Review missing inputs" }),
+    ).toBeTruthy();
   });
 
   it("renders a sequenced lever report on the default Optimize page when action rows exist", async () => {
