@@ -45,14 +45,14 @@ This candidate improves the executive context experience without changing its so
 
 - Pass: supplier cardinality regression tests, including preserved punctuation, duplicate list tokens, missing endpoints and counting units.
 - Pass: initial focused record-browser regression sweep, 52 tests.
-- Pass: final integrated Home sweep, 760 tests across 56 suites, including independent-review regression cases.
+- Pass: integrated Home sweep, 760 tests across 56 suites, including independent-review regression cases. An unused test-only coverage export and its dedicated test were subsequently removed; final count is 759.
 - Pass: full repository typecheck through the owned Node 24 typecheck command.
 - Pass: focused lint, zero errors. Four pre-existing unused-variable warnings remain in an existing test fixture.
 - Pass: controlled-release gates, 11 of 11 executed and passed.
 - Pass: context/corpus dataset-manifest validation; existing approval-metadata warnings are unchanged. No dataset is added or loaded.
 - Pass: local component browser review of all eight chapter overviews at narrow width; no document-width overflow. Focused maps render at desktop and narrow widths with a fitted default, full-map access, zoom and visible-reference inspection.
 - Pass: actual local 26-page PDF render; tables retain their cells, notes remain with their final table rows, and source/synthetic scope remains visible.
-- Independent review: all five reproduced semantic and map-reference issues were corrected with regression coverage before merge. Final independent acceptance is required before merge.
+- Pass: final independent review accepted all five corrections with 122 focused tests. Route/export reachability required removal of one unused test-only helper; the product coverage helper remains mounted and covered.
 - Not run: post-release runtime invariant and signed-in browser acceptance. No live completion claim is made.
 
 ## Rollout Plan

@@ -275,19 +275,6 @@ export function recordCoverage(
   };
 }
 
-export function chapterCoverage(
-  bundle: HomeReviewBundle,
-  source: HomeRecordRenderSource,
-  chapterId: ChapterId,
-): ContextCoverage[] {
-  const domains = new Set(SUBJECTS[chapterId]);
-  return (Object.keys(COVERAGE_SUBJECTS) as ContextCoverageSubject[])
-    .filter((subject) =>
-      COVERAGE_SUBJECTS[subject].domains.some((domain) => domains.has(domain)),
-    )
-    .map((subject) => recordCoverage(bundle, source, subject));
-}
-
 const text = (value: unknown) =>
   typeof value === "string" ? value.trim() : "";
 export interface LeadershipExcerpt {

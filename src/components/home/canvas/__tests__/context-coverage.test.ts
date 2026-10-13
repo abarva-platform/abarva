@@ -7,7 +7,6 @@ import type {
 } from "@/lib/home/preview/types";
 import {
   chapterContext,
-  chapterCoverage,
   flowRecords,
   leadershipContext,
   operatingContext,
@@ -276,19 +275,6 @@ describe("summary and detail coverage", () => {
     expect(coverage).toMatchObject({ state: "profile", profileState: "available" });
     expect(coverage.basis).toContain("Reviewed stored record fallback");
     expect(coverage.recordSource).toBe(fallback);
-  });
-  it("maps compiled-domain aliases into readable chapter subjects without treating provenance as a subject", () => {
-    const record = bundle();
-    const coverage = chapterCoverage(record, reviewed, "strategy_value_creation");
-    expect(coverage.map((item) => item.subject)).toEqual([
-      "vendor_contract", "program_initiative", "ai_use_case",
-    ]);
-    expect(coverage.find((item) => item.subject === "ai_use_case")).toMatchObject({
-      label: "AI & automation use cases", state: "summary", rowCount: null,
-    });
-    expect(chapterCoverage(record, reviewed, "how_we_operate").some(
-      (item) => item.subject === "relationship_edge",
-    )).toBe(false);
   });
 });
 
