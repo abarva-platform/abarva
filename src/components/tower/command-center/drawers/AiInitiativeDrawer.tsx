@@ -95,6 +95,7 @@ function financeAmount(a: TowerAiView): string {
 
 function financeBasisRead(a: TowerAiView): string | null {
   if (isToolRollout(a)) return null;
+  const verifiedPortfolioAmountLoaded = a.financeValidatedAmountLoaded === true;
   const latest = a.valueObservationMonths.at(-1);
   const dated = a.valueObservationMonths
     .map((month) => month.month)
@@ -111,13 +112,13 @@ function financeBasisRead(a: TowerAiView): string | null {
       ? `${eventDates[0]} to ${eventDates[eventDates.length - 1]}`
       : "no dated Finance events";
   const mismatch =
-    latest && latest.financeValidatedUsd !== a.financeValidatedUsd;
-  const differingFinanceEvents = a.financeApprovalEvents.filter(
+    verifiedPortfolioAmountLoaded && latest && latest.financeValidatedUsd !== a.financeValidatedUsd;
+  const differingFinanceEvents = verifiedPortfolioAmountLoaded ? a.financeApprovalEvents.filter(
     (event) =>
       /validat/i.test(
         `${event.eventType ?? ""} ${event.approvalState ?? ""}`,
       ) && event.amountUsd !== a.financeValidatedUsd,
-  );
+  ) : [];
   const timingConflict = Boolean(
     a.realizationStartMonth &&
     dated.some((month) => month < a.realizationStartMonth!),
@@ -127,7 +128,7 @@ function financeBasisRead(a: TowerAiView): string | null {
     a.valueObservationMonths.some((month) => month.boardClaimableUsd > 0),
   );
   return [
-    `Monthly observations: ${monthRange}. Finance events: ${eventRange}. The portfolio Finance amount has no period or amount basis on this record.`,
+    `Monthly observations: ${monthRange}. Finance events: ${eventRange}. ${verifiedPortfolioAmountLoaded ? "The portfolio Finance amount has no period or amount basis on this record." : "No independently verified portfolio Finance amount is loaded; source labels and event amounts do not establish one."}`,
     mismatch
       ? `The latest source-labeled validated amount (${formatUsdM(latest.financeValidatedUsd)} in ${latest.month}) differs from the portfolio amount (${formatUsdM(a.financeValidatedUsd)}); their bases have not been reconciled.`
       : null,
@@ -406,7 +407,7 @@ export function AiInitiativeDrawer({
             drawing an empty chart frame.
           */}
               <DrawerSection>Source-stated claim, month by month</DrawerSection>
-              {a.valueObservationMonths.length > 0 && a.financeValidatedAmountLoaded === false ? <p className={cx(styles.recBox, styles.muted)}>These monthly figures and Finance labels are source assertions. In this synthetic demo, they are not independent Finance clearance or achieved ROI. The Finance amount remains Not verified.</p> : null}
+              {a.valueObservationMonths.length > 0 && a.financeValidatedAmountLoaded === false ? <p className={cx(styles.recBox, styles.muted)}>{a.sourcePlan ? "These monthly figures are synthetic source assertions. " : "These monthly figures are source assertions. "}Finance labels on them are not independent Finance clearance or achieved ROI. The Finance amount remains Not verified.</p> : null}
               {a.valueObservationMonths.length === 0 ? (
                 <div className={styles.urow}>
                   No monthly value observations are recorded for this case. That
@@ -531,7 +532,7 @@ export function AiInitiativeDrawer({
               <DrawerSection>Source-recorded Finance events</DrawerSection>
               {a.financeApprovalEvents.length > 0 && a.financeValidatedAmountLoaded === false ? (
                 <div className={styles.urow}>
-                  These events are recorded in the synthetic source. Their roles, approval labels and amounts do not establish independent Finance sign-off or a verified benefit.
+                  These events are recorded in {a.sourcePlan ? "the synthetic source" : "the source"}. Their roles, approval labels and amounts do not establish independent Finance sign-off or a verified benefit.
                 </div>
               ) : null}
               {a.financeApprovalEvents.length === 0 ? (

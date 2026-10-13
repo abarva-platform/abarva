@@ -192,6 +192,7 @@ describe("Tower detail proof states", () => {
       ...view.allInitiatives[0]!,
       sourceFile: "case.csv",
       financeValidatedUsd: 13_000_000,
+      financeValidatedAmountLoaded: true,
       realizationStartMonth: "2027-08",
       valueObservationMonths: [
         {
@@ -250,14 +251,24 @@ describe("Tower detail proof states", () => {
         amountUsd: 250_000, amountBasis: "monthly", note: null,
       }],
     };
-    render(<AiInitiativeDrawer item={caseRow} onClose={() => {}} />);
+    const { rerender } = render(<AiInitiativeDrawer item={caseRow} onClose={() => {}} />);
     const drawer = screen.getByRole("dialog");
     expect(within(drawer).getByText("Source-stated claim, month by month")).toBeInTheDocument();
     expect(within(drawer).getByText("Source-recorded Finance events")).toBeInTheDocument();
     expect(within(drawer).getByText(/The Finance amount remains Not verified/)).toBeInTheDocument();
     expect(within(drawer).getByText(/do not establish independent Finance sign-off/)).toBeInTheDocument();
+    expect(within(drawer).getByText(/No independently verified portfolio Finance amount is loaded/)).toBeInTheDocument();
     expect(within(drawer).queryByText(/No monthly value observations are recorded/)).not.toBeInTheDocument();
     expect(within(drawer).getAllByText("Not verified").length).toBeGreaterThan(0);
+    rerender(<AiInitiativeDrawer item={{
+      ...caseRow,
+      sourcePlan: {
+        fundingUsd: null, yearlyBenefitLowUsd: null, yearlyBenefitHighUsd: null,
+        roiLowMultiple: null, roiHighMultiple: null,
+      },
+    }} onClose={() => {}} />);
+    expect(within(drawer).getByText(/These monthly figures are synthetic source assertions/)).toBeInTheDocument();
+    expect(within(drawer).getByText(/These events are recorded in the synthetic source/)).toBeInTheDocument();
   });
 
   it("shows rollout adoption without case-only Finance proof or invented zero", () => {
