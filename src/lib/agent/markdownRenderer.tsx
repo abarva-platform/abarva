@@ -883,8 +883,54 @@ export function AgentMarkdown({
       components={
         preserveOutput
           ? {
+              h1: ({ children }) => (
+                <h1 className="mb-4 mt-7 text-2xl font-semibold leading-tight text-slate-900">
+                  {children}
+                </h1>
+              ),
+              h2: ({ children }) => (
+                <h2 className="mb-3 mt-7 text-xl font-semibold leading-snug text-slate-900">
+                  {children}
+                </h2>
+              ),
+              h3: ({ children }) => (
+                <h3 className="mb-2 mt-5 text-base font-semibold text-slate-900">
+                  {children}
+                </h3>
+              ),
               p: ({ children }) => (
-                <p style={{ margin: "0.6em 0" }}>{children}</p>
+                <p className="my-3 leading-relaxed">{children}</p>
+              ),
+              ul: ({ children }) => (
+                <ul className="my-3 list-disc space-y-1 pl-6">{children}</ul>
+              ),
+              ol: ({ children }) => (
+                <ol className="my-3 list-decimal space-y-1 pl-6">{children}</ol>
+              ),
+              li: ({ children }) => (
+                <li className="pl-1 leading-relaxed">{children}</li>
+              ),
+              blockquote: ({ children }) => (
+                <blockquote className="my-4 border-l-2 border-slate-300 pl-4 text-slate-700">
+                  {children}
+                </blockquote>
+              ),
+              table: ({ children }) => (
+                <div className="my-4 w-full overflow-x-auto">
+                  <table className="w-full border-collapse text-left text-sm">
+                    {children}
+                  </table>
+                </div>
+              ),
+              th: ({ children }) => (
+                <th className="border-b border-slate-300 bg-slate-50 px-3 py-2 font-semibold">
+                  {children}
+                </th>
+              ),
+              td: ({ children }) => (
+                <td className="border-b border-slate-200 px-3 py-2 align-top">
+                  {children}
+                </td>
               ),
               pre: ({ children }) => (
                 <pre

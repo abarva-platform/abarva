@@ -128,7 +128,13 @@
     "recordedAt": "2026-10-11",
     "release": "2026-10-11-intelligence-executive-quality-review",
     "reason": "A new behavioral suite was added to a directory already selected by CI. Preserve the original triage draw and include this executed suite in current directory coverage.",
-    "suites": [
+    "suites": [],
+    "retirement": {
+      "recordedAt": "2026-10-13",
+      "release": "2026-10-13-intelligence-answer-experience",
+      "reason": "The quality-review component and its dedicated suite were removed from the advisor surface. Keep the prior executed suite as historical evidence, outside current directory coverage."
+    },
+    "retiredSuites": [
       {
         "path": "src/components/intelligence-advisory/__tests__/IntelligenceQualityReview.test.tsx",
         "directory": "src/components/intelligence-advisory/__tests__",

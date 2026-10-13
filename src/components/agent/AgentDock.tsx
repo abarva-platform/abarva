@@ -485,6 +485,8 @@ export interface AgentDockProps {
    * persisted split/canvas modes for this surface.
    */
   layout?: "dock" | "chat-only";
+  /** Let a chat-only surface use the full available page width. */
+  chatOnlyFullWidth?: boolean;
   /**
    * `standard` keeps the full operational dock used by Source/Moves/Tower.
    * `focused` keeps the chat rail quiet for GPT-like advisor surfaces and
@@ -728,6 +730,7 @@ export function AgentDock(props: AgentDockProps) {
     variant = "standard",
     quietReviewChrome = false,
     defaultMode = "side-rail",
+    chatOnlyFullWidth = false,
     disableStoredMode = false,
     collapsedRestoreMode,
     surfaceContext: rawSurfaceContext,
@@ -1253,6 +1256,9 @@ export function AgentDock(props: AgentDockProps) {
           ...PANEL_STYLE,
           ...(focused ? FOCUSED_PANEL_STYLE : null),
           ...(chatOnly ? CHAT_ONLY_PANEL_STYLE : null),
+          ...(chatOnly && chatOnlyFullWidth
+            ? { width: "100%", maxWidth: "none" }
+            : null),
           ...(expanded ? EXPANDED_PANEL_INNER_STYLE : null),
           outline: draggingOver
             ? `2px dashed ${CANVAS.SPLITTER_ACTIVE}`
@@ -1325,6 +1331,9 @@ export function AgentDock(props: AgentDockProps) {
           style={{
             ...(focused ? FOCUSED_THREAD_STYLE : THREAD_STYLE),
             ...(chatOnly ? CHAT_ONLY_THREAD_STYLE : null),
+            ...(chatOnly && chatOnlyFullWidth
+              ? { maxWidth: "none" }
+              : null),
             ...(chatOnly && thread.length === 0
               ? CHAT_ONLY_EMPTY_THREAD_STYLE
               : null),
@@ -1685,6 +1694,7 @@ export function AgentDock(props: AgentDockProps) {
   }, [
     agent,
     chatOnly,
+    chatOnlyFullWidth,
     compactSheet,
     composerDisabled,
     composerDisabledReason,
