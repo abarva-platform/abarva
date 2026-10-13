@@ -28,9 +28,11 @@ Adds a separate operator for selecting a privately staged synthetic Tower genera
 
 `scripts/tower/operate-rich-synthetic-serving.mjs`, focused tests, the corresponding package scripts, and an operator runbook.
 
+The readback uses three bound values for unfiltered pages and four when a page-key filter is present, matching the generated SQL in both cases.
+
 ## QA / Validation
 
-Static syntax, focused unit tests, and release check passed. The approved private Layer 4 stage completed with all nine page readbacks, an unchanged active selector, a passing quality gate, and an immutable Blob proof uploaded with byte-for-byte readback. Local stage-proof validation reported no gaps. A private serving check job must still return `ready` with exact stage proof and approval binding before promotion. No serving change or signed-in product proof is claimed by this record.
+Static syntax, focused unit tests, and release check passed. The approved private Layer 4 stage completed with all nine page readbacks, an unchanged active selector, a passing quality gate, and an immutable Blob proof uploaded with byte-for-byte readback. Local stage-proof validation reported no gaps. A readback regression test now checks parameter counts for filtered and unfiltered queries. A private serving check job must still return `ready` with exact stage proof and approval binding before promotion. No serving change or signed-in product proof is claimed by this record.
 
 ## Rollout Plan
 
