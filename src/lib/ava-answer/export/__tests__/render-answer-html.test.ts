@@ -9,6 +9,57 @@ import {
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { renderToBuffer } from "@react-pdf/renderer";
 
+it("preserves admitted narrative, record basis and citations without repeating the headline", () => {
+  const answer: AvaAnswerPacket = {
+    ...answerFixture(),
+    surface: "home",
+    directAnswer: "The value claim needs verification.",
+    prose:
+      "**Bottom line**\n\nThe value claim needs verification.\n\n**Key points**\n\n- **Value proof:** Validate the declared benefit baseline.\n\n- **Leadership:** These are modelled responses, not actual testimony.\n\n**Next step:** Agree the baseline before approving further investment.\n\n*Record basis: Reviewed stored record. Synthetic reference, not client-attested. Data currency is not independently attested.*",
+    artifacts: [],
+    citations: [
+      {
+        id: "reference-basis",
+        label: "Record declaration",
+        sourceClass: "tenant-fact",
+        excerpt: "A modelled reference, not client-attested.",
+      },
+    ],
+  };
+  const html = renderAvaChatSessionStandaloneHtml({
+    surface: "home-preview",
+    turns: [{ id: "answer", role: "agent", body: answer.prose!, answer }],
+  });
+  for (const expected of [
+    "<strong>Value proof:</strong>",
+    "Validate the declared benefit baseline.",
+    "modelled responses",
+    "<strong>Next step:</strong>",
+    "Reviewed stored record",
+    "Synthetic reference, not client-attested",
+    "Evidence Used",
+    "Record declaration",
+  ])
+    expect(html).toContain(expected);
+  expect(html.match(/The value claim needs verification\./g)).toHaveLength(1);
+});
+
+it("keeps distinct supporting prose escaped and behind public-text safety", () => {
+  const answer: AvaAnswerPacket = {
+    ...answerFixture(),
+    directAnswer: "Headline judgment.",
+    prose:
+      "Supporting detail must remain. <script>alert(1)</script> tenant_id 123e4567-e89b-42d3-a456-426614174000",
+    artifacts: [],
+  };
+  const html = renderAvaAnswerStandaloneHtml(answer);
+  expect(html).toContain("Headline judgment.");
+  expect(html).toContain("Supporting detail must remain.");
+  expect(html).not.toContain("<script>alert(1)</script>");
+  expect(html).not.toContain("tenant_id");
+  expect(html).not.toContain("123e4567-e89b-42d3-a456-426614174000");
+});
+
 function answerFixture(): AvaAnswerPacket {
   return {
     surface: "intelligence",
