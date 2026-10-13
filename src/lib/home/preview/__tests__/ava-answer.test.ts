@@ -377,6 +377,134 @@ describe("answerHomeAvaQuestion", () => {
     },
   );
 
+  it.each([
+    "Did the CEO actually say these words in a real interview, or are these modelled responses?",
+    "Are these leadership quotations client-attested?",
+    "Are these responses synthetic or transcribed from interviews?",
+  ])(
+    "answers reference-basis questions from the record declaration: %s",
+    async (question) => {
+      const answer = await answerHomeAvaQuestion({
+        bundle: {
+          chapters: [...CHAPTERS, leadershipChapter],
+          declaredSyntheticDemo: true,
+          provenance: {
+            canonical_snapshot_hash: "reference-record-version",
+            home_synthesis_contract_version: "test",
+            thesis_prompt_version: "test",
+            chapter_prompt_version: "test",
+            model: "test",
+            signal_packet_version: "test",
+            verification_version: "test",
+            generated_at: "2026-10-13T00:00:00Z",
+            generation_commit_sha: null,
+            generation_image_digest: null,
+          },
+        },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question,
+      });
+      expect(mockGetAuditedAnthropicClient).not.toHaveBeenCalled();
+      expect(answer.status).toBe("partial");
+      expect(answer.directAnswer).toContain("modelled reference material");
+      expect(answer.directAnswer).toContain("not verified quotations");
+      expect(answer.prose).toBeUndefined();
+      expect(answer.citations[0].recordId).toBe("reference-record-version");
+      expect(answer.gaps[0].label).toBe("Quotation not verified");
+      expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+    },
+  );
+
+  it.each([false, undefined])(
+    "does not infer reference or real-interview status from an alias (%s)",
+    async (declaredSyntheticDemo) => {
+      mockClaudeJson({ status: "no_data", cited_claim_tags: [] });
+      const answer = await answerHomeAvaQuestion({
+        bundle: {
+          chapters: [...CHAPTERS, leadershipChapter],
+          declaredSyntheticDemo,
+        },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question: "Did the CEO actually say these words in a real interview?",
+      });
+      expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(1);
+      expect(answer.status).toBe("no_data");
+      expect(answer.citations).toEqual([]);
+      expect(answer.prose).toBeUndefined();
+      expect(answer.directAnswer).not.toContain("synthetic reference");
+    },
+  );
+
+  it.each(["unparseable", "unavailable", "no_data", "uncited"])(
+    "keeps reference recovery behind the qualification gate (%s)",
+    async (failure) => {
+      if (failure === "unavailable") {
+        mockGetAuditedAnthropicClient.mockRejectedValue(
+          new Error("unavailable"),
+        );
+      } else if (failure === "unparseable") {
+        mockGetAuditedAnthropicClient.mockResolvedValue({
+          client: {
+            messages: {
+              create: jest
+                .fn()
+                .mockResolvedValue({
+                  content: [{ type: "text", text: "not json" }],
+                }),
+            },
+          },
+        } as never);
+      } else {
+        mockClaudeJson({
+          status: failure === "no_data" ? "no_data" : "answered",
+          direct_answer: "Verification is incomplete.",
+          cited_claim_tags: [],
+        });
+      }
+      const answer = await answerHomeAvaQuestion({
+        bundle: {
+          chapters: [
+            ...CHAPTERS,
+            {
+              ...leadershipChapter,
+              key_insights: [
+                {
+                  ...leadershipChapter.key_insights[0],
+                  statement:
+                    "All 44 leaders interviewed raised data trust concerns.",
+                },
+              ],
+            },
+          ],
+          declaredSyntheticDemo: true,
+        },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question: "What should leadership verify before acting?",
+      });
+      expect(answer.status).toBe("no_data");
+      expect(answer.directAnswer).toContain("concise, qualified summary");
+      expect(answer.prose).toBeUndefined();
+      expect(answer.artifacts).toEqual([]);
+      expect(answer.citations.map((c) => c.id)).toContain("LP-K1");
+      expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+    },
+  );
+
+  it("retains short, explicitly qualified reference recovery claims", async () => {
+    mockGetAuditedAnthropicClient.mockRejectedValue(new Error("unavailable"));
+    const answer = await answerHomeAvaQuestion({
+      bundle: {
+        chapters: [...CHAPTERS, leadershipChapter],
+        declaredSyntheticDemo: true,
+      },
+      tenantKey: CANONICAL_TENANT_KEYS[0],
+      question: "What should leadership verify before acting?",
+    });
+    expect(answer.status).toBe("partial");
+    expect(answer.prose).toContain("Modelled reference responses");
+    expect(answer.citations.map((c) => c.id)).toContain("LP-K1");
+  });
+
   it.each(["answered", "no_data"])(
     "does not publish unsafe testimony without citations (%s)",
     async (status) => {
