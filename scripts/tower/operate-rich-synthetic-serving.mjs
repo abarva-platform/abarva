@@ -277,8 +277,9 @@ async function servingApproval(config, source, stage) {
 }
 
 function pageFingerprint(rows) {
-  return sha(stableJson(rows.map(({ row_key, source_hash }) => ({ row_key, source_hash }))
-    .sort((left, right) => left.row_key.localeCompare(right.row_key) ||
+  return sha(stableJson(rows.map(({ page_key, row_key, source_hash }) => ({ page_key, row_key, source_hash }))
+    .sort((left, right) => left.page_key.localeCompare(right.page_key) ||
+      left.row_key.localeCompare(right.row_key) ||
       left.source_hash.localeCompare(right.source_hash))));
 }
 
@@ -288,8 +289,11 @@ export async function pageReadback(client, schema, tenant, assessment, version) 
     const predicate = schema === "serving" || pageKey === null ? "true" : table === "tower_ai_portfolio"
       ? "coalesce(display_payload_json ->> 'page_key', 'ai_portfolio') = $4"
       : "page_key = $4";
+    const pageExpression = schema === "ecl_projection" && table === "tower_ai_portfolio"
+      ? "coalesce(display_payload_json ->> 'page_key', 'ai_portfolio')"
+      : "page_key";
     const rows = (await client.query(
-      `select row_key, source_hash from ${schema}.${schema === "serving" ? page : table} where tenant_key=$1 and assessment_id=$2 and projection_version=$3 and ${predicate} order by row_key, source_hash`,
+      `select ${pageExpression} as page_key, row_key, source_hash from ${schema}.${schema === "serving" ? page : table} where tenant_key=$1 and assessment_id=$2 and projection_version=$3 and ${predicate} order by ${pageExpression}, row_key, source_hash`,
       [tenant, assessment, version, pageKey],
     )).rows;
     result[page] = { row_count: rows.length, row_fingerprint_sha256: pageFingerprint(rows) };

@@ -145,14 +145,26 @@ test("physical and serving reads use their respective page partitions", async ()
   const queries = [];
   const client = { query: async (sql) => {
     queries.push(sql);
-    return { rows: [{ row_key: "same", source_hash: "f".repeat(64) }] };
+    return { rows: [{ page_key: "ai_portfolio", row_key: "same", source_hash: "f".repeat(64) }] };
   } };
   const physical = await pageReadback(client, "ecl_projection", tenant, assessment, 2);
   assert.equal(Object.keys(physical).length, 9);
   assert.ok(queries.some((sql) => sql.includes("display_payload_json ->> 'page_key'")));
+  assert.ok(queries.every((sql) => sql.includes("as page_key")));
   queries.length = 0;
   const serving = await pageReadback(client, "serving", tenant, assessment, 2);
   assert.equal(Object.keys(serving).length, 9);
   assert.ok(queries.every((sql) => !sql.includes("display_payload_json")));
   assert.ok(queries.some((sql) => sql.includes("from serving.tower_adoption_lens")));
+});
+
+test("serving readback fingerprint matches the staged page and row identity", async () => {
+  const rows = [
+    { page_key: "decision_lanes", row_key: "same", source_hash: "b".repeat(64) },
+    { page_key: "command_center", row_key: "same", source_hash: "a".repeat(64) },
+  ];
+  const client = { query: async () => ({ rows }) };
+  const readback = await pageReadback(client, "ecl_projection", tenant, assessment, 2);
+  assert.equal(readback.tower_command_center.row_fingerprint_sha256,
+    sha(stableJson([...rows].reverse())));
 });
