@@ -677,6 +677,68 @@ describe("answerHomeAvaQuestion", () => {
     );
   });
 
+  describe("combined revenue population admission", () => {
+    const source = {
+      ...CHAPTERS[1],
+      chapterId: "our_business" as const,
+      key_insights: [
+        {
+          ...CHAPTERS[1].key_insights[0],
+          statement:
+            "Revenue is split 60% provider delivery / 40% health plan, with the health plan itself 70% Medicare Advantage and Medicare FFS versus 30% commercial and Medicaid managed care.",
+        },
+      ],
+    };
+    const safe = {
+      status: "partial",
+      direct_answer:
+        "The enterprise combines provider delivery and a health plan.",
+      key_points: [
+        "**Composition:** Provider delivery represents 60% of revenue and health plan operations 40%.",
+        "**Plan mix:** Medicare Advantage and Medicare FFS jointly represent 70% of health plan revenue.",
+        "**Discovery:** Establish the current service baseline before assessing a proposed transformation.",
+      ],
+      cited_claim_tags: ["OB-K1"],
+      caveats: [],
+    };
+
+    it.each([false, true])(
+      "repairs or withholds an unsupported MA-only opener (%s)",
+      async (validRepair) => {
+        const unsafe = {
+          ...safe,
+          direct_answer: "Revenue is concentrated in Medicare Advantage.",
+        };
+        const create = jest
+          .fn()
+          .mockResolvedValueOnce({
+            content: [{ type: "text", text: JSON.stringify(unsafe) }],
+          })
+          .mockResolvedValueOnce({
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(validRepair ? safe : unsafe),
+              },
+            ],
+          });
+        mockGetAuditedAnthropicClient.mockResolvedValue({
+          client: { messages: { create } },
+        } as never);
+        const answer = await answerHomeAvaQuestion({
+          bundle: { chapters: [source] },
+          tenantKey: CANONICAL_TENANT_KEYS[0],
+          question:
+            "What do we know about the business? Give three short points.",
+        });
+        expect(create).toHaveBeenCalledTimes(2);
+        expect(answer.directAnswer).not.toContain("Revenue is concentrated");
+        expect(answer.prose !== undefined).toBe(validRepair);
+        expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+      },
+    );
+  });
+
   describe("conditional source effect admission", () => {
     const source = {
       ...CHAPTERS[1],
@@ -801,6 +863,62 @@ describe("answerHomeAvaQuestion", () => {
       expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(1);
       expect(answer.directAnswer).toContain(categorical);
     });
+  });
+
+  it.each([
+    "**Evidence:** Original interview transcripts are unverified in this Home record; request them before discovery conclusions.",
+    "**Discovery:** Interview service owners to establish the current baseline before assessing the user's proposed target.",
+  ])(
+    "admits missing interview references and future discovery requests: %s",
+    async (point) => {
+      mockClaudeJson({
+        status: "partial",
+        direct_answer:
+          "Charter discovery only after establishing the evidence baseline.",
+        key_points: [
+          point,
+          "**Context:** Inspect the current technology dependency.",
+          "**Decision:** Verify business fit with accountable owners.",
+        ],
+        cited_claim_tags: ["TD-K1"],
+        caveats: [],
+      });
+      const answer = await answerHomeAvaQuestion({
+        bundle: { chapters: CHAPTERS, declaredSyntheticDemo: true },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question:
+          "Give three short points for discovery and identify missing interview references.",
+      });
+      expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(1);
+      expect(answer.prose?.replace(/\*\*/g, "")).toContain(
+        point.replace(/\*\*/g, ""),
+      );
+      expect(answer.directAnswer).not.toContain("couldn't safely");
+      expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+    },
+  );
+
+  it("does not let a safe interview gap license actual testimony", async () => {
+    mockClaudeJson({
+      status: "partial",
+      direct_answer: "Review the leadership evidence before acting.",
+      key_points: [
+        "**Evidence:** Original interview transcripts are unverified; all 44 leaders raised data trust concerns.",
+      ],
+      cited_claim_tags: ["LP-K1"],
+      caveats: [],
+    });
+    const answer = await answerHomeAvaQuestion({
+      bundle: {
+        chapters: [...CHAPTERS, leadershipChapter],
+        declaredSyntheticDemo: true,
+      },
+      tenantKey: CANONICAL_TENANT_KEYS[0],
+      question: "What leadership evidence is available?",
+    });
+    expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(2);
+    expect(answer.prose).toBeUndefined();
+    expect(answer.directAnswer).toContain("couldn't safely");
   });
 
   it("states the original-reference limit when the request needs source titles or document references", async () => {
@@ -1195,7 +1313,7 @@ describe("answerHomeAvaQuestion", () => {
     JSON.stringify({
       ...referenceAnswer,
       key_points: [
-        `**Leadership:** Modelled responses ${"need verification ".repeat(20)}.`,
+        `**Leadership:** Modelled responses ${"need verification ".repeat(25)}.`,
       ],
     }),
   ])(
@@ -1677,6 +1795,88 @@ describe("answerHomeAvaQuestion", () => {
     );
     expect(answer.prose?.match(/^-/gm)).toHaveLength(1);
     expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+  });
+
+  it("preserves a complete qualified point after the bounded shortening attempt", async () => {
+    const statement =
+      "The published value summary describes the tracked portfolio only and requires owner review before use in a funding decision; accountable owners must verify the stated acceptance limits and supporting evidence before acting on its findings.";
+    const point = `**Scope:** ${statement}`;
+    expect(point.split(/\s+/).length).toBeGreaterThan(30);
+    expect(point.split(/\s+/).length).toBeLessThanOrEqual(45);
+    mockClaudeJson({
+      status: "partial",
+      direct_answer: "Review the stated portfolio and acceptance limits.",
+      key_points: [
+        point,
+        "**Basis:** Inspect the published claim before acting.",
+        "**Decision:** Verify owner acceptance before a funding decision.",
+      ],
+      cited_claim_tags: ["PV-K1"],
+    });
+    const answer = await answerHomeAvaQuestion({
+      bundle: {
+        chapters: [
+          {
+            ...CHAPTERS[1],
+            key_insights: [
+              {
+                statement,
+                evidence_ids: ["reference"],
+                confidence: "medium",
+                claim_type: "FACT",
+              },
+            ],
+          },
+        ],
+      },
+      tenantKey: CANONICAL_TENANT_KEYS[0],
+      question: "Give three short points about value proof.",
+    });
+    expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(2);
+    expect(answer.directAnswer).not.toContain("couldn't safely");
+    expect(answer.prose).toContain(statement);
+    expect(answer.prose?.match(/^-/gm)).toHaveLength(3);
+    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+  });
+
+  it("never admits unsupported quantities through the qualified-point budget", async () => {
+    const point =
+      "**Baseline:** The current baseline is 91% resolution and must be reviewed with accountable owners before any funding decision, because the published record does not yet establish independently accepted benefits or savings for the enterprise.";
+    expect(point.split(/\s+/).length).toBeGreaterThan(30);
+    expect(point.split(/\s+/).length).toBeLessThanOrEqual(45);
+    mockClaudeJson({
+      status: "partial",
+      direct_answer: "Review the baseline.",
+      key_points: [
+        point,
+        "**Basis:** Inspect the record.",
+        "**Decision:** Establish the baseline before funding.",
+      ],
+      cited_claim_tags: ["PV-K1"],
+    });
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const answer = await answerHomeAvaQuestion({
+        bundle: { chapters: CHAPTERS },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question: "Give three short points about the baseline.",
+      });
+      expect(answer.prose).toBeUndefined();
+      expect(answer.directAnswer).toContain("couldn't safely");
+      const log = warn.mock.calls
+        .map(([message]) => String(message))
+        .find((message) => message.includes("home_ava.answer_withheld"));
+      expect(log).toBeDefined();
+      expect(JSON.parse(log!)).toMatchObject({
+        reasons: expect.arrayContaining([
+          expect.stringContaining("Quantities"),
+        ]),
+      });
+      expect(log).not.toContain(point);
+      expect(log).not.toContain("91%");
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   it("checks point length after stale-count sanitization expands the visible wording", async () => {
