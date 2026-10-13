@@ -5,7 +5,13 @@ import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { graphPlot } from "@/lib/intelligence/answer/model-exhibit-layout";
 import { sourceDisplayLabel } from "@/lib/intelligence/answer/source-display-label";
 
-export function ModelAuthoredExhibits({ answer }: { answer: AvaAnswerPacket }) {
+export function ModelAuthoredExhibits({
+  answer,
+  showSources = true,
+}: {
+  answer: AvaAnswerPacket;
+  showSources?: boolean;
+}) {
   return (
     <div className="space-y-4" aria-label="Claude exhibits">
       {answer.artifacts.map((a) => (
@@ -117,24 +123,39 @@ export function ModelAuthoredExhibits({ answer }: { answer: AvaAnswerPacket }) {
           )}
         </section>
       ))}
-      {answer.citations.length > 0 && (
-        <details className="text-sm">
-          <summary>Sources</summary>
-          <ul>
-            {answer.citations.map((c) => (
-              <li key={c.id}>
-                {c.url ? (
-                  <a href={c.url} target="_blank" rel="noreferrer">
-                    {sourceDisplayLabel(c.label)}
-                  </a>
-                ) : (
-                  sourceDisplayLabel(c.label)
-                )}
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
+      {showSources && <ModelAuthoredSources answer={answer} />}
     </div>
   );
+}
+
+export function ModelAuthoredSources({ answer }: { answer: AvaAnswerPacket }) {
+  return answer.citations.length > 0 ? (
+    <details className="text-sm">
+      <summary>Sources</summary>
+      <ul>
+        {answer.citations.map((c) => (
+          <li key={c.id}>
+            {c.url ? (
+              <a href={c.url} target="_blank" rel="noreferrer">
+                {sourceDisplayLabel(c.label)}
+              </a>
+            ) : (
+              sourceDisplayLabel(c.label)
+            )}
+            {c.recordId && (
+              <p className="text-xs text-stone-600">
+                Context record: {c.recordId}
+              </p>
+            )}
+            {c.excerpt && (
+              <details className="mt-1">
+                <summary>Supplied context</summary>
+                <p className="whitespace-pre-wrap text-xs">{c.excerpt}</p>
+              </details>
+            )}
+          </li>
+        ))}
+      </ul>
+    </details>
+  ) : null;
 }

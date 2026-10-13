@@ -41,6 +41,30 @@ const chart = {
 const fence = (kind: string, value: unknown) =>
   `\`\`\`${kind}\n${JSON.stringify(value)}\n\`\`\``;
 
+it("decodes generic JSON provenance and question arrays while preserving ordinary JSON", () => {
+  const questions = [
+    "Which eligibility boundary should discovery test?",
+    "How should successful resolution be measured?",
+    "Which decision should Finance validate?",
+  ];
+  const ordinary = fence("json", ["red", "green", "blue"]);
+  const raw = `Validate the baseline.\n\n${fence("json", ["S1"])}\n\n${fence("", questions)}\n\n${ordinary}`;
+  const result = modelAuthoredAnswerPacket(raw, "What next?", "test", [
+    {
+      id: "operating-plan",
+      type: "TENANT",
+      name: "Operating plan",
+      detail: "Baseline requires validation",
+    },
+  ]);
+  expect(result.nextSteps.map((q) => q.label)).toEqual(questions);
+  expect(result.citations.map((c) => c.label)).toEqual(["Operating plan"]);
+  expect(result.prose).not.toContain('["S1"]');
+  expect(result.prose).toContain(ordinary);
+  expect(result.modelAuthored?.rawText).toBe(raw);
+  expect(isIntactModelAuthoredPacket(result)).toBe(true);
+});
+
 it("previews prose through character-split exhibit and provenance blocks without exposing transport", () => {
   const opening = "Validate the opportunity.\n\n";
   const raw = `${opening}${fence("table", table)}\n\n${fence("chart", chart)}\n\n${fence("graph", graph)}\n\n${fence("sources", ["S1"])}\n\n${fence("followups", ["Which scope?", "Which baseline?", "Which decision?"])}\n\nNext decision.`;

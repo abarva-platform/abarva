@@ -45,6 +45,7 @@ import { useAtlasPageState } from "@/components/shell/AtlasPageStateProvider";
 import { demoSafeClientText } from "@/lib/client-config";
 import { hasVisibleAvaArtifacts } from "@/lib/ava-answer/renderable-artifacts";
 import { ModelAuthoredExhibits } from "@/components/agent-answer/ModelAuthoredExhibits";
+import { ExecutiveReadingView } from "@/components/agent-answer/ExecutiveReadingView";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { AgentResponseParts } from "@/components/agent/AgentResponseParts";
@@ -413,6 +414,8 @@ export interface ChatMessage {
   body: string;
   /** Presentation status while an answer is still being generated. */
   streamStatus?: string;
+  /** Opt-in concise reading view; complete content remains expandable and exportable. */
+  readingWordBudget?: number;
   /** Optional structured UI parts rendered beneath the assistant prose. */
   parts?: AgentResponsePart[];
   /** Optional createdAt for byline rendering. */
@@ -1430,7 +1433,14 @@ export function AgentDock(props: AgentDockProps) {
                   }
                 >
                   {turn.role === "agent" ? (
-                    turn.parts?.length ? (
+                    turn.readingWordBudget ? (
+                      <ExecutiveReadingView
+                        text={turn.body}
+                        answer={turn.agentAnswer}
+                        budget={turn.readingWordBudget}
+                        streaming={Boolean(turn.streamStatus)}
+                      />
+                    ) : turn.parts?.length ? (
                       <AgentResponseParts parts={turn.parts} />
                     ) : (
                       <AgentMarkdown
@@ -1473,6 +1483,7 @@ export function AgentDock(props: AgentDockProps) {
                   </div>
                 ) : null}
                 {turn.role === "agent" &&
+                !turn.readingWordBudget &&
                 shouldRenderAvaArtifactsInDock(surface, turn.agentAnswer) ? (
                   <div
                     data-testid="agent-dock-artifacts"

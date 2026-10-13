@@ -96,17 +96,29 @@ const graphSchema = z
 const followupSchema = z.array(z.string().min(1)).length(3);
 const sourceIdsSchema = z.array(z.string().regex(/^S[1-9]\d*$/)).min(1);
 
-/** Decode explicit transport blocks only. Invalid blocks stay verbatim in prose. */
+/** Decode transport blocks. Unsupported content stays verbatim in prose. */
 export function decodeModelAuthoredAnswer(rawText: string) {
   const artifacts: AvaArtifact[] = [];
   const followups: string[] = [];
   const sourceIds: string[] = [];
   const protocolIssues: string[] = [];
   const prose = rawText.replace(
-    /^```(table|chart|quadrant-matrix|graph|sources|followups)[ \t]*\r?\n([\s\S]*?)^```[ \t]*(?=\r?$)/gm,
+    /^```(table|chart|quadrant-matrix|graph|sources|followups|json)?[ \t]*\r?\n([\s\S]*?)^```[ \t]*(?=\r?$)/gm,
     (block, kind: string, payload: string) => {
       try {
         const value: unknown = JSON.parse(payload);
+        // Some completions use a generic JSON fence for the two metadata
+        // arrays. Their exact shapes are unambiguous; ordinary JSON remains
+        // prose. Exhibit shapes still require an explicit transport label.
+        if (!kind || kind === "json") {
+          if (sourceIdsSchema.safeParse(value).success) kind = "sources";
+          else if (
+            followupSchema.safeParse(value).success &&
+            (value as string[]).every((q) => q.trim().endsWith("?"))
+          )
+            kind = "followups";
+          else return block;
+        }
         if (kind === "sources") {
           if (sourceIds.length) throw new Error("Duplicate sources block");
           sourceIds.push(...sourceIdsSchema.parse(value));
@@ -132,6 +144,7 @@ export function decodeModelAuthoredAnswer(rawText: string) {
         }
         return "";
       } catch {
+        if (!kind || kind === "json") return block;
         protocolIssues.push(
           `Unrendered ${kind} block; original content retained.`,
         );

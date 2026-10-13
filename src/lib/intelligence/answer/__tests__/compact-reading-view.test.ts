@@ -1,0 +1,89 @@
+import {
+  compactReadingView,
+  executiveReadingBudget,
+  wordCount,
+} from "../compact-reading-view";
+import type { AvaArtifact } from "@/lib/ava-answer/contract";
+
+const table: AvaArtifact = {
+  artifact: "table",
+  id: "options",
+  title: "Delivery options",
+  columns: [
+    { key: "option", label: "Option" },
+    { key: "gate", label: "Decision gate" },
+  ],
+  rows: [
+    { option: "In house", gate: "Prove operational capacity" },
+    { option: "Hybrid", gate: "Retain business accountability" },
+    { option: "Managed service", gate: "Validate quality and total cost" },
+  ],
+  note: "Advisory comparison; outcomes and costs require validation.",
+};
+
+it("keeps a compact comparison whole alongside the recommendation without changing its data", () => {
+  const opening =
+    "## Delivery decision\n\nCharter discovery. The eligible population and resolution baseline are unknown; retain all delivery options pending evidence.";
+  const detail = Array(10)
+    .fill(
+      "Operations must establish the inquiry taxonomy before Finance can assess value. Quality ownership stays with the business.",
+    )
+    .join("\n\n");
+  const prose = opening + "\n\n" + detail;
+  const artifacts = [table];
+  const saved = JSON.stringify(artifacts);
+  const view = compactReadingView(prose, artifacts, 100);
+  expect(view.hasMore).toBe(true);
+  expect(view.prose).toContain("resolution baseline are unknown");
+  expect(view.visibleWords).toBeLessThanOrEqual(100);
+  expect(view.artifacts).toEqual([table]);
+  expect(JSON.stringify(artifacts)).toBe(saved);
+  expect(prose.endsWith(detail)).toBe(true);
+});
+
+it("folds an oversized table as a whole and avoids orphan headings", () => {
+  const large: AvaArtifact = {
+    ...table,
+    rows: Array(8).fill({
+      option: "Candidate delivery option",
+      gate: Array(30).fill("evidence").join(" "),
+    }),
+  };
+  const prose =
+    "Recommend a bounded discovery.\n\n## Detailed options\n\n" +
+    Array(120).fill("detail").join(" ");
+  const view = compactReadingView(prose, [large], 100);
+  expect(view.prose).toBe("Recommend a bounded discovery.");
+  expect(view.artifacts).toEqual([]);
+  expect(view.hasMore).toBe(true);
+  expect(large.rows).toHaveLength(8);
+});
+
+it("preserves a short answer verbatim and ends a long opening at a sentence boundary", () => {
+  const short = "Baseline is unknown.  Validate eligibility first.\n";
+  expect(compactReadingView(short, [], 100)).toMatchObject({
+    prose: short,
+    hasMore: false,
+  });
+  const long =
+    "The baseline is unknown. " +
+    Array(200).fill("Unmeasured detail").join(" ") +
+    ".";
+  const view = compactReadingView(long, [], 100);
+  expect(view.prose).toBe("The baseline is unknown.");
+  expect(wordCount(view.prose)).toBeLessThanOrEqual(100);
+});
+
+it("uses a short reading view for simple questions and honors an explicit longer word count", () => {
+  expect(
+    executiveReadingBudget("What is successful self-service resolution?"),
+  ).toBe(100);
+  expect(
+    executiveReadingBudget(
+      "Compare the three operating options and propose a discovery plan.",
+    ),
+  ).toBe(300);
+  expect(executiveReadingBudget("Provide a 600 word opportunity brief.")).toBe(
+    600,
+  );
+});

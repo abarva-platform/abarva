@@ -13,6 +13,7 @@ import type {
   SuggestedAction,
 } from "@/components/agent/AgentDock";
 import { executiveReviewQuestions } from "@/lib/intelligence/answer/quality-review";
+import { executiveReadingBudget } from "@/lib/intelligence/answer/compact-reading-view";
 import { AvaChatShell } from "@/components/ava-chat/AvaChatShell";
 import type { AskSource } from "@/lib/intelligence/ask/types";
 import {
@@ -396,6 +397,10 @@ export function AdvisoryIntelligencePage({
                   : m.answer || m.streamStatus || "Gathering client context...",
               citations: m.sources.length > 0 ? m.sources : undefined,
               agentAnswer: m.agentAnswer ?? undefined,
+              readingWordBudget:
+                m.agentAnswer && !m.agentAnswer.modelAuthored
+                  ? undefined
+                  : executiveReadingBudget(m.question),
               streamStatus:
                 m.answer.trim() && m.status === "streaming"
                   ? "Preparing the rest of the answer…"
