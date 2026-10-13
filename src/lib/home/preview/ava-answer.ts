@@ -45,7 +45,7 @@ type AvaAnswerBundleSlice = Pick<
     >
   >;
 
-const PROMPT_VERSION = "home-preview-ava-answer-v8";
+const PROMPT_VERSION = "home-preview-ava-answer-v9";
 const CLAUDE_MODEL = "claude-sonnet-5";
 // Thinking and visible text share this budget; brevity is enforced separately.
 const MAX_TOKENS = 4096;
@@ -1117,7 +1117,10 @@ export async function answerHomeAvaQuestion(args: {
 
     if (!parsed || needsCompactAnswerRepair(parsed, question, context)) {
       const original = parsed;
-      const repairMessage = `${userMessage}\n\nAnswer correction: use at most four key_points by default, each with a bold business label, one complete sentence, 15-25 words and never more than 30. Respect the requested bullet count. For synthetic_reference=true, explicitly qualify leadership assertions as modelled responses; concern counts are not a measure of how many leaders trust data. All claim tags belong only in cited_claim_tags. Preserve qualifications and the exact financial denominator: vendor spend must not become technology spend, enterprise spend or total budget. Vendor allocation does not establish spending outside internal control. AI-portfolio validation is not enterprise-wide validation. Missing evidence here does not establish enterprise absence: qualify program, Move, baseline and evidence gaps as not established in this Home record, not nonexistent or absent from current tracking. Do not calculate a new percentage or invent a causal connection. Return the complete JSON schema.`;
+      const repairReasons = parsed
+        ? compactAnswerRepairReasons(parsed, question, context)
+        : ["The prior response did not match the required response structure."];
+      const repairMessage = `${userMessage}\n\nConstraints requiring correction:\n${repairReasons.map((reason) => `- ${reason}`).join("\n")}\n\nAnswer correction: use at most four key_points by default, each with a bold business label, one complete sentence, 15-25 words and never more than 30. Respect the requested bullet count. For synthetic_reference=true, explicitly qualify leadership assertions as modelled responses in EACH affected point; a qualification only in caveats is insufficient. If a leadership claim cannot be qualified concisely, use another relevant cited claim rather than remove its qualification. Concern counts are not a measure of how many leaders trust data. All claim tags belong only in cited_claim_tags. Preserve qualifications and the exact financial denominator: vendor spend must not become technology spend, enterprise spend or total budget. Vendor allocation does not establish spending outside internal control. AI-portfolio validation is not enterprise-wide validation. Missing evidence here does not establish enterprise absence: qualify program, Move, baseline and evidence gaps as not established in this Home record, not nonexistent or absent from current tracking. Do not calculate a new percentage or invent a causal connection. Return the complete JSON schema.`;
       const remainingMs = TIMEOUT_MS - (Date.now() - startedAt);
       if (remainingMs > 3_000) {
         try {
@@ -1134,6 +1137,7 @@ export async function answerHomeAvaQuestion(args: {
               activeChapterId: args.activeChapterId ?? null,
               contextScope: "enterprise_spine_plus_focus",
               presentationRepair: true,
+              presentationRepairReasons: repairReasons,
             },
           });
           const repairTimeout = TIMEOUT_MS - (Date.now() - startedAt);
@@ -1582,32 +1586,56 @@ function visibleKeyPoints(
     : [];
 }
 
-function needsCompactAnswerRepair(
+function compactAnswerRepairReasons(
   parsed: ModelResponseShape,
   question: string,
   context: GroundingContext,
-): boolean {
-  if (
-    hasUnqualifiedReferenceTestimony(parsed, context) ||
-    hasBroadenedSpendConcentration(parsed, context) ||
-    hasUnsupportedEvidenceScope(parsed, context)
-  )
-    return true;
-  if (parsed.status === "no_data") return false;
+): string[] {
+  const reasons: string[] = [];
+  if (hasUnqualifiedReferenceTestimony(parsed, context))
+    reasons.push(
+      "Each leadership assertion must preserve its modelled or synthetic basis; concern counts do not establish a trust population.",
+    );
+  if (hasBroadenedSpendConcentration(parsed, context))
+    reasons.push(
+      "Supplier concentration must retain the cited spend population and denominator.",
+    );
+  if (hasUnsupportedEvidenceScope(parsed, context))
+    reasons.push(
+      "Evidence gaps must remain bounded to Home; portfolio validation is not enterprise-wide validation, and vendor allocation is not control loss.",
+    );
+  if (parsed.status === "no_data") return reasons;
   const points = visibleKeyPoints(parsed, question);
-  return (
+  if (
     (requestedKeyPointLimit(question) === 4 &&
       Array.isArray(parsed.key_points) &&
       parsed.key_points.length > 4) ||
     (requestedKeyPointLimit(question) < 4 &&
-      points.length !== requestedKeyPointLimit(question)) ||
+      points.length !== requestedKeyPointLimit(question))
+  )
+    reasons.push(
+      `Return ${requestedKeyPointLimit(question) === 4 ? "at most 4" : requestedKeyPointLimit(question)} supporting points with the requested business labels.`,
+    );
+  if (
     points.some(
       (point) =>
         wordCount(
           sanitizeAvaVisibleText(point, context, MAX_PROSE_PARAGRAPH_WORDS),
         ) > MAX_KEY_POINT_WORDS,
     )
-  );
+  )
+    reasons.push(
+      `Each complete supporting point must be at most ${MAX_KEY_POINT_WORDS} words, including its label; preserve qualifications while shortening.`,
+    );
+  return reasons;
+}
+
+function needsCompactAnswerRepair(
+  parsed: ModelResponseShape,
+  question: string,
+  context: GroundingContext,
+): boolean {
+  return compactAnswerRepairReasons(parsed, question, context).length > 0;
 }
 
 function stripInlineClaimTags(text: string): string {
@@ -2370,12 +2398,30 @@ function wordCount(text: string): number {
 }
 
 function isInterviewBasisQuestion(question: string): boolean {
+  const sentences = splitNarrativeSentences(question);
+  const firstRequest = sentences[0] ?? "";
+  const requests = sentences.flatMap((sentence) =>
+    sentence.split(/[,;\n]|\b(?:and|also|then|but)\b/i),
+  );
+  // A qualification instruction must not replace a substantive business question.
+  if (
+    requests.some((request) =>
+      /^(?:please\s+)?(?:tell me\s+)?(?:what|why|how|where|which|recommend|compare|explore|assess|evaluate|prioritize|outline|plan)\b/i.test(
+        request.trim(),
+      ),
+    )
+  ) {
+    return false;
+  }
   return (
+    /^(?:please\s+)?(?:(?:can|could|would|will)\s+you\s+)?(?:are|is|were|was|did|does|verify|confirm|check)\b/i.test(
+      firstRequest,
+    ) &&
     /\b(?:real|actual(?:ly)?|modelled|modeled|synthetic|transcripts?|transcribed|attested)\b/i.test(
-      question,
+      firstRequest,
     ) &&
     /\b(?:interviews?|responses?|testimony|quotes?|quotations?|say|said|words)\b/i.test(
-      question,
+      firstRequest,
     )
   );
 }

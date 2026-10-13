@@ -306,6 +306,16 @@ describe("answerHomeAvaQuestion", () => {
       });
       expect(create).toHaveBeenCalledTimes(2);
       expect(answer.directAnswer).not.toContain("trusted by few");
+      expect(
+        mockGetAuditedAnthropicClient.mock.calls[1][0].metadata,
+      ).toMatchObject({
+        presentationRepairReasons: expect.arrayContaining([
+          expect.stringContaining("Each leadership assertion"),
+        ]),
+      });
+      expect(create.mock.calls[1][0].messages[0].content).toContain(
+        "in EACH affected point",
+      );
       expect(answer.directAnswer).not.toContain("leadership-reported");
       expect(answer.prose).toContain("Modelled responses");
       expect(answer.citations.map((c) => c.id)).toContain("LP-K1");
@@ -381,9 +391,14 @@ describe("answerHomeAvaQuestion", () => {
     "Did the CEO actually say these words in a real interview, or are these modelled responses?",
     "Are these leadership quotations client-attested?",
     "Are these responses synthetic or transcribed from interviews?",
+    "Can you confirm whether these interview responses are synthetic?",
+    "Please verify whether these quotations are client-attested.",
+    "Are these quotations about our strategic plan client-attested?",
+    "Are these responses actual statements of what leaders said?",
   ])(
     "answers reference-basis questions from the record declaration: %s",
     async (question) => {
+      mockGetAuditedAnthropicClient.mockRejectedValue(new Error("unavailable"));
       const answer = await answerHomeAvaQuestion({
         bundle: {
           chapters: [...CHAPTERS, leadershipChapter],
@@ -432,6 +447,36 @@ describe("answerHomeAvaQuestion", () => {
       expect(answer.citations).toEqual([]);
       expect(answer.prose).toBeUndefined();
       expect(answer.directAnswer).not.toContain("synthetic reference");
+    },
+  );
+
+  it.each([
+    "For our existing business opportunity, what evidence is missing before chartering discovery? Distinguish sourced facts, synthetic examples, assumptions and missing evidence; say when original source/page/date references are unavailable.",
+    "What should the CFO prioritize? Use modelled responses only as synthetic examples, not actual testimony.",
+    "Explore the opportunity using synthetic reference context and say what evidence is missing.",
+    "Are these leadership quotations client-attested? What should the CFO prioritize?",
+    "How do the modelled interview responses inform business priorities?",
+    "Are these quotations synthetic, and how should the CFO prioritize the opportunity?",
+    "Are these quotations synthetic? Outline the discovery plan.",
+  ])(
+    "keeps mixed business and basis requests on the grounded answer path: %s",
+    async (question) => {
+      mockClaudeJson(referenceAnswer);
+      const answer = await answerHomeAvaQuestion({
+        bundle: {
+          chapters: [...CHAPTERS, leadershipChapter],
+          declaredSyntheticDemo: true,
+        },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question,
+      });
+      expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(1);
+      expect(answer.directAnswer).toBe(referenceAnswer.direct_answer);
+      expect(answer.citations.map((citation) => citation.id)).toContain(
+        "LP-K1",
+      );
+      expect(answer.prose).toContain("Modelled responses");
+      expect(validateAvaAnswerPacket(answer).passed).toBe(true);
     },
   );
 
@@ -971,6 +1016,16 @@ describe("answerHomeAvaQuestion", () => {
     });
     const firstMessage = create.mock.calls[0][0].messages[0].content;
     expect(create.mock.calls[1][0].messages[0].content).toContain(firstMessage);
+    expect(create.mock.calls[1][0].messages[0].content).toContain(
+      "Constraints requiring correction:",
+    );
+    expect(
+      mockGetAuditedAnthropicClient.mock.calls[1][0].metadata,
+    ).toMatchObject({
+      presentationRepairReasons: expect.arrayContaining([
+        expect.stringContaining("Return 3 supporting points"),
+      ]),
+    });
     expect(answer.prose?.match(/^-/gm)).toHaveLength(3);
     expect(maxParagraphWords(answer.prose)).toBeLessThanOrEqual(31);
     expect(answer.prose).not.toMatch(/PV-K1|TD-K1/);
@@ -980,6 +1035,48 @@ describe("answerHomeAvaQuestion", () => {
     ]);
     expect(answer.caveats[0].detail).toContain("incomplete");
     expect(answer.status).toBe("partial");
+    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+  });
+
+  it("keeps the default supporting-point limit a maximum during repair", async () => {
+    const initial = {
+      status: "answered",
+      direct_answer: "Review the value evidence.",
+      key_points: Array.from(
+        { length: 5 },
+        () => "Value evidence needs review.",
+      ),
+      cited_claim_tags: ["PV-K1"],
+    };
+    const create = jest
+      .fn()
+      .mockResolvedValueOnce({
+        content: [{ type: "text", text: JSON.stringify(initial) }],
+      })
+      .mockResolvedValueOnce({
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              ...initial,
+              key_points: ["Value evidence needs review."],
+            }),
+          },
+        ],
+      });
+    mockGetAuditedAnthropicClient.mockResolvedValue({
+      client: { messages: { create } },
+    } as never);
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS },
+      tenantKey: CANONICAL_TENANT_KEYS[0],
+      question: "Summarize the value evidence.",
+    });
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(create.mock.calls[1][0].messages[0].content).toContain(
+      "Return at most 4 supporting points",
+    );
+    expect(answer.prose?.match(/^-/gm)).toHaveLength(1);
     expect(validateAvaAnswerPacket(answer).passed).toBe(true);
   });
 
@@ -1000,6 +1097,13 @@ describe("answerHomeAvaQuestion", () => {
       question: "Give me three concise bullets about data.",
     });
     expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(2);
+    expect(
+      mockGetAuditedAnthropicClient.mock.calls[1][0].metadata,
+    ).toMatchObject({
+      presentationRepairReasons: expect.arrayContaining([
+        expect.stringContaining("Each complete supporting point"),
+      ]),
+    });
     expect(answer.prose).toBeUndefined();
     expect(answer.directAnswer).toContain("concise summary");
   });
