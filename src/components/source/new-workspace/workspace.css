@@ -121,6 +121,20 @@
 .snw-nda-suppliers dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0; }
 .snw-nda-suppliers dt { color: #707771; font-size: 11px; font-weight: 650; text-transform: uppercase; }
 .snw-nda-suppliers dd { margin: 3px 0 0; overflow-wrap: anywhere; }
+.snw-audit-detail { margin-top: 8px; font-size: 12px; overflow-wrap: anywhere; }
+.snw-audit-detail summary { width: fit-content; cursor: pointer; font-weight: 650; }
+.snw-audit-detail summary:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+.snw-audit-detail p { margin: 8px 0; }
+.snw-audit-detail dl { margin-top: 10px; }
+.snw-registry-detail { margin: 18px 0; }
+.snw-registry-detail > summary { width: fit-content; cursor: pointer; font-size: 13px; font-weight: 650; }
+.snw-registry-detail > summary:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+.snw-nda-readiness > .snw-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; margin-bottom: 18px; }
+.snw-nda-readiness > .snw-facts div { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; }
+@media (max-width: 640px) {
+  .snw-nda-readiness > .snw-facts { grid-template-columns: minmax(0, 1fr); }
+  .snw-nda-supplier-heading { flex-wrap: wrap; }
+}
 .snw-intelligence { max-width: 1180px; }
 .snw-intel-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 22px; border-bottom: 1px solid #dededb; padding-bottom: 20px; }
 .snw-intel-heading h2 { font: 500 25px/1.22 Fraunces, Georgia, serif; margin: 10px 0; }

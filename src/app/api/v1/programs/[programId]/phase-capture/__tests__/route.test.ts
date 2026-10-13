@@ -1119,6 +1119,58 @@ describe("reviewed P0 correction command on the existing capture route", () => {
         "The correction outcome could not be confirmed. Read the stored input and audit before retrying.",
     });
   });
+  it.each([
+    [
+      "rolled_back",
+      500,
+      "correction_rolled_back",
+      "The captured-input correction was rolled back. No correction was saved. Read the stored input and audit before retrying.",
+    ],
+    [
+      "not_started",
+      503,
+      "correction_not_started",
+      "The captured-input correction did not start. Read the stored input and audit before retrying.",
+    ],
+  ])(
+    "reports a confirmed %s correction outcome without claiming partial persistence",
+    async (transactionOutcome, status, error, detail) => {
+      mockRestoreReviewedP0.mockRejectedValue(
+        Object.assign(new Error("internal_database_failure"), {
+          transactionOutcome,
+        }),
+      );
+      const response = await POST(req(command) as NextRequest, { params });
+      expect(response.status).toBe(status);
+      expect(await response.json()).toEqual({
+        error,
+        detail,
+        transactionOutcome,
+      });
+      expect(mockSbFrom).not.toHaveBeenCalled();
+    },
+  );
+  it("retains the ordinary save failure body outside the correction command", async () => {
+    mockGetProgramById.mockRejectedValue(
+      Object.assign(new Error("ordinary_save_failure"), {
+        transactionOutcome: "rolled_back",
+      }),
+    );
+    const response = await POST(
+      req({ phase: 1, sections: {} }) as NextRequest,
+      { params },
+    );
+    expect(response.status).toBe(500);
+    expect(await response.json()).toMatchObject({ error: "internal_error" });
+  });
+  it("does not invent a rollback outcome when the correction error has no outcome evidence", async () => {
+    mockRestoreReviewedP0.mockRejectedValue(new Error("outcome_not_recorded"));
+    const response = await POST(req(command) as NextRequest, { params });
+    expect(response.status).toBe(500);
+    const body = await response.json();
+    expect(body.error).toBe("internal_error");
+    expect(body.transactionOutcome).toBeUndefined();
+  });
   it("does not enter correction for an inaccessible Move", async () => {
     mockGetProgramById.mockResolvedValue(null);
     const response = await POST(req(command) as NextRequest, { params });

@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -58,7 +58,7 @@ Only the automatically triggered repo-owned ACA main deploy workflow may promote
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` only.
 - Shared runtime mutators: none in this candidate.
-- Approved image digest: pending the successful main deployment artifact.
+- Approved image digest: `sha256:57592b8d1cfa65d883a1b4304f150b446e8dc9ce8f5c434f4989cedb6fb11e6c` for the actual connection release; later serving descendants require their own invariant.
 - ACA runtime invariant: web template and sole 100%-traffic latest-ready revision match the approved digest.
 - Worker image invariant: every required worker matches the same digest.
 - Feature/env flag update path: none.
@@ -73,6 +73,10 @@ Revert through a controlled squash PR and the repo-owned main deploy workflow. P
 The exact source diff, real-resolver before/after regression, eight restored mutation receipts, focused test and local gate output, immutable-source census reconciliation, fetched guard, exact-head CI, actual squash commit, approved deployment artifact, fresh runtime invariant and independent native audit/readback.
 
 The preceding release is [#9452](https://github.com/abarva-platform/abarva/pull/9452), squash `847782ee6e36cc7ff48c23e0cca8fd91170c0d0b`. Its valid [after walk](https://github.com/abarva-platform/abarva/actions/runs/38298423936) failed speed/non-speed acceptance; this connection candidate does not waive that result.
+
+The connection release [#9480](https://github.com/abarva-platform/abarva/pull/9480) merged as `1fc0d368cd11cc95b87d74a8ac0171543495c9e8`. Exact final CI completed with 36 successful checks and five expected skips, followed by the stable actual fetched guard and matched squash. Automatic deployment [38312771957](https://github.com/abarva-platform/abarva/actions/runs/38312771957) and an independent invariant verify its approved digest `sha256:57592b8d1cfa65d883a1b4304f150b446e8dc9ce8f5c434f4989cedb6fb11e6c` on the web template, sole traffic revision and required workers. A later verified serving descendant retains identical correction code. This proves connection-source deployment, not a successful correction.
+
+A subsequent observed correction reached the mandatory audit and PostgreSQL refused a parameter inferred as both text and UUID. The wrapper recorded rollback; independently compared saved native before/after results were unchanged. The mechanism is addressed separately by `2026-10-12-moves-capture-audit-parameter-binding`. No live retry or downstream acceptance is implied.
 
 ## Known Gaps
 

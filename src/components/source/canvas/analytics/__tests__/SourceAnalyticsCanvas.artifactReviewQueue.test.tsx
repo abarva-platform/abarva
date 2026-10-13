@@ -3,7 +3,7 @@
  */
 
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
 import { SAMPLE_STRATEGY_STAGE } from "../strategy-sample-view-model";
@@ -51,6 +51,43 @@ const event: SourcingEventSummary = {
   nextDecision: "Strategy gate",
   approvalPolicyCode: "self_v1",
 };
+
+it("keeps the complete registered file inventory closed without hiding current gate controls", () => {
+  render(
+    <SourceAnalyticsCanvas
+      event={event}
+      viewStage="strategy"
+      tenantName="Test Client"
+      stageView={SAMPLE_STRATEGY_STAGE}
+      initialWorkspace="files"
+      artifacts={[
+        { id: "strategy-input", artifactCode: "d01_strategy_memo", stageKey: "strategy", recordKind: "registry_artifact", sourceOrigin: "uploaded", originalName: "strategy-input.txt", status: "uploaded" },
+        { id: "scope-input", artifactCode: "d04_scope", stageKey: "scope", recordKind: "registry_artifact", sourceOrigin: "uploaded", originalName: "scope-input.txt", status: "uploaded" },
+      ]}
+    />,
+  );
+
+  const inventory = screen.getByTestId("source-file-inventory");
+  expect(inventory.tagName).toBe("DETAILS");
+  expect(inventory).not.toHaveAttribute("open");
+  expect(within(inventory).getByText("File inventory (2 registered)")).toBeInTheDocument();
+  const cards = within(inventory).getAllByTestId(/^source-shell-file-card-/);
+  expect(cards).toHaveLength(2);
+  expect(inventory).toHaveTextContent("strategy-input.txt");
+  expect(inventory).toHaveTextContent("scope-input.txt");
+  for (const id of ["source-stage-evidence-checklist", "source-session-evidence-capture", "source-evidence-readiness-panel", "source-artifact-review-queue"]) {
+    const control = screen.getByTestId(id);
+    expect(inventory).not.toContainElement(control);
+    expect(control).toBeVisible();
+  }
+  expect(screen.getByTestId("source-artifact-review-queue")).toHaveTextContent("2 blockers");
+});
+
+it("leaves the empty inventory message visible without a zero-file disclosure", () => {
+  render(<SourceAnalyticsCanvas event={event} viewStage="strategy" tenantName="Test Client" stageView={SAMPLE_STRATEGY_STAGE} initialWorkspace="files" artifacts={[]} />);
+  expect(screen.queryByTestId("source-file-inventory")).not.toBeInTheDocument();
+  expect(screen.getByText("No Source artifacts are registered for this event yet.")).toBeVisible();
+});
 
 it("counts only gate-relevant artifacts in the approval queue", () => {
   render(

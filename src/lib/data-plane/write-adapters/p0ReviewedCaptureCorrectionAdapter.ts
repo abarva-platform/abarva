@@ -278,9 +278,10 @@ export async function restoreP0ReviewedCapture(
           stored.state_jsonb;
       }
       const audit = await query(
-        "INSERT INTO program_audit_log (tenant_key, program_id, engagement_id, actor_id, actor_role, action, from_state, to_state, rationale, evidence_refs) VALUES ($1,$2,$2,$3,$4,$5,$6,$7,$8,$9::text[]) RETURNING id",
+        "INSERT INTO program_audit_log (tenant_key, program_id, engagement_id, actor_id, actor_role, action, from_state, to_state, rationale, evidence_refs) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::text[]) RETURNING id",
         [
           ctx.clientKey,
+          moveId,
           moveId,
           ctx.userId,
           ctx.role ?? ctx.tenantRole ?? null,
