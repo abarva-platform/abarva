@@ -450,7 +450,7 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "moves_step_pages_p0p1_v1",
     summary:
-      "Opt-in P0 and P1 step-page mount and sunset routing. A phase defaults to step pages only after every step has an implemented page; the existing capture remains available during transition. Requires moves_step_pages_v3 and moves_capture_v2.",
+      "Opt-in P0 and P1 step-page mount and sunset routing. A phase defaults to step pages only after every step has an implemented page; the existing capture remains available during transition. Requires moves_step_pages_v3 and moves_capture_v2. With moves_extended_intake_fields_v1 and active all-synthetic input declarations, P1 can explicitly confirm existing canonical sponsor progress contacts and leads with unchanged participant rights and mandatory audited readback; signed historical roles remain separate.",
     policy: "tenant",
     includeTenants: ["meridian"],
   },

@@ -21,6 +21,8 @@ import {
 import { BusinessChangeAssessmentForm } from "../BusinessChangeAssessmentForm";
 import { CharterBasisField } from "../CharterBasisField";
 import styles from "./MovesStepPage.module.css";
+import { P1ParticipantBindingForm } from "./P1ParticipantBindingForm";
+import { p1ParticipantBindingsReady } from "@/lib/programs/p1-participant-binding";
 
 const cx = (...names: string[]) =>
   names.map((name) => styles[name] ?? name).join(" ");
@@ -381,7 +383,14 @@ export function TextCaptureStep({
         : `record ${pendingFieldRows.length} answers`;
     for (const row of pendingFieldRows.slice(1)) row.clause = null;
   }
-  if (config.sponsorCheck) {
+  if (config.sponsorCheck && host.p1ParticipantBinding?.enabled) {
+    const confirmed = p1ParticipantBindingsReady(host.p1ParticipantBinding.preview);
+    rows.push({ id: "sponsor-role", eyebrow: "Operational contacts", rank: fields.length,
+      subject: confirmed ? "Sponsor contact and lead confirmed" : "Confirm sponsor contact and lead",
+      shortName: "sponsor contact and lead", state: confirmed ? "settled" : "decision",
+      clause: "confirm the existing sponsor contact and lead",
+      middle: <P1ParticipantBindingForm control={host.p1ParticipantBinding} captureBusy={host.charterBasis?.busy}/>, actions: null });
+  } else if (config.sponsorCheck) {
     const sponsor = host.move.participants.find(
       (participant) =>
         participant.role.toLowerCase() === "sponsor" &&
@@ -434,7 +443,9 @@ export function TextCaptureStep({
     depth: "full",
     rows,
     blockedBy,
-    readySentence: config.ready,
+    readySentence: config.sponsorCheck && host.p1ParticipantBinding?.enabled
+      ? "The existing sponsor contact, lead and scope are recorded. Continue to Stakeholders and decision rights"
+      : config.ready,
     emptySentence: `Record ${fields[0]?.label.toLowerCase() ?? "this step"}`,
   });
   const phaseBase = `/strategic-moves/${encodeURIComponent(host.move.id)}/phase/${host.phase}`;
@@ -471,7 +482,9 @@ export function TextCaptureStep({
       phaseCode={`P${host.phase}`}
       phaseName={host.phase === 0 ? "Originate" : "Charter"}
       title={config.title}
-      intro={config.intro}
+      intro={config.sponsorCheck && host.p1ParticipantBinding?.enabled
+        ? "Confirm operational sponsor progress contact and lead separately from preserved signed roles and participant permissions."
+        : config.intro}
       nextAction={nextAction}
       blockedLink={
         blockedBy

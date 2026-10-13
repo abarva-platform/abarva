@@ -47,6 +47,8 @@ import {
 } from "@/lib/programs/operating-adoption";
 import { RomEstimateStep } from "@/components/strategic-moves/step-page/RomEstimateStep";
 import { useP4ValueReadback } from "@/components/strategic-moves/step-page/useP4ValueReadback";
+import { useP1ParticipantBinding } from "@/components/strategic-moves/step-page/useP1ParticipantBinding";
+import { p1ParticipantBindingsReady } from "@/lib/programs/p1-participant-binding";
 import { readValueModel } from "@/lib/programs/value-model-capture";
 import {
   isRomEstimateDone,
@@ -415,6 +417,8 @@ interface MovesPhaseStandaloneClientProps {
    */
   stepPagesV3Enabled?: boolean;
   phaseStepPagesEnabled?: boolean;
+  p1ParticipantBindingEnabled?: boolean;
+  initialP1ParticipantBinding?: import("@/lib/programs/p1-participant-binding").P1ParticipantBindingPreview | null;
   catchUpEnabled?: boolean;
   p2RootCausesForCatchUp?: string;
   p2GateRecordConfirmed?: boolean;
@@ -1095,6 +1099,8 @@ function samePhaseBuildArtifactIds(
 export function MovesPhaseStandaloneClient({
   stepPagesV3Enabled = false,
   phaseStepPagesEnabled: requestedPhaseStepPagesEnabled,
+  p1ParticipantBindingEnabled = false,
+  initialP1ParticipantBinding,
   catchUpEnabled = false,
   p2RootCausesForCatchUp = "",
   p2GateRecordConfirmed = false,
@@ -1172,6 +1178,7 @@ export function MovesPhaseStandaloneClient({
       ? `${currentUser.email} · ${currentUser.role}`
       : (currentUser?.email ?? null);
   const phase = phaseFor(phaseNum);
+  const p1ParticipantBinding = useP1ParticipantBinding(move.id, p1ParticipantBindingEnabled && phaseNum === 1, initialP1ParticipantBinding);
   const phaseStepPagesEnabled =
     requestedPhaseStepPagesEnabled ??
     ((phaseNum === 2 || phaseNum === 3) &&
@@ -3881,9 +3888,9 @@ export function MovesPhaseStandaloneClient({
   if (phase.phase === 1) {
     recordStepDone["P1.1"] =
       Boolean(recordStepDone["P1.1"]) &&
-      move.participants.some(
+      (p1ParticipantBinding.enabled ? p1ParticipantBindingsReady(p1ParticipantBinding.preview) : move.participants.some(
         (participant) => participant.role.toLowerCase() === "sponsor",
-      );
+      ));
   }
   if (phase.phase === 2) {
     const p2Criteria = move.gateCriteria;
@@ -4249,6 +4256,7 @@ export function MovesPhaseStandaloneClient({
         phase.phase <= 1 ? setPhaseCaptureValue : setVisiblePhaseCaptureValue,
       priorPhaseCapture: priorPhaseCaptureValues,
       canApproveGates,
+      p1ParticipantBinding,
       p5TowerHandoffEnabled,
       onP5HandoffState: (published) =>
         setP5Publication({ moveId: move.id, published }),

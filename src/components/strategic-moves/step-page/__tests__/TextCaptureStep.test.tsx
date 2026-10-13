@@ -1,11 +1,13 @@
 /** @jest-environment jsdom */
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import "@testing-library/jest-dom";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { renderToString } from "react-dom/server";
 import type { StepPageHostProps } from "../phase-step-pages";
 import { P0_STEP_PAGES } from "../p0-step-pages";
 import { P1_STEP_PAGES } from "../p1-step-pages";
 import type { StepPageView } from "@/lib/programs/step-page-views";
+import type { P1ParticipantBindingPreview } from "@/lib/programs/p1-participant-binding";
 
 let mockEvidenceReadable = true;
 jest.mock("../StepEvidence", () => ({
@@ -86,6 +88,58 @@ function page(view: StepPageView, props: StepPageHostProps) {
   if (!component) throw new Error(`No page for ${view}`);
   return render(<>{component(props)}</>);
 }
+
+describe("normal P1 explicit existing contact confirmation", () => {
+  const preview: P1ParticipantBindingPreview = { moveId: "move-1", status: "available", current: { sponsorPersonId: "role-only", leadPersonId: "role-only" },
+    choices: [{ personId: "declared-operator", name: "Declared automated operator", role: "Automated operator", attribution: "delegated_automated" }],
+    revision: "a".repeat(64), preservationRevision: "b".repeat(64), canConfirm: true, confirmed: false, auditId: null };
+  function props() {
+    const value = host(1, { sponsor_commitment: "Declared contact answer", scope_boundary: "Bounded scope" });
+    value.p1ParticipantBinding = { enabled: true, loading: false, saving: false, error: null, preview,
+      reload: jest.fn(async () => {}), confirm: jest.fn(async () => {}) };
+    return value;
+  }
+  it("offers no default appointment, labels delegated synthetic responsibility and previews both explicit choices before sending", async () => {
+    const value = props(); page("p1-sponsor-scope", value);
+    const sponsor = screen.getByLabelText("Sponsor progress contact"); const lead = screen.getByLabelText("Day-to-day lead");
+    expect(sponsor).toHaveValue(""); expect(lead).toHaveValue("");
+    expect(screen.getByText(/does not establish independent client, executive or Finance approval/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Review contact confirmation" })).toBeDisabled();
+    fireEvent.change(sponsor, { target: { value: "declared-operator" } }); fireEvent.change(lead, { target: { value: "declared-operator" } });
+    fireEvent.change(screen.getByLabelText("Contact confirmation rationale"), { target: { value: "Explicit delegated contact and lead" } });
+    fireEvent.click(screen.getByRole("button", { name: "Review contact confirmation" }));
+    expect(value.p1ParticipantBinding!.confirm).not.toHaveBeenCalled(); expect(screen.getByText("Selected sponsor ID")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Confirm sponsor contact and lead" }));
+    await waitFor(() => expect(value.p1ParticipantBinding!.confirm).toHaveBeenCalledWith(expect.objectContaining({ sponsorPersonId: "declared-operator", leadPersonId: "declared-operator", expectedRevision: preview.revision, rationale: "Explicit delegated contact and lead" })));
+    expect(value.setValue).not.toHaveBeenCalled();
+  });
+  it.each(["loading", "unavailable", "permission", "saving", "capture"])("holds confirmation on %s", (state) => {
+    const value = props();
+    if (state === "loading") value.p1ParticipantBinding!.loading = true;
+    if (state === "unavailable") value.p1ParticipantBinding!.preview = null;
+    if (state === "permission") value.p1ParticipantBinding!.preview = { ...preview, canConfirm: false };
+    if (state === "saving") value.p1ParticipantBinding!.saving = true;
+    if (state === "capture") value.charterBasis = { active: true, busy: true, values: {}, approvedSources: {}, errors: {}, setValue: jest.fn() };
+    page("p1-sponsor-scope", value);
+    const review = screen.queryByRole("button", { name: "Review contact confirmation" });
+    if (review) expect(review).toBeDisabled(); expect(value.p1ParticipantBinding!.confirm).not.toHaveBeenCalled();
+  });
+  it("requires the stored audit and both exact eligible canonical bindings, instead of relabelling a participant role", () => {
+    const value = props(); const mounted = page("p1-sponsor-scope", value);
+    value.p1ParticipantBinding!.preview = { ...preview, current: { sponsorPersonId: "declared-operator", leadPersonId: "declared-operator" }, confirmed: true, auditId: "audit" };
+    mounted.rerender(<>{P1_STEP_PAGES["p1-sponsor-scope"]?.(value)}</>);
+    expect(screen.getByText("Sponsor contact and lead confirmed")).toBeInTheDocument();
+    expect(screen.queryByText(/has the sponsor role on this Move/)).not.toBeInTheDocument();
+  });
+  it("discards a reviewed command when either selection changes", () => {
+    const value = props(); page("p1-sponsor-scope", value);
+    for (const label of ["Sponsor progress contact", "Day-to-day lead"]) fireEvent.change(screen.getByLabelText(label), { target: { value: "declared-operator" } });
+    fireEvent.change(screen.getByLabelText("Contact confirmation rationale"), { target: { value: "Explicit" } });
+    fireEvent.click(screen.getByRole("button", { name: "Review contact confirmation" }));
+    fireEvent.change(screen.getByLabelText("Day-to-day lead"), { target: { value: "" } });
+    expect(screen.queryByRole("button", { name: "Confirm sponsor contact and lead" })).not.toBeInTheDocument();
+  });
+});
 
 const views: Array<[StepPageView, number, string]> = [
   ["p0-signal", 0, "Business trigger"],
