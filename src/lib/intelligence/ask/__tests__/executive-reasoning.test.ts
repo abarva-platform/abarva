@@ -54,14 +54,16 @@ async function generate(modelAuthoredOutput: boolean) {
   }
 }
 
-it("reasons before executive answers without changing canonical answer text", async () => {
+it("uses low adaptive effort without exposing reasoning or changing answer text", async () => {
   const { output, request } = await generate(true);
   expect(request.model).toBe("claude-sonnet-4-6");
   expect(request.thinking).toEqual({ type: "adaptive", display: "omitted" });
-  expect(request.output_config).toEqual({ effort: "medium" });
+  expect(request.output_config).toEqual({ effort: "low" });
   expect(request.max_tokens).toBe(8192);
   expect(output).toBe(originalAnswer);
   expect(output).not.toContain("PRIVATE_REASONING_MARKER");
+  expect(request.messages[0].content).toContain("Every supplied company source is provisional");
+  expect(request.messages[0].content).toContain("Do not output any company inventory totals");
 });
 
 it("gives a multi-part discovery request enough output room and a dynamic format", async () => {
@@ -97,7 +99,7 @@ it("gives a multi-part discovery request enough output room and a dynamic format
     const request = create.mock.calls[0][0];
     expect(request.model).toBe("claude-sonnet-4-6");
     expect(request.max_tokens).toBe(12000);
-    expect(request.system).toContain("roughly 300 words of prose");
+    expect(request.system).toContain("roughly 300 words total");
     expect(request.messages[0].content).toContain("Answer every requested area");
   } finally {
     if (previous === undefined) delete process.env.ANTHROPIC_API_KEY;
@@ -105,7 +107,7 @@ it("gives a multi-part discovery request enough output room and a dynamic format
   }
 });
 
-it("retries once at lower effort when private thinking consumes the first answer", async () => {
+it("retries once when private thinking consumes the first answer", async () => {
   const previous = process.env.ANTHROPIC_API_KEY;
   process.env.ANTHROPIC_API_KEY = "test";
   create.mockClear();
@@ -147,7 +149,7 @@ it("retries once at lower effort when private thinking consumes the first answer
     })) output += delta;
     expect(output).toBe(originalAnswer);
     expect(create).toHaveBeenCalledTimes(2);
-    expect(create.mock.calls[0][0].output_config).toEqual({ effort: "medium" });
+    expect(create.mock.calls[0][0].output_config).toEqual({ effort: "low" });
     expect(create.mock.calls[1][0].output_config).toEqual({ effort: "low" });
   } finally {
     if (previous === undefined) delete process.env.ANTHROPIC_API_KEY;

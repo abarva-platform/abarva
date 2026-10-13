@@ -298,11 +298,11 @@ export function isMultiPartDiscoveryAsk(query: string): boolean {
   return (query.match(/(?:^|\n)\s*\d+\.\s+[^\n]+/g) ?? []).length >= 3;
 }
 
-const MULTI_PART_EXECUTIVE_FORMAT = `MULTI-PART DISCOVERY FORMAT: The user asked for several distinct areas of analysis. Open with a short decision statement, then address every requested area under a descriptive Markdown heading with concise paragraphs or bullets. Finish with the requested decision brief. Aim for roughly 300 words of prose, with concise exhibits where they improve coverage; extend only as needed for required claims, caveats, and citations. Avoid repetition and filler. Keep factual statements bound to the supplied source title and record, passage, or date when available; say when a precise reference is unavailable. Preserve every evidence, tenant, and no-fabrication rule above.
+const MULTI_PART_EXECUTIVE_FORMAT = `MULTI-PART DISCOVERY FORMAT: The user asked for several distinct areas of analysis. Open with a short decision statement and integrate every requested area into the requested executive brief. Aim for roughly 300 words total including prose, bullets and exhibit cells, excluding source metadata. Group related parts or use a compact coverage table rather than a report section for every subquestion. Do not repeat the analysis in a second concluding brief. Keep native exhibits concise and distinct. Extend only for explicitly requested deep detail or essential evidence and caveats. Keep factual statements bound to the supplied source title and record, passage, or date when available; say when a precise reference is unavailable. Preserve every evidence, tenant, and no-fabrication rule above.
 
 Choose exhibits for the question rather than defaulting to a 2×2 matrix. A compact table can compare operating options, evidence gaps, or measurement gates. Use a Recharts bar, horizontal-bar, or line chart only when the supplied governed sources contain at least two compatible measured values, with their counting basis and dates. A proposed target alone is not a measured series. A qualitative matrix is useful only when two independently supported tradeoff axes help the decision. Use up to three distinct, useful exhibits when the request warrants them.`;
 
-const MULTI_PART_EXECUTIVE_REMINDER = `Answer every requested area and finish with the requested decision brief. Use clear Markdown headings, short paragraphs, bullets, and suitable evidence-backed exhibits. Aim for roughly 300 prose words, extending when needed to cover requested evidence and decision boundaries. This guidance does not loosen source readiness, tenant isolation, or numeric evidence rules. Do not expose source aliases or private reasoning.
+const MULTI_PART_EXECUTIVE_REMINDER = `Answer every requested area within the requested decision brief. Aim for roughly 300 words total including prose, bullets and exhibit cells; group related areas and use follow-ups for deeper analysis. Preserve the user's target denominator and exclusions, separate different benefit mechanisms, and name missing baselines. No hypothetical numbers without an explicitly requested synthetic scenario. This guidance does not loosen source readiness, tenant isolation, or numeric evidence rules. Do not expose source aliases or private reasoning.
 
 ${EXECUTIVE_FOLLOWUP_CONTRACT}`;
 
@@ -726,7 +726,7 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
       ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`
       : `${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`;
   const rawPrompt = modelAuthored
-    ? `SOURCES PROVIDED (aliases belong only in fenced sources and citationIds metadata; never in visible text):\n${modelSources.map((s, i) => `[S${i + 1}] ${s.type} | ${s.name}\n${s.detail}`).join("\n\n")}\n\nUSER QUESTION:\n${args.query}\n\n${multiPartDiscovery ? MULTI_PART_EXECUTIVE_REMINDER : EXECUTIVE_BRIEF_REMINDER}`
+    ? `SOURCES PROVIDED (aliases belong only in fenced sources and citationIds metadata; never in visible text):\n${modelSources.map((s, i) => `[S${i + 1}] ${s.type} | ${s.name}\n${s.detail}`).join("\n\n")}\n\nUSER QUESTION:\n${args.query}\n\n${multiPartDiscovery ? MULTI_PART_EXECUTIVE_REMINDER : EXECUTIVE_BRIEF_REMINDER}\n\n${executiveContext?.decisionGuard ?? ""}`
     : answerOnly
       ? `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}${rankedDecisionPromptDirective}\n\n${universalAnswerVisualContract}`
       : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}${rankedDecisionPromptDirective}\n\nRespond with your synthesis. For rich-text Intelligence, the right canvas is mandatory: include Decision, Industry Insights, Chart, Table, and Evidence tabs.`;
@@ -830,7 +830,7 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
               type: "adaptive" as const,
               display: "omitted" as const,
             },
-            output_config: { effort: "medium" as const },
+            output_config: { effort: "low" as const },
           }
         : {}),
     });
