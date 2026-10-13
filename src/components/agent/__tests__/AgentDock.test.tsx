@@ -513,6 +513,59 @@ describe("AgentDock · default mode", () => {
     expect(agentTurn).not.toHaveTextContent("**Start with Treasury**");
   });
 
+  it("renders a formatted Home bottom line once without dropping supporting points", () => {
+    const directAnswer = "Analytics maturity is below its stated target.";
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface="home-preview"
+        thread={[
+          {
+            id: "a1",
+            role: "agent",
+            body: "Legacy body must not replace the formatted answer.",
+            agentAnswer: {
+              surface: "home",
+              mode: "KNOW",
+              tenantKey: "test-enterprise",
+              question: "What is the analytics priority?",
+              intent: "analytics",
+              directAnswer,
+              prose: `**Bottom line**\n\n${directAnswer}\n\n**Key points**\n\n- **Value:** Validation is partial, not zero.`,
+              status: "answered",
+              citations: [],
+              artifacts: [],
+              factsUsed: [],
+              metricsUsed: [],
+              relationshipsUsed: [],
+              gaps: [],
+              caveats: [],
+              nextSteps: [],
+              quality: {
+                confidence: "medium",
+                evidenceStrength: "partial",
+                tenantGrounding: "partial",
+                answerCompleteness: "complete",
+              },
+              safety: {
+                tenantFencePassed: true,
+                rawIdsSuppressed: true,
+                forbiddenLanguagePassed: true,
+                unsupportedClaimsBlocked: true,
+              },
+            },
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div>workspace</div>}
+      />,
+    );
+    const text = screen.getByTestId("agent-dock-turn-agent").textContent ?? "";
+    expect(text.split(directAnswer)).toHaveLength(2);
+    expect(text).toContain("Validation is partial, not zero.");
+    expect(text).not.toContain("Legacy body");
+  });
+
   it("shows a citation gap for substantive uncited agent text without evidence context", () => {
     render(
       <AgentDock

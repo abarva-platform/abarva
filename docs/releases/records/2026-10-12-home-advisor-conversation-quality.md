@@ -41,7 +41,8 @@ Home advisor responses gain a clear bottom line, structured supporting points an
 
 ## QA / Validation
 
-- Focused Home answer, API, conversation, record-parity, list-marker and shared-dock tests: 153 passing.
+- Focused Home answer, API, conversation, record-parity, list-marker, shared-dock and tenant-name preservation tests: 156 passing across nine suites.
+- Existing integration workflow suite set: 4,898 passing tests across 180 suites, with its existing skips preserved.
 - Full TypeScript validation passed with Node 24 and a 12 GiB heap ceiling; the initial default-heap attempt exhausted its 4 GiB limit.
 - Scoped ESLint passed. All eleven release controls passed.
 - No data-plane load, model regeneration, sign-off, or operator job is part of this release.

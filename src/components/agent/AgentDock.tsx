@@ -118,7 +118,7 @@ function avaAnswerTextForDock(
   const directAnswer = answer.directAnswer?.trim();
   const prose = answer.prose?.trim();
   const text =
-    (surface === "home-preview"
+    (surface === "home-preview" && !prose?.startsWith("**Bottom line**")
       ? [directAnswer, prose === directAnswer ? "" : prose]
           .filter(Boolean)
           .join("\n\n")
