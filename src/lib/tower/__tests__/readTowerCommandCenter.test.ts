@@ -422,6 +422,18 @@ describe("readTowerCommandCenter", () => {
           projected_annual_value_high_usd: 24_000_000,
           roi_low_multiple: 2.2,
           roi_high_multiple: 2.7,
+          finance_validated_value_usd: 250_000,
+          value_observation_months: [{
+            month: "2026-08", sponsor_claimed_usd: 500_000,
+            finance_reviewed_usd: 300_000, finance_validated_usd: 250_000,
+            board_claimable_usd: 0, validation_state: "finance_validated_actual",
+            actual_value: 4, reviewer_role: "Finance partner",
+          }],
+          finance_approval_events: [{
+            event_date: "2026-08-31", event_type: "finance_validated_actual",
+            approval_state: "approved", approver_role: "Finance partner",
+            amount_usd: 250_000, amount_basis: "monthly", note: "Source-stated review",
+          }],
         },
       }),
       row_type: "ai_business_case",
@@ -447,6 +459,32 @@ describe("readTowerCommandCenter", () => {
     expect(mart?.aiPortfolio[0]?.projectSpendSourceLinked).toBe(true);
     expect(mart?.aiPortfolio[0]?.aiAmountBasis).toBe("unknown");
     expect(mart?.aiPortfolio[0]?.promisedValueUsd).toBeNull();
+    expect(mart?.aiPortfolio[0]?.valueObservationMonths).toEqual([
+      expect.objectContaining({ month: "2026-08", financeValidatedUsd: 250_000 }),
+    ]);
+    expect(mart?.aiPortfolio[0]?.financeApprovalEvents).toEqual([
+      expect.objectContaining({ eventDate: "2026-08-31", amountUsd: 250_000 }),
+    ]);
+    expect(mart?.aiPortfolio[0]?.financeValidatedAmountLoaded).toBe(false);
+    expect(mart?.aiPortfolio[0]?.financeValidatedValueUsd).toBe(0);
+
+    const approvedCaseRow = {
+      ...caseRow,
+      payload_json: {
+        ...caseRow.payload_json,
+        display_payload_json: {
+          ...caseRow.payload_json.display_payload_json,
+          evidence_approval_status: "approved",
+          finance_validation_status: "finance_validated",
+        },
+      },
+    };
+    mockServingRows({ tower_command_center: [summary], tower_ai_portfolio: [approvedCaseRow] });
+    const approvedMart = await readTowerCommandCenter({ tenantKeyCandidates: ["fixture-tenant"] });
+    expect(approvedMart?.aiPortfolio[0]?.valueObservationMonths).toHaveLength(1);
+    expect(approvedMart?.aiPortfolio[0]?.financeApprovalEvents).toHaveLength(1);
+    expect(approvedMart?.aiPortfolio[0]?.financeValidatedAmountLoaded).toBe(true);
+    expect(approvedMart?.aiPortfolio[0]?.financeValidatedValueUsd).toBe(250_000);
   });
 
   it("maps ECL serving views into the existing Tower Command Center contract", async () => {

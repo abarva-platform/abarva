@@ -972,13 +972,13 @@ function controlBlockerFields(row: TowerServingRow): {
 }
 
 /**
- * The dated finance trail on a case. Amounts are carried as recorded: 28 of the 84 events in the
- * canonical file record a literal 0, which is a stated amount and not a missing one.
+ * The dated finance trail on a case is visible as a source assertion. Its event labels do not
+ * establish independent Finance approval; approvedFinanceEvidence still gates reported totals.
+ * Amounts are carried as recorded, including a literal 0 when the source states one.
  */
 function financeApprovalEvents(
   row: TowerServingRow,
 ): TowerMartFinanceApprovalEvent[] {
-  if (!approvedFinanceEvidence(row)) return [];
   const raw = displayPayload(row).finance_approval_events;
   if (!Array.isArray(raw)) return [];
   return raw.map((entry) => {
@@ -1012,14 +1012,13 @@ function evidenceItems(row: TowerServingRow): TowerMartEvidenceItem[] {
 }
 
 /**
- * The monthly value observations behind the waterfall, so a drawer can show when each step
- * happened rather than only its total. Rows without a month are dropped: an observation that
- * cannot be placed in time cannot be read as a sequence.
+ * Source-stated monthly observations show how a claim changed over time. They remain visible
+ * even when independent Finance approval is absent; approvedFinanceEvidence separately gates
+ * verified and reportable money. Undated rows cannot form a sequence and are dropped.
  */
 function valueObservationMonths(
   row: TowerServingRow,
 ): TowerMartValueObservationMonth[] {
-  if (!approvedFinanceEvidence(row)) return [];
   const raw = displayPayload(row).value_observation_months;
   if (!Array.isArray(raw)) return [];
   return raw

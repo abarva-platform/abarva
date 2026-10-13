@@ -129,10 +129,10 @@ function financeBasisRead(a: TowerAiView): string | null {
   return [
     `Monthly observations: ${monthRange}. Finance events: ${eventRange}. The portfolio Finance amount has no period or amount basis on this record.`,
     mismatch
-      ? `The latest monthly validated amount (${formatUsdM(latest.financeValidatedUsd)} in ${latest.month}) differs from the portfolio amount (${formatUsdM(a.financeValidatedUsd)}); their bases have not been reconciled.`
+      ? `The latest source-labeled validated amount (${formatUsdM(latest.financeValidatedUsd)} in ${latest.month}) differs from the portfolio amount (${formatUsdM(a.financeValidatedUsd)}); their bases have not been reconciled.`
       : null,
     differingFinanceEvents.length > 0
-      ? "At least one dated Finance validation event has a different amount; confirm its period and amount basis before presenting the portfolio amount as reconciled."
+      ? "At least one source-labeled Finance validation event has a different amount; confirm its period and amount basis before presenting the portfolio amount as reconciled."
       : null,
     timingConflict
       ? `A monthly observation predates the recorded realization start (${a.realizationStartMonth}); confirm whether it is a target, review event, or realized value.`
@@ -405,8 +405,8 @@ export function AiInitiativeDrawer({
             the source recorded them, and a case with no observations says so rather than
             drawing an empty chart frame.
           */}
-              <DrawerSection>What the claim did, month by month</DrawerSection>
-              {a.sourcePlan ? <p className={cx(styles.recBox, styles.muted)}>These monthly figures and Finance labels are synthetic source assertions. They are not independent Finance clearance or achieved ROI.</p> : null}
+              <DrawerSection>Source-stated claim, month by month</DrawerSection>
+              {a.valueObservationMonths.length > 0 && a.financeValidatedAmountLoaded === false ? <p className={cx(styles.recBox, styles.muted)}>These monthly figures and Finance labels are source assertions. In this synthetic demo, they are not independent Finance clearance or achieved ROI. The Finance amount remains Not verified.</p> : null}
               {a.valueObservationMonths.length === 0 ? (
                 <div className={styles.urow}>
                   No monthly value observations are recorded for this case. That
@@ -528,10 +528,10 @@ export function AiInitiativeDrawer({
                 }
               />
 
-              <DrawerSection>Finance trail</DrawerSection>
-              {a.sourcePlan ? (
+              <DrawerSection>Source-recorded Finance events</DrawerSection>
+              {a.financeApprovalEvents.length > 0 && a.financeValidatedAmountLoaded === false ? (
                 <div className={styles.urow}>
-                  These events are recorded in the synthetic source. Their roles and amounts do not establish independent Finance sign-off.
+                  These events are recorded in the synthetic source. Their roles, approval labels and amounts do not establish independent Finance sign-off or a verified benefit.
                 </div>
               ) : null}
               {a.financeApprovalEvents.length === 0 ? (
