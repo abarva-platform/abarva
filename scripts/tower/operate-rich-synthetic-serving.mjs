@@ -277,10 +277,7 @@ async function servingApproval(config, source, stage) {
 }
 
 function pageFingerprint(rows) {
-  return sha(stableJson(rows.map(({ page_key, row_key, source_hash }) => ({ page_key, row_key, source_hash }))
-    .sort((left, right) => left.page_key.localeCompare(right.page_key) ||
-      left.row_key.localeCompare(right.row_key) ||
-      left.source_hash.localeCompare(right.source_hash))));
+  return sha(stableJson(rows.map(({ page_key, row_key, source_hash }) => ({ page_key, row_key, source_hash }))));
 }
 
 export async function pageReadback(client, schema, tenant, assessment, version) {
