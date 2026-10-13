@@ -99,7 +99,11 @@ function compositions(text: string, label: string) {
           basis: revenueBasis(match.groups!.basis),
           share: Number(match.groups!.share),
           conditionalOrNegative:
-            isBoundedFrame(match.groups!.frame) || isNegativeConclusion(prefix),
+            isBoundedFrame(match.groups!.frame) ||
+            isNegativeConclusion(prefix) ||
+            /^\s+(?:is|remains)\s+not\s+(?:established|shown|proven|confirmed)\b/.test(
+              text.slice(match.index! + match[0].length),
+            ),
         },
       ];
     }),

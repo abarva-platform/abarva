@@ -6,8 +6,12 @@ const POPULATION =
   "(?:\\d[\\d,]*(?:\\s*(?:of|/)\\s*\\d[\\d,]*)?|\\d+(?:\\.\\d+)?\\s*%|all|most|many|few|no|none of the)";
 const LEADER_POPULATION = `${POPULATION}\\s+(?:of\\s+(?:the\\s+)?)?(?:leaders?|executives?|interviewees?)`;
 const UNSUPPORTED_TRUST = new RegExp(
-  `\\btrusted by\\s+${LEADER_POPULATION}\\b|\\b${LEADER_POPULATION}\\s+trust\\b`,
+  `\\btrusted by\\s+${LEADER_POPULATION}\\b|\\b${LEADER_POPULATION}(?:\\s+(?:and|&)\\s+(?:leaders?|executives?|interviewees?))?\\s+trust\\b`,
   "i",
+);
+const COORDINATED_PEOPLE = new RegExp(
+  `\\b(${PEOPLE})\\s+and\\s+(${PEOPLE})\\b`,
+  "gi",
 );
 const LEADER_COUNT = new RegExp(`\\b${LEADER_POPULATION}\\b`, "gi");
 const PEOPLE_ASSERTION = new RegExp(
@@ -27,14 +31,19 @@ const EVIDENCE_GAP =
 const EVIDENCE_NOT_ESTABLISHED =
   /^(?:(?:the|this|current|available|supplied|home|original|verified)\s+)*(?:record|evidence|sources?|interview\s+(?:evidence|transcripts?|testimony))\s+(?:does|do|can)\s+not\s+(?:establish|show|prove|confirm|verify|document)\s+(?:that|whether)\s+|^no\s+(?:verified\s+)?(?:evidence|interview\s+(?:evidence|testimony))\s+(?:establishes|shows|proves|confirms|verifies|documents)\s+(?:that|whether)\s+/i;
 const FUTURE_INTERVIEW =
-  /\b(?:should|will|must|could|may|plan to|plans to|need to|needs to|intend to|intends to)\s+(?:[\w'-]+\s+){0,2}interview\s+$|^interview\s+$/i;
+  /\b(?:should|will|must|could|may|plan to|plans to|need to|needs to|intend to|intends to)\s+(?:[\w'-]+\s+){0,2}interview\s+$|^interview\s+$|^schedule\s+future\s+interviews\s+with\s+$/i;
+const INTERVIEW_TOPIC = new RegExp(
+  `(\\binterview\\s+(?:${POPULATION}\\s+)?${PEOPLE}\\s+about\\s+)reported\\s+(?=[\\w'-])`,
+  "gi",
+);
 const BASIS =
   /\b(?:modelled|modeled|synthetic|simulated)(?:\s+(?:responses?|reference|interviews?|testimony|findings|examples?|evidence|scenario|leaders?|executives?|interviewees?)\b|(?=\s*(?::|\)|$)))/gi;
 
 function clauses(passage: string): string[] {
   return splitNarrativeSentences(passage).flatMap((sentence) =>
     sentence
-      .split(/\n|;|,?\s+\b(?:and|but|whereas|while|yet)\b\s+/i)
+      .replace(COORDINATED_PEOPLE, "$1 & $2")
+      .split(/\n|;|,?\s+\b(?:and|but|whereas|while|yet|although)\b\s+/i)
       .map((clause) =>
         clause
           .replace(/^\s*[-*]\s+/, "")
@@ -53,7 +62,7 @@ function clauses(passage: string): string[] {
 function hasLocalReferenceBasis(clause: string): boolean {
   return Array.from(clause.matchAll(BASIS)).some(
     (match) =>
-      !/\b(?:not|no|never|without)\s+(?:(?:a|an|the|currently|explicitly)\s+){0,3}$/i.test(
+      !/\b(?:not|no|never|without)\s+(?:(?:a|an|the|currently|explicitly|actually)\s+){0,3}$/i.test(
         clause.slice(0, match.index),
       ),
   );
@@ -66,10 +75,12 @@ export function hasUnqualifiedReferenceTestimony(
 ): boolean {
   if (declaredSyntheticDemo !== true) return false;
   return passages.flatMap(clauses).some((clause) => {
-    if (UNSUPPORTED_TRUST.test(clause)) return true;
     if (EVIDENCE_NOT_ESTABLISHED.test(clause)) return false;
+    if (UNSUPPORTED_TRUST.test(clause)) return true;
     // Remove only bounded evidence-gap spans, keeping any neighboring assertion intact.
-    const assertionText = clause.replace(EVIDENCE_GAP, "");
+    const assertionText = clause
+      .replace(EVIDENCE_GAP, "")
+      .replace(INTERVIEW_TOPIC, "$1");
     const asserted =
       PEOPLE_ASSERTION.test(assertionText) ||
       ATTRIBUTED_TESTIMONY.test(assertionText) ||

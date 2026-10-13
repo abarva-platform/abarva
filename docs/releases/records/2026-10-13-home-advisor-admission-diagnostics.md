@@ -35,7 +35,7 @@ Layer 4, Products. Release lane: `global-control-lane`. Home answer admission an
 
 ## QA / Validation
 
-Pass: Final affected answer/display/export run, 866 tests across 40 suites; Node 24 typecheck, scoped lint and all 11 release gates. Independent review and protected CI remain pending.
+Pass: Final affected answer/display/export run, 895 tests across 40 suites; Node 24 typecheck, scoped lint and all 11 release gates. Independent review found bounded negation, local qualification and evidence-request cases; regressions were added and the reproduced findings corrected. Protected CI remains pending.
 
 Not run on this candidate: Signed-in discovery and business questions, cross-domain replies, count/source parity, graph honesty, actual exports and visual checks. Safe withholding is not useful-answer acceptance.
 

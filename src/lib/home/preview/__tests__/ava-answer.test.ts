@@ -702,6 +702,36 @@ describe("answerHomeAvaQuestion", () => {
       caveats: [],
     };
 
+    it("does not use a postposed negated share as concentration support", async () => {
+      mockClaudeJson({
+        ...safe,
+        direct_answer: "Revenue is concentrated in Medicare Advantage.",
+        cited_claim_tags: ["OB-K1", "OB-K2"],
+      });
+      const answer = await answerHomeAvaQuestion({
+        bundle: {
+          chapters: [
+            {
+              ...source,
+              key_insights: [
+                ...source.key_insights,
+                {
+                  ...source.key_insights[0],
+                  statement:
+                    "That Medicare Advantage accounts for 60% of revenue is not established.",
+                },
+              ],
+            },
+          ],
+        },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question: "What do we know about the business?",
+      });
+      expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(2);
+      expect(answer.prose).toBeUndefined();
+      expect(answer.directAnswer).not.toContain("Revenue is concentrated");
+    });
+
     it.each([false, true])(
       "repairs or withholds an unsupported MA-only opener (%s)",
       async (validRepair) => {

@@ -118,6 +118,37 @@ describe("hasUnqualifiedReferenceTestimony", () => {
     ).toBe(true);
   });
 
+  it.each([
+    ["The record does not establish whether interviews occurred, although leaders reported delays.", true],
+    ["The record does not establish whether interviews occurred, although modelled responses show leaders reported delays.", false],
+    ["The record does not establish whether interviews occurred, although most leaders trust the data.", true],
+    ["These are not actually modelled responses: leaders reported delays.", true],
+    ["These are actually modelled responses: leaders reported delays.", false],
+    ["These are not actually synthetic responses: leaders reported delays.", true],
+    ["Modelled responses: leaders and executives reported delays.", false],
+    ["Leaders and executives reported delays.", true],
+    ["Modelled responses: leaders reported delays and executives reported delays.", true],
+    ["Modelled responses: most leaders and executives trust the data.", true],
+    ["Schedule future interviews with 12 leaders.", false],
+    ["Schedule future interviews with 12 leaders who already reported delays.", true],
+    ["Schedule future interviews with 12 leaders; most leaders trust the data.", true],
+    ["Discovery should interview members about reported service gaps.", false],
+    ["Discovery should interview members about reported handling delays.", false],
+    ["Discovery should interview members who reported service gaps.", true],
+    ["Discovery should interview members who reported handling delays.", true],
+    ["Discovery should interview members about reported handling delays, leaders reported service gaps.", true],
+    ["Discovery should interview members about reported handling delays; most leaders trust the data.", true],
+    ["Members reported service gaps.", true],
+    ["Discovery should interview 12 leaders about reported service gaps.", false],
+    ["The record does not establish whether most leaders trust the data.", false],
+    ["Most leaders trust the data.", true],
+    ["The record does not establish whether most leaders trust the data; all leaders trust the data.", true],
+    ["The record does not establish whether most leaders trust the data, although leaders reported delays.", true],
+    ["The record does not establish whether most leaders trust the data. Modelled responses: leaders reported delays.", false],
+  ] as const)("keeps the supplied bounded case and its countercase distinct: %s", (passage, expected) => {
+    expect(hasUnqualifiedReferenceTestimony([passage], true)).toBe(expected);
+  });
+
   it.each([false, undefined])("does not activate without a declared synthetic demo (%s)", (declared) => {
     expect(
       hasUnqualifiedReferenceTestimony(

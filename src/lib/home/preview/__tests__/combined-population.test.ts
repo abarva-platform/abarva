@@ -167,6 +167,8 @@ describe("hasUnsupportedMaOnlyRevenueConcentration", () => {
     "Medicare Advantage accounts for 50% of plan revenue.",
     "Medicare Advantage accounts for 150% of plan revenue.",
     "Medicare Advantage could account for 65% of plan revenue.",
+    "That Medicare Advantage accounts for 60% of revenue is not established.",
+    "Medicare Advantage accounts for 60% of plan revenue remains not confirmed.",
     "Medicare Advantage does not account for 65% of plan revenue.",
     "Medicare Advantage may dominate plan revenue.",
     "Plan revenue is not concentrated in Medicare Advantage.",
