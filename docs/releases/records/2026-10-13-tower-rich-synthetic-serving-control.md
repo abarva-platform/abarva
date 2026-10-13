@@ -30,7 +30,7 @@ Adds a separate operator for selecting a privately staged synthetic Tower genera
 
 ## QA / Validation
 
-Static syntax, focused unit tests, release check, and read-only candidate inspection must pass before a job runs. A private check job must return `ready` with exact stage proof and approval binding before promotion. No database mutation or live serving proof is claimed by this record.
+Static syntax, focused unit tests, and release check passed. The approved private Layer 4 stage completed with all nine page readbacks, an unchanged active selector, a passing quality gate, and an immutable Blob proof uploaded with byte-for-byte readback. Local stage-proof validation reported no gaps. A private serving check job must still return `ready` with exact stage proof and approval binding before promotion. No serving change or signed-in product proof is claimed by this record.
 
 ## Rollout Plan
 
@@ -53,8 +53,8 @@ Use the `rollback` mode with the immutable promotion proof URI and SHA-256. The 
 
 ## Audit Evidence
 
-The private stage tar URI and SHA-256; its stage proof and quality gate; the check proof URI and SHA-256; the named exact-version manifest approvals; promotion or pending proof; post-switch serving readback; rollback proof when used; ACA Job logs and digest; and signed-in page evidence.
+The private stage tar URI and SHA-256, stage proof, quality gate, active-selector readback, and ACA Job execution are retained in private operator evidence. The check proof URI and SHA-256, named exact-version serving approval, promotion or pending proof, post-switch serving readback, and signed-in page evidence are required for later serving proof.
 
 ## Known Gaps
 
-No private stage, serving approval, check proof, promotion, deployment, or signed-in readback is recorded yet.
+The candidate is privately staged but inactive. Exact-version serving approval is recorded; the check proof, promotion, and signed-in readback are still outstanding.
