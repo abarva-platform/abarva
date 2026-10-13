@@ -17,13 +17,24 @@ on:
         required: false
         type: string
         default: ""
+      deployed_sha:
+        description: "Optional full SHA of a deployed main ancestor with unchanged Tower operator contracts"
+        required: false
+        type: string
+        default: ""
+      deployed_run_id:
+        description: "Successful repo-owned ACA main deploy run ID for an explicit deployed_sha"
+        required: false
+        type: string
+        default: ""
 
 concurrency:
-  group: db-migration-lab
+  group: aca-main-deploy-production
   cancel-in-progress: false
 
 permissions:
   contents: read
+  actions: read
   id-token: write
 
 env:
@@ -43,30 +54,56 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production
+    concurrency:
+      group: db-migration-lab
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: Assert main HEAD and explicit mode
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Bind main workflow to the exact deployed image source
+        id: ancestor
+        env:
+          SCHEMA_MODE: ${{ inputs.mode }}
+          SCHEMA_CONFIRM: ${{ inputs.confirm }}
+          REQUESTED_DEPLOYED_SHA: ${{ inputs.deployed_sha }}
+          REQUESTED_DEPLOY_RUN_ID: ${{ inputs.deployed_run_id }}
         shell: bash
         run: |
           set -euo pipefail
           [[ "$GITHUB_REF" == "refs/heads/main" ]] || { echo "Select main only" >&2; exit 1; }
           git fetch origin main
-          [[ "$(git rev-parse HEAD)" == "$(git rev-parse origin/main)" ]] || {
-            echo "Workflow dispatch is not current main HEAD" >&2; exit 1;
-          }
-          echo "::notice title=Tower schema mode::${{ inputs.mode }}"
-          if [[ "${{ inputs.mode }}" == "apply" ]]; then
-            [[ "${{ inputs.confirm }}" == "APPLY_TOWER_ONLY" ]] || {
+          mkdir -p audit-artifacts/tower-only-schema/public-proof
+          explicit=false
+          [[ -z "$REQUESTED_DEPLOYED_SHA" ]] || explicit=true
+          if [[ "$explicit" == true ]]; then
+            [[ "$REQUESTED_DEPLOY_RUN_ID" =~ ^[1-9][0-9]*$ ]] || {
+              echo "Explicit deployed SHA requires a numeric ACA main deploy run ID" >&2; exit 1;
+            }
+          else
+            [[ -z "$REQUESTED_DEPLOY_RUN_ID" ]] || {
+              echo "Deploy run ID is only valid with an explicit deployed SHA" >&2; exit 1;
+            }
+          fi
+          node scripts/tower/verify-deployed-schema-ancestor.mjs \
+            --dispatch-sha="$GITHUB_SHA" --deployed-sha="$REQUESTED_DEPLOYED_SHA" \
+            --explicit-ancestor="$explicit" \
+            > audit-artifacts/tower-only-schema/public-proof/ancestor-binding.json
+          deployed_sha="$(jq -r .deployed_sha audit-artifacts/tower-only-schema/public-proof/ancestor-binding.json)"
+          echo "TOWER_DEPLOYED_SHA=$deployed_sha" >> "$GITHUB_ENV"
+          echo "TOWER_EXPLICIT_ANCESTOR=$explicit" >> "$GITHUB_ENV"
+          echo "TOWER_DEPLOY_RUN_ID=$REQUESTED_DEPLOY_RUN_ID" >> "$GITHUB_ENV"
+          echo "::notice title=Tower schema mode::$SCHEMA_MODE"
+          if [[ "$SCHEMA_MODE" == "apply" ]]; then
+            [[ "$SCHEMA_CONFIRM" == "APPLY_TOWER_ONLY" ]] || {
               echo "Exact Tower apply confirmation is required" >&2; exit 1;
             }
           fi
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: "24"
 
       - name: Verify Azure identity configuration
         shell: bash
@@ -89,7 +126,7 @@ jobs:
           set -euo pipefail
           mkdir -p audit-artifacts/tower-only-schema
           mkdir -p audit-artifacts/tower-only-schema/public-proof
-          tag="main-${GITHUB_SHA:0:8}"
+          tag="main-${TOWER_DEPLOYED_SHA:0:8}"
           digest="$(az acr manifest show-metadata --registry "$ACR_NAME" \
             --name "${IMAGE_REPOSITORY}:${tag}" --query digest --output tsv)"
           [[ "$digest" == sha256:* ]] || { echo "Current main image digest is unavailable" >&2; exit 1; }
@@ -119,9 +156,56 @@ jobs:
               echo "Worker $worker differs from current main digest" >&2; exit 1;
             }
           done
-          jq -n --arg sha "$GITHUB_SHA" --arg image "$image" --arg revision "$revision" \
-            '{main_sha:$sha,image:$image,revision:$revision}' > audit-artifacts/tower-only-schema/public-proof/runtime-binding.json
+          jq -n --arg workflow_head "$GITHUB_SHA" --arg deployed_sha "$TOWER_DEPLOYED_SHA" \
+            --arg current_main "$(jq -r .current_main_sha audit-artifacts/tower-only-schema/public-proof/ancestor-binding.json)" \
+            --arg image "$image" --arg revision "$revision" \
+            '{workflow_head_sha:$workflow_head,deployed_sha:$deployed_sha,current_main_sha_at_bind:$current_main,image:$image,revision:$revision}' \
+            > audit-artifacts/tower-only-schema/public-proof/runtime-binding.json
           echo "image=$image" >> "$GITHUB_OUTPUT"
+
+      - name: Verify successful repo-owned deploy evidence for explicit ancestor
+        if: env.TOWER_EXPLICIT_ANCESTOR == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence_dir=audit-artifacts/tower-only-schema/deployed-run
+          mkdir -p "$evidence_dir"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${TOWER_DEPLOY_RUN_ID}" > "$evidence_dir/run.json"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${TOWER_DEPLOY_RUN_ID}/artifacts?per_page=100" \
+            > "$evidence_dir/artifacts.json"
+          jq -e --arg repo "$GITHUB_REPOSITORY" --arg sha "$TOWER_DEPLOYED_SHA" \
+            --argjson run_id "$TOWER_DEPLOY_RUN_ID" '
+            .id == $run_id and .repository.full_name == $repo and .head_repository.full_name == $repo and
+            .head_sha == $sha and .head_branch == "main" and
+            .path == ".github/workflows/aca-main-deploy.yml" and
+            (.event == "push" or .event == "workflow_dispatch") and
+            .status == "completed" and .conclusion == "success"' "$evidence_dir/run.json" >/dev/null || {
+            echo "Explicit ancestor lacks a successful repo-owned main deploy run" >&2; exit 1;
+          }
+          jq -e --argjson run_id "$TOWER_DEPLOY_RUN_ID" '
+            .total_count == (.artifacts | length) and
+            ([.artifacts[] | select(.name == "aca-main-deploy" and .expired == false and
+              .workflow_run.id == $run_id)] | length) == 1' "$evidence_dir/artifacts.json" >/dev/null || {
+            echo "Successful deploy has no unique retained evidence artifact" >&2; exit 1;
+          }
+          gh run download "$TOWER_DEPLOY_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name aca-main-deploy --dir "$evidence_dir/download"
+          proof="$evidence_dir/download/runtime-invariant/runtime-invariant-proof.json"
+          [[ -f "$proof" ]] || { echo "Runtime invariant proof is absent" >&2; exit 1; }
+          node scripts/tower/verify-deployed-run-evidence.mjs \
+            "$evidence_dir/run.json" "$evidence_dir/artifacts.json" "$proof" \
+            "$TOWER_DEPLOY_RUN_ID" "$TOWER_DEPLOYED_SHA" "${{ steps.image.outputs.image }}" \
+            "$GITHUB_REPOSITORY" > "$evidence_dir/verified.json"
+          artifact_id="$(jq -r .deploy_artifact_id "$evidence_dir/verified.json")"
+          jq -n --arg workflow_head "$GITHUB_SHA" --arg deployed_sha "$TOWER_DEPLOYED_SHA" \
+            --arg run_id "$TOWER_DEPLOY_RUN_ID" --arg artifact_id "$artifact_id" \
+            --arg proof_sha256 "$(sha256sum "$proof" | cut -d' ' -f1)" \
+            --arg image "${{ steps.image.outputs.image }}" \
+            '{workflow_head_sha:$workflow_head,deployed_sha:$deployed_sha,deploy_run_id:$run_id,
+              deploy_artifact_id:$artifact_id,deploy_runtime_proof_sha256:$proof_sha256,image:$image}' \
+            > audit-artifacts/tower-only-schema/public-proof/deploy-evidence-binding.json
 
       - name: Assert private operator is idle
         shell: bash
@@ -169,6 +253,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git fetch origin main
+          deployed_input=""
+          [[ "$TOWER_EXPLICIT_ANCESTOR" != true ]] || deployed_input="$TOWER_DEPLOYED_SHA"
+          node scripts/tower/verify-deployed-schema-ancestor.mjs \
+            --dispatch-sha="$GITHUB_SHA" --deployed-sha="$deployed_input" \
+            --explicit-ancestor="$TOWER_EXPLICIT_ANCESTOR" \
+            > audit-artifacts/tower-only-schema/public-proof/ancestor-before-status.json
           npm run ops:aca-job -- \
             --image "${{ steps.image.outputs.image }}" \
             --idle-image "${{ steps.image.outputs.image }}" \
@@ -179,7 +270,7 @@ jobs:
             --env TOWER_RELOAD_PROOF_BLOB_ACCOUNT="$TOWER_PROOF_ACCOUNT" \
             --env TOWER_RELOAD_PROOF_BLOB_CONTAINER="$TOWER_PROOF_CONTAINER" \
             --env TOWER_SCHEMA_RUN_ID="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
-            --env TOWER_SCHEMA_MAIN_SHA="$GITHUB_SHA" \
+            --env TOWER_SCHEMA_MAIN_SHA="$TOWER_DEPLOYED_SHA" \
             --env TOWER_SCHEMA_IMAGE="${{ steps.image.outputs.image }}" \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
             --out-dir audit-artifacts/tower-only-schema/preflight \
@@ -200,6 +291,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git fetch origin main
+          deployed_input=""
+          [[ "$TOWER_EXPLICIT_ANCESTOR" != true ]] || deployed_input="$TOWER_DEPLOYED_SHA"
+          node scripts/tower/verify-deployed-schema-ancestor.mjs \
+            --dispatch-sha="$GITHUB_SHA" --deployed-sha="$deployed_input" \
+            --explicit-ancestor="$TOWER_EXPLICIT_ANCESTOR" \
+            > audit-artifacts/tower-only-schema/public-proof/ancestor-before-apply.json
           az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --output json \
             > audit-artifacts/tower-only-schema/containerapp-before-apply.json
           az containerapp ingress traffic show --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --output json \
@@ -216,6 +314,13 @@ jobs:
             audit-artifacts/tower-only-schema/revision-before-apply.json)" == "${{ steps.image.outputs.image }}" ]] || {
             echo "Live digest changed after preflight" >&2; exit 1;
           }
+          for worker in job-abarva-deliv-worker job-abarva-deliv-worker-event; do
+            worker_image="$(az containerapp job show --name "$worker" --resource-group "$RESOURCE_GROUP" \
+              --query 'properties.template.containers[0].image' --output tsv)"
+            [[ "$worker_image" == "${{ steps.image.outputs.image }}" ]] || {
+              echo "Worker digest changed after preflight" >&2; exit 1;
+            }
+          done
           az containerapp job execution list --name job-abarva-private-operator-eus --resource-group "$RESOURCE_GROUP" \
             --output json > audit-artifacts/tower-only-schema/operator-executions-before-apply.json
           nonterminal="$(jq -f scripts/tower/operator-nonterminal-executions.jq \
@@ -238,7 +343,7 @@ jobs:
             --env TOWER_RELOAD_PROOF_BLOB_ACCOUNT="$TOWER_PROOF_ACCOUNT" \
             --env TOWER_RELOAD_PROOF_BLOB_CONTAINER="$TOWER_PROOF_CONTAINER" \
             --env TOWER_SCHEMA_RUN_ID="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
-            --env TOWER_SCHEMA_MAIN_SHA="$GITHUB_SHA" \
+            --env TOWER_SCHEMA_MAIN_SHA="$TOWER_DEPLOYED_SHA" \
             --env TOWER_SCHEMA_IMAGE="${{ steps.image.outputs.image }}" \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
             --out-dir audit-artifacts/tower-only-schema/apply \
@@ -265,7 +370,7 @@ jobs:
             --env TOWER_RELOAD_PROOF_BLOB_ACCOUNT="$TOWER_PROOF_ACCOUNT" \
             --env TOWER_RELOAD_PROOF_BLOB_CONTAINER="$TOWER_PROOF_CONTAINER" \
             --env TOWER_SCHEMA_RUN_ID="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
-            --env TOWER_SCHEMA_MAIN_SHA="$GITHUB_SHA" \
+            --env TOWER_SCHEMA_MAIN_SHA="$TOWER_DEPLOYED_SHA" \
             --env TOWER_SCHEMA_IMAGE="${{ steps.image.outputs.image }}" \
             --secret-env DATABASE_URL=azure-postgres-control-database-url \
             --out-dir audit-artifacts/tower-only-schema/readback \
@@ -285,7 +390,8 @@ jobs:
           {
             echo "## Tower-only schema run"
             echo "Mode: ${{ inputs.mode }}"
-            echo "Main SHA: $GITHUB_SHA"
+            echo "Workflow head SHA: $GITHUB_SHA"
+            echo "Deployed image source SHA: ${TOWER_DEPLOYED_SHA:-unbound}"
             echo "Source and Home migrations were outside this exact apply list."
             echo "The public artifact holds redacted receipts and idle status. Full schema readback is in private Blob."
           } >> "$GITHUB_STEP_SUMMARY"
