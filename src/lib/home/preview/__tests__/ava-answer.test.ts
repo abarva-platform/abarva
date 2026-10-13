@@ -258,37 +258,60 @@ describe("answerHomeAvaQuestion", () => {
     },
   );
 
-  it("repairs unqualified reference testimony and unsupported trust-population inference", async () => {
-    const unsafe = {
-      ...referenceAnswer,
+  it.each([
+    {
       direct_answer: "The data is trusted by few leaders.",
       key_points: ["36 of 44 leaders raised data trust concerns."],
-    };
-    const create = jest
-      .fn()
-      .mockResolvedValueOnce({
-        content: [{ type: "text", text: JSON.stringify(unsafe) }],
-      })
-      .mockResolvedValueOnce({
-        content: [{ type: "text", text: JSON.stringify(referenceAnswer) }],
+    },
+    {
+      direct_answer:
+        "The analytics platform carries a leadership-reported trust gap.",
+      key_points: referenceAnswer.key_points,
+    },
+    {
+      direct_answer: referenceAnswer.direct_answer,
+      key_points: [
+        "36 of 44 leaders flagged data trust concerns, with leadership keeping independent extracts.",
+      ],
+    },
+    {
+      direct_answer: referenceAnswer.direct_answer,
+      key_points: ["Data trust concerns appear across 36 of 44 leaders."],
+    },
+  ])(
+    "repairs unqualified reference testimony and unsupported trust-population inference: %j",
+    async (unsafeWording) => {
+      const unsafe = {
+        ...referenceAnswer,
+        ...unsafeWording,
+      };
+      const create = jest
+        .fn()
+        .mockResolvedValueOnce({
+          content: [{ type: "text", text: JSON.stringify(unsafe) }],
+        })
+        .mockResolvedValueOnce({
+          content: [{ type: "text", text: JSON.stringify(referenceAnswer) }],
+        });
+      mockGetAuditedAnthropicClient.mockResolvedValue({
+        client: { messages: { create } },
+      } as never);
+      const answer = await answerHomeAvaQuestion({
+        bundle: {
+          chapters: [...CHAPTERS, leadershipChapter],
+          declaredSyntheticDemo: true,
+        },
+        tenantKey: "test-tenant",
+        question: "What does the record say about data trust?",
       });
-    mockGetAuditedAnthropicClient.mockResolvedValue({
-      client: { messages: { create } },
-    } as never);
-    const answer = await answerHomeAvaQuestion({
-      bundle: {
-        chapters: [...CHAPTERS, leadershipChapter],
-        declaredSyntheticDemo: true,
-      },
-      tenantKey: "test-tenant",
-      question: "What does the record say about data trust?",
-    });
-    expect(create).toHaveBeenCalledTimes(2);
-    expect(answer.directAnswer).not.toContain("trusted by few");
-    expect(answer.prose).toContain("Modelled responses");
-    expect(answer.citations.map((c) => c.id)).toContain("LP-K1");
-    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
-  });
+      expect(create).toHaveBeenCalledTimes(2);
+      expect(answer.directAnswer).not.toContain("trusted by few");
+      expect(answer.directAnswer).not.toContain("leadership-reported");
+      expect(answer.prose).toContain("Modelled responses");
+      expect(answer.citations.map((c) => c.id)).toContain("LP-K1");
+      expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+    },
+  );
 
   it.each([
     {
@@ -298,6 +321,21 @@ describe("answerHomeAvaQuestion", () => {
     {
       direct_answer: "Modelled responses show data is trusted by few leaders.",
       key_points: referenceAnswer.key_points,
+    },
+    {
+      direct_answer:
+        "The analytics platform carries a leadership-reported trust gap.",
+      key_points: referenceAnswer.key_points,
+    },
+    {
+      direct_answer: referenceAnswer.direct_answer,
+      key_points: [
+        "36 of 44 leaders flagged data trust concerns, with leadership keeping independent extracts.",
+      ],
+    },
+    {
+      direct_answer: referenceAnswer.direct_answer,
+      key_points: ["Data trust concerns appear across 36 of 44 leaders."],
     },
   ])(
     "withholds unsafe reference wording when the bounded repair cannot qualify it",
