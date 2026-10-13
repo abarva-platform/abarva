@@ -22,6 +22,49 @@ export function BudgetShapePanel({ view }: { view: TowerCommandCenterView }) {
     style: "currency", currency: "USD", maximumFractionDigits: 1,
     notation: "compact",
   }).format(value);
+  const sourcePlanCases = view.allInitiatives
+    .filter((item) => item.populationKind === "ai_case" && item.sourcePlan?.fundingUsd != null)
+    .sort((a, b) => (b.sourcePlan?.fundingUsd ?? 0) - (a.sourcePlan?.fundingUsd ?? 0));
+
+  if (sourcePlanCases.length > 0) {
+    const largest = sourcePlanCases.slice(0, 6);
+    const maxFunding = largest[0]?.sourcePlan?.fundingUsd ?? 0;
+    return (
+      <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+        <h2 style={{ margin: 0, fontFamily: "var(--abarva-serif)", fontWeight: 500, fontSize: 26 }}>
+          The synthetic AI plan shows where funding was proposed. These are case estimates, not approved spending or tool bills.
+        </h2>
+        <div style={PANEL}>
+          <h3 style={{ margin: "0 0 8px", fontSize: 16 }}>Largest planned AI cases</h3>
+          <p style={{ margin: "0 0 18px", fontSize: 14, color: "var(--canon-gray-700)" }}>
+            Compare the proposed funding with each case&apos;s expected benefit and proof before making a funding decision.
+          </p>
+          {largest.map((item) => {
+            const funding = item.sourcePlan?.fundingUsd ?? 0;
+            return (
+              <div key={item.id} style={{ display: "grid", gridTemplateColumns: "minmax(200px, 1fr) minmax(180px, 2fr) 110px", gap: 14, alignItems: "center", padding: "10px 0", borderTop: "1px solid var(--canon-border)" }}>
+                <span style={{ fontSize: 14 }}>{item.name}</span>
+                <span style={{ height: 12, background: "var(--canon-gray-100)" }}>
+                  <span style={{ display: "block", width: `${maxFunding > 0 ? (funding / maxFunding) * 100 : 0}%`, height: 12, background: "var(--canon-teal-dark)" }} />
+                </span>
+                <strong style={{ textAlign: "right", fontFamily: "var(--abarva-mono)" }}>{money(funding)}</strong>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 20 }}>
+          <div style={PANEL}>
+            <h3 style={{ margin: "0 0 8px", fontSize: 15 }}>Overall IT budget</h3>
+            <p style={{ margin: 0, lineHeight: 1.55 }}>The synthetic source states an overall budget and separate case plans. Tower shows an AI share only after the total and the case funding are reconciled on the same basis.</p>
+          </div>
+          <div style={PANEL}>
+            <h3 style={{ margin: "0 0 8px", fontSize: 15 }}>Tool and partner costs</h3>
+            <p style={{ margin: 0, lineHeight: 1.55 }}>Rollout and vendor records show which tools are in use. Subscription and partner charges need a linked Finance amount before they enter a spend total.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>

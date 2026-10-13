@@ -29,6 +29,7 @@ type ToolRow = {
   readonly adoptionPct: number | null;
   readonly targetPct: number | null;
   readonly linkedCases: number | null;
+  readonly qualityIssue: boolean;
 };
 
 const GRID: React.CSSProperties = {
@@ -49,12 +50,16 @@ function toolRows(view: TowerCommandCenterView): readonly ToolRow[] {
         (item.usageHeadline !== null || item.usageBars.length > 0),
     )
     .map((item) => {
+      const qualityIssue = item.enabledUsers !== null && item.enabledUsers !== undefined &&
+        item.monthlyActiveUsers !== null && item.monthlyActiveUsers !== undefined &&
+        item.monthlyActiveUsers > item.enabledUsers;
       return {
         item,
         usageMeasure: item.usageHeadline ?? "Not loaded",
-        adoptionPct: recordedAdoptionRate(item),
+        adoptionPct: qualityIssue ? null : recordedAdoptionRate(item),
         targetPct: item.adoptionTargetPct,
         linkedCases: item.linkedBusinessCaseCount,
+        qualityIssue,
       };
     })
     .sort((a, b) => shortfall(b) - shortfall(a));
@@ -88,6 +93,7 @@ export function ToolsTablePanel({
   const belowTarget = withTarget.filter(
     (row) => (row.adoptionPct as number) < (row.targetPct as number),
   ).length;
+  const needingSourceCheck = rows.filter((row) => row.qualityIssue).length;
 
   if (rows.length === 0) {
     return (
@@ -123,6 +129,11 @@ export function ToolsTablePanel({
               : `${formatCount(rows.length)} tool rollouts have usage context; no rollout has both a recorded adoption rate and target.`
           : `${formatCount(belowTarget)} of ${formatCount(withTarget.length)} rollouts sit below their own adoption target.`}
       </h2>
+      {needingSourceCheck > 0 ? (
+        <p style={{ margin: 0, fontSize: 14, color: "var(--canon-red)" }}>
+          {needingSourceCheck} tool {needingSourceCheck === 1 ? "row needs" : "rows need"} a source check because monthly active users exceed enabled users. Their adoption rates are withheld from the target comparison.
+        </p>
+      ) : null}
       <div style={{ background: "var(--canon-bg-surface)", border: "1px solid var(--canon-border)" }}>
         <div
           style={{
@@ -144,7 +155,7 @@ export function ToolsTablePanel({
           <span style={{ textAlign: "right" }}>Cases</span>
           <span style={{ textAlign: "right" }}>Detail</span>
         </div>
-        {rows.map(({ item, usageMeasure, adoptionPct, targetPct, linkedCases }) => (
+        {rows.map(({ item, usageMeasure, adoptionPct, targetPct, linkedCases, qualityIssue }) => (
           <div
             key={item.id}
             onDoubleClick={() => onOpenAi?.(item.n)}
@@ -170,7 +181,7 @@ export function ToolsTablePanel({
               {item.vendor ?? "Not loaded"}
             </span>
             <span style={{ fontFamily: "var(--abarva-mono)", fontSize: 13, lineHeight: 1.35 }}>
-              {usageMeasure}
+              {qualityIssue ? "Usage needs source check" : usageMeasure}
             </span>
             <span style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
               <span style={{ position: "relative", height: 12, background: "var(--canon-gray-100)" }}>

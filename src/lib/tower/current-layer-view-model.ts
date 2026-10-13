@@ -254,6 +254,14 @@ export interface TowerMartAiPortfolioItem {
   aiAmountBasis?: TowerAiAmountBasis;
   /** Whether any spend was recorded. The value above is coerced to 0 when nothing was. */
   aiSpendLoaded?: boolean;
+  /** Historic synthetic Layer 4 planning assertions, kept separate from approved and achieved money. */
+  sourcePlan?: {
+    fundingUsd: number | null;
+    yearlyBenefitLowUsd: number | null;
+    yearlyBenefitHighUsd: number | null;
+    roiLowMultiple: number | null;
+    roiHighMultiple: number | null;
+  } | null;
   /** Initiative-detail fields, each carried from its own canonical column. */
   projectName?: string | null;
   lifecycleStage?: string | null;

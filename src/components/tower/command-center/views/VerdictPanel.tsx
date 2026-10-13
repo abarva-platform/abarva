@@ -294,6 +294,65 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
     return { name, value: count, label: String(count), fill };
   });
 
+  const sourcePlanCases = cases.filter((item) => item.sourcePlan !== null && item.sourcePlan !== undefined);
+  if (sourcePlanCases.length > 0) {
+    const toolCount = view.allInitiatives.filter((item) => item.populationKind === "tool_rollout").length;
+    const fundingPlans = sourcePlanCases.filter((item) => item.sourcePlan?.fundingUsd !== null).length;
+    const benefitPlans = sourcePlanCases.filter((item) => item.sourcePlan?.yearlyBenefitLowUsd !== null).length;
+    const roiPlans = sourcePlanCases.filter((item) => item.sourcePlan?.roiLowMultiple !== null).length;
+    const leadingPlans = sourcePlanCases
+      .filter((item) => (item.sourcePlan?.fundingUsd ?? 0) > 0)
+      .sort((a, b) => (b.sourcePlan?.fundingUsd ?? 0) - (a.sourcePlan?.fundingUsd ?? 0))
+      .slice(0, 5);
+    return (
+      <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+        <h2 style={{ margin: 0, fontFamily: "var(--abarva-serif)", fontWeight: 500, fontSize: 26, lineHeight: 1.25 }}>
+          Follow the AI plan from funding to use to results. This synthetic assessment maps {cases.length} AI cases and {toolCount} tool rollouts; the planned return still needs measured outcomes and Finance review.
+        </h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 1 }}>
+          <MetricCard label="AI business cases" value={String(cases.length)} caption="Each case has a named plan and owner" />
+          <MetricCard label="AI tool rollouts" value={String(toolCount)} caption="Usage and adoption are checked separately from case value" />
+          <MetricCard label="Cases with a funding plan" value={`${fundingPlans} of ${cases.length}`} caption="Source-stated synthetic plans; approved funding is not established" accent="var(--canon-amber)" />
+          <MetricCard label="Cases with an ROI estimate" value={`${roiPlans} of ${cases.length}`} caption="Projected return, not savings earned" accent="var(--canon-teal)" />
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
+          <div style={{ ...PANEL, flex: "1 1 560px" }}>
+            <h3 style={{ margin: "0 0 8px", fontSize: 16 }}>Five largest case funding plans</h3>
+            <p style={{ margin: "0 0 18px", fontSize: 14, lineHeight: 1.5, color: "var(--canon-gray-700)" }}>
+              Each amount belongs to one synthetic business case. These rows are not an approved portfolio total or money already spent.
+            </p>
+            {leadingPlans.map((item) => (
+              <div key={item.id} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 16, padding: "12px 0", borderTop: "1px solid var(--canon-border)" }}>
+                <div>
+                  <strong style={{ fontSize: 15 }}>{item.name}</strong>
+                  <div style={{ marginTop: 4, fontSize: 13, color: "var(--canon-gray-500)" }}>
+                    {item.sourcePlan?.yearlyBenefitLowUsd === null
+                      ? "Yearly benefit estimate not stated"
+                      : `Yearly benefit plan ${bigMoney(item.sourcePlan?.yearlyBenefitLowUsd ?? null)}`}
+                    {item.sourcePlan?.roiLowMultiple !== null && item.sourcePlan?.roiLowMultiple !== undefined
+                      ? ` · projected ROI ${item.sourcePlan.roiLowMultiple.toFixed(1)}x${item.sourcePlan.roiHighMultiple !== null ? `–${item.sourcePlan.roiHighMultiple.toFixed(1)}x` : ""}`
+                      : ""}
+                  </div>
+                </div>
+                <strong style={{ fontFamily: "var(--abarva-mono)", whiteSpace: "nowrap" }}>{bigMoney(item.sourcePlan?.fundingUsd ?? null)}</strong>
+              </div>
+            ))}
+          </div>
+          <div style={{ ...PANEL, flex: "1 1 340px" }}>
+            <h3 style={{ margin: "0 0 8px", fontSize: 16 }}>Finance stage stated in the source</h3>
+            <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--canon-gray-700)" }}>
+              The status describes a case&apos;s review stage. It does not independently verify a cleared dollar result.
+            </p>
+            <HBar data={statusData} axisLabel="AI use cases" height={210} labelWidth={140} right={40} axisFmt={(v) => String(v)} />
+          </div>
+        </div>
+        <p style={{ ...NOTE, margin: 0 }}>
+          {benefitPlans} cases carry a yearly benefit plan. Compare each plan with tool use, an outcome reading, and Finance-reviewed results before deciding to scale, fix, or stop it. No combined benefit or achieved ROI is quoted here.
+        </p>
+      </section>
+    );
+  }
+
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>
       <h2

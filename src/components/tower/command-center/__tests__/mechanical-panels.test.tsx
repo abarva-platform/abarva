@@ -389,6 +389,27 @@ describe("mechanical Tower Command Center panels", () => {
     expect(text).not.toContain("Business case with usage");
   });
 
+  it("withholds adoption when active users exceed enabled users", () => {
+    const view = viewWith({
+      allInitiatives: [initiative({
+        id: "TOOL-CHECK",
+        name: "Tool needing source check",
+        populationKind: "tool_rollout",
+        usageHeadline: "Monthly active users · 281",
+        usageBars: [{ label: "Monthly active users", valueText: "281", pct: 54, tone: "amber" }],
+        enabledUsers: 234,
+        monthlyActiveUsers: 281,
+        adoptionActualPct: 54,
+        adoptionTargetPct: 60,
+      })],
+    });
+    const vendorRows = buildToolVendorRows(view);
+    expect(vendorRows[0]?.activeUsers).toBeNull();
+    render(<ToolsTablePanel view={view} />);
+    expect(document.body.textContent).toContain("monthly active users exceed enabled users");
+    expect(document.body.textContent).toContain("Usage needs source check");
+  });
+
   it("opens tool rollout details and explains control blockers in place", () => {
     const onOpenAi = jest.fn();
     render(

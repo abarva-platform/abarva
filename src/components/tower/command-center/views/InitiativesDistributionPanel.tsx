@@ -166,6 +166,53 @@ export function InitiativesDistributionPanel({ view }: { view: TowerCommandCente
   const topType = byType.find((row) => row.name !== "Not loaded" && row.investmentUsd !== null);
   const missingFunding = cases.filter((item) => item.aiAmountBasis !== "approved_funding").length;
   const missingBenefits = cases.filter((item) => !item.promisedBenefitLoaded).length;
+  const sourcePlanCases = cases.filter((item) => item.sourcePlan != null);
+  if (sourcePlanCases.length > 0) {
+    const counts = [...new Set(cases.map((item) => item.businessValueType ?? "Unclassified"))]
+      .map((name) => ({ name, count: cases.filter((item) => (item.businessValueType ?? "Unclassified") === name).length }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    const maxCount = counts[0]?.count ?? 0;
+    const withFunding = sourcePlanCases.filter((item) => item.sourcePlan?.fundingUsd != null).length;
+    const withBenefit = sourcePlanCases.filter((item) => item.sourcePlan?.yearlyBenefitLowUsd != null).length;
+    const withRoi = sourcePlanCases.filter((item) => item.sourcePlan?.roiLowMultiple != null).length;
+    return (
+      <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+        <h2 style={{ margin: 0, fontFamily: "var(--abarva-serif)", fontWeight: 500, fontSize: 26 }}>
+          The synthetic AI plan spans {counts.length} value areas. Funding and return estimates are available case by case, while achieved value needs separate proof.
+        </h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 1 }}>
+          {[
+            ["Cases with a funding plan", withFunding],
+            ["Cases with a yearly benefit plan", withBenefit],
+            ["Cases with a projected ROI", withRoi],
+          ].map(([label, count]) => (
+            <div key={label} style={PANEL}>
+              <div style={{ fontSize: 14, color: "var(--canon-gray-500)" }}>{label}</div>
+              <strong style={{ display: "block", marginTop: 6, fontFamily: "var(--abarva-serif)", fontSize: 30 }}>{count} of {cases.length}</strong>
+            </div>
+          ))}
+        </div>
+        <div style={PANEL}>
+          <h3 style={{ margin: "0 0 8px", fontSize: 16 }}>Where the AI cases aim to create value</h3>
+          <p style={{ margin: "0 0 18px", fontSize: 14, color: "var(--canon-gray-700)" }}>
+            Each case appears once under its source value category. Bars count cases; they do not add disputed funding or benefit amounts.
+          </p>
+          {counts.map((row) => (
+            <div key={row.name} style={{ display: "grid", gridTemplateColumns: "minmax(180px, 1fr) minmax(160px, 2fr) 35px", gap: 14, alignItems: "center", padding: "10px 0", borderTop: "1px solid var(--canon-border)" }}>
+              <span>{row.name}</span>
+              <span style={{ height: 12, background: "var(--canon-gray-100)" }}>
+                <span style={{ display: "block", width: `${maxCount > 0 ? (row.count / maxCount) * 100 : 0}%`, height: 12, background: "var(--canon-amber)" }} />
+              </span>
+              <strong style={{ textAlign: "right" }}>{row.count}</strong>
+            </div>
+          ))}
+        </div>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.55, color: "var(--canon-gray-700)" }}>
+          Open Business cases for each source-stated funding amount, yearly benefit estimate, and projected ROI. Finance review stage, measured outcomes, and tool use must be assessed before deciding whether to scale, fix, or stop a case.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>

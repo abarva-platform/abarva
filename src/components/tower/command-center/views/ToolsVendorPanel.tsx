@@ -53,6 +53,8 @@ function activeUsers(item: TowerAiView): number | null {
     ACTIVE_USER_METRICS.has(bar.label.replace(/[_-]/g, " ").replace(/\s+/g, " ").trim().toLowerCase()),
   );
   const count = item.monthlyActiveUsers;
+  if (item.enabledUsers !== null && item.enabledUsers !== undefined &&
+      count !== null && count !== undefined && count > item.enabledUsers) return null;
   return hasActiveUserMetric && typeof count === "number" && Number.isFinite(count) && count >= 0
     ? count
     : null;
@@ -125,6 +127,10 @@ export function ToolsVendorPanel({ view }: { view: TowerCommandCenterView }) {
   const blockedTools = rows.reduce((sum, row) => sum + row.blockerCount, 0);
   const vendorsWithActiveUsers = rows.filter((row) => row.activeUsers !== null).length;
   const hasActiveUsers = vendorsWithActiveUsers > 0;
+  const inconsistentToolRows = view.allInitiatives.filter((item) =>
+    isToolRollout(item) && item.enabledUsers != null && item.monthlyActiveUsers != null &&
+    item.monthlyActiveUsers > item.enabledUsers,
+  ).length;
 
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>
@@ -189,6 +195,7 @@ export function ToolsVendorPanel({ view }: { view: TowerCommandCenterView }) {
           ? "Only rows explicitly measured as active users enter this chart. Counts are added across tool rollouts, so one person using two tools can be counted twice. Licensed seats are not loaded."
           : "No explicitly named active-user or licensed-seat measure is loaded for a vendor comparison."} Rollout counts here cover only tool rows with a usage metric, using declared page and canonical object identity;
         {" "}{unclassifiedPortfolioCount(view.allInitiatives)} rows without that identity are excluded.
+        {inconsistentToolRows > 0 ? ` ${inconsistentToolRows} tool ${inconsistentToolRows === 1 ? "row is" : "rows are"} excluded from active-user totals until monthly active and enabled counts reconcile.` : ""}
       </p>
     </section>
   );

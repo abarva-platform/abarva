@@ -6,6 +6,8 @@ import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-mod
 import { CommandCenterView } from "../CommandCenterView";
 import { EvidenceActionsContractView, ValueProofContractView } from "../ContractTabs";
 import { VerdictPanel } from "../VerdictPanel";
+import { BudgetShapePanel } from "../BudgetShapePanel";
+import { InitiativesTablePanel } from "../InitiativesTablePanel";
 import { evidenceGapAmount } from "../evidence-gap-amount";
 
 function fixtureView() {
@@ -24,6 +26,36 @@ function fixtureView() {
 }
 
 describe("Tower financial story boundaries", () => {
+  it("shows an older synthetic case plan without presenting it as approved or achieved", () => {
+    const view = fixtureView();
+    const first = view.allInitiatives[0];
+    if (!first) throw new Error("Fixture needs an AI row");
+    const withPlan = {
+      ...view,
+      allInitiatives: [{
+        ...first,
+        populationKind: "ai_case" as const,
+        sourcePlan: {
+          fundingUsd: 12_000_000,
+          yearlyBenefitLowUsd: 30_000_000,
+          yearlyBenefitHighUsd: 36_000_000,
+          roiLowMultiple: 2.5,
+          roiHighMultiple: 3,
+        },
+      }],
+    };
+    const verdict = renderToStaticMarkup(<VerdictPanel view={withPlan} />);
+    const budget = renderToStaticMarkup(<BudgetShapePanel view={withPlan} />);
+    const cases = renderToStaticMarkup(<InitiativesTablePanel view={withPlan} />);
+    expect(verdict).toContain("synthetic assessment");
+    expect(verdict).toContain("projected ROI 2.5x");
+    expect(verdict).toContain("No combined benefit or achieved ROI is quoted here");
+    expect(verdict).not.toContain("Board claimable YTD");
+    expect(budget).toContain("proposed");
+    expect(budget).toContain("not approved spending");
+    expect(cases).toContain("source records case funding plans");
+    expect(cases).toContain("projected 2.5x");
+  });
   it("separates annual assertions from year-to-date claims and flags unreconciled budget", () => {
     const view = fixtureView();
     const html = renderToStaticMarkup(<VerdictPanel view={{

@@ -444,6 +444,22 @@ export function AiInitiativeDrawer({
             records 0, which is not the same as a project whose spend was never recorded.
           */}
               <DrawerSection>Money</DrawerSection>
+              {a.sourcePlan ? (
+                <>
+                  <p className={cx(styles.recBox, styles.muted)}>
+                    Synthetic business-case plan. The amounts and ROI below are source-stated estimates; they are not approved spend or achieved savings.
+                  </p>
+                  <DrawerRow label="Funding in source plan" value={a.sourcePlan.fundingUsd === null ? "Not stated" : formatUsdM(a.sourcePlan.fundingUsd)} />
+                  <DrawerRow label="Expected yearly benefit, low case" value={a.sourcePlan.yearlyBenefitLowUsd === null ? "Not stated" : formatUsdM(a.sourcePlan.yearlyBenefitLowUsd)} />
+                  <DrawerRow label="Expected yearly benefit, high case" value={a.sourcePlan.yearlyBenefitHighUsd === null ? "Not stated" : formatUsdM(a.sourcePlan.yearlyBenefitHighUsd)} />
+                  <DrawerRow
+                    label="Projected ROI range"
+                    value={a.sourcePlan.roiLowMultiple === null ? "Not stated" :
+                      `${a.sourcePlan.roiLowMultiple.toFixed(1)}x${a.sourcePlan.roiHighMultiple === null ? "" : `–${a.sourcePlan.roiHighMultiple.toFixed(1)}x`}`}
+                    sub="A planning ratio, not a Finance checked return."
+                  />
+                </>
+              ) : null}
               <DrawerRow
                 label={a.aiAmountBasis === "approved_funding" ? "Approved AI funding" : a.aiAmountBasis === "annualized_tool_cost" ? "Yearly tool cost" : "Amount basis"}
                 value={

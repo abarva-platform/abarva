@@ -344,6 +344,97 @@ describe("readTowerCommandCenter", () => {
     expect(mart?.command.knownValueAmountUsd).toBe(0);
   });
 
+  it("keeps retained synthetic case plans separate from approved funding and achieved value", async () => {
+    const summary = {
+      ...servingRow({ row_key: "executive_summary", page_key: "command_center" }),
+      tenant_key: "fixture-tenant",
+      assessment_id: "retained-v2",
+      projection_version: 2,
+    };
+    const caseRow = {
+      ...servingRow({
+        row_key: "case-1",
+        page_key: "ai_portfolio",
+        use_case_object_id: "use-case-1",
+        display_payload_json: {
+          page_key: "ai_portfolio",
+          layer4_build_version: "tower-layer4-products-v2026-08",
+          approved_funding_usd: 12_000_000,
+          projected_annual_value_low_usd: 30_000_000,
+          projected_annual_value_high_usd: 36_000_000,
+          roi_low_multiple: 2.5,
+          roi_high_multiple: 3,
+          finance_status: "sponsor_claimed",
+        },
+      }),
+      row_type: "ai_business_case",
+      tenant_key: "fixture-tenant",
+      assessment_id: "retained-v2",
+      projection_version: 2,
+    };
+    mockServingRows({
+      tower_command_center: [summary],
+      tower_value_proof: [],
+      tower_decision_lanes: [],
+      tower_evidence: [],
+      tower_recommended_actions: [],
+      tower_ai_portfolio: [caseRow],
+      tower_cost_lens: [],
+      tower_risk_lens: [],
+      tower_adoption_lens: [],
+    });
+    const mart = await readTowerCommandCenter({ tenantKeyCandidates: ["fixture-tenant"] });
+    expect(mart?.aiPortfolio[0]?.sourcePlan).toEqual({
+      fundingUsd: 12_000_000,
+      yearlyBenefitLowUsd: 30_000_000,
+      yearlyBenefitHighUsd: 36_000_000,
+      roiLowMultiple: 2.5,
+      roiHighMultiple: 3,
+    });
+    expect(mart?.aiPortfolio[0]?.aiAmountBasis).toBe("unknown");
+    expect(mart?.aiPortfolio[0]?.promisedValueUsd).toBeNull();
+    expect(mart?.command.approvedProgramBudgetFy26).toBeNull();
+    expect(mart?.command.claimableValue).toBe(0);
+  });
+
+  it("reads a declared synthetic plan on a newer projection without relying on an assessment ID", async () => {
+    const summary = {
+      ...servingRow({ row_key: "executive_summary", page_key: "command_center" }),
+      tenant_key: "fixture-tenant",
+      assessment_id: "newer-projection",
+      projection_version: 7,
+    };
+    const caseRow = {
+      ...servingRow({
+        row_key: "case-2",
+        page_key: "ai_portfolio",
+        use_case_object_id: "use-case-2",
+        display_payload_json: {
+          page_key: "ai_portfolio",
+          source_plan_basis: "synthetic_sponsor_scenario_not_finance_actual",
+          approved_funding_usd: 9_000_000,
+          projected_annual_value_low_usd: 20_000_000,
+          projected_annual_value_high_usd: 24_000_000,
+          roi_low_multiple: 2.2,
+          roi_high_multiple: 2.7,
+        },
+      }),
+      row_type: "ai_business_case",
+      tenant_key: "fixture-tenant",
+      assessment_id: "newer-projection",
+      projection_version: 7,
+    };
+    mockServingRows({
+      tower_command_center: [summary],
+      tower_ai_portfolio: [caseRow],
+    });
+    const mart = await readTowerCommandCenter({ tenantKeyCandidates: ["fixture-tenant"] });
+    expect(mart?.aiPortfolio[0]?.sourcePlan?.fundingUsd).toBe(9_000_000);
+    expect(mart?.aiPortfolio[0]?.sourcePlan?.roiLowMultiple).toBe(2.2);
+    expect(mart?.aiPortfolio[0]?.aiAmountBasis).toBe("unknown");
+    expect(mart?.aiPortfolio[0]?.promisedValueUsd).toBeNull();
+  });
+
   it("maps ECL serving views into the existing Tower Command Center contract", async () => {
     mockServingRows({
       tower_command_center: [
