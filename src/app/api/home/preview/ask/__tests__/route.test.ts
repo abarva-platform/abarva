@@ -32,32 +32,35 @@ jest.mock("@/lib/home/preview/ecl-projection-bundle", () => ({
 }));
 
 jest.mock("@/lib/home/preview/ava-answer", () => ({
-  answerHomeAvaQuestion: jest.fn(async () => ({
-    surface: "home",
-    mode: "KNOW",
-    status: "answered",
-    directAnswer: "Use the served Home record.",
-    factsUsed: [],
-    metricsUsed: [],
-    relationshipsUsed: [],
-    citations: [],
-    gaps: [],
-    caveats: [],
-    nextSteps: [],
-    artifacts: [],
-    quality: {
-      confidence: "high",
-      evidenceStrength: "strong",
-      tenantGrounding: "complete",
-      answerCompleteness: "complete",
-    },
-    safety: {
-      policyChecked: true,
-      disclosureLevel: "tenant-confidential",
-      containsRestrictedContent: false,
-      redactionsApplied: [],
-    },
-  })),
+  answerHomeAvaQuestion: jest.fn(
+    async ({ question }: { question: string }) => ({
+      surface: "home",
+      question,
+      mode: "KNOW",
+      status: "answered",
+      directAnswer: "Use the served Home record.",
+      factsUsed: [],
+      metricsUsed: [],
+      relationshipsUsed: [],
+      citations: [],
+      gaps: [],
+      caveats: [],
+      nextSteps: [],
+      artifacts: [],
+      quality: {
+        confidence: "high",
+        evidenceStrength: "strong",
+        tenantGrounding: "complete",
+        answerCompleteness: "complete",
+      },
+      safety: {
+        policyChecked: true,
+        disclosureLevel: "tenant-confidential",
+        containsRestrictedContent: false,
+        redactionsApplied: [],
+      },
+    }),
+  ),
 }));
 
 const mockedResolveBundle = jest.mocked(
@@ -188,6 +191,30 @@ beforeEach(() => {
     bundle: homeBundle(),
     recordSource: liveRecordSource(),
   });
+});
+
+it("carries the resolved registry declaration into the answer's visible basis", async () => {
+  const bundle = { ...homeBundle(), declaredSyntheticDemo: true };
+  mockedResolveBundle.mockResolvedValue({
+    bundle,
+    recordSource: liveRecordSource(),
+  });
+  const response = await POST(
+    makeRequest({
+      tenantKey: "meridian-health",
+      question: "What should leadership prioritize?",
+      expectedRecordSource: liveRecordSource(),
+    }),
+  );
+  const json = await response.json();
+  expect(response.status).toBe(200);
+  expect(mockedAnswerHomeAvaQuestion).toHaveBeenCalledWith(
+    expect.objectContaining({ bundle }),
+  );
+  expect(json.answer.prose).toContain(
+    "Synthetic reference, not client-attested",
+  );
+  expect(json.recordSource).toEqual(liveRecordSource());
 });
 
 it("answers from the same served Home bundle source that renders the page", async () => {

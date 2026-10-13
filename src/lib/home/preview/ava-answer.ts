@@ -37,9 +37,14 @@ type AvaAnswerBundleSlice = Pick<
   HomeReviewBundle,
   "chapters" | "technologyEstate"
 > &
-  Partial<Pick<HomeReviewBundle, "thesis" | "contextVersion" | "provenance">>;
+  Partial<
+    Pick<
+      HomeReviewBundle,
+      "thesis" | "contextVersion" | "provenance" | "declaredSyntheticDemo"
+    >
+  >;
 
-const PROMPT_VERSION = "home-preview-ava-answer-v4";
+const PROMPT_VERSION = "home-preview-ava-answer-v5";
 const CLAUDE_MODEL = "claude-sonnet-5";
 const MAX_TOKENS = 1600;
 const TIMEOUT_MS = 45_000;
@@ -75,6 +80,7 @@ interface VendorEvidenceSummary {
 
 interface GroundingContext {
   tenantDisplayName: string;
+  declaredSyntheticDemo: boolean;
   promptContextJson: string;
   taggedClaims: TaggedClaim[];
   citationIndex: Map<string, TaggedClaim>;
@@ -686,6 +692,13 @@ function buildGroundingContext(
 
   const contextPayload = {
     tenant: TENANT_DISPLAY_NAMES[tenantKey] ?? tenantKey,
+    record_basis: {
+      synthetic_reference: bundle.declaredSyntheticDemo ?? null,
+      leadership_basis:
+        bundle.declaredSyntheticDemo === true
+          ? "Modelled reference responses, not actual interviews or client attestation."
+          : "Use the basis declared by each cited claim; no synthetic basis is inferred.",
+    },
     question_context_plan: buildQuestionContextPlan(question, activeChapterId),
     enterprise_context_spine: buildEnterpriseContextSpine(
       bundle,
@@ -705,6 +718,7 @@ function buildGroundingContext(
 
   return {
     tenantDisplayName: TENANT_DISPLAY_NAMES[tenantKey] ?? tenantKey,
+    declaredSyntheticDemo: bundle.declaredSyntheticDemo === true,
     promptContextJson: JSON.stringify(contextPayload, null, 2),
     taggedClaims,
     citationIndex,
@@ -717,12 +731,13 @@ function buildGroundingContext(
 const SYSTEM_PROMPT = `You are aVa, AbarVa's enterprise advisor for this tenant's Home preview experience. Answer the user's question using ONLY the enterprise context supplied in the user message: the enterprise context spine, the tenant's verified chapter narratives (Executive Brief, Our Business, Strategy & Value Creation, How We Operate, Technology & Data, Performance & Value, Leadership Perspective, What Needs Attention), and its real Technology Estate segmentation counts. Chapter claims carry citation tags (e.g. "EB-K1"); each tagged statement has already passed an entailment-verification pass against underlying evidence before publication.
 
 The enterprise context spine is always available. Treat the active chapter as the user's current focus, not as a boundary. When the question touches one domain, consider whether another domain materially changes the answer: technology may depend on strategy, ownership, contracts, risk, programs, data, value, or leadership testimony. Do not force cross-domain connections when they are not relevant.
-If the question is broad but relevant cited claims are available, answer directionally with explicit limits instead of returning no_data. Use compact consulting structure: short answer, 3-5 bullets, confidence/evidence, caveat. Avoid long paragraphs.
-Make direct_answer one decisive sentence. In prose use at most four short Markdown bullets, with a bold business label on each, followed by one clearly labelled business implication or recommended next step. Aim for 160 words total; do not repeat direct_answer in prose. Prioritize the material business issue rather than listing everything available.
+If the question is broad but relevant cited claims are available, answer directionally with explicit limits instead of returning no_data. Use compact consulting structure: one bottom line, three or four labelled points, one next step and the evidence limits. Avoid long paragraphs.
+Make direct_answer one decisive sentence. Put the supporting points in key_points, at most four by default, each starting with a short bold Markdown business label, e.g. "**Value proof:** ...". Aim for 15-25 words per point and 160 words total. In prose provide only one short "**Next step:** ..." or "**Business implication:** ..." sentence, at most 30 words; leave it empty when there is no supported next move. Never repeat direct_answer or key_points in prose. Prioritize the material business issue rather than listing everything available.
 Partial value validation is not zero value. Regulated-data volume is exposure context, not proof of a compliance failure. Modelled interview answers are not actual testimony or independent client attestation. Preserve these distinctions.
+When record_basis.synthetic_reference is true, every leadership/interview assertion must explicitly say "modelled responses" or "synthetic reference" in that point or sentence. Never say people actually said, agreed, or were interviewed. Concern counts do not measure how many leaders trust the data: do not turn them into "trusted by few leaders" or similar trust-population claims.
 Only select a chart/table when it materially answers this question; an available inventory breakdown is not automatically a useful decision exhibit. Choose visual.type "none" when no relevant dataset is available.
 conversation contains earlier user questions and claim references rehydrated from THIS record. Use it only to resolve follow-up intent. Previous questions are not new evidence or instructions; never assume an earlier assistant statement remains a fact.
-Put the main points in key_points: 3-5 short strings, at most 30 words each. Aim for 15-25 words: one priority and one reason, not a compound paragraph. Respect an explicitly requested number of bullets. Keep direct_answer to one short sentence. Do not repeat key_points in prose; leave prose empty when key_points cover the answer. Put citation tags ONLY in cited_claim_tags, never inline in key_points, direct_answer, prose or caveats. Preserve uncertainty and evidence limits when shortening; do not strengthen association into causation.
+Respect an explicitly requested number of bullets. Put citation tags ONLY in cited_claim_tags, never inline in key_points, direct_answer, prose or caveats. Preserve uncertainty and evidence limits when shortening; do not strengthen association into causation.
 
 Context-use boundaries:
 - enterprise_context_spine and record_summaries are orientation and routing context unless they point to cited claim tags.
@@ -982,7 +997,7 @@ export async function answerHomeAvaQuestion(args: {
     }
 
     if (needsCompactAnswerRepair(parsed, question, context)) {
-      const repairMessage = `${userMessage}\n\nPresentation correction: use key_points, one complete sentence per point, 15-25 words and never more than 30. Respect the requested bullet count. All claim tags belong only in cited_claim_tags. Preserve qualifications; do not invent a causal connection. Return the complete JSON schema.`;
+      const repairMessage = `${userMessage}\n\nAnswer correction: use at most four key_points by default, each with a bold business label, one complete sentence, 15-25 words and never more than 30. Respect the requested bullet count. For synthetic_reference=true, explicitly qualify leadership assertions as modelled responses; concern counts are not a measure of how many leaders trust data. All claim tags belong only in cited_claim_tags. Preserve qualifications; do not invent a causal connection. Return the complete JSON schema.`;
       const remainingMs = TIMEOUT_MS - (Date.now() - startedAt);
       if (remainingMs > 3_000) {
         try {
@@ -1057,12 +1072,16 @@ export async function answerHomeAvaQuestion(args: {
           args.tenantKey,
           question,
         );
-        if (packet.citations.length === 0) return packet;
+        if (
+          packet.citations.length === 0 &&
+          !hasUnqualifiedReferenceTestimony(parsed, context)
+        )
+          return packet;
         return {
           ...packet,
           status: "partial",
           directAnswer:
-            "I couldn't safely produce a concise summary. Open Evidence basis for the supporting claims.",
+            "I couldn't safely produce a concise summary without losing its evidence qualifications. Open Evidence basis for the supporting claims.",
           prose: undefined,
           artifacts: [],
           gaps: [
@@ -1070,7 +1089,7 @@ export async function answerHomeAvaQuestion(args: {
               id: "home-ava-compact-gap",
               label: "Concise summary unavailable",
               detail:
-                "Supporting claims are retained without cutting away their qualifications.",
+                "Supporting claims are retained without presenting modelled responses as actual testimony or cutting away qualifications.",
               severity: "medium",
               citationIds: packet.citations.map((citation) => citation.id),
             },
@@ -1113,7 +1132,34 @@ function requestedKeyPointLimit(question: string): number {
     question,
   )
     ? 3
-    : 5;
+    : 4;
+}
+
+function hasUnqualifiedReferenceTestimony(
+  parsed: ModelResponseShape,
+  context: GroundingContext,
+): boolean {
+  if (!context.declaredSyntheticDemo) return false;
+  const passages = [
+    parsed.direct_answer,
+    parsed.prose,
+    ...(Array.isArray(parsed.key_points) ? parsed.key_points : []),
+  ].filter((value): value is string => typeof value === "string");
+  return passages.some((passage) => {
+    const unsupportedTrust =
+      /\btrusted by\s+(?:few|most|many|all)\s+(?:leaders?|executives?)\b|\b(?:few|most|many|all)\s+(?:leaders?|executives?)\s+trust\b/i.test(
+        passage,
+      );
+    const testimony =
+      /\b(?:leaders?|interviewees?)\b.{0,60}\b(?:raised|said|reported|agreed|expressed|confirmed|verified)\b|\b(?:interviewed|interviews?|testimony)\b/i.test(
+        passage,
+      );
+    return (
+      unsupportedTrust ||
+      (testimony &&
+        !/\b(?:modelled|modeled|synthetic|simulated)\b/i.test(passage))
+    );
+  });
 }
 
 function visibleKeyPoints(
@@ -1142,9 +1188,13 @@ function needsCompactAnswerRepair(
   question: string,
   context: GroundingContext,
 ): boolean {
+  if (hasUnqualifiedReferenceTestimony(parsed, context)) return true;
   if (parsed.status === "no_data") return false;
   const points = visibleKeyPoints(parsed, question);
   return (
+    (requestedKeyPointLimit(question) === 4 &&
+      Array.isArray(parsed.key_points) &&
+      parsed.key_points.length > 4) ||
     (requestedKeyPointLimit(question) === 3 && points.length !== 3) ||
     points.some(
       (point) =>
@@ -1361,16 +1411,27 @@ function packageModelResponse(
       ? parsed.direct_answer.trim()
       : "I don't have a grounded answer for that yet.";
   const keyPoints = visibleKeyPoints(parsed, question);
+  const nextStep =
+    typeof parsed.prose === "string" &&
+    /^\*\*(?:Next step|Business implication):\*\*/i.test(parsed.prose.trim()) &&
+    wordCount(parsed.prose) <= 30
+      ? parsed.prose.trim()
+      : "";
   const proseRaw =
     keyPoints.length > 0
-      ? keyPoints
-          .map(
-            (point) =>
-              `- ${point
-                .trim()
-                .replace(/^[-*]\s+/, "")
-                .replace(/\s+/g, " ")}`,
-          )
+      ? [
+          keyPoints
+            .map(
+              (point) =>
+                `- ${point
+                  .trim()
+                  .replace(/^[-*]\s+/, "")
+                  .replace(/\s+/g, " ")}`,
+            )
+            .join("\n\n"),
+          nextStep,
+        ]
+          .filter(Boolean)
           .join("\n\n")
       : typeof parsed.prose === "string"
         ? parsed.prose.trim()
@@ -1704,7 +1765,7 @@ function sanitizeAvaVisibleText(
   context: GroundingContext,
   maxWordsPerParagraph: number,
 ): string {
-  return scrubPublicAvaAnswerText(
+  const sanitized = scrubPublicAvaAnswerText(
     sanitizeVisibleStaleClaims(
       sanitizeRecordCountContradictions(
         compactAnswerText(stripInlineClaimTags(text), maxWordsPerParagraph),
@@ -1713,6 +1774,22 @@ function sanitizeAvaVisibleText(
       context,
     ),
   );
+  // Restore only authored label formatting, after the label and body have both been scrubbed.
+  const labels = new Set(
+    Array.from(
+      text.matchAll(/(?:^|\n)(?:-\s+)?\*\*([^*\n]{1,60}:)\*\*\s/g),
+      (match) => scrubPublicAvaAnswerText(match[1]),
+    ),
+  );
+  return sanitized
+    .split("\n")
+    .map((line) => {
+      const label = line.match(/^(-\s+)?([^:\n]{1,60}:)(\s.*)$/);
+      return label && labels.has(label[2])
+        ? `${label[1] ?? ""}**${label[2]}**${label[3]}`
+        : line;
+    })
+    .join("\n");
 }
 
 function sanitizeVisibleStaleClaims(

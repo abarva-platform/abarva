@@ -214,6 +214,227 @@ describe("answerHomeAvaQuestion", () => {
     mockGetAuditedAnthropicClient.mockReset();
   });
 
+  const leadershipChapter: ChapterView = {
+    ...CHAPTERS[0],
+    chapterId: "leadership_perspective",
+    title: "Leadership Perspective",
+    key_insights: [
+      {
+        statement:
+          "Modelled reference responses: 36 of 44 leaders raised data trust concerns.",
+        evidence_ids: ["modelled-reference-1"],
+        confidence: "high",
+        claim_type: "FACT",
+      },
+    ],
+  };
+  const referenceAnswer = {
+    status: "answered",
+    direct_answer: "Data trust needs verification.",
+    key_points: [
+      "**Leadership:** Modelled responses: 36 of 44 leaders raised data trust concerns.",
+    ],
+    cited_claim_tags: ["LP-K1"],
+    visual: { type: "none" },
+    caveats: [],
+  };
+
+  it.each([true, false, undefined])(
+    "uses the registry's declared reference basis (%s), not the tenant alias",
+    async (declaredSyntheticDemo) => {
+      mockClaudeJson(referenceAnswer);
+      await answerHomeAvaQuestion({
+        bundle: {
+          chapters: [...CHAPTERS, leadershipChapter],
+          declaredSyntheticDemo,
+        },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question: "What should leadership verify?",
+      });
+      const prompt = mockGetAuditedAnthropicClient.mock.calls[0][0].prompt;
+      expect(prompt).toContain(
+        `"synthetic_reference": ${declaredSyntheticDemo ?? "null"}`,
+      );
+    },
+  );
+
+  it("repairs unqualified reference testimony and unsupported trust-population inference", async () => {
+    const unsafe = {
+      ...referenceAnswer,
+      direct_answer: "The data is trusted by few leaders.",
+      key_points: ["36 of 44 leaders raised data trust concerns."],
+    };
+    const create = jest
+      .fn()
+      .mockResolvedValueOnce({
+        content: [{ type: "text", text: JSON.stringify(unsafe) }],
+      })
+      .mockResolvedValueOnce({
+        content: [{ type: "text", text: JSON.stringify(referenceAnswer) }],
+      });
+    mockGetAuditedAnthropicClient.mockResolvedValue({
+      client: { messages: { create } },
+    } as never);
+    const answer = await answerHomeAvaQuestion({
+      bundle: {
+        chapters: [...CHAPTERS, leadershipChapter],
+        declaredSyntheticDemo: true,
+      },
+      tenantKey: "test-tenant",
+      question: "What does the record say about data trust?",
+    });
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(answer.directAnswer).not.toContain("trusted by few");
+    expect(answer.prose).toContain("Modelled responses");
+    expect(answer.citations.map((c) => c.id)).toContain("LP-K1");
+    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+  });
+
+  it.each([
+    {
+      direct_answer: "Data trust needs verification.",
+      key_points: ["36 of 44 leaders raised data trust concerns."],
+    },
+    {
+      direct_answer: "Modelled responses show data is trusted by few leaders.",
+      key_points: referenceAnswer.key_points,
+    },
+  ])(
+    "withholds unsafe reference wording when the bounded repair cannot qualify it",
+    async (unsafe) => {
+      mockClaudeJson({ ...referenceAnswer, ...unsafe });
+      const answer = await answerHomeAvaQuestion({
+        bundle: {
+          chapters: [...CHAPTERS, leadershipChapter],
+          declaredSyntheticDemo: true,
+        },
+        tenantKey: "test-tenant",
+        question: "What does the record say about data trust?",
+      });
+      expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(2);
+      expect(answer.status).toBe("partial");
+      expect(answer.directAnswer).toContain("evidence qualifications");
+      expect(answer.prose).toBeUndefined();
+      expect(answer.artifacts).toEqual([]);
+      expect(answer.citations.map((c) => c.id)).toContain("LP-K1");
+    },
+  );
+
+  it.each([false, undefined])(
+    "does not relabel undeclared or non-reference testimony (%s)",
+    async (declaredSyntheticDemo) => {
+      mockClaudeJson({
+        ...referenceAnswer,
+        key_points: ["36 of 44 leaders raised data trust concerns."],
+      });
+      await answerHomeAvaQuestion({
+        bundle: {
+          chapters: [...CHAPTERS, leadershipChapter],
+          declaredSyntheticDemo,
+        },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question: "What do the interviews say?",
+      });
+      expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.each(["answered", "no_data"])(
+    "does not publish unsafe testimony without citations (%s)",
+    async (status) => {
+      mockClaudeJson({
+        ...referenceAnswer,
+        status,
+        key_points: ["36 of 44 leaders raised data trust concerns."],
+        cited_claim_tags: [],
+      });
+      const answer = await answerHomeAvaQuestion({
+        bundle: {
+          chapters: [...CHAPTERS, leadershipChapter],
+          declaredSyntheticDemo: true,
+        },
+        tenantKey: "test-tenant",
+        question: "What do the interviews say?",
+      });
+      expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(2);
+      expect(answer.directAnswer).toContain("evidence qualifications");
+      expect(answer.prose).toBeUndefined();
+      expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+    },
+  );
+
+  it("retains a short labelled next step alongside the supporting points", async () => {
+    mockClaudeJson({
+      ...referenceAnswer,
+      prose:
+        "**Next step:** Verify the underlying data before making an investment decision.",
+    });
+    const answer = await answerHomeAvaQuestion({
+      bundle: {
+        chapters: [...CHAPTERS, leadershipChapter],
+        declaredSyntheticDemo: true,
+      },
+      tenantKey: "test-tenant",
+      question: "What should leadership verify?",
+    });
+    expect(answer.prose).toContain("**Next step:**");
+    expect(answer.prose).toContain("**Leadership:**");
+    expect(answer.citations.map((c) => c.id)).toContain("LP-K1");
+  });
+
+  it("repairs excess default points instead of silently dropping the fifth business issue", async () => {
+    const points = [
+      "**One:** Verify value proof.",
+      "**Two:** Review evidence.",
+      "**Three:** Check ownership.",
+      "**Four:** Validate outcomes.",
+      "**Five:** Confirm assumptions.",
+    ];
+    const initial = { ...referenceAnswer, key_points: points };
+    const create = jest
+      .fn()
+      .mockResolvedValueOnce({
+        content: [{ type: "text", text: JSON.stringify(initial) }],
+      })
+      .mockResolvedValueOnce({
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              ...initial,
+              key_points: points.slice(0, 4),
+            }),
+          },
+        ],
+      });
+    mockGetAuditedAnthropicClient.mockResolvedValue({
+      client: { messages: { create } },
+    } as never);
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: [...CHAPTERS, leadershipChapter] },
+      tenantKey: "test-tenant",
+      question: "What should leadership verify?",
+    });
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(answer.prose?.match(/^-/gm)).toHaveLength(4);
+  });
+
+  it("does not restore unsanitized internal terms when preserving bold labels", async () => {
+    mockClaudeJson({
+      ...referenceAnswer,
+      key_points: ["**source_record_id:** Verify APP-001 before acting."],
+    });
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: [...CHAPTERS, leadershipChapter] },
+      tenantKey: "test-tenant",
+      question: "What should be verified?",
+    });
+    expect(answer.prose).not.toContain("source_record_id");
+    expect(answer.prose).not.toContain("APP-001");
+    expect(answer.prose).toContain("**source reference:**");
+    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+  });
+
   it("answers visible family row counts without asking a model", async () => {
     const answer = await answerHomeAvaQuestion({
       bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
