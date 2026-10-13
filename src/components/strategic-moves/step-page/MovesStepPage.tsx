@@ -440,20 +440,6 @@ export function useStepPageTheme() {
   return { theme, effective, toggle, mounted };
 }
 
-/** The existing notes slot shares the step's tokens and current theme. */
-export function StepNotesPanel({ children }: { children: ReactNode }) {
-  const { theme } = useStepPageTheme();
-  return (
-    <section
-      className={cx("notes-panel")}
-      data-theme={theme ?? undefined}
-      aria-label="Session notes"
-    >
-      {children}
-    </section>
-  );
-}
-
 type WorkspaceIdentity = Pick<
   MovesStepPageProps,
   "moveName" | "clientDisplayName" | "syntheticNote" | "tabs" | "phases"
