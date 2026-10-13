@@ -52,8 +52,10 @@ actor, source IDs, phases, versions and hashes. No tenant list or filename infer
 
 ## QA / Validation
 
-- PASS: 41 focused tests across three suites and full Node 24 typecheck.
-- PASS: changed-file lint with zero warnings, 16 mutation checks killed/restored,
+- PASS: 42 focused tests across three suites and full Node 24 typecheck.
+- Operator startup uses the existing Node marker preload, inherited by the tsx
+  child process. A real npm entry check refuses a changed cohort hash before data access.
+- PASS: changed-file lint with zero warnings, 17 mutation checks killed/restored,
   no new library/route/export orphans, 19 export audit tests, five corpus gates,
   genuine manual/census/tenancy regeneration and all 11 release gates.
 - PASS: nine Azure/broker regression suites, 128 tests.

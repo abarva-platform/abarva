@@ -1,5 +1,9 @@
 jest.mock("server-only",()=>({}));
 import { createHash } from "node:crypto";
+import { mkdtempSync,writeFileSync,rmSync,existsSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
 import manifestJson from "@/../docs/governance/dataset-manifests/moves-reviewed-source-preparation-v1.json";
 import type { DatasetManifest } from "@/lib/governance/dataset-manifest";
@@ -28,6 +32,15 @@ function fixture() {
 }
 
 describe("exact source preparation",()=>{
+  it("starts the real operator entry and refuses a changed input before data access",()=>{
+    const dir=mkdtempSync(path.join(tmpdir(),"source-entry-refusal-"));
+    try {
+      const file=path.join(dir,"cohort.json"),out=path.join(dir,"plan.json");writeFileSync(file,"{}\n");
+      const root=path.resolve(__dirname,"../../../..");
+      const result=spawnSync(process.platform==="win32"?"npm.cmd":"npm",["run","ops:moves-source-plan","--","--cohort-file",file,"--cohort-file-sha256","0".repeat(64),"--out",out],{cwd:root,encoding:"utf8",timeout:15000,env:{...process.env,PATH:`${path.dirname(process.execPath)}${path.delimiter}${process.env.PATH??""}`}});
+      expect(result.error).toBeUndefined();expect(result.status).toBe(1);expect(result.stderr.trim()).toBe("source_cohort_file_changed");expect(existsSync(out)).toBe(false);
+    } finally {rmSync(dir,{recursive:true,force:true});}
+  });
   it("plans three current sources and defers five future sources without earning readiness",()=>{
     const {cohort,snapshot}=fixture();const plan=prepareExactSourcePlan(cohort,snapshot,manifest);
     expect(plan.sources.filter(source=>source.eligible)).toHaveLength(3);
