@@ -12,9 +12,15 @@
   "retrieval_proof_required": false,
   "pii_phi_handling": null,
   "expected_object_count": 987,
-  "approved_by": "Pending human review",
+  "approved_by": "Anand Sundaram",
   "approved_at": "2026-10-13",
-  "load_approval": null,
+  "load_approval": {
+    "approved_by": "Anand Sundaram",
+    "approved_at": "2026-10-13",
+    "assessment_id": "tower-rich-synthetic-candidate-c50d17bfb71b92b7",
+    "source_set_hash": "c50d17bfb71b92b7392e247ca75f33965b9ee4639b6a6fd295ebf9a5884e0c40",
+    "release_record": "docs/releases/records/2026-10-13-tower-rich-synthetic-source-reconciliation.md"
+  },
   "serving_approval": null,
-  "notes": "Draft declaration only; the approved_by placeholder is not an approval. The generated package remains no_runtime_load=true. Source project budgets explicitly name FY26 and reconcile by domain to the synthetic Finance envelope. Source-stated annual benefit and ROI are marked synthetic_sponsor_scenario_not_finance_actual; ROI uses high build-cost estimate as denominator. No current-client spend, realized ROI, Finance attestation, private load or Tower serving is claimed. Before loading, replace the declaration placeholder with a named human decision and add exact-version load approval. Serving requires a separate exact-version approval."
+  "notes": "Named exact-version approval authorizes private ACA loading of this synthetic candidate only. Serving approval remains separate and is not recorded. Source project budgets name FY26 and reconcile by domain to the synthetic Finance envelope. Source-stated annual benefit and ROI are sponsor scenarios, not Finance actuals. No current-client spend, realized ROI, Finance attestation, private load, or Tower serving is claimed by this declaration."
 }

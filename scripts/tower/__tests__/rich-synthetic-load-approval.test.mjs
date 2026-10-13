@@ -62,14 +62,14 @@ function fixture(t) {
   };
 }
 
-test("offline declaration reports pending without authorizing a load", async () => {
-  const manifest = JSON.parse(fs.readFileSync(path.join(SOURCE, "package_manifest.json"), "utf8"));
-  const result = await checkRichSyntheticLoadApproval({
-    packageDir: SOURCE,
-    assessmentId: manifest.assessment_id,
-    tenantKey: manifest.tenant_key,
-    releaseRecord: RELEASE_RECORD,
-  });
+test("offline declaration reports pending without authorizing a load", async (t) => {
+  const f = fixture(t);
+  f.packageManifest.no_runtime_load = true;
+  fs.writeFileSync(path.join(f.packageDir, "package_manifest.json"), JSON.stringify(f.packageManifest));
+  f.declaration.approved_by = "Pending human review";
+  f.declaration.load_approval = null;
+  fs.writeFileSync(f.declarationPath, JSON.stringify(f.declaration));
+  const result = await checkRichSyntheticLoadApproval(f.binding);
   assert.equal(result.status, "pending");
   assert.match(result.reasons.join("; "), /no_runtime_load|no load_approval/);
 });
