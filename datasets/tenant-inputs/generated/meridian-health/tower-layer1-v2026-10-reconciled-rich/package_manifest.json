@@ -1,0 +1,229 @@
+{
+  "package_id": "meridian-layer1-synthetic-20261013-reconciled",
+  "assessment_id": "tower-rich-synthetic-candidate-c50d17bfb71b92b7",
+  "source_set_hash": "c50d17bfb71b92b7392e247ca75f33965b9ee4639b6a6fd295ebf9a5884e0c40",
+  "source_set_hash_basis": "sha256(JSON.stringify(sorted Layer 1 source file paths, row counts, and SHA-256 values))",
+  "tenant_key": "meridian-health",
+  "generated_at": "2026-10-13T12:00:00.000Z",
+  "package_type": "tower_full_synthetic_layer_cube_package",
+  "status": "offline_layer_cube_proof_no_load_no_deploy",
+  "no_runtime_load": true,
+  "layers": {
+    "layer_1_client_intake": "generated",
+    "layer_2_source_adapters": "generated",
+    "layer_3_canonical": "generated",
+    "cube": "generated",
+    "layer_4_read_models": "generated"
+  },
+  "revenue_usd": 20400000000,
+  "total_it_budget_usd": 1050000000,
+  "tower_reviewed_project_budget_usd": 703100000,
+  "source_plan_basis": "synthetic_sponsor_scenario_not_finance_actual",
+  "files": [
+    {
+      "file": "20_it_budget_by_domain.csv",
+      "rows": 8,
+      "sha256": "9cea5833c16d01af1f52af871d83867549621c3c08f0d137ed9d8188128d78c9"
+    },
+    {
+      "file": "layer_1_client_intake/source_system_extracts/20_it_budget_by_domain.csv",
+      "rows": 8,
+      "sha256": "9cea5833c16d01af1f52af871d83867549621c3c08f0d137ed9d8188128d78c9"
+    },
+    {
+      "file": "layer_1_client_intake/source_system_extracts/21_it_project_portfolio.csv",
+      "rows": 140,
+      "sha256": "6955be032ac119b21ae3a0eabc48ae59b3303c6b89f88280906d8c6aae02dc44"
+    },
+    {
+      "file": "layer_1_client_intake/source_system_extracts/22_ai_business_cases.csv",
+      "rows": 42,
+      "sha256": "226dd4b95b1fc3056e0479f3d042aaf2080aba20a6228e26616c85b901b42bbe"
+    },
+    {
+      "file": "layer_1_client_intake/source_system_extracts/23_ai_tool_rollout.csv",
+      "rows": 13,
+      "sha256": "4328fd4ea94365a6292750a68bfaa593f57e4e341e2ee54855b655abfbd69ebd"
+    },
+    {
+      "file": "layer_1_client_intake/source_system_extracts/24_monthly_value_tracking.csv",
+      "rows": 504,
+      "sha256": "e99374c3402e0d15b09670b0737f7405e05688ae5bdfcccefb796fe40326bf8f"
+    },
+    {
+      "file": "layer_1_client_intake/source_system_extracts/25_finance_approval_ledger.csv",
+      "rows": 84,
+      "sha256": "251bbe7ed6d2f07802e4f33c637b0bd493792db0fc83d60bc795b16a13ab14f4"
+    },
+    {
+      "file": "layer_1_client_intake/source_system_extracts/26_evidence_register.csv",
+      "rows": 196,
+      "sha256": "ff06bba99332a2fac7485706899f0b748e592373b999e11c8a1b9afc7e992983"
+    },
+    {
+      "file": "21_it_project_portfolio.csv",
+      "rows": 140,
+      "sha256": "6955be032ac119b21ae3a0eabc48ae59b3303c6b89f88280906d8c6aae02dc44"
+    },
+    {
+      "file": "22_ai_business_cases.csv",
+      "rows": 42,
+      "sha256": "226dd4b95b1fc3056e0479f3d042aaf2080aba20a6228e26616c85b901b42bbe"
+    },
+    {
+      "file": "23_ai_tool_rollout.csv",
+      "rows": 13,
+      "sha256": "4328fd4ea94365a6292750a68bfaa593f57e4e341e2ee54855b655abfbd69ebd"
+    },
+    {
+      "file": "24_monthly_value_tracking.csv",
+      "rows": 504,
+      "sha256": "e99374c3402e0d15b09670b0737f7405e05688ae5bdfcccefb796fe40326bf8f"
+    },
+    {
+      "file": "25_finance_approval_ledger.csv",
+      "rows": 84,
+      "sha256": "251bbe7ed6d2f07802e4f33c637b0bd493792db0fc83d60bc795b16a13ab14f4"
+    },
+    {
+      "file": "26_evidence_register.csv",
+      "rows": 196,
+      "sha256": "ff06bba99332a2fac7485706899f0b748e592373b999e11c8a1b9afc7e992983"
+    },
+    {
+      "file": "00_layer1_readme.csv",
+      "rows": 1,
+      "sha256": "7f975d7c00a167e0a29165bad71ac0e668fad9b179a8db123843d3958704e457"
+    },
+    {
+      "file": "layer_1_client_intake/00_layer1_readme.csv",
+      "rows": 1,
+      "sha256": "7f975d7c00a167e0a29165bad71ac0e668fad9b179a8db123843d3958704e457"
+    },
+    {
+      "file": "layer_1_client_intake/source_file_manifest.csv",
+      "rows": 7,
+      "sha256": "a2c4f2bf8aa7bcf94d4dc8423eb7ff54e2321934aec450aae56f460200d5906e"
+    },
+    {
+      "file": "layer_2_source_adapters/adapter_runs.csv",
+      "rows": 7,
+      "sha256": "418f715a2147cbb858d8533f85921bdb9dbdd4b5732d78df478d78651295c728"
+    },
+    {
+      "file": "layer_2_source_adapters/adapter_emitted_objects.csv",
+      "rows": 987,
+      "sha256": "fddc18345ac6b2b328f27384dd465f4256cd86280c4856784978a099d3f95670"
+    },
+    {
+      "file": "layer_3_canonical/canonical_budgets.csv",
+      "rows": 8,
+      "sha256": "b1c3bc1607a638c00e3d8405959d3765369f7f6511dae3bdb41abe55d3c1d053"
+    },
+    {
+      "file": "layer_3_canonical/canonical_projects.csv",
+      "rows": 140,
+      "sha256": "349577e795a72d6952c2bb209981ceeb8c18bd5b5ad22c7cc526d142c8dfeeb2"
+    },
+    {
+      "file": "layer_3_canonical/canonical_ai_use_cases.csv",
+      "rows": 42,
+      "sha256": "c499d9f0f2e01f984bc3a76b618420fa0092f8c524187cbc79212e088d7f3212"
+    },
+    {
+      "file": "layer_3_canonical/canonical_tools.csv",
+      "rows": 13,
+      "sha256": "f6c803994f2ee361df2f3056e851fa02dacfa261ae9c98ff2b8105d0010ae49a"
+    },
+    {
+      "file": "layer_3_canonical/canonical_monthly_value_observations.csv",
+      "rows": 504,
+      "sha256": "4315afc932b6c1854e08fdc383d82af518e78700cdd97369e9b2177cad164c64"
+    },
+    {
+      "file": "layer_3_canonical/canonical_finance_approval_events.csv",
+      "rows": 84,
+      "sha256": "49ad1260f4ef6a2fc7e8a3d91e47c45aa44578e055a6f9e593de01b2e25c2676"
+    },
+    {
+      "file": "layer_3_canonical/canonical_evidence_items.csv",
+      "rows": 196,
+      "sha256": "17d48c84e0cfc0629ec9eb2a84ce632543623410886666ab975a2f28c421d228"
+    },
+    {
+      "file": "layer_3_canonical/canonical_relationships.csv",
+      "rows": 280,
+      "sha256": "26c50a61cab8c17b7c24f4cbf79d4e4407ef50879c5a3b294576870db7deb3ec"
+    },
+    {
+      "file": "cube/tower_ai_case_cube.csv",
+      "rows": 42,
+      "sha256": "bc326ebab197ddc0f9bdb5c74a65a0eaff30ce8f1bc12c2d1513f04d97087e97"
+    },
+    {
+      "file": "cube/tower_ai_portfolio_cube.csv",
+      "rows": 21,
+      "sha256": "4ffe5150c6ffbd5a3873e95c5b1710db542e2e307415a90f6f49f365d0bc30e3"
+    },
+    {
+      "file": "cube/tower_ai_tool_rollout_cube.csv",
+      "rows": 13,
+      "sha256": "f270c5b4539ad9ea1a21c051f5203db533c88ed17566f8bdf4eb9eea9f1552c5"
+    },
+    {
+      "file": "cube/cube_measures.csv",
+      "rows": 14,
+      "sha256": "f1b77e151b8df2274c4ae90646a1c45c1abdfab5992b2def3a2ca7307d16233a"
+    },
+    {
+      "file": "cube/cube_dimensions.csv",
+      "rows": 25,
+      "sha256": "5a64075504caad0d79c8f48e2eb912da58c7eb0dfc2a442e71b05b0db8a66078"
+    },
+    {
+      "file": "cube/cube_gate_flags.csv",
+      "rows": 4,
+      "sha256": "c8a33648730bb074906062613a95eeee8f37bd4cd2860112358813ff9b05dc8a"
+    },
+    {
+      "file": "layer_4_read_models/tower_executive_summary.csv",
+      "rows": 1,
+      "sha256": "9d01a66d0677d5144ec833e248ffa2a3f6f3ea2c08972b7c9eefa1e7fdd57957"
+    },
+    {
+      "file": "layer_4_read_models/tower_ai_initiatives_table.csv",
+      "rows": 42,
+      "sha256": "3bf996c2103bc3dae0ac5d325ed49e690fa2a15d7e3c7ab13586d81ba7ca6554"
+    },
+    {
+      "file": "layer_4_read_models/tower_tools_table.csv",
+      "rows": 13,
+      "sha256": "4328fd4ea94365a6292750a68bfaa593f57e4e341e2ee54855b655abfbd69ebd"
+    },
+    {
+      "file": "layer_4_read_models/tower_value_proof_queue.csv",
+      "rows": 34,
+      "sha256": "1159f8f870cf0b5493feb54c93b0f3a0eb34d2bf8258da030cd3a6ea7593ec20"
+    },
+    {
+      "file": "README.md",
+      "rows": null,
+      "sha256": "766c4c6603fa754187da8226a93d509b126d13a6cc0590a9d758bab0d38db856"
+    },
+    {
+      "file": "layer_1_client_intake/LAYER_1_SIGNOFF.md",
+      "rows": null,
+      "sha256": "886a1cbbcad952ab80a16b8b6daf0d4664e1803f38fe733c5fd99bfa3e6983c1"
+    },
+    {
+      "file": "layer_2_source_adapters/LAYER_2_SIGNOFF.md",
+      "rows": null,
+      "sha256": "712aa4be3bc7a0792da4b3b8e89533f98345fab44405743a68c04280829a6a62"
+    },
+    {
+      "file": "layer_3_canonical/LAYER_3_SIGNOFF.md",
+      "rows": null,
+      "sha256": "2e90f1ecf8a300b9b80fb19527ecd18dc30f345f93791c882bf32399cd806307"
+    }
+  ]
+}

@@ -313,6 +313,42 @@ export function CommandCenterView({
   onGoToAi: () => void;
   onGoToActions: () => void;
 }) {
+  const plannedCases = view.allInitiatives.filter((item) => isBusinessCase(item) && item.sourcePlan != null);
+  if (plannedCases.length > 0) {
+    const topCases = [...plannedCases]
+      .sort((a, b) => (b.sourcePlan?.fundingUsd ?? -1) - (a.sourcePlan?.fundingUsd ?? -1))
+      .slice(0, 6);
+    const withProjectedRoi = plannedCases.filter((item) => item.sourcePlan?.roiLowMultiple != null).length;
+    const withProjectSpend = plannedCases.filter((item) => item.projectName && item.actualSpendYtdUsd != null).length;
+    return (
+      <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+        <h2 style={{ margin: 0, fontFamily: "var(--abarva-serif)", fontWeight: 500, fontSize: 26 }}>
+          Decide which AI bets to scale, repair, or stop after comparing the synthetic plan with use and measured results.
+        </h2>
+        <p style={{ margin: 0, maxWidth: 1000, fontSize: 15, lineHeight: 1.6 }}>
+          {formatCount(plannedCases.length)} source case plans are loaded; {formatCount(withProjectedRoi)} show projected return on investment and {formatCount(withProjectSpend)} link to project spending records. These counts describe source coverage, not successful investments. The Finance stages are synthetic source assertions, not independent approval.
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
+          <article style={{ padding: 20, background: "var(--canon-bg-surface)", border: "1px solid var(--canon-border)" }}><h3>Scale only with proof</h3><p>Match actual tool use, measured outcomes, and a Finance-cleared value to the same case and period.</p><button type="button" onClick={onGoToFunnel}>Review results and proof</button></article>
+          <article style={{ padding: 20, background: "var(--canon-bg-surface)", border: "1px solid var(--canon-border)" }}><h3>Repair the weak spots</h3><p>Check underused rollouts, missing baselines, and cases whose source plan lacks a clear result.</p><button type="button" onClick={onGoToAi}>Review tools and cases</button></article>
+          <article style={{ padding: 20, background: "var(--canon-bg-surface)", border: "1px solid var(--canon-border)" }}><h3>Consider a stop decision</h3><p>Pause expansion where evidence is missing; decide to stop only after the owner and Finance review costs, usage, and alternatives.</p><button type="button" onClick={onGoToActions}>Review the proof queue</button></article>
+        </div>
+        <div style={{ background: "var(--canon-bg-surface)", border: "1px solid var(--canon-border)", padding: "20px 24px" }}>
+          <h3 style={{ margin: "0 0 10px" }}>Largest proposed case funding to examine</h3>
+          {topCases.map((item) => (
+            <div key={item.id} style={{ display: "grid", gridTemplateColumns: "minmax(200px, 1fr) 120px minmax(130px, 1fr)", gap: 16, borderTop: "1px solid var(--canon-border)", padding: "12px 0" }}>
+              <span>{item.name}{item.vendor ? ` · ${item.vendor}` : ""}</span>
+              <strong>{item.sourcePlan?.fundingUsd == null ? "Not stated" : formatUsdM(item.sourcePlan.fundingUsd)}</strong>
+              <span>Finance stage in synthetic source: {item.financeStatus?.replaceAll("_", " ") ?? "Not stated"}</span>
+            </div>
+          ))}
+        </div>
+        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.55, color: "var(--canon-gray-500)" }}>
+          Proposed funding is case-level and may overlap project spend. No proposed funding, project spend, tool bill, or projected benefit is added into an approved portfolio total here.
+        </p>
+      </section>
+    );
+  }
   const s = view.summary;
   const claims = valueClaimCount(view);
   const missingActualClaims = Math.max(0, claims - s.outcomeMeasuredClaimCount);

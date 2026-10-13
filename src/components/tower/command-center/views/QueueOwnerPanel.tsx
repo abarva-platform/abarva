@@ -87,6 +87,39 @@ function fundingLabel(row: OwnerRow): string {
 }
 
 export function QueueOwnerPanel({ view }: { view: TowerCommandCenterView }) {
+  const sourcePlanCases = view.allInitiatives.filter((item) => isBusinessCase(item) && item.sourcePlan != null);
+  if (sourcePlanCases.length > 0) {
+    const bySponsor = new Map<string, { cases: number; withRoi: number; withProjectSpend: number }>();
+    for (const item of sourcePlanCases) {
+      const sponsor = item.sponsorRole ?? "Sponsor not stated";
+      const current = bySponsor.get(sponsor) ?? { cases: 0, withRoi: 0, withProjectSpend: 0 };
+      bySponsor.set(sponsor, {
+        cases: current.cases + 1,
+        withRoi: current.withRoi + (item.sourcePlan?.roiLowMultiple != null ? 1 : 0),
+        withProjectSpend: current.withProjectSpend + (item.projectName && item.actualSpendYtdUsd != null ? 1 : 0),
+      });
+    }
+    const sponsors = [...bySponsor.entries()].sort((a, b) => b[1].cases - a[1].cases || a[0].localeCompare(b[0]));
+    return (
+      <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+        <h2 style={{ margin: 0, fontFamily: "var(--abarva-serif)", fontWeight: 500, fontSize: 26 }}>
+          {formatCount(sourcePlanCases.length)} synthetic AI case plans need an owner to connect projected return with actual use and results.
+        </h2>
+        <p style={{ margin: 0, lineHeight: 1.6 }}>These source sponsor roles help route review. A named role is not a task assignment or Finance approval.</p>
+        <div style={PANEL}>
+          {sponsors.map(([sponsor, count]) => (
+            <div key={sponsor} style={{ display: "grid", gridTemplateColumns: "minmax(200px, 1fr) repeat(3, 120px)", gap: 16, padding: "14px 22px", borderBottom: "1px solid var(--canon-border)" }}>
+              <strong>{sponsor}</strong>
+              <span>{formatCount(count.cases)} cases</span>
+              <span>{formatCount(count.withRoi)} ROI plans</span>
+              <span>{formatCount(count.withProjectSpend)} project spend links</span>
+            </div>
+          ))}
+        </div>
+        <p style={{ margin: 0, fontSize: 13, color: "var(--canon-gray-500)" }}>No funding, project spend, or benefit amounts are summed by owner: one project can support several cases, and planned return is not a realized result.</p>
+      </section>
+    );
+  }
   const rows = buildQueueOwnerRows(view);
   // The denominator has to be the same population the rows are built from.
   const total = rows.reduce((sum, row) => sum + row.count, 0);

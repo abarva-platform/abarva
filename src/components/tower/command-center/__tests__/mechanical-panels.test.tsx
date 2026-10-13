@@ -389,6 +389,27 @@ describe("mechanical Tower Command Center panels", () => {
     expect(text).not.toContain("Business case with usage");
   });
 
+  it("withholds adoption when active users exceed enabled users", () => {
+    const view = viewWith({
+      allInitiatives: [initiative({
+        id: "TOOL-CHECK",
+        name: "Tool needing source check",
+        populationKind: "tool_rollout",
+        usageHeadline: "Monthly active users · 281",
+        usageBars: [{ label: "Monthly active users", valueText: "281", pct: 54, tone: "amber" }],
+        enabledUsers: 234,
+        monthlyActiveUsers: 281,
+        adoptionActualPct: 54,
+        adoptionTargetPct: 60,
+      })],
+    });
+    const vendorRows = buildToolVendorRows(view);
+    expect(vendorRows[0]?.activeUsers).toBeNull();
+    render(<ToolsTablePanel view={view} />);
+    expect(document.body.textContent).toContain("monthly active users exceed enabled users");
+    expect(document.body.textContent).toContain("Usage needs source check");
+  });
+
   it("opens tool rollout details and explains control blockers in place", () => {
     const onOpenAi = jest.fn();
     render(
@@ -846,7 +867,8 @@ describe("mechanical Tower Command Center panels", () => {
       expect.objectContaining({ vendor: "Vendor Alpha", activeUsers: 150, toolCount: 3 }),
     ]));
     render(<ToolsVendorPanel view={view} />);
-    expect(document.body.textContent).toContain("Active-user counts across tools by vendor");
+    expect(document.body.textContent).toContain("Tool-user counts across rollouts by vendor");
+    expect(document.body.textContent).toContain("the same employee may appear more than once");
     expect(document.body.textContent).toContain("one person using two tools can be counted twice");
     expect(document.body.textContent).toContain("Rollout counts here cover only tool rows with a usage metric");
     expect(document.body.textContent).not.toContain("1,150");

@@ -1047,8 +1047,49 @@ function isActiveSourceCaseStatus(status: string | null | undefined): boolean {
   return ["active", "live", "in_use", "production", "production_enterprise_wide"].includes(normalized);
 }
 
+/** Preserve an older synthetic case plan without promoting it into approved or achieved totals. */
+function sourceSyntheticCasePlan(row: TowerServingRow): TowerMartAiPortfolioItem["sourcePlan"] {
+  const display = displayPayload(row);
+  const explicitlyDeclared =
+    display.source_plan_basis === "synthetic_sponsor_scenario_not_finance_actual" &&
+    display.page_key === "ai_portfolio" &&
+    nullableText(payload(row).use_case_object_id) !== null;
+  const retainedLegacyPlan = row.projection_version === 2 &&
+    row.row_type === "ai_business_case" &&
+    display.page_key === "ai_portfolio" &&
+    display.layer4_build_version === "tower-layer4-products-v2026-08";
+  if ((!explicitlyDeclared && !retainedLegacyPlan) || sourceRefs(row).length === 0) return null;
+  const amount = (...keys: string[]): number | null => {
+    for (const key of keys) {
+      const value = nullableNum(display[key] as Numeric);
+      if (value !== null && value >= 0) return value;
+    }
+    return null;
+  };
+  const multiple = (key: string): number | null => {
+    const value = nullableNum(display[key] as Numeric);
+    return value !== null && value > 0 ? value : null;
+  };
+  const plan = {
+    fundingUsd: amount(...(explicitlyDeclared
+      ? ["approved_investment_usd", "approved_funding_usd"]
+      : ["approved_funding_usd"])),
+    yearlyBenefitLowUsd: amount("projected_annual_value_low_usd"),
+    yearlyBenefitHighUsd: amount("projected_annual_value_high_usd"),
+    roiLowMultiple: multiple("roi_low_multiple"),
+    roiHighMultiple: multiple("roi_high_multiple"),
+  };
+  return Object.values(plan).every((value) => value === null) ? null : plan;
+}
+
 function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
   const refs = sourceRefs(row);
+  const projectId = payloadTextFrom(row, ["project_id"]);
+  const projectRef = projectId === null ? null : refs.find((ref) =>
+    ref.project_id === projectId && nullableText(ref.source_file) !== null &&
+    nullableText(ref.ecl_source_record_id) !== null &&
+    (nullableNum(ref.source_row as Numeric) ?? 0) >= 2,
+  ) ?? null;
   const declaredPage = nullableText(displayPayload(row).page_key);
   const canonicalUseCaseId = nullableText(payload(row).use_case_object_id);
   const canonicalToolId = nullableText(payload(row).tool_object_id);
@@ -1108,6 +1149,7 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
       payloadTextFrom(row, ["item_kind", "itemKind"]) ?? "unknown",
     populationKind,
     vendorName: payloadTextFrom(row, ["vendor_name"]),
+    domainName: payloadTextFrom(row, ["domain_name"]),
     systemName: payloadTextFrom(row, ["system_name"]) ??
       (populationKind === "tool_rollout" ? payloadTextFrom(row, ["tool_name"]) : null),
     aiSpendType: payloadTextFrom(row, ["ai_spend_type"]),
@@ -1120,8 +1162,14 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     aiTaggedSpendUsd,
     aiAmountBasis,
     aiSpendLoaded,
+    sourcePlan: sourceSyntheticCasePlan(row),
     // Initiative-detail fields. Each reads its own key; none falls back to another.
     projectName: payloadTextFrom(row, ["project_name"]),
+    projectId,
+    projectBudgetFiscalYear: payloadTextFrom(row, ["project_budget_fiscal_year"]),
+    projectSpendAsOfDate: payloadTextFrom(row, ["project_spend_as_of_date"]),
+    projectSpendSourceLinked: displayPayload(row).source_plan_basis === "synthetic_sponsor_scenario_not_finance_actual" && projectRef !== null,
+    projectSpendSourceFile: projectRef === null ? null : nullableText(projectRef.source_file),
     lifecycleStage: payloadTextFrom(row, ["lifecycle_stage"]),
     financePartnerRole: payloadTextFrom(row, ["finance_partner_role"]),
     successMetric: payloadTextFrom(row, ["success_metric"]),

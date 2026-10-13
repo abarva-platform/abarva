@@ -21,6 +21,7 @@ import {
   DrawerStat,
 } from "./DrawerShell";
 import { sourceFieldLabel, sourceFieldNote } from "./sourceFieldCopy";
+import { sourceSpendDate } from "../views/synthetic-project-spend";
 
 const KIND_LABEL: Record<TowerAiView["kind"], string> = {
   funded: "Funded program",
@@ -358,8 +359,9 @@ export function AiInitiativeDrawer({
                 sub={gatingConstraintExplanation(a.gatingConstraint)}
               />
               <DrawerRow
-                label="Finance status"
+                label={a.sourcePlan ? "Finance stage in synthetic source" : "Finance status"}
                 value={humanizeEvent(a.financeStatus)}
+                sub={a.sourcePlan ? "This is a demo source assertion, not independent CFO approval." : undefined}
               />
               <DrawerRow
                 label="Control blocker"
@@ -404,6 +406,7 @@ export function AiInitiativeDrawer({
             drawing an empty chart frame.
           */}
               <DrawerSection>What the claim did, month by month</DrawerSection>
+              {a.sourcePlan ? <p className={cx(styles.recBox, styles.muted)}>These monthly figures and Finance labels are synthetic source assertions. They are not independent Finance clearance or achieved ROI.</p> : null}
               {a.valueObservationMonths.length === 0 ? (
                 <div className={styles.urow}>
                   No monthly value observations are recorded for this case. That
@@ -444,22 +447,37 @@ export function AiInitiativeDrawer({
             records 0, which is not the same as a project whose spend was never recorded.
           */}
               <DrawerSection>Money</DrawerSection>
-              <DrawerRow
+              {a.sourcePlan ? (
+                <>
+                  <p className={cx(styles.recBox, styles.muted)}>
+                    Synthetic business-case plan. The amounts and ROI below are source-stated estimates; they are not approved spend or achieved savings.
+                  </p>
+                  <DrawerRow label="Funding in source plan" value={a.sourcePlan.fundingUsd === null ? "Not stated" : formatUsdM(a.sourcePlan.fundingUsd)} />
+                  <DrawerRow label="Expected yearly benefit, low case" value={a.sourcePlan.yearlyBenefitLowUsd === null ? "Not stated" : formatUsdM(a.sourcePlan.yearlyBenefitLowUsd)} />
+                  <DrawerRow label="Expected yearly benefit, high case" value={a.sourcePlan.yearlyBenefitHighUsd === null ? "Not stated" : formatUsdM(a.sourcePlan.yearlyBenefitHighUsd)} />
+                  <DrawerRow
+                    label="Projected ROI range"
+                    value={a.sourcePlan.roiLowMultiple === null ? "Not stated" :
+                      `${a.sourcePlan.roiLowMultiple.toFixed(1)}x${a.sourcePlan.roiHighMultiple === null ? "" : `–${a.sourcePlan.roiHighMultiple.toFixed(1)}x`}`}
+                    sub="A planning ratio, not a Finance checked return."
+                  />
+                </>
+              ) : null}
+              {!a.sourcePlan ? <DrawerRow
                 label={a.aiAmountBasis === "approved_funding" ? "Approved AI funding" : a.aiAmountBasis === "annualized_tool_cost" ? "Yearly tool cost" : "Amount basis"}
-                value={
-                  a.aiAmountBasis === "unknown" ? "Not verified" : formatUsdM(a.aiSpendUsd)
-                }
-              />
+                value={a.aiAmountBasis === "unknown" ? "Not verified" : formatUsdM(a.aiSpendUsd)}
+              /> : null}
               <DrawerRow
-                label="Spent to date"
+                label={a.sourcePlan ? `Project spending in source through ${sourceSpendDate(a.projectSpendAsOfDate)}` : "Spent to date"}
                 value={
                   a.actualSpendYtdUsd === null
                     ? "Not recorded"
                     : formatUsdM(a.actualSpendYtdUsd)
                 }
+                sub={a.sourcePlan ? "Synthetic project portfolio record. This may appear on more than one case; it is not a tool subscription bill or a Finance-cleared benefit." : undefined}
               />
               <DrawerRow
-                label="Forecast"
+                label={a.sourcePlan ? "Project spending forecast in synthetic source" : "Forecast"}
                 value={
                   a.forecastSpendUsd === null
                     ? "Not recorded"
@@ -511,6 +529,11 @@ export function AiInitiativeDrawer({
               />
 
               <DrawerSection>Finance trail</DrawerSection>
+              {a.sourcePlan ? (
+                <div className={styles.urow}>
+                  These events are recorded in the synthetic source. Their roles and amounts do not establish independent Finance sign-off.
+                </div>
+              ) : null}
               {a.financeApprovalEvents.length === 0 ? (
                 <div className={styles.urow}>
                   No approved Finance trail is loaded for this case. A status

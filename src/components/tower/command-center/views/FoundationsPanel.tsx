@@ -20,6 +20,7 @@ import {
 } from "@/lib/tower/command-center/format";
 import { approvedAiCaseFunding, isBusinessCase } from "./portfolio-kind";
 import { FoundationSourceInventory } from "./FoundationSourceInventory";
+import { sourceSpendDate } from "./synthetic-project-spend";
 
 type FoundationRow = {
   readonly item: TowerAiView;
@@ -74,6 +75,37 @@ function hasHave(count: number): string {
 
 export function FoundationsPanel({ view }: { view: TowerCommandCenterView }) {
   const rows = foundationRows(view);
+  const sourcePlanRows = rows.filter((row) => row.item.sourcePlan != null);
+  if (sourcePlanRows.length > 0) {
+    return (
+      <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+        {view.foundationInventory ? <FoundationSourceInventory inventory={view.foundationInventory} /> : null}
+        <h2 style={{ margin: 0, fontFamily: "var(--abarva-serif)", fontWeight: 500, fontSize: 26 }}>
+          {formatCount(rows.length)} foundation cases make the AI plan possible. Their value depends on the results of the cases they support.
+        </h2>
+        <p style={{ margin: 0, maxWidth: 980, fontSize: 15, lineHeight: 1.55, color: "var(--canon-gray-700)" }}>
+          These are synthetic source plans for platforms and governance. Each case shows its own proposed funding and linked project spend where recorded. The source does not link these costs to every downstream benefit, so Tower does not add a foundation ROI total.
+        </p>
+        <div style={PANEL}>
+          <div style={{ ...GRID, padding: "12px 22px", borderBottom: "1px solid var(--canon-border-strong)", fontSize: 11, fontWeight: 600 }}>
+            <span>Foundation case</span><span>Purpose</span><span style={{ textAlign: "right" }}>Funding plan</span><span style={{ textAlign: "right" }}>Project spend so far</span><span>Proof still needed</span>
+          </div>
+          {rows.map(({ item }) => (
+            <div key={item.id} style={{ ...GRID, alignItems: "center", padding: "14px 22px", borderBottom: "1px solid var(--canon-border)", fontSize: 14 }}>
+              <span>{item.name}</span>
+              <span>{item.category ?? item.kind}</span>
+              <span style={{ textAlign: "right" }}>{item.sourcePlan?.fundingUsd != null ? formatUsdM(item.sourcePlan.fundingUsd) : "Not stated"}</span>
+              <span style={{ textAlign: "right" }}>{item.projectName && item.actualSpendYtdUsd != null ? `${formatUsdM(item.actualSpendYtdUsd)} through ${sourceSpendDate(item.projectSpendAsOfDate)}` : "Not stated"}</span>
+              <span>Link to cases with measured outcomes</span>
+            </div>
+          ))}
+        </div>
+        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.55, color: "var(--canon-gray-500)" }}>
+          Spending comes from synthetic project portfolio records and can appear on more than one case. It is not a tool subscription bill or a Finance-cleared benefit. No foundation project spend total is calculated here.
+        </p>
+      </section>
+    );
+  }
   const spendUsd = rows.reduce((sum, row) => sum + (row.item.aiAmountBasis === "approved_funding" ? row.item.aiSpendUsd : 0), 0);
   const missingSpendRows = rows.filter((row) => row.item.aiAmountBasis !== "approved_funding").length;
   const loadedValueRows = rows.filter((row) => row.item.promisedBenefitLoaded);

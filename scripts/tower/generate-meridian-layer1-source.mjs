@@ -11,18 +11,20 @@ const ROOT = path.resolve(
 );
 const OUT_DIR = path.join(
   ROOT,
-  "datasets/tenant-inputs/generated/meridian-health/tower-layer1-v2026-08-business-case",
+  "datasets/tenant-inputs/generated/meridian-health/tower-layer1-v2026-10-reconciled-rich",
 );
 const TENANT_KEY = "meridian-health";
 const AS_OF_DATE = "2026-08-24";
 const EXTRACT_DATE = "2026-08-24";
-const LOAD_RUN_ID = "meridian-layer1-synthetic-20260824";
+const LOAD_RUN_ID = "meridian-layer1-synthetic-20261013-reconciled";
 const TOTAL_REVENUE_USD = 20_400_000_000;
 const TOTAL_IT_BUDGET_USD = 1_050_000_000;
 const TOWER_REVIEWED_PROJECT_USD = 703_100_000;
 const TARGET_AI_PORTFOLIO_ROI_LOW = 3.2;
 const TARGET_AI_PORTFOLIO_ROI_HIGH = 4.0;
-const GENERATED_AT = "2026-08-28T17:07:06.875Z";
+const GENERATED_AT = "2026-10-13T12:00:00.000Z";
+const SOURCE_PLAN_BASIS = "synthetic_sponsor_scenario_not_finance_actual";
+const MIN_DOMAIN_NONPROJECT_HEADROOM_USD = 1_000_000;
 
 const budgetDomains = [
   [
@@ -820,47 +822,97 @@ function valueModelForCase(project, index, noDirectRoi) {
   };
 }
 
-function buildBudgetRows() {
+function buildBudgetRows(projectRows) {
+  const projectTotals = new Map();
+  for (const project of projectRows) {
+    projectTotals.set(
+      project.domain_key,
+      (projectTotals.get(project.domain_key) ?? 0) +
+        project.approved_budget_usd,
+    );
+  }
+  // The synthetic Finance extract must reconcile to the PMO extract by domain.
+  // Preserve the approved IT envelope while moving only the amount needed to
+  // leave at least $1M outside the reviewed project pool in every domain.
+  const adjustedBudgets = new Map(
+    budgetDomains.map(([domainKey, , , baselineBudget]) => [
+      domainKey,
+      Math.max(
+        baselineBudget,
+        (projectTotals.get(domainKey) ?? 0) +
+          MIN_DOMAIN_NONPROJECT_HEADROOM_USD,
+      ),
+    ]),
+  );
+  const uplift =
+    [...adjustedBudgets.values()].reduce((sum, value) => sum + value, 0) -
+    TOTAL_IT_BUDGET_USD;
+  const donorHeadroom = budgetDomains.map(([domainKey, , , baselineBudget]) => ({
+    domainKey,
+    available: Math.max(
+      0,
+      baselineBudget -
+        (projectTotals.get(domainKey) ?? 0) -
+        MIN_DOMAIN_NONPROJECT_HEADROOM_USD,
+    ),
+  })).filter(({ available }) => available > 0);
+  const totalAvailable = donorHeadroom.reduce(
+    (sum, { available }) => sum + available,
+    0,
+  );
+  if (uplift > totalAvailable) {
+    throw new Error("Reviewed projects exceed the synthetic IT budget envelope");
+  }
+  let redistributed = 0;
+  for (const [index, { domainKey, available }] of donorHeadroom.entries()) {
+    const reduction =
+      index === donorHeadroom.length - 1
+        ? uplift - redistributed
+        : Math.floor((uplift * available) / totalAvailable);
+    adjustedBudgets.set(domainKey, adjustedBudgets.get(domainKey) - reduction);
+    redistributed += reduction;
+  }
   return budgetDomains.map(
     ([
       domain_key,
       domain_name,
       budget_owner_role,
-      approved_budget_usd,
+      baseline_budget_usd,
       run_ratio,
       change_ratio,
       transform_ratio,
-      project_allocated_ratio,
-    ]) => ({
-      tenant_key: TENANT_KEY,
-      fiscal_year: "FY26",
-      domain_key,
-      domain_name,
-      it_segment: domain_name,
-      budget_owner_role,
-      approved_budget_usd,
-      run_budget_usd: money(approved_budget_usd * run_ratio),
-      change_budget_usd: money(approved_budget_usd * change_ratio),
-      transform_budget_usd: money(approved_budget_usd * transform_ratio),
-      capex_usd: money(
+    ]) => {
+      const approved_budget_usd = adjustedBudgets.get(domain_key);
+      const run_budget_usd = money(approved_budget_usd * run_ratio);
+      const change_budget_usd = money(approved_budget_usd * change_ratio);
+      const capex_usd = money(
         approved_budget_usd * (domain_key === "infrastructure" ? 0.42 : 0.28),
-      ),
-      opex_usd: money(
-        approved_budget_usd * (domain_key === "infrastructure" ? 0.58 : 0.72),
-      ),
-      tower_reviewed_project_budget_usd: money(
-        approved_budget_usd * project_allocated_ratio,
-      ),
-      source_system: "IT Finance / FP&A",
-      source_object: "FY26 IT budget by domain",
-      source_record_id: `BUD-${domain_key}`,
-      extract_date: EXTRACT_DATE,
-      as_of_date: AS_OF_DATE,
-      refresh_cadence: "monthly_close",
-      quality_state: "synthetic_review_ready",
-      synthetic_basis:
-        "$20.4B health system revenue; IT budget modeled at 5.15% of revenue.",
-    }),
+      );
+      return {
+        tenant_key: TENANT_KEY,
+        fiscal_year: "FY26",
+        domain_key,
+        domain_name,
+        it_segment: domain_name,
+        budget_owner_role,
+        approved_budget_usd,
+        run_budget_usd,
+        change_budget_usd,
+        transform_budget_usd:
+          approved_budget_usd - run_budget_usd - change_budget_usd,
+        capex_usd,
+        opex_usd: approved_budget_usd - capex_usd,
+        tower_reviewed_project_budget_usd: projectTotals.get(domain_key) ?? 0,
+        source_system: "IT Finance / FP&A",
+        source_object: "FY26 IT budget by domain",
+        source_record_id: `BUD-${domain_key}`,
+        extract_date: EXTRACT_DATE,
+        as_of_date: AS_OF_DATE,
+        refresh_cadence: "monthly_close",
+        quality_state: "synthetic_review_ready",
+        synthetic_basis: `FY26 synthetic IT envelope from $20.4B revenue; domain base ${baseline_budget_usd} reallocated to cover FY26 reviewed projects with at least $1M nonproject headroom.`,
+      };
+    },
   );
 }
 
@@ -892,6 +944,8 @@ function buildProjectRows() {
             ? "CISO"
             : "CTO delegate",
       finance_partner_role: "IT Finance Business Partner",
+      fiscal_year: "FY26",
+      project_budget_fiscal_year: "FY26",
       approved_budget_usd,
       actual_spend_ytd_usd: money(
         approved_budget_usd * (0.18 + (index % 5) * 0.08),
@@ -978,6 +1032,8 @@ function buildProjectRows() {
       sponsor_role: ordinal <= 52 ? aiBlueprint[3] : domainForRow[2],
       technology_owner_role: domainForRow[2],
       finance_partner_role: "IT Finance Business Partner",
+      fiscal_year: "FY26",
+      project_budget_fiscal_year: "FY26",
       approved_budget_usd: amount,
       actual_spend_ytd_usd: money(amount * (0.12 + (index % 7) * 0.07)),
       forecast_spend_usd: money(amount * (0.9 + (index % 5) * 0.025)),
@@ -1051,6 +1107,7 @@ function buildAiBusinessCases(projectRows) {
       cost_to_build_high_usd: money(project.approved_budget_usd * 1.12),
       projected_annual_value_low_usd: baseLow,
       projected_annual_value_high_usd: baseHigh,
+      source_plan_basis: SOURCE_PLAN_BASIS,
       roi_low_multiple:
         baseLow > 0
           ? Math.round((baseLow / (project.approved_budget_usd || 1)) * 10) / 10
@@ -1132,6 +1189,8 @@ function buildAiBusinessCases(projectRows) {
     highAllocated += high;
     row.projected_annual_value_low_usd = low;
     row.projected_annual_value_high_usd = high;
+    // Both ROI bounds use the high build-cost estimate as a conservative
+    // denominator. The bounds describe benefit scenarios, not actual returns.
     row.roi_low_multiple =
       Math.round((low / Number(row.cost_to_build_high_usd)) * 10) / 10;
     row.roi_high_multiple =
@@ -1160,7 +1219,10 @@ function buildToolRollouts(aiCases) {
       rollout_goal: tool[4],
       linked_business_case_count: linked.length,
       rollout_target_users: targetUsers,
-      enabled_users: money(targetUsers * (0.45 + (index % 4) * 0.1)),
+      enabled_users: Math.max(
+        money(targetUsers * (0.45 + (index % 4) * 0.1)),
+        money(targetUsers * (actualPct / 100)),
+      ),
       monthly_active_users: money(targetUsers * (actualPct / 100)),
       adoption_target_pct: tool[6],
       adoption_actual_pct: actualPct,
@@ -1482,6 +1544,8 @@ function buildCanonicalArtifacts(sources) {
     domain_name: row.domain_name,
     project_classification: row.project_classification,
     is_ai_related: row.is_ai_related,
+    fiscal_year: row.fiscal_year,
+    project_budget_fiscal_year: row.project_budget_fiscal_year,
     approved_budget_usd: row.approved_budget_usd,
     projected_annual_value_low_usd: row.promised_annual_value_usd,
     lifecycle_stage: row.lifecycle_stage,
@@ -1519,6 +1583,7 @@ function buildCanonicalArtifacts(sources) {
     projected_annual_value_high_usd: row.projected_annual_value_high_usd,
     roi_low_multiple: row.roi_low_multiple,
     roi_high_multiple: row.roi_high_multiple,
+    source_plan_basis: row.source_plan_basis,
     payback_months_target: row.payback_months_target,
     success_metric: row.success_metric,
     proof_needed: row.proof_needed,
@@ -1751,6 +1816,7 @@ function buildCubeArtifacts(sources) {
       approved_investment_usd: project?.approved_budget_usd ?? 0,
       projected_annual_value_low_usd: row.projected_annual_value_low_usd,
       projected_annual_value_high_usd: row.projected_annual_value_high_usd,
+      source_plan_basis: row.source_plan_basis,
       board_claimable_ytd_usd: monthly.board_claimable_ytd_usd,
       finance_validated_ytd_usd: monthly.finance_validated_ytd_usd,
       roi_low_multiple: row.roi_low_multiple,
@@ -1881,6 +1947,7 @@ function buildCubeArtifacts(sources) {
     ["business_value_type", "plain value type"],
     ["business_value_story", "plain-language value thesis"],
     ["finance_status", "current Finance status"],
+    ["source_plan_basis", "synthetic sponsor scenario, separate from Finance actuals"],
     ["committee_decision", "committee disposition"],
     ["primary_tool_or_platform", "tool or platform"],
     ["vendor_name", "vendor or internal provider"],
@@ -1951,6 +2018,7 @@ function buildReadModels(sources, cube) {
       ai_related_investment_usd: aiInvestment,
       projected_annual_value_low_usd: projectedLow,
       projected_annual_value_high_usd: projectedHigh,
+      source_plan_basis: SOURCE_PLAN_BASIS,
       portfolio_roi_low_multiple:
         Math.round((projectedLow / aiInvestment) * 10) / 10,
       portfolio_roi_high_multiple:
@@ -1980,6 +2048,7 @@ function buildReadModels(sources, cube) {
     approved_investment_usd: row.approved_investment_usd,
     projected_annual_value_low_usd: row.projected_annual_value_low_usd,
     projected_annual_value_high_usd: row.projected_annual_value_high_usd,
+    source_plan_basis: row.source_plan_basis,
     roi_low_multiple: row.roi_low_multiple,
     roi_high_multiple: row.roi_high_multiple,
     payback_months_target: row.payback_months_target,
@@ -2113,7 +2182,7 @@ function buildLayer1Signoff({ budgetRows, projectRows, aiCases, toolRollouts, mo
 
   return `# Meridian Tower Synthetic Source Data - Layer 1 Signoff
 
-Package: \`tower-layer1-v2026-08-business-case\`
+Package: \`tower-layer1-v2026-10-reconciled-rich\`
 Tenant key: \`meridian-health\`
 Status: synthetic review package only; not loaded to runtime
 As of: ${AS_OF_DATE}
@@ -2247,7 +2316,7 @@ function buildLayer2Signoff({ adapter, sourceRows }) {
   const sourceRecordCount = sourceExtractCount + adapter.adapterRuns.length + adapter.emittedObjects.length;
   return `# Tower Synthetic Source Data - Layer 2 Signoff
 
-Package: \`tower-layer1-v2026-08-business-case\`
+Package: \`tower-layer1-v2026-10-reconciled-rich\`
 Layer: Source adapters
 Status: locally validated; Azure write path prepared; live Azure write requires governed ACA job approval
 As of: ${AS_OF_DATE}
@@ -2314,7 +2383,7 @@ npm run ops:aca-job -- \\
   --env TOWER_LAYER2_TENANT_KEY=meridian-health \\
   --env TOWER_LAYER2_ASSESSMENT_ID=meridian-tower-layer2-source-adapters-v2026-08 \\
   --env TOWER_LAYER2_BUILD_VERSION=tower-layer2-source-adapters-v2026-08 \\
-  --env TOWER_LAYER2_INPUT_SOURCE_VERSION=tower-layer1-v2026-08-business-case \\
+  --env TOWER_LAYER2_INPUT_SOURCE_VERSION=tower-layer1-v2026-10-reconciled-rich \\
   --env TOWER_LAYER2_IDEMPOTENCY_KEY=meridian-tower-layer2-source-adapters-v2026-08:<main-sha> \\
   --out-dir /tmp/tower-layer2-aca-proof
 \`\`\`
@@ -2339,7 +2408,7 @@ function buildLayer3Signoff({ canonical, sources }) {
   const foundationCases = sources.aiCases.length - directValueCases.length;
   return `# Tower Synthetic Source Data - Layer 3 Signoff
 
-Package: \`tower-layer1-v2026-08-business-case\`
+Package: \`tower-layer1-v2026-10-reconciled-rich\`
 Layer: Canonical enterprise model
 Status: Azure loaded and validator-passed for Layer 3; cubes and product projections pending
 As of: ${AS_OF_DATE}
@@ -2434,7 +2503,7 @@ npm run ops:aca-job -- \\
   --env TOWER_LAYER3_TENANT_KEY=meridian-health \\
   --env TOWER_LAYER3_ASSESSMENT_ID=meridian-tower-layer2-source-adapters-v2026-08 \\
   --env TOWER_LAYER3_BUILD_VERSION=tower-layer3-canonical-v2026-08 \\
-  --env TOWER_LAYER3_INPUT_SOURCE_VERSION=tower-layer1-v2026-08-business-case \\
+  --env TOWER_LAYER3_INPUT_SOURCE_VERSION=tower-layer1-v2026-10-reconciled-rich \\
   --env TOWER_LAYER3_IDEMPOTENCY_KEY=meridian-tower-layer3-canonical-v2026-08:<main-sha> \\
   --out-dir /tmp/tower-layer3-aca-proof
 \`\`\`
@@ -2486,8 +2555,8 @@ async function main() {
   await fs.rm(OUT_DIR, { recursive: true, force: true });
   await fs.mkdir(OUT_DIR, { recursive: true });
 
-  const budgetRows = buildBudgetRows();
   const projectRows = buildProjectRows();
+  const budgetRows = buildBudgetRows(projectRows);
   const aiCases = buildAiBusinessCases(projectRows);
   const aiCaseByProjectId = new Map(
     aiCases.map((item) => [item.project_id, item]),
@@ -2827,6 +2896,7 @@ Rules:
 
 - AI status is explicit, never inferred from BI or folder names.
 - Foundation work carries no direct ROI until linked downstream use cases prove value.
+- Projected annual value and ROI are synthetic sponsor scenarios. Both ROI bounds use the high build-cost estimate; neither is realized ROI.
 - Finance-validated actuals are separate from projected annual value.
 - Products read Layer 4 projections derived from Layer 3; no product owns source data.
 `;
@@ -2872,8 +2942,18 @@ Rules:
     manifestFiles,
   );
 
+  const sourceFiles = manifestFiles
+    .filter(({ file }) =>
+      file.startsWith("layer_1_client_intake/source_system_extracts/"),
+    )
+    .map(({ file, rows, sha256: fileHash }) => ({ file, rows, sha256: fileHash }))
+    .sort((left, right) => left.file.localeCompare(right.file));
+  const sourceSetHash = sha256(JSON.stringify(sourceFiles));
   const manifest = {
     package_id: LOAD_RUN_ID,
+    assessment_id: `tower-rich-synthetic-candidate-${sourceSetHash.slice(0, 16)}`,
+    source_set_hash: sourceSetHash,
+    source_set_hash_basis: "sha256(JSON.stringify(sorted Layer 1 source file paths, row counts, and SHA-256 values))",
     tenant_key: TENANT_KEY,
     generated_at: GENERATED_AT,
     package_type: "tower_full_synthetic_layer_cube_package",
@@ -2889,6 +2969,7 @@ Rules:
     revenue_usd: TOTAL_REVENUE_USD,
     total_it_budget_usd: TOTAL_IT_BUDGET_USD,
     tower_reviewed_project_budget_usd: TOWER_REVIEWED_PROJECT_USD,
+    source_plan_basis: SOURCE_PLAN_BASIS,
     files: manifestFiles,
   };
   await fs.writeFile(

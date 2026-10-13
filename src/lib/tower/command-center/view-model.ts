@@ -450,6 +450,7 @@ function toAiView(item: TowerMartAiPortfolioItem, n: number): TowerAiView {
     displayBucketBasis: bucket.displayBucketBasis,
     mappingPolicyVersion: bucket.mappingPolicyVersion,
     category: humanize(item.aiSpendCategory),
+    domainName: trimOrNull(item.domainName),
     vendor: trimOrNull(item.vendorName),
     system: trimOrNull(item.systemName),
     valueScore: Math.max(0, Math.min(100, num(item.valueScore))),
@@ -482,7 +483,13 @@ function toAiView(item: TowerMartAiPortfolioItem, n: number): TowerAiView {
     // whatever the reader derived. The flag has to come from the reader, which is the only place
     // that can still see whether the source recorded a cost at all.
     aiSpendLoaded: item.aiSpendLoaded ?? false,
+    sourcePlan: item.sourcePlan ?? null,
     projectName: item.projectName ?? null,
+    projectId: item.projectId ?? null,
+    projectBudgetFiscalYear: item.projectBudgetFiscalYear ?? null,
+    projectSpendAsOfDate: item.projectSpendAsOfDate ?? null,
+    projectSpendSourceLinked: item.projectSpendSourceLinked === true,
+    projectSpendSourceFile: item.projectSpendSourceFile ?? null,
     lifecycleStage: item.lifecycleStage ?? null,
     financePartnerRole: item.financePartnerRole ?? null,
     successMetric: item.successMetric ?? null,

@@ -6,16 +6,17 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { assertRichSyntheticLoadApproval } from "./assert-rich-synthetic-load-approval.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const DEFAULT_PACKAGE_DIR = path.join(
   ROOT,
-  "datasets/tenant-inputs/generated/meridian-health/tower-layer1-v2026-08-business-case",
+  "datasets/tenant-inputs/generated/meridian-health/tower-layer1-v2026-10-reconciled-rich",
 );
 const DEFAULT_TENANT_KEY = "meridian-health";
-const DEFAULT_ASSESSMENT_ID = "meridian-tower-layer2-source-adapters-v2026-08";
+const DEFAULT_ASSESSMENT_ID = "tower-rich-synthetic-candidate-c50d17bfb71b92b7";
 const DEFAULT_BUILD_VERSION = "tower-layer3-canonical-v2026-08";
-const DEFAULT_INPUT_SOURCE_VERSION = "tower-layer1-v2026-08-business-case";
+const DEFAULT_INPUT_SOURCE_VERSION = "tower-layer1-v2026-10-reconciled-rich";
 const DEFAULT_OUT_DIR = path.join(ROOT, "reports/meridian-tower-layer3-canonical");
 const PROOF_BEGIN = "__SEMANTIC2_PROOF_TGZ_BEGIN__";
 const PROOF_END = "__SEMANTIC2_PROOF_TGZ_END__";
@@ -127,6 +128,7 @@ function parseArgs(argv) {
     packageDir: path.resolve(argValue(argv, "--package-dir") ?? process.env.TOWER_LAYER3_PACKAGE_DIR ?? DEFAULT_PACKAGE_DIR),
     outDir: path.resolve(argValue(argv, "--out-dir") ?? process.env.TOWER_LAYER3_OUT_DIR ?? DEFAULT_OUT_DIR),
     tenantKey: argValue(argv, "--tenant-key") ?? process.env.TOWER_LAYER3_TENANT_KEY ?? DEFAULT_TENANT_KEY,
+    releaseRecord: argValue(argv, "--release-record") ?? process.env.TOWER_RICH_SYNTHETIC_RELEASE_RECORD ?? null,
     assessmentId:
       argValue(argv, "--assessment-id") ?? process.env.TOWER_LAYER3_ASSESSMENT_ID ?? DEFAULT_ASSESSMENT_ID,
     buildVersion:
@@ -958,9 +960,17 @@ function emitProofBundle(outDir) {
   process.stdout.write(`\n${PROOF_END}\n`);
 }
 
-function main() {
+async function main() {
   const options = parseArgs(process.argv.slice(2));
   assertPackageCanMutate(options);
+  if (options.write) {
+    await assertRichSyntheticLoadApproval({
+      packageDir: options.packageDir,
+      assessmentId: options.assessmentId,
+      tenantKey: options.tenantKey,
+      releaseRecord: options.releaseRecord,
+    });
+  }
   fs.mkdirSync(options.outDir, { recursive: true });
 
   const rows = buildCanonicalRows(options);
@@ -1027,4 +1037,4 @@ function main() {
   if (summary.issues.length) process.exitCode = 1;
 }
 
-main();
+await main();

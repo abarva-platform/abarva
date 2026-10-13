@@ -19,6 +19,7 @@ import {
 import styles from "../TowerCommandCenter.module.css";
 import { expectedBenefitKindLabel } from "./expected-benefit-kind";
 import { isBusinessCase, unclassifiedPortfolioCount } from "./portfolio-kind";
+import { sourceSpendDate } from "./synthetic-project-spend";
 
 type FilterKey = "all" | TowerAiKind;
 type SortKey = "name" | "valueType" | "constraint" | "investment" | "value" | "claimable";
@@ -76,7 +77,10 @@ function statusLabel(item: TowerAiView): string {
 }
 
 function valueLabel(item: TowerAiView): string {
-  return item.promisedBenefitLoaded ? formatUsdM(item.promisedUsd) : "Not loaded";
+  if (item.promisedBenefitLoaded) return formatUsdM(item.promisedUsd);
+  return item.sourcePlan?.yearlyBenefitLowUsd != null
+    ? formatUsdM(item.sourcePlan.yearlyBenefitLowUsd)
+    : "Not loaded";
 }
 
 function financeActualLabel(item: TowerAiView): string {
@@ -96,8 +100,8 @@ function sortValue(item: TowerAiView, key: SortKey): number | string {
   if (key === "name") return item.name;
   if (key === "valueType") return expectedBenefitKindLabel(item.expectedValueArchetype) ?? item.businessValueType ?? "";
   if (key === "constraint") return item.gatingConstraint ?? "";
-  if (key === "investment") return item.aiAmountBasis === "approved_funding" ? item.aiSpendUsd : -1;
-  if (key === "value") return item.promisedBenefitLoaded ? item.promisedUsd : -1;
+  if (key === "investment") return item.aiAmountBasis === "approved_funding" ? item.aiSpendUsd : item.sourcePlan?.fundingUsd ?? -1;
+  if (key === "value") return item.promisedBenefitLoaded ? item.promisedUsd : item.sourcePlan?.yearlyBenefitLowUsd ?? -1;
   return item.financeValidatedAmountLoaded === true ? item.financeValidatedUsd : -1;
 }
 
@@ -115,6 +119,7 @@ export function InitiativesTablePanel({
     () => view.allInitiatives.filter(isBusinessCase),
     [view.allInitiatives],
   );
+  const hasSourcePlans = cases.some((item) => item.sourcePlan != null);
   const chips: FilterKey[] = [
     "all",
     ...(["funded", "embedded", "platform", "governance", "candidate", "unknown"] as TowerAiKind[])
@@ -178,7 +183,9 @@ export function InitiativesTablePanel({
       </div>
 
       <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5, color: "var(--canon-gray-700)" }}>
-        Expected benefit kind describes what the source says a case aims to improve. It does not show an approved amount, a measured result, or a benefit cleared by Finance. The funding group is Tower&apos;s display grouping from intake labels; it is not proof of approved funding.
+        {hasSourcePlans
+          ? "This synthetic source records case funding plans, yearly benefit estimates, and projected ROI. They are proposals, not approved spend or achieved savings. Open a case to inspect its source and evidence."
+          : "Expected benefit kind describes what the source says a case aims to improve. It does not show an approved amount, a measured result, or a benefit cleared by Finance. The funding group is Tower's display grouping from intake labels; it is not proof of approved funding."}
       </p>
 
       <div style={{ background: "var(--canon-bg-surface)", border: "1px solid var(--canon-border)" }}>
@@ -187,9 +194,9 @@ export function InitiativesTablePanel({
             ["name", "Initiative"],
             ["valueType", "Expected benefit kind (plan)"],
             ["constraint", "Constraint"],
-            ["investment", "Approved AI funding"],
-            ["value", "Projected yearly benefit"],
-            ["claimable", "Finance validated in loaded months"],
+            ["investment", hasSourcePlans ? "Case funding plan" : "Approved AI funding"],
+            ["value", hasSourcePlans ? "Yearly benefit plan / ROI" : "Projected yearly benefit"],
+            ["claimable", hasSourcePlans ? "Finance amount in synthetic source" : "Finance validated in loaded months"],
             ["detail", "Detail"],
           ].map(([key, label], i) => (
             <button
@@ -230,8 +237,14 @@ export function InitiativesTablePanel({
                 {item.name}
               </button>
               <span style={{ fontFamily: "var(--abarva-mono)", fontSize: 10, letterSpacing: "0.06em", color: "var(--canon-gray-500)" }}>
-                {item.id} · Source Finance status: {statusLabel(item)}
+                {item.id} · {item.sourcePlan ? "Synthetic source Finance stage" : "Source Finance status"}: {statusLabel(item)}
               </span>
+              {item.sourcePlan ? (
+                <small style={{ color: "var(--canon-gray-500)" }}>
+                  {item.projectName ? `Linked project: ${item.projectName}` : "Linked project name not recorded"}
+                  {item.vendor ? ` · Source partner: ${item.vendor}` : ""}
+                </small>
+              ) : null}
             </span>
             <span style={{ color: "var(--canon-gray-700)", minWidth: 0, display: "grid", gap: 4 }}>
               <span>{expectedBenefitKindLabel(item.expectedValueArchetype) ?? "Not recorded in intake"}</span>
@@ -252,10 +265,26 @@ export function InitiativesTablePanel({
                 aria-label={`Constraint help: ${gatingConstraintExplanation(item.gatingConstraint)}`}
               />
             </span>
-            <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>{item.aiAmountBasis === "approved_funding" ? formatUsdM(item.aiSpendUsd) : "Not verified"}</span>
-            <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>{valueLabel(item)}</span>
-            <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right", color: item.financeValidatedAmountLoaded === true && item.financeValidatedUsd > 0 ? "var(--canon-teal-dark)" : "var(--canon-gray-500)" }}>
-              {financeActualLabel(item)}
+            <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>
+              <span>{item.aiAmountBasis === "approved_funding" ? formatUsdM(item.aiSpendUsd) :
+                item.sourcePlan?.fundingUsd != null ? formatUsdM(item.sourcePlan.fundingUsd) : "Not verified"}</span>
+              {item.sourcePlan && item.projectName && item.actualSpendYtdUsd !== null ? (
+                <small style={{ display: "block", marginTop: 4, color: "var(--canon-gray-500)" }}>
+                  Project spending through {sourceSpendDate(item.projectSpendAsOfDate)} {formatUsdM(item.actualSpendYtdUsd)}
+                </small>
+              ) : null}
+            </span>
+            <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right", display: "grid", gap: 3 }}>
+              <span>{valueLabel(item)}</span>
+              {item.sourcePlan?.roiLowMultiple != null ? (
+                <small style={{ color: "var(--canon-gray-500)" }}>
+                  projected {item.sourcePlan.roiLowMultiple.toFixed(1)}x
+                  {item.sourcePlan.roiHighMultiple != null ? `–${item.sourcePlan.roiHighMultiple.toFixed(1)}x` : ""}
+                </small>
+              ) : null}
+            </span>
+            <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right", color: !item.sourcePlan && item.financeValidatedAmountLoaded === true && item.financeValidatedUsd > 0 ? "var(--canon-teal-dark)" : "var(--canon-gray-500)" }}>
+              {item.sourcePlan && item.financeValidatedAmountLoaded === true ? `Source records ${financeActualLabel(item)}` : financeActualLabel(item)}
             </span>
             <span style={{ textAlign: "right" }}>
               <button

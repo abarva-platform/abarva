@@ -6,14 +6,22 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import {
+  assertRichSyntheticLoadApproval,
+  deriveRichSyntheticSourceIdentity,
+} from "./assert-rich-synthetic-load-approval.mjs";
+import {
+  richStageBlobConfig,
+  uploadRichStageProof,
+} from "./upload-rich-synthetic-stage-proof.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const DEFAULT_PACKAGE_DIR = path.join(
   ROOT,
-  "datasets/tenant-inputs/generated/meridian-health/tower-layer1-v2026-08-business-case",
+  "datasets/tenant-inputs/generated/meridian-health/tower-layer1-v2026-10-reconciled-rich",
 );
 const DEFAULT_TENANT_KEY = "meridian-health";
-const DEFAULT_ASSESSMENT_ID = "meridian-tower-layer2-source-adapters-v2026-08";
+const DEFAULT_ASSESSMENT_ID = "tower-rich-synthetic-candidate-c50d17bfb71b92b7";
 const DEFAULT_BUILD_VERSION = "tower-layer4-products-v2026-08";
 const DEFAULT_INPUT_SOURCE_VERSION = "tower-layer3-canonical-v2026-08";
 const DEFAULT_OUT_DIR = path.join(ROOT, "reports/meridian-tower-layer4-products");
@@ -96,6 +104,7 @@ function parseArgs(argv) {
   return {
     packageDir: path.resolve(argValue(argv, "--package-dir") ?? DEFAULT_PACKAGE_DIR),
     tenantKey: argValue(argv, "--tenant-key") ?? DEFAULT_TENANT_KEY,
+    releaseRecord: argValue(argv, "--release-record") ?? process.env.TOWER_RICH_SYNTHETIC_RELEASE_RECORD ?? null,
     assessmentId: argValue(argv, "--assessment-id") ?? DEFAULT_ASSESSMENT_ID,
     buildVersion:
       argValue(argv, "--build-version") ??
@@ -578,6 +587,7 @@ function buildRows(options) {
     ai_related_investment_usd: num(data.summary.ai_related_investment_usd),
     projected_annual_value_low_usd: num(data.summary.projected_annual_value_low_usd),
     projected_annual_value_high_usd: num(data.summary.projected_annual_value_high_usd),
+    source_plan_basis: data.summary.source_plan_basis || null,
     portfolio_roi_low_multiple: num(data.summary.portfolio_roi_low_multiple),
     portfolio_roi_high_multiple: num(data.summary.portfolio_roi_high_multiple),
     board_claimable_ytd_usd: num(data.summary.board_claimable_ytd_usd),
@@ -656,6 +666,7 @@ function buildRows(options) {
       promised_value_usd: num(row.projected_annual_value_low_usd),
       projected_annual_value_low_usd: num(row.projected_annual_value_low_usd),
       projected_annual_value_high_usd: num(row.projected_annual_value_high_usd),
+      source_plan_basis: row.source_plan_basis || null,
       sponsor_claimed_value_usd: actual.sponsorClaimed,
       finance_reviewed_value_usd: actual.financeReviewed,
       finance_validated_value_usd: actual.financeValidated,
@@ -679,6 +690,8 @@ function buildRows(options) {
       // Initiative-detail fields the canonical layer already carries and the payload dropped.
       // The approved design's drill-down needs each of these; none is derived or inferred.
       project_name: project?.project_name ?? null,
+      project_budget_fiscal_year: project?.project_budget_fiscal_year ?? null,
+      project_spend_as_of_date: project?.as_of_date ?? null,
       lifecycle_stage: project?.lifecycle_stage ?? null,
       finance_partner_role: project?.finance_partner_role ?? null,
       success_metric: row.success_metric ?? null,
@@ -1531,53 +1544,6 @@ function writePurgeSql(outPath, options) {
   fs.writeFileSync(outPath, sql, "utf8");
 }
 
-/**
- * Declare this generation active, and retire whatever was active before it.
- *
- * The active generation used to be inferred — `serving.tower_active_assessment_keys()` ranked on
- * payload shape, projection version, created_at and finally assessment id. A tenant once saw
- * $492.5M instead of $677.8M because that ranking picked a retired generation. `AGENTS.md`:
- * identity is declared, never inferred.
- *
- * Retire first, then activate. A partial unique index permits one active generation per tenant, so
- * activating before retiring would be rejected — which is the index doing its job.
- *
- * Guarded on the table existing, so a database that has not taken the lifecycle migration yet
- * loads exactly as it did before instead of failing.
- */
-function lifecycleDeclarationSql(options) {
-  const tenant = sqlText(options.tenantKey);
-  const assessment = sqlText(options.assessmentId);
-  const build = sqlText(options.buildVersion);
-  return `do $lifecycle$
-begin
-  if to_regclass('ecl_projection.tower_assessment_lifecycle') is null then
-    raise notice 'tower_assessment_lifecycle absent; generation not declared';
-    return;
-  end if;
-
-  update ecl_projection.tower_assessment_lifecycle
-     set state = 'retired',
-         retired_at = now()
-   where tenant_key = ${tenant}
-     and state = 'active'
-     and not (assessment_id = ${assessment} and projection_version = ${PROJECTION_VERSION});
-
-  insert into ecl_projection.tower_assessment_lifecycle
-    (tenant_key, assessment_id, projection_version, state, activated_at, retired_at, build_version, note)
-  values
-    (${tenant}, ${assessment}, ${PROJECTION_VERSION}, 'active', now(), null, ${build},
-     'Declared by the Layer 4 product load.')
-  on conflict (tenant_key, assessment_id, projection_version)
-  do update set
-    state = 'active',
-    activated_at = now(),
-    retired_at = null,
-    build_version = excluded.build_version;
-end
-$lifecycle$;`;
-}
-
 function writeLoadSql(outPath, options, rows) {
   const sql = [
     "begin;",
@@ -1595,9 +1561,8 @@ function writeLoadSql(outPath, options, rows) {
     insertSql("ecl_projection.cube_slice", ["id", "tenant_key", "assessment_id", "snapshot_id", "cube_manifest_id", "cube_key", "cube_version", "slice_key", "grain_key", "primary_object_id", "dimensions_json", "measures_json", "primary_metric_key", "metric_keys_json", "source_refs_json", "basis_summary", "value_state", "quality_state", "gap_flags_json", "source_hash"], rows.cubeSlices),
     insertSql("ecl_projection.cube_slice_metric", ["tenant_key", "assessment_id", "cube_slice_id", "metric_key", "metric_role", "unit", "sort_order", "source_hash"], rows.cubeSliceMetrics),
     insertSql("ecl_projection.cube_slice_measure", ["tenant_key", "assessment_id", "cube_slice_id", "measure_id", "metric_key", "measure_role", "source_hash"], rows.cubeSliceMeasures),
-    // Last, inside the same transaction as the rows it describes. A generation that fails to load
-    // is never declared active, and the prior one keeps serving.
-    lifecycleDeclarationSql(options),
+    // A private load writes only the candidate assessment. A separate,
+    // serving-approved operator changes the active selector after review.
     "commit;",
   ].join("\n");
   fs.writeFileSync(outPath, sql, "utf8");
@@ -1623,6 +1588,28 @@ function servingCountsSql(tenant, assessment, scope) {
     if (scope === "base") clauses.push(`not ${BRIDGE_ROW_PREDICATE}`);
     if (scope === "bridge") clauses.push(BRIDGE_ROW_PREDICATE);
     return `'${surface}', (select count(*) from serving.${surface} where ${clauses.join(" and ")})`;
+  }).join(",\n    ");
+}
+
+function physicalPageRowsSql(tenant, assessment) {
+  const pages = [
+    ["tower_command_center", "tower_command_center", null],
+    ["tower_value_proof", "tower_value_chain", null],
+    ["tower_decision_lanes", "tower_command_center", "decision_lanes"],
+    ["tower_evidence", "tower_evidence_queue", "evidence"],
+    ["tower_recommended_actions", "tower_command_center", "recommended_actions"],
+    ["tower_ai_portfolio", "tower_ai_portfolio", "ai_portfolio"],
+    ["tower_cost_lens", "tower_value_chain", "cost_lens"],
+    ["tower_risk_lens", "tower_evidence_queue", "risk_lens"],
+    ["tower_adoption_lens", "tower_ai_portfolio", "adoption_lens"],
+  ];
+  return pages.map(([surface, table, pageKey]) => {
+    const pageClause = pageKey === null
+      ? "true"
+      : table === "tower_ai_portfolio"
+      ? `coalesce(display_payload_json ->> 'page_key', 'ai_portfolio') = ${sqlText(pageKey)}`
+      : `page_key = ${sqlText(pageKey)}`;
+    return `'${surface}', (select coalesce(jsonb_agg(jsonb_build_object('row_key', row_key, 'source_hash', source_hash) order by row_key), '[]'::jsonb) from ecl_projection.${table} where tenant_key = ${tenant} and assessment_id = ${assessment} and projection_version = ${PROJECTION_VERSION} and ${pageClause})`;
   }).join(",\n    ");
 }
 
@@ -1664,6 +1651,9 @@ select jsonb_build_object(
     ${bridgePhysicalCountsSql(tenant, assessment, true)}
   ),
   'active_assessments', coalesce((select jsonb_agg(jsonb_build_object('assessment_id', active.assessment_id, 'projection_version', active.projection_version)) from serving.tower_active_assessment_keys() active where active.tenant_key = ${tenant}), '[]'::jsonb),
+  'physical_page_rows', jsonb_build_object(
+    ${physicalPageRowsSql(tenant, assessment)}
+  ),
   'serving_counts', jsonb_build_object(
     ${servingCountsSql(tenant, assessment, "tenant")}
   ),
@@ -1719,6 +1709,24 @@ select jsonb_build_object(
       'source_record_id', count(*) filter (where display_payload_json ? 'source_record_id'),
       'extract_date', count(*) filter (where display_payload_json ? 'extract_date'),
       'quality_state', count(*) filter (where display_payload_json ? 'source_quality_state')
+    )
+    from ecl_projection.tower_ai_portfolio
+    where tenant_key = ${tenant} and assessment_id = ${assessment}
+      and projection_version = ${PROJECTION_VERSION}
+      and display_payload_json ->> 'page_key' = 'ai_portfolio'
+  ),
+  'ai_project_spend_field_survival', (
+    select jsonb_build_object(
+      'surface_rows', count(*),
+      'fy26_project_period', count(*) filter (where display_payload_json ->> 'project_budget_fiscal_year' = 'FY26'),
+      'project_spend_as_of_date', count(*) filter (where display_payload_json ->> 'project_spend_as_of_date' ~ '^20[0-9]{2}-[0-9]{2}-[0-9]{2}$'),
+      'actual_spend_ytd_usd', count(*) filter (where jsonb_typeof(display_payload_json -> 'actual_spend_ytd_usd') = 'number' and (display_payload_json ->> 'actual_spend_ytd_usd')::numeric >= 0),
+      'source_plan_basis', count(*) filter (where display_payload_json ->> 'source_plan_basis' = 'synthetic_sponsor_scenario_not_finance_actual'),
+      'project_source_ref', count(*) filter (where exists (
+        select 1 from jsonb_array_elements(source_refs_json) ref
+        where ref ->> 'project_id' = display_payload_json ->> 'project_id'
+          and ref ->> 'source_file' = '21_it_project_portfolio.csv'
+      ))
     )
     from ecl_projection.tower_ai_portfolio
     where tenant_key = ${tenant} and assessment_id = ${assessment}
@@ -1884,8 +1892,8 @@ function validateReadback(readback, expected, options) {
     issues.push("readback_identity_mismatch");
   }
   const active = readback.active_assessments;
-  if (!Array.isArray(active) || active.length !== 1 || active[0].assessment_id !== options.assessmentId || Number(active[0].projection_version) !== PROJECTION_VERSION) {
-    issues.push("target_assessment_not_sole_active_generation");
+  if (!Array.isArray(active) || active.some((row) => row.assessment_id === options.assessmentId)) {
+    issues.push("staged_assessment_must_remain_inactive");
   }
   const bridgeAwareKeys = new Set([
     "projection_entry", "tower_command_center", "tower_value_chain", "tower_evidence_queue", "cube_slice",
@@ -1917,24 +1925,32 @@ function validateReadback(readback, expected, options) {
     issues.push("bridge_projection_entries_do_not_match_physical_rows");
   }
   for (const [surface, count] of Object.entries(expected.serving)) {
+    const physicalRows = readback.physical_page_rows?.[surface];
+    if (!Array.isArray(physicalRows) || physicalRows.length !== Number(count)) {
+      issues.push(`staged_${surface}_physical_count_expected_${count}_got_${physicalRows?.length ?? "missing"}`);
+    } else if (
+      new Set(physicalRows.map((row) => row.row_key)).size !== physicalRows.length ||
+      physicalRows.some((row) => !row.row_key || !/^[0-9a-f]{64}$/.test(row.source_hash ?? ""))
+    ) {
+      issues.push(`staged_${surface}_row_identity_or_hash_invalid`);
+    }
     const base = readback.serving_base_counts?.[surface];
     const bridge = readback.serving_bridge_counts?.[surface];
     const target = readback.serving_target_counts?.[surface];
-    if (Number(base) !== Number(count)) {
-      issues.push(`serving_${surface}_base_expected_${count}_got_${base}`);
-    }
-    if (Number(bridge) !== Number(readback.bridge_source_counts?.[surface])) {
-      issues.push(`serving_${surface}_bridge_source_mismatch`);
-    }
-    if (Number(target) !== Number(base) + Number(bridge)) {
-      issues.push(`serving_${surface}_target_contains_unclassified_rows`);
-    }
-    if (Number(readback.serving_counts?.[surface]) !== Number(target)) {
-      issues.push(`serving_${surface}_includes_other_assessments`);
+    if (Number(base) !== 0 || Number(bridge) !== 0 || Number(target) !== 0) {
+      issues.push(`staged_${surface}_visible_before_serving_approval`);
     }
   }
   const expectedAiCases = Number(expected.serving.tower_ai_portfolio ?? 0);
   const expectedAiTools = Number(expected.serving.tower_adoption_lens ?? 0);
+  for (const key of [
+    "fy26_project_period", "project_spend_as_of_date", "actual_spend_ytd_usd",
+    "source_plan_basis", "project_source_ref",
+  ]) {
+    if (Number(readback.ai_project_spend_field_survival?.[key] ?? 0) !== expectedAiCases) {
+      issues.push(`ai_project_spend_${key}_expected_${expectedAiCases}_got_${readback.ai_project_spend_field_survival?.[key] ?? 0}`);
+    }
+  }
   for (const key of [
     "business_case_id",
     "project_id",
@@ -2114,10 +2130,10 @@ function runPsqlFile(databaseUrl, sqlPath, outDir, label) {
   return run(["psql", databaseUrl, "-v", "ON_ERROR_STOP=1", "-f", sqlPath], label, outDir, true);
 }
 
-function runPsqlReadback(databaseUrl, options, outDir) {
-  const stdout = run(["psql", databaseUrl, "-v", "ON_ERROR_STOP=1", "-At", "-c", readbackSql(options)], "03-readback", outDir);
+function runPsqlReadback(databaseUrl, options, outDir, label = "03-readback") {
+  const stdout = run(["psql", databaseUrl, "-v", "ON_ERROR_STOP=1", "-At", "-c", readbackSql(options)], label, outDir);
   const parsed = JSON.parse(stdout.trim());
-  fs.writeFileSync(path.join(outDir, "03-readback.json"), `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
+  fs.writeFileSync(path.join(outDir, `${label}.json`), `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
   return parsed;
 }
 
@@ -2126,7 +2142,41 @@ function writeJson(filePath, value) {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
-function emitProofBundle(outDir) {
+function privateStageProof(options, priorActive, readback) {
+  const source = deriveRichSyntheticSourceIdentity(options.packageDir);
+  const pages = Object.fromEntries(
+    Object.entries(readback.physical_page_rows ?? {}).map(([page, rows]) => [
+      page,
+      {
+        row_count: rows.length,
+        row_fingerprint_sha256: sha256Text(stableJson(rows)),
+        rows,
+      },
+    ]),
+  );
+  const proof = {
+    proof_type: "tower_rich_synthetic_private_stage_v1",
+    tenant_key: options.tenantKey,
+    assessment_id: options.assessmentId,
+    projection_version: PROJECTION_VERSION,
+    source_set_hash: source.source_set_hash,
+    source_files: source.files,
+    release_record: options.releaseRecord,
+    build_version: options.buildVersion,
+    idempotency_key: options.idempotencyKey,
+    image_digest: process.env.ABARVA_OPERATOR_IMAGE_DIGEST ?? null,
+    quality_gate: { status: "passed", issues: [] },
+    prior_active_assessments: priorActive,
+    post_active_assessments: readback.active_assessments,
+    pages,
+    proof_blob_uri: null,
+    proof_blob_sha256: null,
+    proof_blob_note: "ACA proof uploader supplies immutable Blob URI and SHA-256 after bundling; local proof alone is not a serving receipt.",
+  };
+  return { ...proof, proof_content_sha256: sha256Text(stableJson(proof)) };
+}
+
+function buildProofBundle(outDir) {
   const tarPath = path.join(os.tmpdir(), `meridian-tower-layer4-proof-${Date.now()}.tgz`);
   const rootName = path.basename(outDir);
   const result = spawnSync("tar", ["-czf", tarPath, "-C", path.dirname(outDir), rootName], {
@@ -2134,14 +2184,30 @@ function emitProofBundle(outDir) {
     encoding: "utf8",
   });
   if (result.status !== 0) throw new Error(result.stderr || "proof bundle tar failed");
+  return fs.readFileSync(tarPath);
+}
+
+function emitProofBundle(bytes) {
   process.stdout.write(`${PROOF_BEGIN}\n`);
-  process.stdout.write(fs.readFileSync(tarPath).toString("base64"));
+  process.stdout.write(bytes.toString("base64"));
   process.stdout.write(`\n${PROOF_END}\n`);
 }
 
-function main() {
+async function main() {
   const options = parseArgs(process.argv.slice(2));
+  if (options.purgeOnly) {
+    throw new Error("Refusing Layer 4 purge: use a separately reviewed assessment cleanup operator");
+  }
   assertPackageCanMutate(options);
+  if (options.write) {
+    await assertRichSyntheticLoadApproval({
+      packageDir: options.packageDir,
+      assessmentId: options.assessmentId,
+      tenantKey: options.tenantKey,
+      releaseRecord: options.releaseRecord,
+    });
+  }
+  const stageBlob = options.write ? richStageBlobConfig() : null;
   fs.mkdirSync(options.outDir, { recursive: true });
   const rows = buildRows(options);
   const loadSqlPath = path.join(options.outDir, "tower_layer4_product_cube_load.sql");
@@ -2171,6 +2237,7 @@ function main() {
       operator_identity: process.env.USER ?? "unknown",
       git_sha: gitSha(),
       image_digest: process.env.ABARVA_OPERATOR_IMAGE_DIGEST ?? null,
+      run_id: stageBlob?.runId ?? null,
     },
     package_dir: options.packageDir,
     out_dir: options.outDir,
@@ -2201,30 +2268,64 @@ function main() {
     summary.status = "purge_applied";
     writeJson(path.join(options.outDir, "tower_layer4_product_cube_load_summary.json"), summary);
     console.log(JSON.stringify(summary, null, 2));
-    if (options.emitProofBundle) emitProofBundle(options.outDir);
+    if (options.emitProofBundle) emitProofBundle(buildProofBundle(options.outDir));
     return;
   }
   if (options.write) {
     if (!envFlag("TOWER_LAYER4_AZURE_WRITE_APPROVED")) {
       throw new Error("Refusing Azure write without TOWER_LAYER4_AZURE_WRITE_APPROVED=true");
     }
+    summary.prior_active_assessments = runPsqlReadback(
+      process.env.DATABASE_URL,
+      options,
+      options.outDir,
+      "01-before-stage",
+    ).active_assessments;
     runPsqlFile(process.env.DATABASE_URL, loadSqlPath, options.outDir, "02-load");
-    summary.status = "write_applied";
+    summary.status = "private_stage_applied";
   }
   if (options.write || options.readbackOnly) {
     const readback = runPsqlReadback(process.env.DATABASE_URL, options, options.outDir);
     summary.readback = readback;
     summary.issues = validateReadback(readback, rows.expected, options);
-    summary.status = summary.issues.length ? "failed" : options.write ? "write_verified" : "readback_verified";
+    if (
+      options.write &&
+      JSON.stringify(summary.prior_active_assessments ?? []) !==
+        JSON.stringify(readback.active_assessments ?? [])
+    ) {
+      summary.issues.push("active_selector_changed_during_private_stage");
+    }
+    summary.status = summary.issues.length
+      ? "failed"
+      : options.write
+        ? "private_stage_verified"
+        : "stage_readback_verified";
+    if (options.write && summary.issues.length === 0) {
+      summary.private_stage_proof = path.join(options.outDir, "tower_private_stage_proof.json");
+      writeJson(
+        summary.private_stage_proof,
+        privateStageProof(options, summary.prior_active_assessments, readback),
+      );
+    }
   }
   writeJson(path.join(options.outDir, "tower_layer4_product_cube_load_summary.json"), summary);
+  let proofBytes = null;
+  if (options.write && summary.issues.length === 0) {
+    proofBytes = buildProofBundle(options.outDir);
+    summary.private_stage_blob = await uploadRichStageProof(proofBytes, {
+      tenantKey: options.tenantKey,
+      assessmentId: options.assessmentId,
+      config: stageBlob,
+    });
+    writeJson(path.join(options.outDir, "tower_layer4_product_cube_load_summary.json"), summary);
+  }
   console.log(JSON.stringify(summary, null, 2));
-  if (options.emitProofBundle) emitProofBundle(options.outDir);
+  if (options.emitProofBundle) emitProofBundle(proofBytes ?? buildProofBundle(options.outDir));
   if (summary.issues.length) process.exitCode = 1;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main();
+  await main();
 }
 
-export { readbackSql, validateReadback };
+export { privateStageProof, readbackSql, validateReadback };

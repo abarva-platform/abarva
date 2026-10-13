@@ -1,0 +1,22 @@
+tenant_key,as_of_date,domain_name,business_value_type,finance_status,business_case_count,approved_investment_usd,projected_annual_value_low_usd,projected_annual_value_high_usd,board_claimable_ytd_usd,finance_validated_ytd_usd,roi_low_multiple,roi_high_multiple
+meridian-health,2026-08-24,Data & AI,Foundation,sponsor_claimed,7,42112601,0,0,0,0,0,0
+meridian-health,2026-08-24,Digital & Member Experience,Grow revenue,finance_challenged,3,18411245,82284254,100259088,0,0,4.5,5.4
+meridian-health,2026-08-24,Enterprise Applications,Reduce cost,cfo_approved_target,2,14681677,72251240,91151703,0,0,4.9,6.2
+meridian-health,2026-08-24,Clinical / Epic,Create capacity,not_submitted,4,19942218,107152128,139979573,0,0,5.4,7
+meridian-health,2026-08-24,Data & AI,Foundation,finance_validated_actual,6,26926707,0,0,0,0,0,0
+meridian-health,2026-08-24,Digital & Member Experience,Reduce cost,sponsor_claimed,1,8600000,34548723,41923410,0,0,4,4.9
+meridian-health,2026-08-24,Corporate IT,Reduce cost,finance_challenged,1,6400000,28603129,36652370,0,0,4.5,5.7
+meridian-health,2026-08-24,Clinical / Epic,Create capacity,cfo_approved_target,1,7200000,35432528,47811407,0,0,4.9,6.6
+meridian-health,2026-08-24,Corporate IT,Reduce cost,not_submitted,1,4800000,25791024,29543720,0,0,5.4,6.2
+meridian-health,2026-08-24,Enterprise Applications,Reduce cost,finance_validated_actual,1,7900000,46018096,55841008,13136248,13136248,5.8,7.1
+meridian-health,2026-08-24,Cybersecurity & Risk,Reduce cost,sponsor_claimed,1,5700000,22898572,29342487,0,0,4,5.1
+meridian-health,2026-08-24,Enterprise Applications,Reduce cost,finance_challenged,3,9239407,41293116,51476236,0,0,4.5,5.6
+meridian-health,2026-08-24,Data & AI,Reduce cost,cfo_approved_target,1,3830974,18852930,21596106,0,0,4.9,5.6
+meridian-health,2026-08-24,Corporate IT,Reduce cost,cfo_approved_target,2,8112650,39923847,47240131,0,0,4.9,5.8
+meridian-health,2026-08-24,Cybersecurity & Risk,Reduce cost,not_submitted,2,8563354,46012013,57561532,0,0,5.4,6.7
+meridian-health,2026-08-24,Enterprise Applications,Foundation,finance_validated_actual,1,3380271,0,0,0,0,0,0
+meridian-health,2026-08-24,Digital & Member Experience,Reduce cost,cfo_approved_target,1,2253514,11089958,14210797,0,0,4.9,6.3
+meridian-health,2026-08-24,Enterprise Architecture,Build faster,cfo_approved_target,1,2929568,14416944,19453717,0,0,4.9,6.6
+meridian-health,2026-08-24,Enterprise Applications,Reduce cost,not_submitted,1,3154920,16951795,19418348,0,0,5.4,6.2
+meridian-health,2026-08-24,Clinical / Epic,Create capacity,finance_challenged,1,4957731,22157284,29898260,0,0,4.5,6
+meridian-health,2026-08-24,Digital & Member Experience,Reduce cost,finance_challenged,1,2704217,12085792,13844323,0,0,4.5,5.1

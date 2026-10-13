@@ -23,6 +23,7 @@ const read = (rel: string) => fs.readFileSync(path.resolve(ROOT, rel), "utf-8");
 
 const GENERATOR = read("scripts/tower/generate-meridian-layer1-source.mjs");
 const LAYER4 = read("scripts/tower/load-healthcare-demo-layer4-products.mjs");
+const SERVING_OPERATOR = read("scripts/tower/operate-rich-synthetic-serving.mjs");
 const READER = read("src/lib/tower/readTowerCommandCenter.ts");
 const VIEW = read("src/lib/tower/command-center/view-model.ts");
 const TYPES = read("src/lib/tower/command-center/types.ts");
@@ -483,37 +484,27 @@ describe("the rules hold across every panel, not just the ones already fixed", (
   });
 });
 
-describe("the loader declares the generation it just wrote", () => {
-  it("retires the prior generation before activating this one", () => {
-    // A partial unique index permits one active generation per tenant. Activating before retiring
-    // would be rejected — so the order is load-bearing, not stylistic.
-    const retire = LAYER4.indexOf("set state = 'retired'");
-    const activate = LAYER4.indexOf("insert into ecl_projection.tower_assessment_lifecycle");
+describe("private stage and separately reviewed serving selection", () => {
+  it("keeps the active selector unchanged while Layer 4 stages its rows", () => {
+    expect(LAYER4).not.toContain("lifecycleDeclarationSql(options),");
+    expect(LAYER4).not.toContain("insert into ecl_projection.tower_assessment_lifecycle");
+    expect(LAYER4).toContain("active_selector_changed_during_private_stage");
+    expect(LAYER4).toContain("uploadRichStageProof(proofBytes");
+  });
+
+  it("retires the reviewed prior generation before selecting the candidate", () => {
+    const switchStart = SERVING_OPERATOR.indexOf("async function switchSelector");
+    const switchEnd = SERVING_OPERATOR.indexOf("async function rollbackSelector", switchStart);
+    const switchBody = SERVING_OPERATOR.slice(switchStart, switchEnd);
+    const retire = switchBody.indexOf("set state='retired'");
+    const activate = switchBody.indexOf("insert into ecl_projection.tower_assessment_lifecycle");
+    expect(switchStart).toBeGreaterThan(-1);
+    expect(switchEnd).toBeGreaterThan(switchStart);
     expect(retire).toBeGreaterThan(-1);
     expect(activate).toBeGreaterThan(retire);
-  });
-
-  it("does not retire the generation it is about to activate", () => {
-    // Without this the reload of an existing generation would retire and then re-activate itself,
-    // losing its original activation date for no reason.
-    expect(LAYER4).toContain(
-      "and not (assessment_id = ${assessment} and projection_version = ${PROJECTION_VERSION})",
-    );
-  });
-
-  it("declares inside the same transaction as the rows it describes", () => {
-    // A generation that fails to load must never be declared active. The declaration sits between
-    // the last insert and the commit.
-    const declare = LAYER4.indexOf("lifecycleDeclarationSql(options),");
-    const commit = LAYER4.indexOf('"commit;",');
-    expect(declare).toBeGreaterThan(-1);
-    expect(commit).toBeGreaterThan(declare);
-  });
-
-  it("loads unchanged where the lifecycle table does not exist", () => {
-    expect(LAYER4).toContain(
-      "if to_regclass('ecl_projection.tower_assessment_lifecycle') is null then",
-    );
+    expect(switchBody).toContain("begin isolation level serializable");
+    expect(switchBody).toContain("Reviewed preflight differs from locked selector and rows");
+    expect(switchBody).toContain("Serving readback differs from staged physical page");
   });
 });
 

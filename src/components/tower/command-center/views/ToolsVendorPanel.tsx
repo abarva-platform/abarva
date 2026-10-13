@@ -53,6 +53,8 @@ function activeUsers(item: TowerAiView): number | null {
     ACTIVE_USER_METRICS.has(bar.label.replace(/[_-]/g, " ").replace(/\s+/g, " ").trim().toLowerCase()),
   );
   const count = item.monthlyActiveUsers;
+  if (item.enabledUsers !== null && item.enabledUsers !== undefined &&
+      count !== null && count !== undefined && count > item.enabledUsers) return null;
   return hasActiveUserMetric && typeof count === "number" && Number.isFinite(count) && count >= 0
     ? count
     : null;
@@ -104,7 +106,7 @@ function VendorChart({ rows }: { rows: readonly VendorRow[] }) {
           <Tooltip
             cursor={{ fill: "rgba(10,10,11,0.05)" }}
             contentStyle={{ fontFamily: "var(--abarva-sans)", fontSize: 13, border: "1px solid var(--canon-border)", borderRadius: 0, background: "#fff" }}
-            formatter={(v) => [formatCount(Number(v)), "active-user counts across tools"] as [string, string]}
+            formatter={(v) => [formatCount(Number(v)), "tool-user counts; people may repeat"] as [string, string]}
           />
           <Bar dataKey="value" isAnimationActive={false} barSize={16}>
             {data.map((d) => (
@@ -125,6 +127,10 @@ export function ToolsVendorPanel({ view }: { view: TowerCommandCenterView }) {
   const blockedTools = rows.reduce((sum, row) => sum + row.blockerCount, 0);
   const vendorsWithActiveUsers = rows.filter((row) => row.activeUsers !== null).length;
   const hasActiveUsers = vendorsWithActiveUsers > 0;
+  const inconsistentToolRows = view.allInitiatives.filter((item) =>
+    isToolRollout(item) && item.enabledUsers != null && item.monthlyActiveUsers != null &&
+    item.monthlyActiveUsers > item.enabledUsers,
+  ).length;
 
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>
@@ -140,12 +146,12 @@ export function ToolsVendorPanel({ view }: { view: TowerCommandCenterView }) {
       >
         {!hasActiveUsers
           ? `No vendor-level active-user counts are loaded. ${formatCount(view.usageObservations.length)} adoption-source rows do not establish vendor exposure.`
-          : `${formatCount(vendorsWithActiveUsers)} of ${formatCount(rows.length)} vendor groups with usage-linked rollouts have recorded active-user counts.`}
+          : `${formatCount(vendorsWithActiveUsers)} of ${formatCount(rows.length)} vendor groups with usage-linked rollouts have recorded tool-user counts; the same employee may appear more than once.`}
       </h2>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
         <div style={{ ...PANEL, flex: "1 1 440px" }}>
           <h3 style={{ margin: "0 0 20px", fontSize: 15, fontWeight: 600 }}>
-            Active-user counts across tools by vendor
+            Tool-user counts across rollouts by vendor
           </h3>
           <VendorChart rows={rows} />
         </div>
@@ -189,6 +195,8 @@ export function ToolsVendorPanel({ view }: { view: TowerCommandCenterView }) {
           ? "Only rows explicitly measured as active users enter this chart. Counts are added across tool rollouts, so one person using two tools can be counted twice. Licensed seats are not loaded."
           : "No explicitly named active-user or licensed-seat measure is loaded for a vendor comparison."} Rollout counts here cover only tool rows with a usage metric, using declared page and canonical object identity;
         {" "}{unclassifiedPortfolioCount(view.allInitiatives)} rows without that identity are excluded.
+        {inconsistentToolRows > 0 ? ` ${inconsistentToolRows} tool ${inconsistentToolRows === 1 ? "row is" : "rows are"} excluded from active-user totals until monthly active and enabled counts reconcile.` : ""}
+        {view.allInitiatives.some((item) => item.sourcePlan != null) ? " This is a usage view; subscription and partner bills are not loaded as vendor spend." : ""}
       </p>
     </section>
   );

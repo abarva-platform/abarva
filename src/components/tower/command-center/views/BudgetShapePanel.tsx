@@ -2,6 +2,7 @@
 
 import type React from "react";
 import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
+import { sourceSpendDate, syntheticProjectSpendYtd } from "./synthetic-project-spend";
 
 const PANEL: React.CSSProperties = {
   background: "var(--canon-bg-surface)",
@@ -22,6 +23,72 @@ export function BudgetShapePanel({ view }: { view: TowerCommandCenterView }) {
     style: "currency", currency: "USD", maximumFractionDigits: 1,
     notation: "compact",
   }).format(value);
+  const sourcePlanCases = view.allInitiatives
+    .filter((item) => item.populationKind === "ai_case" && item.sourcePlan?.fundingUsd != null)
+    .sort((a, b) => (b.sourcePlan?.fundingUsd ?? 0) - (a.sourcePlan?.fundingUsd ?? 0));
+
+  if (sourcePlanCases.length > 0) {
+    const projectSpend = syntheticProjectSpendYtd(view);
+    const largest = sourcePlanCases.slice(0, 6);
+    const maxFunding = largest[0]?.sourcePlan?.fundingUsd ?? 0;
+    return (
+      <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+        <h2 style={{ margin: 0, fontFamily: "var(--abarva-serif)", fontWeight: 500, fontSize: 26 }}>
+          The synthetic AI plan shows where funding was proposed. These are case estimates, not approved spending or tool bills.
+        </h2>
+        {projectSpend ? (
+          <div style={PANEL}>
+            <span style={{ fontSize: 14, color: "var(--canon-gray-500)" }}>AI project spending in the FY26 synthetic source</span>
+            <strong style={{ display: "block", marginTop: 8, fontFamily: "var(--abarva-serif)", fontSize: 34 }}>{money(projectSpend.amountUsd)}</strong>
+            <p style={{ margin: "8px 0 0", fontSize: 14, lineHeight: 1.55 }}>
+              Synthetic project portfolio records for {projectSpend.projectCount} distinct FY26 projects through {sourceSpendDate(projectSpend.asOfDate)}. This is spending reported by one source, separate from proposed funding, tool subscriptions, and Finance-cleared benefit.
+            </p>
+          </div>
+        ) : null}
+        <div style={PANEL}>
+          <h3 style={{ margin: "0 0 8px", fontSize: 16 }}>Largest planned AI cases</h3>
+          <p style={{ margin: "0 0 18px", fontSize: 14, color: "var(--canon-gray-700)" }}>
+            Compare the proposed funding with each case&apos;s expected benefit and proof before making a funding decision.
+          </p>
+          {largest.map((item) => {
+            const funding = item.sourcePlan?.fundingUsd ?? 0;
+            return (
+              <div key={item.id} style={{ display: "grid", gridTemplateColumns: "minmax(200px, 1fr) minmax(180px, 2fr) 110px", gap: 14, alignItems: "center", padding: "10px 0", borderTop: "1px solid var(--canon-border)" }}>
+                <span style={{ fontSize: 14, display: "grid", gap: 3 }}>
+                  <strong>{item.name}</strong>
+                  <small style={{ color: "var(--canon-gray-500)" }}>
+                    {item.vendor ? `Source partner: ${item.vendor} · ` : ""}
+                    {item.projectName && item.actualSpendYtdUsd !== null
+                      ? `Project spend through ${sourceSpendDate(item.projectSpendAsOfDate)} ${money(item.actualSpendYtdUsd)}`
+                      : "Project spending not recorded"}
+                  </small>
+                </span>
+                <span style={{ height: 12, background: "var(--canon-gray-100)" }}>
+                  <span style={{ display: "block", width: `${maxFunding > 0 ? (funding / maxFunding) * 100 : 0}%`, height: 12, background: "var(--canon-teal-dark)" }} />
+                </span>
+                <strong style={{ textAlign: "right", fontFamily: "var(--abarva-mono)" }}>{money(funding)}</strong>
+              </div>
+            );
+          })}
+        </div>
+        <p style={{ margin: 0, fontSize: 14, color: "var(--canon-gray-700)" }}>
+          {projectSpend
+            ? "Project spending comes from a synthetic portfolio source and may repeat across linked cases. It is not a tool subscription bill; case figures should not be added again to the distinct-project total above."
+            : "Project spending comes from synthetic portfolio records and may repeat across linked cases. It is not a tool subscription bill; Tower withholds a total until project IDs, fiscal year, source, and as-of dates reconcile."}
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 20 }}>
+          <div style={PANEL}>
+            <h3 style={{ margin: "0 0 8px", fontSize: 15 }}>Overall IT budget</h3>
+            <p style={{ margin: 0, lineHeight: 1.55 }}>The synthetic source states an overall budget and separate case plans. Tower shows an AI share only after the total and the case funding are reconciled on the same basis.</p>
+          </div>
+          <div style={PANEL}>
+            <h3 style={{ margin: "0 0 8px", fontSize: 15 }}>Tool and partner costs</h3>
+            <p style={{ margin: 0, lineHeight: 1.55 }}>Rollout and vendor records show which tools are in use. Subscription and partner charges need a linked Finance amount before they enter a spend total.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>

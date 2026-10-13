@@ -352,6 +352,7 @@ export interface TowerAiView {
   displayBucketBasis: TowerAiDisplayBucketBasis;
   mappingPolicyVersion: string;
   category: string | null;
+  domainName?: string | null;
   vendor: string | null;
   system: string | null;
   /** 0–100, mart `value_score`. Bubble Y axis. */
@@ -393,8 +394,21 @@ export interface TowerAiView {
   aiAmountBasis: TowerAiAmountBasis;
   /** False when no spend was recorded — a tool rollout carries none. $0 is a different claim. */
   aiSpendLoaded: boolean;
+  /** Historic synthetic plan; never included in approved funding or achieved value totals. */
+  sourcePlan?: {
+    fundingUsd: number | null;
+    yearlyBenefitLowUsd: number | null;
+    yearlyBenefitHighUsd: number | null;
+    roiLowMultiple: number | null;
+    roiHighMultiple: number | null;
+  } | null;
   /** Initiative-detail fields for the drill-down. Null where the source recorded nothing. */
   projectName: string | null;
+  projectId?: string | null;
+  projectBudgetFiscalYear?: string | null;
+  projectSpendAsOfDate?: string | null;
+  projectSpendSourceLinked?: boolean;
+  projectSpendSourceFile?: string | null;
   lifecycleStage: string | null;
   financePartnerRole: string | null;
   successMetric: string | null;
