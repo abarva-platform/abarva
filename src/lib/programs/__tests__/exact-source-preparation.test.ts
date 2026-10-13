@@ -48,6 +48,7 @@ describe("exact source preparation",()=>{
     expect(plan.documents.every(doc=>doc.agent_readiness_status==="not_reviewed" && doc.confidence_level==="unverified")).toBe(true);
     expect(plan.documents.every(doc=>plan.sources.filter(source=>source.eligible).some(source=>source.documents.some(owned=>owned.id===doc.id)))).toBe(true);
     expect(plan.readinessWrites).toEqual([]);expect(plan.modelCalls).toBe(0);expect(plan.phaseWrites).toBe(0);
+    expect(plan.rollback.ownedIndexIds).toEqual([]);
     expect(prepareExactSourcePlan(cohort,snapshot,manifest).sourceSetHash).toBe(plan.sourceSetHash);
   });
   it("matches independently generated Python ASCII encoding and keeps microseconds",()=>{
@@ -87,6 +88,14 @@ describe("exact source preparation",()=>{
     for(const mutated of [actual.slice(1),[...actual,actual[0]],actual.map((doc,i)=>i===0?{...doc,client_id:uuid(999)}:doc),actual.map((doc,i)=>i===0?{...doc,body:"changed"}:doc)])expect(()=>verifyExactIndexedDocuments(plan.documents,mutated)).toThrow();
     const missing=structuredClone(actual);delete missing[0].body;expect(()=>verifyExactIndexedDocuments(plan.documents,missing)).toThrow();
   });
+  it("accepts Azure timestamp spelling for the same instant and rejects real drift",()=>{
+    const f=fixture();const plan=prepareExactSourcePlan(f.cohort,f.snapshot,manifest);
+    const actual=plan.documents.map(document=>({...document,last_seen_at:"2026-10-12T10:00:00.1230000Z"}));
+    expect(()=>verifyExactIndexedDocuments(plan.documents,actual)).not.toThrow();
+    expect(()=>verifyExactIndexedDocuments(plan.documents,actual.map(document=>({...document,last_seen_at:"2026-10-12T05:00:00.1230000-05:00"})))).not.toThrow();
+    for(const last_seen_at of ["2026-10-12T10:00:00.1230001Z","2026-10-12T10:00:00.1240000Z","2026-02-30T10:00:00.123Z","invalid",null])expect(()=>verifyExactIndexedDocuments(plan.documents,actual.map(document=>({...document,last_seen_at})))).toThrow("source_index_content_or_scope_changed");
+    expect(()=>verifyExactIndexedDocuments(plan.documents,actual.map(document=>({...document,body:"changed"})))).toThrow("source_index_content_or_scope_changed");
+  });
   it("renders a literal escaped citation and exact original-file link, never future evidence",()=>{
     const f=fixture();const plan=prepareExactSourcePlan(f.cohort,f.snapshot,manifest);const source=plan.sources[0];
     const html=renderSourceCitationProof({...source,quote:"<script>alert(1)</script>"},plan.sourceSetHash);
@@ -94,30 +103,27 @@ describe("exact source preparation",()=>{
     expect(()=>renderSourceCitationProof(plan.sources[3],plan.sourceSetHash)).toThrow("source_future_phase");
     expect(()=>renderSourceCitationProof({...source,downloadPath:"https://other.example/file"},plan.sourceSetHash)).toThrow("source_link_unbound");
   });
-  it("computes create-only row differences, preserves existing matches and refuses collision content",()=>{
+  it("describes prospective missing documents, preserves existing matches and refuses collision content",()=>{
     const f=fixture();const plan=prepareExactSourcePlan(f.cohort,f.snapshot,manifest);
-    expect(scopedIndexRowDiff(plan,[]).create).toEqual(plan.documents);
-    expect(scopedIndexRowDiff(plan,plan.documents).create).toEqual([]);
+    expect(scopedIndexRowDiff(plan,[]).proposedMissingDocuments).toEqual(plan.documents);
+    expect(scopedIndexRowDiff(plan,plan.documents).proposedMissingDocuments).toEqual([]);
     expect(()=>scopedIndexRowDiff(plan,[{...plan.documents[0],client_id:uuid(999)}])).toThrow();
     expect(scopedIndexRowDiff(plan,[]).readinessWrites).toEqual([]);
+    expect(scopedIndexRowDiff(plan,[]).rollback.ownedIds).toEqual([]);
+    expect(scopedIndexRowDiff(plan,[]).creationGuaranteed).toBe(false);
   });
   it("refuses index execution before any source read or upload when load approval is absent",async()=>{
     const f=fixture();const plan=prepareExactSourcePlan(f.cohort,f.snapshot,manifest);const replan=jest.fn(),readBefore=jest.fn(),upload=jest.fn();
     await expect(applyApprovedExactSourceIndex({plan,manifest,releaseRecord:"docs/releases/records/2026-10-12-moves-exact-source-preparation.md",replan,readBefore,upload})).rejects.toThrow("source_index_load_not_approved");
     expect(replan).not.toHaveBeenCalled();expect(readBefore).not.toHaveBeenCalled();expect(upload).not.toHaveBeenCalled();
   });
-  it("refuses source drift and partial indexing, and leaves readiness unchanged on success",async()=>{
+  it("refuses even approved index execution before an upload can replace a raced row",async()=>{
     const f=fixture();const plan=prepareExactSourcePlan(f.cohort,f.snapshot,manifest);const record="docs/releases/records/2026-10-12-moves-exact-source-preparation.md";
     const approved={...manifest,expected_object_count:3,load_approval:{approved_by:"Taylor Morgan",approved_at:"2026-10-12",assessment_id:f.cohort.moveId,move_id:f.cohort.moveId,source_set_hash:plan.sourceSetHash,release_record:record}} satisfies DatasetManifest;
-    const upload=jest.fn(async(docs:typeof plan.documents)=>({value:docs.map(doc=>({key:doc.id,status:true}))}));
-    await expect(applyApprovedExactSourceIndex({plan,manifest:approved,releaseRecord:record,replan:async()=>({...plan,sourceSetHash:"f".repeat(64)}),readBefore:async()=>[],upload})).rejects.toThrow("source_changed_before_index");expect(upload).not.toHaveBeenCalled();
-    const args={plan,manifest:approved,releaseRecord:record,replan:async()=>plan,readBefore:async()=>[],upload};
-    await expect(applyApprovedExactSourceIndex({...args,upload:async()=>({value:[]})})).rejects.toThrow("source_index_partial_or_unverified_result");
-    await expect(applyApprovedExactSourceIndex({...args,upload:async()=>({value:plan.documents.map(doc=>({key:doc.id,status:false}))})})).rejects.toThrow("source_index_partial_or_unverified_result");
-    expect((await applyApprovedExactSourceIndex(args)).mode).toBe("index_submission_unverified");expect(plan.readinessWrites).toEqual([]);
-    let reads=0;
-    await expect(applyApprovedExactSourceIndex({...args,replan:async()=>++reads===1?plan:{...plan,sourceSetHash:"f".repeat(64)}})).rejects.toThrow("source_changed_during_index");
-    upload.mockClear();expect((await applyApprovedExactSourceIndex({...args,readBefore:async()=>plan.documents})).mode).toBe("idempotent");expect(upload).not.toHaveBeenCalled();
+    const upload=jest.fn(async(docs:typeof plan.documents)=>({value:docs.map(doc=>({key:doc.id,status:true,statusCode:200}))}));
+    const replan=jest.fn(async()=>plan),readBefore=jest.fn(async()=>[]);
+    await expect(applyApprovedExactSourceIndex({plan,manifest:approved,releaseRecord:record,replan,readBefore,upload})).rejects.toThrow("source_index_write_capability_unreleased");
+    expect(replan).not.toHaveBeenCalled();expect(readBefore).not.toHaveBeenCalled();expect(upload).not.toHaveBeenCalled();expect(plan.rollback.ownedIndexIds).toEqual([]);
   });
   it("reads an exact scoped snapshot and hashes original bytes, propagating failed reads",async()=>{
     const f=fixture();const responses=[{rows:[f.snapshot.move]},{rows:[f.snapshot.person]},{rows:f.snapshot.rows.map(row=>({evidence:row.evidence,review:row.review,artifact:row.artifact,review_updated_at_db_text:row.reviewUpdatedAtDbText}))},{rows:f.snapshot.history},{rows:[]}];

@@ -12,12 +12,12 @@
 
 Prepare a bounded source cohort from declared current reviews and original Blob
 bytes. A read-only operator plan derives exact Azure index documents and a
-create-only difference. A protected, non-model citation proof checks actual index
+prospective index difference. A protected, non-model citation proof checks actual index
 membership and content, then renders a literal citation with original-file access.
 
-The default operator entry exposes only planning. Index execution through the
-adapter requires separate exact load approval, fresh source comparison and verified
-per-document acknowledgements. Submission does not establish indexing or admission.
+The default operator entry exposes only planning. The apply adapter refuses execution even when load approval is present. A separately
+reviewed serialized writer with actual creation/ownership proof is required.
+Prospective missing IDs are not owned and grant no rollback deletion.
 
 ## Layer Impact
 
@@ -43,8 +43,8 @@ actor, source IDs, phases, versions and hashes. No tenant list or filename infer
 - Complete native source, review and version guards, original Blob byte checks,
   consumer-compatible bindings, independent ledger digest and microsecond checks.
 - Current-phase eligibility and explicit future-source deferral.
-- Exact document IDs, content/scope checks, create-only planning, idempotency,
-  partial-result refusal and source-drift guards.
+- Exact document IDs, content/scope checks, prospective planning and exact existing-content validation.
+  Index execution and rollback ownership remain unreleased.
 - Preparation namespace excluded from ordinary agent retrieval at request and
   returned-hit boundaries. The proof path never constructs model context.
 - Literal escaped citation rendering, original-file link, fresh native comparison,
@@ -52,10 +52,15 @@ actor, source IDs, phases, versions and hashes. No tenant list or filename infer
 
 ## QA / Validation
 
-- PASS: 42 focused tests across three suites and full Node 24 typecheck.
+- PASS: 43 focused tests across three suites and full Node 24 typecheck.
+- The typed index timestamp compares equal instants across Azure fractional
+  precision and UTC offsets, while rejecting actual submillisecond drift. Other
+  index fields and the lossless native review guard remain exact. See
+  [Microsoft supported data types](https://learn.microsoft.com/en-us/rest/api/searchservice/supported-data-types).
 - Operator startup uses the existing Node marker preload, inherited by the tsx
   child process. A real npm entry check refuses a changed cohort hash before data access.
-- PASS: changed-file lint with zero warnings, 17 mutation checks killed/restored,
+- PASS: changed-file lint with zero warnings, 20 active mutation checks killed/restored; two earlier apply-drift
+  checks are retired with the removed write path,
   no new library/route/export orphans, 19 export audit tests, five corpus gates,
   genuine manual/census/tenancy regeneration and all 11 release gates.
 - PASS: nine Azure/broker regression suites, 128 tests.
@@ -84,9 +89,9 @@ separately reviewed canonical readiness candidate.
 
 ## Rollback Plan
 
-Code rolls back through a PR and the main workflow. Data execution records exact
-before-state and newly owned index IDs. Any index reversal requires review of the
-current versions and may affect only those newly created, unchanged owned IDs;
+Code rolls back through a PR and the main workflow. The planner records before-state and prospective index IDs with empty owned-ID
+sets. A future writer must prove concurrency safety and genuine creation before
+any narrowly scoped reversal can be reviewed;
 source, review, capture, signed document and readiness records are preserved.
 
 ## Audit Evidence
@@ -104,6 +109,9 @@ they do not establish live source availability or citation proof.
 - The source quote must correspond to stored extraction; a mismatch refuses the
   candidate and requires source-owner review rather than automatic rewriting.
 - Existing canonical readiness rows refuse this initial absence-bound plan.
+- Azure upload can replace a raced document. This candidate exposes no executable
+  apply capability and claims no newly owned IDs. Serialized ownership, creation
+  acknowledgements and honest partial outcomes remain separate prerequisites.
 - This candidate provides no canonical readiness mutation or phase advancement.
   Subsequent readiness requires actual proof and a separate exact review.
 - Authentication retains the existing identity-resolution contract. The source

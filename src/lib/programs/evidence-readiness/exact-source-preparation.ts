@@ -47,7 +47,7 @@ export interface ExactSourcePlan {
   version: 1; datasetId: string; cohort: ExactSourceCohort; sourceSetHash: string;
   sources: PreparedSource[]; documents: SearchDocument[];
   beforeReadiness: NativeSourceRow[]; readinessWrites: never[];
-  rollback: { createdIndexIdsOnly: string[]; sourceAndReadinessWrites: false };
+  rollback: { plannedIndexIdsNotOwned: string[]; ownedIndexIds: never[]; sourceAndReadinessWrites: false };
   modelCalls: 0; phaseWrites: 0; mode: "plan";
 }
 
@@ -128,14 +128,38 @@ export function prepareExactSourcePlan(raw: unknown, snapshot: ExactSourceSnapsh
   });
   const documents = sources.filter(source=>source.eligible).flatMap(source=>source.documents);
   if (!documents.length || new Set(documents.map(doc=>doc.id)).size!==documents.length) throw new Error("source_index_plan_empty_or_duplicate");
-  return { version:1,datasetId:cohort.datasetId,cohort,sourceSetHash:moveSourceRevision({ cohort,sources:sources.map(s=>s.admissionSource.binding),documents }),sources,documents,beforeReadiness:snapshot.readiness,readinessWrites:[],rollback:{ createdIndexIdsOnly:documents.map(doc=>doc.id),sourceAndReadinessWrites:false },modelCalls:0,phaseWrites:0,mode:"plan" };
+  return { version:1,datasetId:cohort.datasetId,cohort,sourceSetHash:moveSourceRevision({ cohort,sources:sources.map(s=>s.admissionSource.binding),documents }),sources,documents,beforeReadiness:snapshot.readiness,readinessWrites:[],rollback:{ plannedIndexIdsNotOwned:documents.map(doc=>doc.id),ownedIndexIds:[],sourceAndReadinessWrites:false },modelCalls:0,phaseWrites:0,mode:"plan" };
+}
+
+/** Compare the typed index instant at 100 ns precision; native review proof is separate. */
+function indexedTimestampTicks(value:unknown):bigint|null {
+  if (typeof value!=="string") return null;
+  const match=value.match(/^(\d{4}-\d\d-\d\d)T(\d\d:\d\d:\d\d)(?:\.(\d{1,7}))?(Z|[+-]\d\d:\d\d)$/);
+  if (!match || Number(match[1].slice(0,4))<1) return null;
+  const utcCalendar=new Date(`${match[1]}T${match[2]}Z`);
+  if (!Number.isFinite(utcCalendar.getTime()) || utcCalendar.toISOString().slice(0,19)!==`${match[1]}T${match[2]}`) return null;
+  if (match[4]!=="Z") {
+    const hours=Number(match[4].slice(1,3)),minutes=Number(match[4].slice(4,6));
+    if (hours>14 || minutes>59 || (hours===14 && minutes!==0)) return null;
+  }
+  const seconds=Date.parse(`${match[1]}T${match[2]}${match[4]}`);
+  if (!Number.isFinite(seconds)) return null;
+  return BigInt(seconds)*BigInt(10000)+BigInt((match[3]??"").padEnd(7,"0"));
 }
 
 export function verifyExactIndexedDocuments(expected: readonly SearchDocument[], actual: readonly NativeSourceRow[]) {
   if (actual.length!==expected.length || new Set(actual.map(row=>row.id)).size!==actual.length) throw new Error("source_index_membership_incomplete");
   for (const document of expected) {
     const found = actual.find(row=>row.id===document.id);
-    if (!found || Object.entries(document).some(([key,value]) => key!=="@search.action" && (!Object.prototype.hasOwnProperty.call(found,key) || moveSourceRevision(found[key])!==moveSourceRevision(value)))) throw new Error("source_index_content_or_scope_changed");
+    if (!found || Object.entries(document).some(([key,value]) => {
+      if (key==="@search.action") return false;
+      if (!Object.prototype.hasOwnProperty.call(found,key)) return true;
+      if (key==="last_seen_at") {
+        const expectedTime=indexedTimestampTicks(value),actualTime=indexedTimestampTicks(found[key]);
+        return expectedTime===null || actualTime===null || expectedTime!==actualTime;
+      }
+      return moveSourceRevision(found[key])!==moveSourceRevision(value);
+    })) throw new Error("source_index_content_or_scope_changed");
   }
 }
 
