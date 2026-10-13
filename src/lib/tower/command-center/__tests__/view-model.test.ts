@@ -621,9 +621,10 @@ describe("buildTowerCommandCenterView", () => {
     expect(view.gaps[0]).toMatchObject({
       kind: "claim_gate",
       missing:
-        "Governed financial amount and baseline/target/actual proof for Program One",
+        "Value amount, starting point, goal, and measured result for Program One",
       valueAtStakeUsd: null,
     });
+    expect(view.gaps[0].why).toContain("no amount ready to report");
   });
 
   it("still produces evidence gaps when the pipeline gap table is EMPTY", () => {
