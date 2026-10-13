@@ -1,5 +1,9 @@
 const getProgramByIdMock = jest.fn();
 const fromMock = jest.fn();
+const mockAuthoredApproval = jest.fn();
+const mockAuthoredFlag = jest.fn();
+jest.mock("@/lib/data-plane/write-adapters/programsWriteAdapter", () => ({ createAzureProgramsWriteAdapter: () => ({ runAuthoredApproval: (...args: unknown[]) => mockAuthoredApproval(...args) }) }));
+jest.mock("@/lib/features/is-feature-enabled", () => ({ isFeatureEnabled: () => mockAuthoredFlag() }));
 
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
   __esModule: true,
@@ -460,5 +464,47 @@ describe("signOffDeliverable", () => {
         approved_artifact_id: "artifact-approved-2",
       }),
     );
+  });
+});
+
+
+describe("authored current-version approval mutation bridge", () => {
+  const move = "10000000-0000-4000-8000-000000000001";
+  const ctx = { clientId: "client-1", clientKey: "meridian", userId: "operator-1" };
+  const receipt = { source: "authored_docx_upload" as const, origin: "abarva_uploaded" as const,
+    tenantKey: "meridian-health", storageTenantKey: "meridian", moveId: move, deliverableTypeKey: "charter" as const, phase: 1 as const,
+    requestId: "50000000-0000-4000-8000-000000000001", sha256: "a".repeat(64), artifactId: "20000000-0000-4000-8000-000000000001",
+    artifactVersion: 1, uploadedBy: "author-uploader", authoringBasis: "abarva_authored_unsigned" as const,
+    delegatedReviewReference: "delegated-business-review", originalFileName: "charter.docx", parseMethod: "docx-parser",
+    evidenceSnapshotHash: "approved-basis", phaseEvidenceSnapshotHash: "approved-phase-basis", evidenceSnapshotScope: "phase" as const, observedAt: "2026-10-12T18:00:00Z" };
+  const version = { id: "version-1", content: "Authored scope", structured_data: { source: "authored_docx_upload", authoredUpload: receipt } };
+  beforeEach(() => {
+    fromMock.mockReset(); getProgramByIdMock.mockResolvedValue({ id: move });
+    mockAuthoredFlag.mockReturnValue(true); mockAuthoredApproval.mockReset().mockResolvedValue({ ok: true, data: { applied: true } });
+    fromMock.mockImplementation(table => selectDeliverable({ data: table === "deliverables_v2" ? { current_version: 1, signed_off_version: null, structured_data: {} } : version, error: null }));
+  });
+  async function options() {
+    const { captureReviewedDeliverableVersion } = await import("../deliverable-review-receipt");
+    return { authoredApprovalReceipt: receipt, approvedArtifactId: receipt.artifactId, expectedCurrentVersion: 1, reviewedVersion: captureReviewedDeliverableVersion(1, version) };
+  }
+  it("uses the atomic authored seam with original author and workspace reviewer distinct", async () => {
+    expect(await signOffDeliverable(ctx, move, "document-1", await options())).toBe(true);
+    expect(mockAuthoredApproval).toHaveBeenCalledWith(expect.objectContaining({ versionId: "version-1", version: 1, content: "Authored scope", userId: "operator-1", receipt: expect.objectContaining({ uploadedBy: "author-uploader", origin: "abarva_uploaded" }) }));
+    expect(fromMock.mock.calls.map(c => c[0])).toEqual(["deliverables_v2", "deliverable_versions"]);
+  });
+  it("refuses an approval without the exact reviewed version receipt", async () => {
+    await expect(signOffDeliverable(ctx, move, "document-1", { authoredApprovalReceipt: receipt, approvedArtifactId: receipt.artifactId })).rejects.toMatchObject({ code: "deliverable_review_changed" });
+    expect(mockAuthoredApproval).not.toHaveBeenCalled();
+  });
+  it("refuses a flag-off or changed atomic version without falling through to AI approval", async () => {
+    mockAuthoredFlag.mockReturnValue(false);
+    await expect(signOffDeliverable(ctx, move, "document-1", await options())).rejects.toMatchObject({ code: "deliverable_review_changed" });
+    expect(mockAuthoredApproval).not.toHaveBeenCalled();
+    mockAuthoredFlag.mockReturnValue(true); mockAuthoredApproval.mockResolvedValue({ ok: true, data: { applied: false } });
+    await expect(signOffDeliverable(ctx, move, "document-1", await options())).rejects.toMatchObject({ code: "deliverable_review_changed" });
+  });
+  it("reports a failed approval transaction without claiming a sign-off", async () => {
+    mockAuthoredApproval.mockResolvedValue({ ok: false });
+    await expect(signOffDeliverable(ctx, move, "document-1", await options())).rejects.toMatchObject({ code: "authored_approval_unavailable", status: 503 });
   });
 });

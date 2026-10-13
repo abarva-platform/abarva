@@ -44,6 +44,7 @@ import {
   refuseSignOffNotApplied,
 } from "@/lib/programs/deliverable-sign-off-outcome";
 import { getProgramById } from "@/lib/programs/queries";
+import { AUTHORED_P1_UPLOAD_FLAG, AuthoredUploadRefusal, verifyAuthoredApproval, type AuthoredUploadReceipt } from "@/lib/programs/authored-deliverable-upload";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { P5_TOWER_HANDOFF_FLAG } from "@/lib/programs/p5-measurement-plan";
 import {
@@ -431,6 +432,7 @@ export async function POST(
       | undefined;
     let generatedApprovalArtifactId: string | undefined;
     let reviewedVersion: ReviewedDeliverableVersion | undefined;
+    let authoredApprovalReceipt: AuthoredUploadReceipt | undefined;
 
     if (!isFileUploadApproval && currentVersion) {
       const { data: versionRow, error: versionError } = await supabase
@@ -487,6 +489,16 @@ export async function POST(
           },
           { status: 422 },
         );
+      }
+
+      if (source === "authored_docx_upload") {
+        if (!isFeatureEnabled(ctx, AUTHORED_P1_UPLOAD_FLAG)) return Response.json({ error: "authored_approval_unavailable" }, { status: 409 });
+        authoredApprovalReceipt = await verifyAuthoredApproval(ctx, {
+          moveId: programId, key: deliverableTypeKey,
+          content: (versionRow as { content?: string }).content ?? "",
+          receipt: versionStructuredData.authoredUpload,
+        });
+        generatedApprovalArtifactId = authoredApprovalReceipt.artifactId;
       }
 
       const generatedVersion =
@@ -901,6 +913,7 @@ export async function POST(
       approvedContent,
       approvalLineage: generatedApprovalLineage,
       approvalRationale,
+      authoredApprovalReceipt,
     });
     if (!signedOff) {
       const refusal = refuseSignOffNotApplied({
@@ -944,6 +957,7 @@ export async function POST(
         : null,
     });
   } catch (err) {
+    if (err instanceof AuthoredUploadRefusal) return Response.json({ error: err.code, detail: err.message }, { status: err.status });
     if (
       err instanceof DeliverableReviewChanged ||
       err instanceof DeliverableReviewUnavailable

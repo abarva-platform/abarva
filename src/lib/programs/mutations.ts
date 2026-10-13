@@ -667,6 +667,7 @@ export async function signOffDeliverable(
   opts: {
     supabase?: SupabaseClient;
     expectedCurrentVersion?: number;
+    authoredApprovalReceipt?: import("./authored-deliverable-upload").AuthoredUploadReceipt;
     reviewedVersion?: import("./deliverable-review-receipt").ReviewedDeliverableVersion;
     /**
      * Validated lineage for a generated artifact accepted as this deliverable.
@@ -736,6 +737,7 @@ export async function signOffDeliverable(
     DeliverableReviewUnavailable,
   } = await import("./deliverable-review-receipt");
   if (currentVersion !== expectedVersion) throw new DeliverableReviewChanged();
+  let reviewedContent: string | null = null;
   if (opts.reviewedVersion) {
     const { data: version, error: versionError } = await sb
       .from("deliverable_versions")
@@ -745,6 +747,7 @@ export async function signOffDeliverable(
       .maybeSingle();
     if (versionError) throw new DeliverableReviewUnavailable();
     if (!version) throw new DeliverableReviewChanged();
+    reviewedContent = typeof (version as { content?: unknown }).content === "string" ? (version as { content: string }).content : null;
     const currentReceipt = captureReviewedDeliverableVersion(
       expectedVersion,
       version,
@@ -770,6 +773,22 @@ export async function signOffDeliverable(
       if (p5Hash(plan) !== opts.reviewedVersion.planHash)
         throw new DeliverableReviewChanged();
     }
+  }
+  if (opts.authoredApprovalReceipt) {
+    const { isFeatureEnabled } = await import("@/lib/features/is-feature-enabled");
+    const { AUTHORED_P1_UPLOAD_FLAG, readAuthoredUploadReceipt, AuthoredUploadRefusal } = await import("./authored-deliverable-upload");
+    const receipt = readAuthoredUploadReceipt(opts.authoredApprovalReceipt);
+    if (!isFeatureEnabled(ctx, AUTHORED_P1_UPLOAD_FLAG) || !receipt || receipt.moveId !== programId ||
+      receipt.artifactId !== opts.approvedArtifactId || !opts.reviewedVersion?.versionId || reviewedContent === null)
+      throw new DeliverableReviewChanged();
+    const { createAzureProgramsWriteAdapter } = await import("@/lib/data-plane/write-adapters/programsWriteAdapter");
+    const written = await createAzureProgramsWriteAdapter().runAuthoredApproval({ programId, clientId: ctx.clientId,
+      deliverableId, versionId: opts.reviewedVersion.versionId, version: expectedVersion, content: reviewedContent,
+      receipt, userId: ctx.userId, reviewerRole: reviewerRoleForContext(ctx), approvalRationale: opts.approvalRationale?.trim() || null });
+    if (!written.ok || !written.data) throw new AuthoredUploadRefusal("authored_approval_unavailable", 503,
+      "Authored approval could not be confirmed. Check the exact version before retrying.");
+    if (!written.data.applied) throw new DeliverableReviewChanged();
+    return true;
   }
   const priorAuthoritativeVersion = existingPointer.signed_off_version ?? null;
   let approvedVersion = currentVersion;
