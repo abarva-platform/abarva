@@ -25,7 +25,7 @@ function readback() {
   return {
     tenant_key: options.tenantKey,
     assessment_id: options.assessmentId,
-    active_assessments: [{ assessment_id: options.assessmentId, projection_version: 2 }],
+    active_assessments: [{ assessment_id: "retained-assessment", projection_version: 2 }],
     projection_manifest: 0,
     projection_entry: 2,
     projection_entry_source_record_ref: 0,
@@ -51,11 +51,12 @@ function readback() {
       tower_evidence_queue: 0,
       cube_slice: 0,
     },
-    serving_counts: { tower_command_center: 2 },
-    serving_target_counts: { tower_command_center: 2 },
-    serving_base_counts: { tower_command_center: 1 },
-    serving_bridge_counts: { tower_command_center: 1 },
+    serving_counts: { tower_command_center: 0 },
+    serving_target_counts: { tower_command_center: 0 },
+    serving_base_counts: { tower_command_center: 0 },
+    serving_bridge_counts: { tower_command_center: 0 },
     bridge_source_counts: { tower_command_center: 1 },
+    physical_page_rows: { tower_command_center: [{ row_key: "executive_summary", source_hash: "a".repeat(64) }] },
     source_ref_missing: 0,
     tower_value_chain_measure_drift: 0,
     tower_ai_primary_object_drift: 0,
@@ -95,8 +96,8 @@ for (const view of ["tower_ai_portfolio", "tower_adoption_lens"]) {
 assert.deepEqual(validateReadback(readback(), expected, options), []);
 
 const leakedGeneration = readback();
-leakedGeneration.serving_counts.tower_command_center = 7;
-assert.ok(validateReadback(leakedGeneration, expected, options).includes("serving_tower_command_center_includes_other_assessments"));
+leakedGeneration.serving_target_counts.tower_command_center = 7;
+assert.ok(validateReadback(leakedGeneration, expected, options).includes("staged_tower_command_center_visible_before_serving_approval"));
 
 const unknownExtra = readback();
 unknownExtra.tower_command_center = 3;
@@ -107,11 +108,11 @@ lostPackageRow.base_counts.tower_command_center = 0;
 assert.ok(validateReadback(lostPackageRow, expected, options).some((issue) => issue.startsWith("tower_command_center_base_expected_1")));
 
 const missingBridgeInServing = readback();
-missingBridgeInServing.serving_bridge_counts.tower_command_center = 0;
-assert.ok(validateReadback(missingBridgeInServing, expected, options).includes("serving_tower_command_center_bridge_source_mismatch"));
+missingBridgeInServing.serving_bridge_counts.tower_command_center = 1;
+assert.ok(validateReadback(missingBridgeInServing, expected, options).includes("staged_tower_command_center_visible_before_serving_approval"));
 
-const inactiveTarget = readback();
-inactiveTarget.active_assessments = [{ assessment_id: "old-assessment", projection_version: 2 }];
-assert.ok(validateReadback(inactiveTarget, expected, options).includes("target_assessment_not_sole_active_generation"));
+const activeTarget = readback();
+activeTarget.active_assessments = [{ assessment_id: options.assessmentId, projection_version: 2 }];
+assert.ok(validateReadback(activeTarget, expected, options).includes("staged_assessment_must_remain_inactive"));
 
 console.log("Layer 4 readback scope: 7 checks passed");
