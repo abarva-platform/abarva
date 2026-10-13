@@ -66,8 +66,10 @@ const ANSWER_OUTPUT_FORMAT = {
           type: { type: "string", enum: ["chart", "table", "none"] },
           dataset_ref: { type: ["string", "null"] },
           chart_kind: {
-            type: ["string", "null"],
-            enum: ["bar", "horizontal-bar", null],
+            anyOf: [
+              { type: "string", enum: ["bar", "horizontal-bar"] },
+              { type: "null" },
+            ],
           },
         },
         required: ["type", "dataset_ref", "chart_kind"],
@@ -1266,7 +1268,15 @@ export async function answerHomeAvaQuestion(args: {
     }
 
     return packageModelResponse(parsed, context, args.tenantKey, question);
-  } catch {
+  } catch (error) {
+    const metadata = error as { status?: unknown } | null;
+    console.warn(
+      JSON.stringify({
+        event: "home_ava.request_failed",
+        status: typeof metadata?.status === "number" ? metadata.status : null,
+        elapsedMs: Date.now() - startedAt,
+      }),
+    );
     const recovered = shouldRecoverFromRelevantClaims(question)
       ? buildClaimBackedRecoveryAnswer({
           context,

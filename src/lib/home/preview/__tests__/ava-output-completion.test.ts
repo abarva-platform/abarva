@@ -163,8 +163,10 @@ it("uses the unchanged model with adaptive omitted thinking and a strict complet
             type: { type: "string", enum: ["chart", "table", "none"] },
             dataset_ref: { type: ["string", "null"] },
             chart_kind: {
-              type: ["string", "null"],
-              enum: ["bar", "horizontal-bar", null],
+              anyOf: [
+                { type: "string", enum: ["bar", "horizontal-bar"] },
+                { type: "null" },
+              ],
             },
           },
           required: ["type", "dataset_ref", "chart_kind"],
@@ -325,6 +327,24 @@ it("does not echo private failure messages into packet caveats or console diagno
   const logged = consoleDiagnostics().map((args) => format(...args)).join("\n");
   expect(logged).not.toContain("private-failure-content");
   expect(logged).not.toContain(tenantKey);
+});
+
+it("logs only numeric request failure metadata for a provider rejection", async () => {
+  const create = jest.fn().mockRejectedValue(Object.assign(
+    new Error(`private-provider-error:${tenantKey}:${question}`),
+    { status: 400, headers: { authorization: "private-credential" } },
+  ));
+  mockClient(create);
+  expectUnavailable(await answer());
+  const diagnostics = consoleDiagnostics();
+  expect(diagnostics).toHaveLength(1);
+  expect(JSON.parse(String(diagnostics[0][0]))).toEqual({
+    event: "home_ava.request_failed",
+    status: 400,
+    elapsedMs: expect.any(Number),
+  });
+  expect(JSON.stringify(diagnostics)).not.toMatch(/private-provider-error|private-credential/);
+  expect(JSON.stringify(diagnostics)).not.toContain(tenantKey);
 });
 
 it.each([
