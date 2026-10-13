@@ -78,8 +78,11 @@ binding is unbound; a verified differing binding or older proof is stale.
 
 ## QA / Validation
 
-- PASS: nine focused suites, 158 tests, including the worker import boundary.
-- PASS: 14 behavioral mutations killed; original bytes restored and tests pass.
+- PASS: 12 focused suites, 211 tests, including the worker import boundary.
+- PASS: 16 behavioral/schema mutations killed; original bytes restored and tests pass.
+- PASS: both affected CI stages reproduced locally: 132 suites, 1717 tests,
+  three snapshots. Research-order fixtures include admitted evidence; the column
+  guard checks both conditional branches and shared lists against migrations.
 - PASS: changed-file lint with zero warnings, no new library/route/export orphans,
   19 export-audit tests, five static corpus checks and census reconciliation.
 - Census: 3023 to 3025 suites, 2858 to 2860 PR-covered; exactly two new covered suites.

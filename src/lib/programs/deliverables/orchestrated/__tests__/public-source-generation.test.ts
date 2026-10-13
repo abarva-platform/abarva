@@ -8,6 +8,7 @@ import { listApprovedPublicSources } from "@/lib/deliverables/public-research/re
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { runDeliverableForTenant } from "@/lib/deliverables/orchestrator/generate-service";
 import type { DeliverableIntelligenceRequest } from "@/lib/deliverables/orchestrator/types";
+import type { AssembledEvidence } from "@/lib/deliverables/orchestrator/evidence-assembler";
 
 jest.mock("@/lib/deliverables/public-research/repository", () => ({ listApprovedPublicSources: jest.fn() }));
 jest.mock("@/lib/features/is-feature-enabled", () => ({ isFeatureEnabled: jest.fn((_ctx, key) => key === "moves_public_source_research") }));
@@ -66,21 +67,22 @@ describe("Move public-source generation boundary", () => {
     userId: "user-1",
     sourceArtifactRef: MOVE_ID,
   };
-  const assemble = jest.fn(async () => ({
-    evidence: [],
-    sourceRegister: [],
-    retrievedCount: 0,
+  const assemble = jest.fn(async (): Promise<AssembledEvidence> => ({
+    evidence: [{ citationNumber: 1, label: "Saved phase input", statement: "Validate workflow exceptions before implementation.", evidenceFamily: "phase_capture", confidence: "high", disclosureTier: "internal_only", provenanceRef: "capture-fixture" }],
+    sourceRegister: [{ citationNumber: 1, label: "Saved phase input", evidenceFamily: "phase_capture", confidence: "high" }],
+    retrievedCount: 1,
+    admission: [{ objectTable: "program_modules", objectId: "capture-fixture", state: "admitted" }],
     coverage: {
-      approvedAvailable: 0,
-      retrieved: 0,
-      packed: 0,
+      approvedAvailable: 1,
+      retrieved: 1,
+      packed: 1,
       droppedForBudget: 0,
       unreadable: 0,
       cited: 0,
-      coverageRatio: null,
-      coverageState: "no_approved_evidence",
+      coverageRatio: 1,
+      coverageState: "packed",
       requiresAttention: false,
-      usedTokens: 0,
+      usedTokens: 12,
       evidenceTokenBudget: 1000,
     },
   }));
@@ -138,7 +140,7 @@ describe("Move public-source generation boundary", () => {
       generate: (async (req: DeliverableIntelligenceRequest) => { seen.push(req); return { ok: false, blockedReason: "stop", quality: { pass: false, blockers: [], warnings: [] } }; }) as never,
     });
     expect(result.ok).toBe(false);
-    expect(order).toEqual(["source-read", "research", "assemble"]);
+    expect(order).toEqual(["source-read", "assemble", "research"]);
     expect(seen[0].publicSources?.[0]).toMatchObject({ citationNumber: 1, title: "Public rule" });
   });
 

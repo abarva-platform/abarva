@@ -58,6 +58,7 @@ import {
   PUBLIC_SOURCES_PER_RUN_MAX,
 } from "../public-research/types";
 import { runDeliverableForTenant } from "../orchestrator/generate-service";
+import type { AssembledEvidence } from "../orchestrator/evidence-assembler";
 import { getFeatureFlagDefinition } from "@/lib/features/registry";
 import { AI_WORKLOADS } from "@/lib/observability/ai-workload-taxonomy";
 
@@ -841,23 +842,37 @@ describe("build hook", () => {
     error: null,
   };
   const order: string[] = [];
-  const assemble = jest.fn(async () => {
+  const assemble = jest.fn(async (): Promise<AssembledEvidence> => {
     order.push("assemble");
     return {
-      evidence: [],
-      sourceRegister: [],
-      retrievedCount: 0,
+      evidence: [{
+        citationNumber: 1,
+        label: "Saved phase input",
+        statement: "Validate workflow exceptions before implementation.",
+        evidenceFamily: "phase_capture",
+        confidence: "high",
+        disclosureTier: "internal_only",
+        provenanceRef: "capture-fixture",
+      }],
+      sourceRegister: [{
+        citationNumber: 1,
+        label: "Saved phase input",
+        evidenceFamily: "phase_capture",
+        confidence: "high",
+      }],
+      retrievedCount: 1,
+      admission: [{ objectTable: "program_modules", objectId: "capture-fixture", state: "admitted" }],
       coverage: {
-        approvedAvailable: 0,
-        retrieved: 0,
-        packed: 0,
+        approvedAvailable: 1,
+        retrieved: 1,
+        packed: 1,
         droppedForBudget: 0,
         unreadable: 0,
         cited: 0,
-        coverageRatio: null,
-        coverageState: "no_approved_evidence",
+        coverageRatio: 1,
+        coverageState: "packed",
         requiresAttention: false,
-        usedTokens: 0,
+        usedTokens: 12,
         evidenceTokenBudget: 1000,
       },
     };
@@ -926,9 +941,10 @@ describe("build hook", () => {
     expect(out.publicResearch).toBeUndefined();
   });
 
-  it("runs before assembly, stores only, and reports the coverage note", async () => {
+  it("runs after source admission, stores only, and reports the coverage note", async () => {
     const out = await runDeliverableForTenant(buildInput, deps());
-    expect(order).toEqual(["research", "assemble"]);
+    expect(order).toEqual(["assemble", "research"]);
+    expect(assemble).toHaveBeenCalledWith(expect.objectContaining({ requireMoveAdmission: true }));
     expect(research).toHaveBeenCalledWith({
       tenantClientKey: "meridian",
       clientId: CLIENT_ID,
