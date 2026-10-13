@@ -211,6 +211,7 @@ describe("authored DOCX draft upload action", () => {
     expect(screen.getByRole("button", { name: "Upload authored draft" })).toBeDisabled(); expect(fetchMock).not.toHaveBeenCalled();
   });
   it("submits only draft admission with declared identity and computed byte hash", async () => {
+    const recorded = jest.fn(); window.addEventListener("moves:authored-admission-recorded", recorded);
     const fetchMock = jest.fn().mockResolvedValue(jsonResponse({ ok: true, admittedVersion: 1, artifactVersion: 1, originalDownloadUrl: "/uploaded-original" }, 201)); global.fetch = fetchMock;
     render(<AuthoredDeliverableUploadAction moveId="move-1" documentKey="charter" />); select();
     await waitFor(() => expect(screen.getByRole("button", { name: "Upload authored draft" })).toBeEnabled());
@@ -221,6 +222,9 @@ describe("authored DOCX draft upload action", () => {
     expect(form.get("expectedState")).toBe("absent"); expect(form.get("deliverableTypeKey")).toBe("charter");
     expect(form.get("expectedFileSha256")).toBe("01".repeat(32)); expect(form.get("signOff")).toBeNull();
     expect(screen.getByRole("link", { name: "Download uploaded original" })).toHaveAttribute("href", "/uploaded-original");
+    expect(recorded).toHaveBeenCalledTimes(1);
+    expect((recorded.mock.calls[0][0] as CustomEvent).detail).toEqual({ moveId: "move-1" });
+    window.removeEventListener("moves:authored-admission-recorded", recorded);
   });
   it("retains the same operation receipt after partial storage or a lost response", async () => {
     const fetchMock = jest.fn().mockResolvedValueOnce(jsonResponse({ detail: "Original retained; document admission unconfirmed.", storedArtifactId: "file-1" }, 503))
@@ -235,10 +239,12 @@ describe("authored DOCX draft upload action", () => {
     expect(fetchMock.mock.calls.map(c => (c[1].body as FormData).get("requestId"))).toEqual(Array(2).fill("50000000-0000-4000-8000-000000000001"));
   });
   it("reports the exact refusal and does not refresh or sign off", async () => {
+    const recorded = jest.fn(); window.addEventListener("moves:authored-admission-recorded", recorded);
     const fetchMock = jest.fn().mockResolvedValue(jsonResponse({ detail: "This document already has a version." }, 409)); global.fetch = fetchMock;
     render(<AuthoredDeliverableUploadAction moveId="move-1" documentKey="discovery_plan" />); select();
     await waitFor(() => expect(screen.getByRole("button", { name: "Upload authored draft" })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: "Upload authored draft" }));
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("already has a version")); expect(mockRefresh).not.toHaveBeenCalled();
+    expect(recorded).not.toHaveBeenCalled(); window.removeEventListener("moves:authored-admission-recorded", recorded);
   });
 });

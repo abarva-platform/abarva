@@ -49,6 +49,8 @@ import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidenc
 import { getStrategicMovesTenancy } from "@/lib/programs/strategic-moves-context";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { MovesPhaseStandaloneClient } from "@/components/strategic-moves/MovesPhaseStandaloneClient";
+import { PhaseDocumentsPanel } from "@/components/strategic-moves/PhaseDocumentsPanel";
+import { AUTHORED_P1_UPLOAD_FLAG } from "@/lib/programs/authored-deliverable-receipt";
 import { p1ParticipantBindingEnabled, readP1ParticipantBinding } from "@/lib/data-plane/write-adapters/p1ParticipantBindingAdapter";
 import {
   isStrategicMoveRouteId,
@@ -1597,6 +1599,10 @@ export default async function StrategicMovePhaseWorkspacePage({
         />
       ) : null}
       <MovesPhaseStandaloneClient
+        initialAuthoredP1Documents={parsedPhase === 1 && isFeatureEnabled(ctx, AUTHORED_P1_UPLOAD_FLAG) &&
+          approvalPolicy?.canUploadArtifacts === true && approvalPolicy.canGenerateDeliverables === true &&
+          (!Array.isArray(approvalPolicy.programIdsAllowed) || approvalPolicy.programIdsAllowed.includes(move.id)) ?
+          <PhaseDocumentsPanel moveId={move.id} currentPhase={1} compact presentationMode authoredAdmissionView /> : null}
         canApproveGates={canApproveGates}
         carriesForwardContent={carriesForwardContent}
         p3PriorPhaseContent={p3PriorPhaseContent}

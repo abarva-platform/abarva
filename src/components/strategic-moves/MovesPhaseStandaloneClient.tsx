@@ -360,6 +360,8 @@ interface PhaseContract {
 }
 
 interface MovesPhaseStandaloneClientProps {
+  /** Server-authorized, canonical P1 document readback for normal Files. */
+  initialAuthoredP1Documents?: ReactNode;
   initialOriginationApproval?: import("@/lib/programs/approved-gate-phases").OriginationApprovalReadback;
   /** Server-resolved permission for evidence and phase approval actions. */
   canApproveGates?: boolean;
@@ -1097,6 +1099,7 @@ function samePhaseBuildArtifactIds(
 }
 
 export function MovesPhaseStandaloneClient({
+  initialAuthoredP1Documents = null,
   stepPagesV3Enabled = false,
   phaseStepPagesEnabled: requestedPhaseStepPagesEnabled,
   p1ParticipantBindingEnabled = false,
@@ -4690,6 +4693,7 @@ export function MovesPhaseStandaloneClient({
                       this Move, not a preview.
                     </p>
                   </div>
+                  {phase.phase === 1 ? initialAuthoredP1Documents : null}
                   <FileCabinetPanel
                     moveId={move.id}
                     phase={phase.phase}

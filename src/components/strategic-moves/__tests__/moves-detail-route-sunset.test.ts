@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import ts from "typescript";
 
 const repoRoot = process.cwd();
 
@@ -8,6 +9,28 @@ function read(relativePath: string): string {
 }
 
 describe("Moves detail route sunset", () => {
+  it("connects the real phase page's existing document reader to the normal Files host", () => {
+    const source = read("src/app/(maestro)/strategic-moves/[moveId]/phase/[phaseNum]/page.tsx");
+    const ast = ts.createSourceFile("page.tsx", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    let slot: ts.JsxAttribute | undefined;
+    function visit(node: ts.Node) {
+      if ((ts.isJsxSelfClosingElement(node) || ts.isJsxOpeningElement(node)) && node.tagName.getText(ast) === "MovesPhaseStandaloneClient") {
+        slot = node.attributes.properties.find((p): p is ts.JsxAttribute => ts.isJsxAttribute(p) && p.name.getText(ast) === "initialAuthoredP1Documents");
+      }
+      ts.forEachChild(node, visit);
+    }
+    visit(ast);
+    expect(slot?.initializer && ts.isJsxExpression(slot.initializer)).toBe(true);
+    const expression = (slot!.initializer as ts.JsxExpression).expression!;
+    expect(ts.isConditionalExpression(expression)).toBe(true);
+    const mounted = (expression as ts.ConditionalExpression).whenTrue;
+    expect(ts.isJsxSelfClosingElement(mounted)).toBe(true);
+    const element = mounted as ts.JsxSelfClosingElement;
+    expect(element.tagName.getText(ast)).toBe("PhaseDocumentsPanel");
+    expect(element.attributes.properties.some(p => ts.isJsxAttribute(p) && p.name.getText(ast) === "authoredAdmissionView")).toBe(true);
+    expect(element.attributes.properties.find(p => ts.isJsxAttribute(p) && p.name.getText(ast) === "moveId")?.getText(ast)).toBe("moveId={move.id}");
+    expect(source).not.toContain('initialAuthoredP1Documents={resolvedSearchParams.workspace');
+  });
   it("keeps the legacy detail route as a current-phase redirect only", () => {
     const source = read("src/app/(maestro)/strategic-moves/[moveId]/page.tsx");
 
