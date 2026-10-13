@@ -91,10 +91,10 @@ export function HomeAvaChat({
       setShowJumpToLatest(
         Boolean(
           transcript &&
-            transcript.scrollHeight -
-              transcript.scrollTop -
-              transcript.clientHeight >
-              80,
+          transcript.scrollHeight -
+            transcript.scrollTop -
+            transcript.clientHeight >
+            80,
         ),
       );
     };
@@ -280,6 +280,14 @@ export function HomeAvaChat({
     <div
       ref={shellRef}
       data-home-ava-chat
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        minHeight: 0,
+        minWidth: 0,
+        overflow: "hidden",
+      }}
       onScrollCapture={(event) => {
         const transcript = transcriptRef.current;
         if (!transcript || event.target !== transcript) return;
@@ -292,6 +300,15 @@ export function HomeAvaChat({
       }}
     >
       <style>{`
+        [data-home-ava-chat] > [data-testid="ava-chat-shell"] {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          height: 100%;
+          min-height: 0;
+          min-width: 0;
+          overflow: hidden;
+        }
         [data-home-ava-chat] [aria-label="Suggested actions"] {
           grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
           gap: 4px !important;
