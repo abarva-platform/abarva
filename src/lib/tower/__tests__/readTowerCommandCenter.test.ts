@@ -570,6 +570,41 @@ describe("readTowerCommandCenter", () => {
     );
   });
 
+  it("shows an adoption row with a declared tool ID as a tool even when it links to a case", async () => {
+    mockServingRows({
+      tower_command_center: [servingRow({ row_key: "executive_summary", page_key: "command_center" })],
+      tower_adoption_lens: [
+        servingRow({
+          row_key: "linked-tool",
+          page_key: "adoption_lens",
+          tool_object_id: "tool-1",
+          use_case_object_id: "case-1",
+          tool_name: "Assistant rollout",
+          display_payload_json: { page_key: "adoption_lens", title: "Assistant rollout" },
+        }),
+        servingRow({
+          row_key: "case-only-usage",
+          page_key: "adoption_lens",
+          use_case_object_id: "case-1",
+          tool_object_id: null,
+          display_payload_json: { page_key: "adoption_lens", title: "Separate case usage" },
+        }),
+      ],
+    });
+
+    const mart = await readTowerCommandCenter({ tenantKeyCandidates: ["meridian-health"] });
+    const view = buildTowerCommandCenterView(mart, { tenantName: "Example" });
+
+    expect(mart?.aiPortfolio.map((item) => item.populationKind)).toEqual([
+      "tool_rollout",
+      "usage_observation",
+    ]);
+    expect(view?.allInitiatives.map((item) => item.populationKind)).toEqual(["tool_rollout"]);
+    expect(view?.allInitiatives[0]?.system).toBe("Assistant rollout");
+    expect(view?.usageObservations.map((item) => item.populationKind)).toEqual(["usage_observation"]);
+    expect(view?.summary.aiInitiativeCount).toBe(1);
+  });
+
   it("leaves freshness absent when serving rows do not record it", async () => {
     mockServingRows({
       tower_command_center: [servingRow()],

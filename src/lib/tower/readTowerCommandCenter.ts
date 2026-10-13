@@ -1096,10 +1096,10 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
   const populationKind =
     declaredPage === "ai_portfolio" && canonicalUseCaseId
       ? "ai_case"
-      : declaredPage === "adoption_lens" && canonicalUseCaseId
-        ? "usage_observation"
-        : declaredPage === "adoption_lens" && canonicalToolId
-          ? "tool_rollout"
+      : declaredPage === "adoption_lens" && canonicalToolId
+        ? "tool_rollout"
+        : declaredPage === "adoption_lens" && canonicalUseCaseId
+          ? "usage_observation"
           : "unknown";
   const licensedUsersRaw = payloadNullableNumberFrom(row, [
     "licensed_users",
