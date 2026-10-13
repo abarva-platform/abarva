@@ -7,13 +7,45 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-import { buildRegisteredIntakeCandidate } from "../build-registered-intake-reload-candidate.mjs";
+import { buildRegisteredIntakeCandidate, csvRows } from "../build-registered-intake-reload-candidate.mjs";
 import { buildPhysicalPlan, validatePhysicalPlan, OUTCOME_MEASURE_PARITY_SQL } from "../stage-registered-intake-partial.mjs";
+import { adaptRegisteredSyntheticFinanceBudget } from "../adapters/registered-synthetic-finance-budget.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const registry = JSON.parse(fs.readFileSync(path.join(ROOT, "datasets/tenant-inputs/tenant-input-registry.json"), "utf8"));
 const tenantKey = registry.activeTenants.find((tenant) => tenant.packets?.some((packet) => packet.classification === "synthetic-demo"))?.tenantKey;
 const build = (variant) => buildRegisteredIntakeCandidate({ repoRoot: ROOT, tenantKey, variant });
+
+test("selected synthetic Finance source requires exact bytes, six amounts, and run/change parity", () => {
+  const tenant = registry.activeTenants.find((item) => item.tenantKey === tenantKey);
+  const file = "SA02_IT_Finance_Budget_Spend_Extract.csv";
+  const bytes = fs.readFileSync(path.join(ROOT, tenant.canonicalInputRoot, file));
+  const sha256 = crypto.createHash("sha256").update(bytes).digest("hex");
+  const rows = csvRows(bytes.toString("utf8")).map((row, index) => ({ ...row, __source_row: index + 2 }));
+  const selection = tenant.syntheticDemoBudgetSelection;
+  assert.equal(sha256, selection.sourceSha256);
+  assert.equal(rows.length, 70);
+  const adapted = adaptRegisteredSyntheticFinanceBudget({ rows, selection, metadata: { sha256 } });
+  assert.equal(adapted.line_items.length, 70);
+  assert.equal(new Set(adapted.line_items.map((item) => item.source_record_id)).size, 70);
+  assert.deepEqual(adapted.line_items.map((item) => item.run_change_flag).reduce((counts, flag) =>
+    ({ ...counts, [flag]: (counts[flag] || 0) + 1 }), {}), { run: 31, change: 39 });
+  assert.equal(adapted.run_change_split.run.amount_usd + adapted.run_change_split.change.amount_usd,
+    adapted.amount_usd);
+  assert.ok(adapted.line_items.every((item) => item.variance_usd ===
+    item.forecast_spend_usd - item.budget_amount_usd &&
+    ["budget_amount_usd", "actual_spend_usd", "forecast_spend_usd", "committed_spend_usd",
+      "invoice_amount_usd", "variance_usd"].every((field) =>
+      Number.isFinite(item[field]) && item.value_source_by_field[field]?.endsWith(`:${field}`))));
+  assert.throws(() => adaptRegisteredSyntheticFinanceBudget({ rows, selection,
+    metadata: { sha256: "modified-source" } }), /exact registered file/);
+  assert.throws(() => adaptRegisteredSyntheticFinanceBudget({ rows: rows.map((row, index) =>
+    index === 0 ? { ...row, variance_usd: "0" } : row), selection, metadata: { sha256 } }),
+  /amounts or variance changed/);
+  assert.throws(() => adaptRegisteredSyntheticFinanceBudget({ rows: rows.map((row, index) =>
+    index === 0 ? { ...row, run_change_flag: "other" } : row), selection, metadata: { sha256 } }),
+  /identity, period, or source status changed/);
+});
 
 test("v6 expands the registered source set and distinguishes unverified assertions from claimable value", () => {
   const prior = build("source-fields-v1");
@@ -22,7 +54,14 @@ test("v6 expands the registered source set and distinguishes unverified assertio
     "bc04b5bbd56115272c41973bafea26bf5e76834467f76f934fc48272d9889c14");
   assert.notEqual(report.input_fingerprint_sha256, prior.input_fingerprint_sha256);
   assert.equal(Object.entries(report.source_manifest).filter(([file, entry]) =>
-    !file.startsWith("extracts/") && entry.content_disposition !== "hash_count_only").length, 22);
+    !file.startsWith("extracts/") && entry.content_disposition !== "hash_count_only").length, 23);
+  assert.equal(report.canonical.budget.status, "no_independent_finance_attestation");
+  assert.equal(report.canonical.budget.approved_fy_budget_usd, null);
+  assert.equal(report.canonical.synthetic_demo_fy26_budget.amount_usd, 650000000);
+  assert.equal(report.canonical.synthetic_demo_fy26_budget.run_change_split.run.amount_usd, 487500000);
+  assert.equal(report.canonical.synthetic_demo_fy26_budget.run_change_split.change.amount_usd, 162500000);
+  assert.equal(report.canonical.synthetic_demo_fy26_budget.run_change_split.run.line_item_count, 31);
+  assert.equal(report.canonical.synthetic_demo_fy26_budget.run_change_split.change.line_item_count, 39);
   for (const file of ["00_enterprise_profile.csv", "01_business_functions.csv", "01b_business_segments.csv",
     "03_workforce_roles.csv", "17_service_scope_managed_services.csv"]) assert.ok(report.source_manifest[file]);
   assert.equal(report.source_manifest["SA10_AI_Value_Interview_Evidence.csv"].content_disposition, "hash_count_only");
@@ -69,12 +108,19 @@ test("v6 physical plan ties each asserted amount to one exact source record and 
   const report = build("source-assertions-v1");
   const { plan, viewCounts } = buildPhysicalPlan(report);
   assert.equal(validatePhysicalPlan(report, plan, viewCounts).status, "pass");
-  assert.equal(plan.sourceFiles.length, 22);
-  assert.equal(plan.sourceRecords.length, 3864);
-  assert.equal(plan.objects.length, 1479);
-  assert.equal(plan.measures.length, 1568);
-  assert.equal(plan.projectionMeasureRefs.length, 1494);
-  assert.equal(Object.values(viewCounts).reduce((sum, count) => sum + count, 0), 1594);
+  assert.equal(plan.sourceFiles.length, 23);
+  assert.equal(plan.sourceRecords.length, 3934);
+  assert.equal(plan.objects.length, 1480);
+  assert.equal(plan.measures.length, 1991);
+  assert.equal(plan.projectionMeasureRefs.length, 1498);
+  assert.equal(Object.values(viewCounts).reduce((sum, count) => sum + count, 0), 1595);
+  const budgetMeasures = plan.measures.filter((row) => row.metric_key.startsWith("synthetic_demo_"));
+  assert.equal(budgetMeasures.length, 423);
+  assert.equal(budgetMeasures.find((row) => row.metric_key === "synthetic_demo_fy26_run_budget_usd")?.value_number, 487500000);
+  assert.equal(budgetMeasures.find((row) => row.metric_key === "synthetic_demo_fy26_change_budget_usd")?.value_number, 162500000);
+  assert.equal(budgetMeasures.filter((row) => row.metric_key === "synthetic_demo_fy26_budget_line_usd").length, 70);
+  assert.ok(budgetMeasures.filter((row) => row.metric_key === "synthetic_demo_fy26_budget_line_usd")
+    .every((row) => row.attributes_json.do_not_add_to_aggregate === true));
   assert.equal(viewCounts.foundations, 1242);
   assert.ok(plan.projectionManifests.every((row) => row.projection_version === 6));
   assert.equal(plan.measures.filter((row) => row.metric_key === "program_source_expected_value_usd").length, 38);
@@ -98,6 +144,23 @@ test("v6 physical plan ties each asserted amount to one exact source record and 
   assert.equal(plan.objects.filter((row) => row.attributes_json.source_population === "registered_foundation_intake").length, 1242);
   assert.equal(plan.commandRows.filter((row) => row.page_key === "foundations").length, 1242);
   assert.equal(plan.sourceFiles.filter((row) => row.file_name.startsWith("extracts/")).length, 0);
+});
+
+test("synthetic demo budget gate rejects component, line, and scenario drift", () => {
+  const report = build("source-assertions-v1");
+  const { plan, viewCounts } = buildPhysicalPlan(report);
+  const component = plan.measures.find((row) => row.metric_key === "synthetic_demo_fy26_run_budget_usd");
+  const line = plan.measures.find((row) => row.metric_key === "synthetic_demo_fy26_budget_line_usd");
+  const summary = plan.commandRows.find((row) => row.page_key === "command_center");
+  component.value_number += 1;
+  line.attributes_json.do_not_add_to_aggregate = false;
+  line.scenario = "actual";
+  summary.display_payload_json.synthetic_demo_fy26_change_usd += 1;
+  const gate = validatePhysicalPlan(report, plan, viewCounts);
+  assert.equal(gate.status, "fail");
+  assert.ok(gate.errors.some((error) => error.includes("synthetic demo budget source")));
+  assert.ok(gate.errors.some((error) => error.includes("executive synthetic demo budget")));
+  assert.ok(gate.errors.some((error) => error.includes("synthetic demo Finance line item")));
 });
 
 test("v6 outcome readback distinguishes text observations from source-only Finance amounts", () => {
@@ -256,7 +319,7 @@ test("segment fixture regeneration preserves corrected function and AI case rows
   }
 });
 
-test("v6 write with exact approval still requires ACA job identity before opening a database", () => {
+test("v6 write with exact approval still requires ACA identity before opening a database", () => {
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), "tower-source-assertions-refusal-"));
   try {
     const result = spawnSync(process.execPath, ["--import", "tsx",

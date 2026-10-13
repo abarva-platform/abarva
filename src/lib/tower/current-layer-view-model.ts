@@ -16,6 +16,10 @@ export interface TowerMartCommandCenter {
   /** When the posture row was last built. Absent or null when the source did not record one. */
   refreshTimestamp?: string | null;
   totalItBudgetFy26: number | null;
+  /** Exact-source FY26 amount selected for a synthetic demo; not independent Finance approval. */
+  syntheticDemoBudgetFy26?: number | null;
+  syntheticDemoRunBudgetFy26?: number | null;
+  syntheticDemoChangeBudgetFy26?: number | null;
   runBudgetFy26: number | null;
   changeBudgetFy26: number | null;
   approvedProgramBudgetFy26: number | null;

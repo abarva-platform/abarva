@@ -4,9 +4,23 @@
     "label": "IT budget (FY26)",
     "tenant": "meridian-health",
     "mode": "quote",
-    "status": "ABSENT",
-    "claims": [],
-    "asserted": []
+    "status": "ONE_SOURCE",
+    "claims": [
+      {
+        "tree": "active",
+        "rel": "SA02_IT_Finance_Budget_Spend_Extract.csv",
+        "col": "budget_amount_usd",
+        "value": 650000000
+      }
+    ],
+    "asserted": [
+      {
+        "tree": "active",
+        "rel": "SA02_IT_Finance_Budget_Spend_Extract.csv",
+        "col": "budget_amount_usd",
+        "value": 650000000
+      }
+    ]
   },
   {
     "metric": "it_budget_usd",

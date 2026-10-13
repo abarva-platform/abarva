@@ -75,6 +75,16 @@ describe("Verdict panel", () => {
     expect(budget?.textContent).not.toContain("$0");
   });
 
+  it("shows a selected demo budget but prioritizes a later independently approved budget", () => {
+    const demo = viewWith({ totalItBudgetFy26: null, syntheticDemoBudgetFy26: 650_000_000 });
+    const { rerender } = render(<VerdictPanel view={demo} />);
+    expect(screen.getByText("FY26 synthetic demo budget").parentElement?.textContent).toContain("$650.0M");
+    expect(screen.getByText("FY26 synthetic demo budget").parentElement?.textContent).toContain("independent Finance sign-off is not recorded");
+    rerender(<VerdictPanel view={viewWith({ totalItBudgetFy26: 700_000_000,
+      syntheticDemoBudgetFy26: 650_000_000 })} />);
+    expect(screen.getByText("Approved FY26 IT budget").parentElement?.textContent).toContain("$700.0M");
+  });
+
   it("labels an annual assertion without inventing a YTD claim population", () => {
     render(<VerdictPanel view={viewWith()} />);
     expect(

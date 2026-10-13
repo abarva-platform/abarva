@@ -33,6 +33,13 @@
       "displayName": "Meridian Health",
       "companySizeBand": "large",
       "canonicalInputRoot": "datasets/tenant-inputs/active/meridian-health/current",
+      "syntheticDemoBudgetSelection": {
+        "sourceFile": "SA02_IT_Finance_Budget_Spend_Extract.csv",
+        "sourceSha256": "90b9f6425501d697a89f9205150da4395698face50a2896e579eabe8bf9658f5",
+        "fiscalYear": "FY26",
+        "selectionStatus": "approved_for_synthetic_demo",
+        "independentFinanceAttestation": false
+      },
       "packets": [
         {
           "packetId": "current-universal-integrated-healthcare",

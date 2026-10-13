@@ -1577,6 +1577,9 @@ export function buildTowerCommandCenterView(
     refreshTimestamp: command.refreshTimestamp ?? null,
 
     budgetUsd: command.totalItBudgetFy26,
+    syntheticDemoBudgetUsd: command.syntheticDemoBudgetFy26 ?? null,
+    syntheticDemoRunUsd: command.syntheticDemoRunBudgetFy26 ?? null,
+    syntheticDemoChangeUsd: command.syntheticDemoChangeBudgetFy26 ?? null,
     runUsd: command.runBudgetFy26,
     changeUsd: command.changeBudgetFy26,
     approvedInvestmentUsd: command.approvedProgramBudgetFy26,

@@ -8,5 +8,13 @@
     "grain": "one aggregate across registered category rows",
     "basis": "one_source_modeled_annual_planning_estimate",
     "separate_category_object_rule": "requires_declared_business_id"
+  },
+  "synthetic_demo_budget_metric": {
+    "object_key": "synthetic_demo_fy26_it_budget_usd",
+    "object_type": "metric",
+    "source_file": "SA02_IT_Finance_Budget_Spend_Extract.csv",
+    "source_field": "budget_amount_usd",
+    "grain": "one FY26 aggregate across exact source-record IDs",
+    "basis": "user_selected_synthetic_demo_source_not_finance_attested"
   }
 }

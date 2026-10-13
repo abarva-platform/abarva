@@ -84,6 +84,10 @@ export interface TowerCommandSummary {
   refreshTimestamp: string | null;
 
   budgetUsd: number | null;
+  /** Source-selected synthetic FY26 budget, separate from independently approved funding. */
+  syntheticDemoBudgetUsd?: number | null;
+  syntheticDemoRunUsd?: number | null;
+  syntheticDemoChangeUsd?: number | null;
   runUsd: number | null;
   changeUsd: number | null;
   approvedInvestmentUsd: number | null;

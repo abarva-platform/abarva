@@ -833,6 +833,19 @@ describe("mechanical Tower Command Center panels", () => {
     expect(document.body.textContent).not.toContain("Budget fields are present");
   });
 
+  it("shows the source-selected demo budget split without calling it independently approved", () => {
+    render(<BudgetShapePanel view={viewWith({ summary: {
+      budgetUsd: null, runUsd: null, changeUsd: null,
+      syntheticDemoBudgetUsd: 650_000_000,
+      syntheticDemoRunUsd: 487_500_000,
+      syntheticDemoChangeUsd: 162_500_000,
+    } })} />);
+    expect(document.body.textContent).toContain("existing operations and new work");
+    expect(document.body.textContent).toContain("$487.5M");
+    expect(document.body.textContent).toContain("$162.5M");
+    expect(document.body.textContent).toContain("independent Finance sign-off is not recorded");
+  });
+
   it("separates the source's benefit plan and funding category in both AI tables", () => {
     const caseRow = initiative({
       id: "CASE-PLAN",
