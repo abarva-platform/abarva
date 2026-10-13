@@ -1,4 +1,5 @@
 export const AUTHORED_P1_UPLOAD_FLAG = "moves_authored_p1_draft_upload_v1";
+export const AUTHORED_ADMISSION_RECORDED_EVENT = "moves:authored-admission-recorded";
 export const AUTHORED_DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 export type AuthoredP1Key = "charter" | "discovery_plan";
 
@@ -58,4 +59,3 @@ export interface AuthoredAdmissionResponse {
   replayed: boolean;
   originalDownloadUrl: string;
 }
-

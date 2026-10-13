@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./step-page/MovesStepPage.module.css";
 import type { AuthoredAdmissionResponse, AuthoredP1Key } from "@/lib/programs/authored-deliverable-receipt";
+import { AUTHORED_ADMISSION_RECORDED_EVENT } from "@/lib/programs/authored-deliverable-receipt";
 
 export function AuthoredDeliverableUploadAction({ moveId, documentKey }: { moveId: string; documentKey: AuthoredP1Key }) {
   const router = useRouter();
@@ -45,7 +46,9 @@ export function AuthoredDeliverableUploadAction({ moveId, documentKey }: { moveI
         setStoredId(typeof result.storedArtifactId === "string" ? result.storedArtifactId : null);
         return;
       }
-      setReceipt(result); setStoredId(null); router.refresh();
+      setReceipt(result); setStoredId(null);
+      window.dispatchEvent(new CustomEvent(AUTHORED_ADMISSION_RECORDED_EVENT, { detail: { moveId } }));
+      router.refresh();
     } catch { setError("The request result is unavailable. Keep this selected file and retry with the same request."); }
     finally { setBusy(false); }
   }

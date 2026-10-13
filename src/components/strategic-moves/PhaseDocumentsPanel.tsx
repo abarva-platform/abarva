@@ -50,6 +50,8 @@ interface Props {
   moveId: string;
   currentPhase?: number;
   compact?: boolean;
+  /** Existing P1 document controls embedded in the normal Files workspace. */
+  authoredAdmissionView?: boolean;
   /** Demo/video presentation mode: keep downloads, reduce internal labels. */
   presentationMode?: boolean;
   /** Move archetype — routes the orchestrator's archetype-specific brief. */
@@ -777,6 +779,7 @@ export async function PhaseDocumentsPanel({
   moveId,
   currentPhase,
   compact,
+  authoredAdmissionView = false,
   presentationMode = false,
   moveName,
   boardArtifactCount = 0,
@@ -788,24 +791,30 @@ export async function PhaseDocumentsPanel({
   const canApproveGates = access?.canApproveGates === true;
   const canUploadAuthored = authoredEnabled && access?.canUploadArtifacts === true && access?.canGenerateDeliverables === true &&
     (!Array.isArray(access.programIdsAllowed) || access.programIdsAllowed.includes(moveId));
+  if (authoredAdmissionView && !canUploadAuthored) return null;
   // The Documents tab is read-only browse/download — generation happens via the
   // phase workspace's Approve & Build, so the archetype/moveName/clientDisplayName
   // props (still accepted for caller compatibility) are no longer used here.
   const [deliverableProjection, attachments] = await Promise.all([
     fetchDeliverablesByKey(moveId),
-    listAttachmentsForProgram(moveId).catch(() => [] as AttachmentRecord[]),
+    authoredAdmissionView ? Promise.resolve([] as AttachmentRecord[]) : listAttachmentsForProgram(moveId).catch(() => [] as AttachmentRecord[]),
   ]);
   // What the sign-off column on this render is. Derived once, so every row and
   // the panel warning answer from the same fact rather than re-deciding it.
   const signOffReadback = describeDeliverableProjectionReadback(
     deliverableProjection.available ? "available" : "unavailable",
   );
+  if (authoredAdmissionView && !deliverableProjection.available) return (
+    <p role="status" data-testid="document-register-unreadable-warning">
+      Document availability could not be read. Refresh Files before choosing an authored draft.
+    </p>
+  );
   // Downstream reads stay a map. The map being empty is no longer the only
   // thing on screen that knows a read failed — `signOffReadback` is.
   const deliverablesByKey = deliverableProjection.available
     ? deliverableProjection.byKey
     : new Map<string, DbDeliverable>();
-  const evidenceNeedPackets = tenancy
+  const evidenceNeedPackets = tenancy && !authoredAdmissionView
     ? await (async () => {
         try {
           const { loadDiscoveryEvidenceReadiness } =
@@ -836,7 +845,7 @@ export async function PhaseDocumentsPanel({
   >();
   // The route the Move has recorded, which narrows what P3 builds. null when
   // nothing is recorded yet — then every phase shows its full canonical set.
-  const confirmedSolutionRoute = tenancy
+  const confirmedSolutionRoute = tenancy && !authoredAdmissionView
     ? await loadMoveConfirmedSolutionRoute(tenancy, moveId).catch(() => null)
     : null;
   const activeClient = await getActiveClientRow().catch(() => null);
@@ -903,7 +912,7 @@ export async function PhaseDocumentsPanel({
     DELIVERABLE_REGISTRY.map((d) => d.deliverableTypeKey),
   );
   const extraDeliverables = Array.from(deliverablesByKey.values()).filter(
-    (d) => !canonicalKeys.has(d.deliverable_type_key),
+    (d) => !authoredAdmissionView && !canonicalKeys.has(d.deliverable_type_key),
   );
 
   const contentKeys = new Set(
@@ -1078,7 +1087,7 @@ export async function PhaseDocumentsPanel({
       )}
 
       {/* Phase sections */}
-      {[1, 2, 3, 4, 5].map((phase) => {
+      {(authoredAdmissionView ? [1] : [1, 2, 3, 4, 5]).map((phase) => {
         // The documents this Move's route declares for the phase — the same
         // set its Approve & Build produces — plus any canonical document
         // outside that set this Move already has something to show for, so a

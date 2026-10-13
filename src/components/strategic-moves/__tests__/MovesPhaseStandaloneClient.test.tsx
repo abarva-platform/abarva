@@ -26,6 +26,7 @@ import {
   within,
 } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { AuthoredDeliverableUploadAction } from "../AuthoredDeliverableUploadAction";
 import { TextDecoder, TextEncoder } from "util";
 import { ReadableStream } from "stream/web";
 import {
@@ -5228,6 +5229,24 @@ describe("MovesPhaseStandaloneClient", () => {
       } finally {
         PHASE_STEP_PAGES["p1-sponsor-scope"] = original;
       }
+    });
+
+    it("mounts both server-authorized P1 authored controls on the normal Files composition and removes them on Steps", () => {
+      const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
+      render(<MovesPhaseStandaloneClient captureV2Enabled stepPagesV3Enabled phaseStepPagesEnabled
+        initialWorkspaceView="files" initialPhaseCaptureValues={saved} carriesForwardContent={[]} evidenceNeedPackets={[]}
+        move={move} phaseNum={1} phaseTallies={[...phaseTallies]} initialAuthoredP1Documents={<section>
+          <AuthoredDeliverableUploadAction moveId={move.id} documentKey="charter" />
+          <AuthoredDeliverableUploadAction moveId={move.id} documentKey="discovery_plan" />
+        </section>} />);
+      expect(screen.getByRole("heading", { name: "Files & Evidence" })).toBeInTheDocument();
+      expect(document.querySelector('#authored-file-charter')).toBeInTheDocument();
+      expect(document.querySelector('#authored-file-discovery_plan')).toBeInTheDocument();
+      expect(screen.getAllByRole("button", { name: "Upload authored draft" })).toHaveLength(2);
+      expect(screen.getByLabelText("Upload Move file")).toBeInTheDocument();
+      fireEvent.click(workspaceTab("Steps"));
+      expect(document.querySelector('#authored-file-charter')).not.toBeInTheDocument();
+      expect(document.querySelector('#authored-file-discovery_plan')).not.toBeInTheDocument();
     });
 
     it("selects Steps during its normal route navigation without retaining the Files view on the reused client", () => {

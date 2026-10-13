@@ -37,6 +37,8 @@ let mockCanApproveGates = true;
 jest.mock("next/navigation", () => ({ useRouter: () => ({ refresh: jest.fn() }) }));
 let mockAuthoredEnabled = false;
 let mockCanUploadAuthored = true;
+let mockCanGenerateAuthored = true;
+let mockAllowedPrograms: string[] | null = null;
 jest.mock("@/lib/features/is-feature-enabled", () => ({ isFeatureEnabled: () => mockAuthoredEnabled }));
 
 jest.mock("@/lib/supabase-server", () => ({
@@ -76,7 +78,8 @@ jest.mock("@/lib/auth/program-access-policy", () => ({
   loadUserProgramAccessPolicy: async () => ({
     canApproveGates: mockCanApproveGates,
     canUploadArtifacts: mockCanUploadAuthored,
-    canGenerateDeliverables: mockCanUploadAuthored,
+    canGenerateDeliverables: mockCanGenerateAuthored,
+    programIdsAllowed: mockAllowedPrograms,
   }),
 }));
 jest.mock("@/lib/programs/load-move-confirmed-route", () => ({
@@ -163,6 +166,8 @@ describe("the Documents tab states whether its sign-off column was read", () => 
     mockCanApproveGates = true;
     mockAuthoredEnabled = false;
     mockCanUploadAuthored = true;
+    mockCanGenerateAuthored = true;
+    mockAllowedPrograms = null;
   });
 
   it("warns once when the document register could not be read", async () => {
@@ -176,6 +181,42 @@ describe("the Documents tab states whether its sign-off column was read", () => 
     // only sign-off read the panel makes.
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toHaveTextContent(/unknown for every document/i);
+  });
+
+  it("produces only the two P1 controls for the active Files slot from known absent canonical rows", async () => {
+    mockAuthoredEnabled = true; mockRunHistory = [];
+    render(await PhaseDocumentsPanel({ moveId: MOVE_ID, currentPhase: 1, compact: true,
+      presentationMode: true, authoredAdmissionView: true }));
+    expect(document.querySelector('#authored-file-charter')).toBeInTheDocument();
+    expect(document.querySelector('#authored-file-discovery_plan')).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Upload authored draft" })).toHaveLength(2);
+    expect(screen.queryByText("Discovery & Diagnosis Report")).not.toBeInTheDocument();
+  });
+
+  it.each(["flag", "permission", "generate", "scope", "register"])("withholds Files admission on an unavailable %s", async failure => {
+    mockAuthoredEnabled = true; mockRunHistory = [];
+    if (failure === "flag") mockAuthoredEnabled = false;
+    if (failure === "permission") mockCanUploadAuthored = false;
+    if (failure === "generate") mockCanGenerateAuthored = false;
+    if (failure === "scope") mockAllowedPrograms = ["another-move"];
+    if (failure === "register") mockDeliverablesError = { message: "read unavailable" };
+    const rendered = await PhaseDocumentsPanel({ moveId: MOVE_ID, currentPhase: 1, compact: true,
+      presentationMode: true, authoredAdmissionView: true });
+    if (failure !== "register") expect(rendered).toBeNull();
+    render(rendered);
+    expect(screen.queryByRole("button", { name: "Upload authored draft" })).not.toBeInTheDocument();
+    if (failure === "register") expect(screen.getByTestId("document-register-unreadable-warning")).toBeInTheDocument();
+  });
+
+  it("preserves the existing signed Charter in the active Files slot and exposes only the absent guide", async () => {
+    mockAuthoredEnabled = true; mockRunHistory = []; mockDeliverablesData = [SIGNED_OFF_CHARTER_ROW];
+    render(await PhaseDocumentsPanel({ moveId: MOVE_ID, currentPhase: 1, compact: true,
+      presentationMode: true, authoredAdmissionView: true }));
+    expect(document.querySelector('#authored-file-charter')).not.toBeInTheDocument();
+    expect(document.querySelector('#authored-file-discovery_plan')).toBeInTheDocument();
+    expect(within(documentRow("Program Charter")).getByText(SIGNED_OFF_STATUS_LABEL)).toBeInTheDocument();
+    expect(within(documentRow("Program Charter")).getByRole("link", { name: "Download Word" })).toHaveAttribute("href",
+      `/api/programs/${MOVE_ID}/deliverables/deliverable-charter-1/content-export?format=docx`);
   });
 
   it("treats a register that reported an error as unread even when it still returned rows", async () => {
