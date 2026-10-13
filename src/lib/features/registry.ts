@@ -106,6 +106,7 @@ export type FeatureFlagKey =
   | "moves_charter_basis_v1"
   | "moves_charter_assumptions_discover_v1"
   | "moves_authored_p1_draft_upload_v1"
+  | "moves_authored_p2_draft_upload_v1"
   | "moves_capture_p0_v1"
   | "moves_capture_composition_v1"
   | "moves_workspace_v2"
@@ -533,6 +534,12 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "moves_authored_p1_draft_upload_v1",
     summary: "Allows an authorized author to upload an unsigned authored DOCX to the declared P1 Charter or Discovery Workshop Guide when no document exists. The stored original, hash, uploaded origin and version receipt are preserved; separate approval verifies the exact file and current evidence. No model, capture promotion, input acceptance or phase advance runs on upload. Enabled for the synthetic demo tenant; existing paths remain unchanged elsewhere.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_authored_p2_draft_upload_v1",
+    summary: "Allows authorized initial unsigned authored P2 report and worksheet presentations and a design working guide. The report includes its separately receipted diagnostic Word original in the same document version. Every original retains its bytes, hash and declared identity; separate current-version approval checks the entire package and current evidence. Decoded Office text is checked before storage. No generation, context promotion or phase advance runs on upload. Enabled for the synthetic demo tenant; P1 and other document paths retain their existing controls.",
     policy: "tenant",
     includeTenants: ["meridian"],
   },

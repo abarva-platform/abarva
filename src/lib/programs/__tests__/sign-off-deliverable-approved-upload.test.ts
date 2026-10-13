@@ -2,8 +2,9 @@ const getProgramByIdMock = jest.fn();
 const fromMock = jest.fn();
 const mockAuthoredApproval = jest.fn();
 const mockAuthoredFlag = jest.fn();
+let mockAuthoredP2Flag = true;
 jest.mock("@/lib/data-plane/write-adapters/programsWriteAdapter", () => ({ createAzureProgramsWriteAdapter: () => ({ runAuthoredApproval: (...args: unknown[]) => mockAuthoredApproval(...args) }) }));
-jest.mock("@/lib/features/is-feature-enabled", () => ({ isFeatureEnabled: () => mockAuthoredFlag() }));
+jest.mock("@/lib/features/is-feature-enabled", () => ({ isFeatureEnabled: (_ctx: unknown, key: string) => key === "moves_authored_p2_draft_upload_v1" ? mockAuthoredP2Flag : mockAuthoredFlag() }));
 
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
   __esModule: true,
@@ -507,4 +508,18 @@ describe("authored current-version approval mutation bridge", () => {
     mockAuthoredApproval.mockResolvedValue({ ok: false });
     await expect(signOffDeliverable(ctx, move, "document-1", await options())).rejects.toMatchObject({ code: "authored_approval_unavailable", status: 503 });
   });
+  it("passes the complete original P2 package and exact reviewed version to the existing atomic seam", async () => {
+    const r = { ...receipt, source: "authored_docx_upload" as const, phase: 2 as const, deliverableTypeKey: "design_workshop_guide" as const,
+      fileRole: "primary" as const, fileFormat: "docx" as const, textSha256: "d".repeat(64), originalFileName: "guide.docx" };
+    const v = { ...version, structured_data: { source: r.source, authoredUpload: r } };
+    fromMock.mockImplementation(table => selectDeliverable({ data: table === "deliverables_v2" ? { current_version: 1, signed_off_version: null, structured_data: {} } : v, error: null }));
+    const { captureReviewedDeliverableVersion } = await import("../deliverable-review-receipt");
+    const opts = { authoredApprovalReceipt: r, approvedArtifactId: r.artifactId, expectedCurrentVersion: 1, reviewedVersion: captureReviewedDeliverableVersion(1,v) };
+    mockAuthoredP2Flag = true; expect(await signOffDeliverable(ctx,move,"document-1",opts)).toBe(true);
+    expect(mockAuthoredApproval).toHaveBeenCalledWith(expect.objectContaining({receipt:r,versionId:"version-1",content:"Authored scope"}));
+    mockAuthoredApproval.mockClear(); mockAuthoredP2Flag = false;
+    await expect(signOffDeliverable(ctx,move,"document-1",opts)).rejects.toMatchObject({code:"deliverable_review_changed"});
+    expect(mockAuthoredApproval).not.toHaveBeenCalled(); mockAuthoredP2Flag = true;
+  });
+
 });

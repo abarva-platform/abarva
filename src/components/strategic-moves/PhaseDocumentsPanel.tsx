@@ -10,7 +10,7 @@
 //   currentPhase  — highlights the current phase section
 
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
-import { AUTHORED_P1_UPLOAD_FLAG, readAuthoredUploadReceipt, type AuthoredUploadReceipt } from "@/lib/programs/authored-deliverable-receipt";
+import { AUTHORED_P1_UPLOAD_FLAG, AUTHORED_P2_UPLOAD_FLAG, authoredDocumentSpec, readAuthoredUploadReceipt, type AuthoredUploadReceipt } from "@/lib/programs/authored-deliverable-receipt";
 import { AuthoredDeliverableUploadAction } from "./AuthoredDeliverableUploadAction";
 import { getServerSupabase } from "@/lib/supabase-server";
 import { getActiveClientRow } from "@/lib/active-client";
@@ -50,7 +50,7 @@ interface Props {
   moveId: string;
   currentPhase?: number;
   compact?: boolean;
-  /** Existing P1 document controls embedded in the normal Files workspace. */
+  /** Existing authored document controls embedded in the normal Files workspace. */
   authoredAdmissionView?: boolean;
   /** Demo/video presentation mode: keep downloads, reduce internal labels. */
   presentationMode?: boolean;
@@ -143,9 +143,10 @@ async function fetchDeliverablesByKey(
         latest_content: latest?.content ?? null,
         ...{ authoredUpload: (() => {
           const receipt = readAuthoredUploadReceipt(latest?.structured_data?.authoredUpload);
-          return receipt?.moveId === programId && receipt.deliverableTypeKey === row.deliverable_type_key && latest?.version === row.current_version ? receipt : null;
+          return receipt?.source === latest?.structured_data?.source && receipt?.moveId === programId &&
+            receipt.deliverableTypeKey === row.deliverable_type_key && latest?.version === row.current_version ? receipt : null;
         })(),
-          authoredVersion: latest?.structured_data?.source === "authored_docx_upload" },
+          authoredVersion: latest?.structured_data?.source === "authored_docx_upload" || latest?.structured_data?.source === "authored_pptx_upload" || latest?.structured_data?.authoredUpload !== undefined },
         signed_off_version: row.signed_off_version,
         approved_artifact_id: row.approved_artifact_id,
       });
@@ -487,7 +488,7 @@ function DocumentRow({
             lineHeight: 1.3,
           }}
         >
-          {spec.documentTitle}
+          {spec.phase === 1 && spec.deliverableTypeKey === "discovery_plan" ? "Discovery Plan" : spec.documentTitle}
         </div>
         <div style={{ fontSize: 10, color: "#9AA3B2", marginTop: 1 }}>
           {spec.audiencePrimary}
@@ -509,7 +510,7 @@ function DocumentRow({
           minWidth: 80,
         }}
       >
-        {authored ? <span>Authored upload · {dbRow?.signed_off_version === dbRow?.current_version ? "workspace sign-off recorded" : "draft"}</span> : hasContent && dot ? (
+        {authored && !authoredReceipt ? <span>Authored file receipt unavailable</span> : authored ? <span>Authored upload · {dbRow?.signed_off_version === dbRow?.current_version ? "workspace sign-off recorded" : "draft"}</span> : hasContent && dot ? (
           <>
             <span
               style={{
@@ -592,7 +593,8 @@ function DocumentRow({
         {hasContent && dbRow ? (
           <>
             {authored ? (
-              authoredReceipt ? <a href={`/api/v1/programs/${moveId}/artifacts/${authoredReceipt.artifactId}/download`} style={linkStyle("primary")}>Download uploaded original</a>
+              authoredReceipt ? <><a href={`/api/v1/programs/${moveId}/artifacts/${authoredReceipt.artifactId}/download`} style={linkStyle("primary")}>Download uploaded original</a>
+                {authoredReceipt.companion && <a href={`/api/v1/programs/${moveId}/artifacts/${authoredReceipt.companion.artifactId}/download`} style={linkStyle("primary")}>Download Word original</a>}</>
               : <span>Authored file binding unavailable</span>
             ) : !isExcel && (
               <>
@@ -613,7 +615,7 @@ function DocumentRow({
               {formatDate(dbRow.updated_at)}
             </span>
             {(!calmBrowse || authored) &&
-              (!authored || authoredApprovalEnabled) &&
+              (!authored || authoredApprovalEnabled && Boolean(authoredReceipt)) &&
               canApproveGates &&
               (blockedNextAction ? (
                 <span style={{ fontSize: 10, color: "#B4513C", maxWidth: 260 }}>
@@ -701,9 +703,8 @@ function DocumentRow({
           // document is produced when its phase is built via Approve & Build in
           // the phase workspace (which runs the governed, gated orchestrator).
           // This keeps the Documents tab a consistent browse/download surface.
-          canUploadAuthored && !dbRow && !runArtifact && spec.phase === 1 &&
-            (spec.deliverableTypeKey === "charter" || spec.deliverableTypeKey === "discovery_plan") ?
-            <AuthoredDeliverableUploadAction moveId={moveId} documentKey={spec.deliverableTypeKey} /> :
+          canUploadAuthored && !dbRow && !runArtifact && authoredDocumentSpec(spec.phase, spec.deliverableTypeKey) ?
+            <AuthoredDeliverableUploadAction moveId={moveId} documentKey={authoredDocumentSpec(spec.phase, spec.deliverableTypeKey)!.key} phase={spec.phase === 2 ? 2 : 1} /> :
           <span
             style={{ fontSize: 10.5, color: "#9AA3B2", fontStyle: "italic" }}
           >
@@ -787,11 +788,14 @@ export async function PhaseDocumentsPanel({
   const calmBrowse = Boolean(compact) || presentationMode;
   const tenancy = await getStrategicMovesTenancy().catch(() => null);
   const authoredEnabled = Boolean(tenancy && isFeatureEnabled(tenancy, AUTHORED_P1_UPLOAD_FLAG));
+  const authoredP2Enabled = Boolean(tenancy && isFeatureEnabled(tenancy, AUTHORED_P2_UPLOAD_FLAG));
   const access = tenancy ? await loadUserProgramAccessPolicy(tenancy, { programId: moveId }).catch(() => null) : null;
   const canApproveGates = access?.canApproveGates === true;
-  const canUploadAuthored = authoredEnabled && access?.canUploadArtifacts === true && access?.canGenerateDeliverables === true &&
+  const canUploadAuthored = access?.canUploadArtifacts === true && access?.canGenerateDeliverables === true &&
     (!Array.isArray(access.programIdsAllowed) || access.programIdsAllowed.includes(moveId));
-  if (authoredAdmissionView && !canUploadAuthored) return null;
+  const admissionPhase = currentPhase === 1 || currentPhase === 2 ? currentPhase : null;
+  const admissionEnabled = admissionPhase === 1 ? authoredEnabled : admissionPhase === 2 && authoredP2Enabled;
+  if (authoredAdmissionView && (!canUploadAuthored || !admissionEnabled)) return null;
   // The Documents tab is read-only browse/download — generation happens via the
   // phase workspace's Approve & Build, so the archetype/moveName/clientDisplayName
   // props (still accepted for caller compatibility) are no longer used here.
@@ -1087,7 +1091,7 @@ export async function PhaseDocumentsPanel({
       )}
 
       {/* Phase sections */}
-      {(authoredAdmissionView ? [1] : [1, 2, 3, 4, 5]).map((phase) => {
+      {(authoredAdmissionView ? [admissionPhase!] : [1, 2, 3, 4, 5]).map((phase) => {
         // The documents this Move's route declares for the phase — the same
         // set its Approve & Build produces — plus any canonical document
         // outside that set this Move already has something to show for, so a
@@ -1178,8 +1182,9 @@ export async function PhaseDocumentsPanel({
                   )}
                   presentationMode={calmBrowse}
                   canApproveGates={canApproveGates}
-                  canUploadAuthored={canUploadAuthored && deliverableProjection.available}
-                  authoredApprovalEnabled={authoredEnabled}
+                  canUploadAuthored={canUploadAuthored && deliverableProjection.available &&
+                    (spec.phase === 1 ? authoredEnabled : spec.phase === 2 && currentPhase === 2 && authoredP2Enabled)}
+                  authoredApprovalEnabled={spec.phase === 1 ? authoredEnabled : spec.phase === 2 && currentPhase === 2 && authoredP2Enabled}
                   signOffReadback={signOffReadback}
                 />
               ))}

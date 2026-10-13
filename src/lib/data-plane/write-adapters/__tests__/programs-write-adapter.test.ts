@@ -408,4 +408,63 @@ describe('initial authored P1 admission transaction', () => {
     expect(await createAzureProgramsWriteAdapter(session).runAuthoredApproval({ ...input, receipt: approvedReceipt, deliverableId: 'document-1', versionId: 'version-1', version: 1, userId: 'reviewer-1', reviewerRole: 'artifact_owner', approvalRationale: null })).toEqual({ ok: true, data: { applied: false } });
     expect(statements.some(sql => sql.startsWith('UPDATE') || sql.startsWith('INSERT'))).toBe(false);
   });
+  function p2Receipt(): import("@/lib/programs/authored-deliverable-receipt").AuthoredUploadReceipt {
+    return { ...receipt, source: "authored_pptx_upload", phase: 2, deliverableTypeKey: "discovery_report",
+      fileRole: "primary", fileFormat: "pptx", textSha256: "d".repeat(64), originalFileName: "report.pptx", parseMethod: "pptx-parser",
+      companion: { source: "authored_docx_upload", origin: receipt.origin, tenantKey: receipt.tenantKey, storageTenantKey: receipt.storageTenantKey,
+        moveId: receipt.moveId, phase: 2, deliverableTypeKey: "discovery_report", requestId: receipt.requestId,
+        fileRole: "diagnostic_word", fileFormat: "docx", sha256: "b".repeat(64), textSha256: "e".repeat(64),
+        artifactId: "20000000-0000-4000-8000-000000000002", artifactVersion: 1, uploadedBy: receipt.uploadedBy,
+        authoringBasis: receipt.authoringBasis, originalFileName: "diagnostic.docx", parseMethod: "docx-parser" } };
+  }
+  it("atomically locks current P2 and both original file receipts before inserting one uploaded version", async () => {
+    const r = p2Receipt(); const calls: Array<[string, readonly unknown[]]> = [];
+    const { session, state } = fakeTxSession((sql, args) => {
+      calls.push([sql,args]);
+      if (sql.startsWith("SELECT id FROM engagements")) return [{ id: r.moveId }];
+      if (sql.startsWith("SELECT artifact_id")) return [{ artifact_id: args[0] }];
+      if (sql.startsWith("SELECT type_key")) return [{ type_key: r.deliverableTypeKey }];
+      if (sql.startsWith("INSERT INTO deliverables_v2")) return [{ id: "document-p2" }];
+      if (sql.startsWith("INSERT INTO deliverable_versions")) return [{ id: "version-p2" }];
+      return [];
+    });
+    const result = await createAzureProgramsWriteAdapter(session).runInitialAuthoredDeliverable({ ...input, receipt: r });
+    expect(result).toMatchObject({ ok: true, data: { kind: "created", receipt: r } }); expect(state.transactions).toBe(1);
+    expect(calls.find(([sql]) => sql.startsWith("SELECT id FROM engagements"))?.[0]).toContain("current_phase = 2 FOR UPDATE");
+    const locks = calls.filter(([sql]) => sql.startsWith("SELECT artifact_id")); expect(locks).toHaveLength(2);
+    expect(locks.map(([,args]) => args[0])).toEqual([r.artifactId,r.companion!.artifactId]);
+    for (const [sql] of locks) { expect(sql).toContain("FOR UPDATE"); expect(sql).toContain("authoredTextSha256"); expect(sql).toContain("authoredUploadedBy"); }
+    expect(locks[1][1]).toEqual([r.companion!.artifactId,r.moveId,r.storageTenantKey,2,"docx",1,r.companion!.sha256,r.requestId,r.deliverableTypeKey,"diagnostic_word",r.uploadedBy,r.companion!.textSha256]);
+    expect(calls.filter(([sql]) => sql.startsWith("INSERT INTO deliverable_versions"))).toHaveLength(1);
+    expect(calls.some(([sql]) => sql.startsWith("UPDATE engagements") || sql.includes("'approval_granted'"))).toBe(false);
+  });
+  it.each(["phase", "primary", "companion"])("leaves every document/version unchanged when P2 %s lock is unavailable", async failure => {
+    const r = p2Receipt(); const { session, statements } = fakeTxSession((sql,args) => {
+      if (sql.startsWith("SELECT id FROM engagements")) return failure === "phase" ? [] : [{ id: r.moveId }];
+      if (sql.startsWith("SELECT artifact_id")) return (failure === "primary" && args[0] === r.artifactId || failure === "companion" && args[0] === r.companion!.artifactId) ? [] : [{ artifact_id: args[0] }];
+      return [];
+    });
+    expect((await createAzureProgramsWriteAdapter(session).runInitialAuthoredDeliverable({ ...input, receipt: r })).ok).toBe(false);
+    expect(statements.some(sql => sql.startsWith("INSERT") || sql.startsWith("UPDATE"))).toBe(false);
+  });
+  it("rejects a missing companion before taking an admission lock", async () => {
+    const r = { ...p2Receipt(), companion: undefined }; const { session, statements } = fakeTxSession();
+    expect((await createAzureProgramsWriteAdapter(session).runInitialAuthoredDeliverable({ ...input, receipt: r })).ok).toBe(false); expect(statements).toHaveLength(0);
+  });
+  it("binds P2 approval to current phase and all originals without creating a version", async () => {
+    const r = { ...p2Receipt(), evidenceSnapshotHash: "b".repeat(64), phaseEvidenceSnapshotHash: "c".repeat(64) }; const calls: Array<[string, readonly unknown[]]> = [];
+    const { session } = fakeTxSession((sql,args) => { calls.push([sql,args]); return sql.startsWith("SELECT d.id") ? [{ id: "document-p2" }] : sql.startsWith("SELECT artifact_id") ? [{ artifact_id: args[0] }] : []; });
+    expect(await createAzureProgramsWriteAdapter(session).runAuthoredApproval({ ...input, receipt: r, deliverableId: "document-p2", versionId: "version-p2", version: 1, userId: "reviewer-1", reviewerRole: "other", approvalRationale: "Workspace package review" })).toEqual({ ok: true, data: { applied: true } });
+    expect(calls[0][0]).toContain("e.current_phase = 2 FOR UPDATE OF e, d, v, a");
+    expect(calls[0][0]).toContain("v.structured_data->>'source' = $14"); expect(calls[0][1][13]).toBe("authored_pptx_upload");
+    expect(calls.filter(([sql]) => sql.startsWith("SELECT artifact_id"))).toHaveLength(2);
+    const files = calls.filter(([sql]) => sql.startsWith("UPDATE move_artifacts")); expect(files.map(([,args]) => args[0])).toEqual([r.artifactId,r.companion!.artifactId]);
+    expect(calls.some(([sql]) => sql.startsWith("INSERT INTO deliverable_versions"))).toBe(false);
+  });
+  it("does not update either approval pointer when the companion changed", async () => {
+    const r = { ...p2Receipt(), evidenceSnapshotHash: "b".repeat(64), phaseEvidenceSnapshotHash: "c".repeat(64) }; const { session, statements } = fakeTxSession((sql,args) => sql.startsWith("SELECT d.id") ? [{ id: "document-p2" }] : sql.startsWith("SELECT artifact_id") && args[0] === r.artifactId ? [{ artifact_id: args[0] }] : []);
+    expect((await createAzureProgramsWriteAdapter(session).runAuthoredApproval({ ...input, receipt: r, deliverableId: "document-p2", versionId: "version-p2", version: 1, userId: "reviewer-1", reviewerRole: "other", approvalRationale: null })).ok).toBe(false);
+    expect(statements.some(sql => sql.startsWith("UPDATE") || sql.includes("'approval_granted'"))).toBe(false);
+  });
+
 });

@@ -14,6 +14,7 @@ const mockLoadApprovedSolutionApproach = jest.fn();
 const mockLoadCurrentMoveContextExtractFreshness = jest.fn();
 const mockP5Flag = jest.fn();
 const mockAuthoredFlag = jest.fn();
+const mockAuthoredP2Flag = jest.fn();
 const mockVerifyAuthoredApproval = jest.fn();
 jest.mock("@/lib/programs/authored-deliverable-upload", () => ({
   ...jest.requireActual("@/lib/programs/authored-deliverable-upload"),
@@ -21,7 +22,7 @@ jest.mock("@/lib/programs/authored-deliverable-upload", () => ({
 }));
 const mockP5Plan = jest.fn();
 jest.mock("@/lib/features/is-feature-enabled", () => ({
-  isFeatureEnabled: (_ctx: unknown, key: string) => key === "moves_authored_p1_draft_upload_v1" ? mockAuthoredFlag() : mockP5Flag(),
+  isFeatureEnabled: (_ctx: unknown, key: string) => key === "moves_authored_p1_draft_upload_v1" ? mockAuthoredFlag() : key === "moves_authored_p2_draft_upload_v1" ? mockAuthoredP2Flag() : mockP5Flag(),
 }));
 jest.mock("@/lib/programs/p5-measurement-contract", () => ({
   ...jest.requireActual("@/lib/programs/p5-measurement-contract"),
@@ -1274,32 +1275,69 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
     });
   });
   describe("bounded authored approve-as-is route", () => {
+    const authoredMove = "10000000-0000-4000-8000-000000000001";
+    const authoredArtifact = "20000000-0000-4000-8000-000000000001";
     beforeEach(() => {
-      mockAuthoredFlag.mockReturnValue(true); mockVerifyAuthoredApproval.mockReset();
+      mockAuthoredFlag.mockReturnValue(true); mockAuthoredP2Flag.mockReturnValue(false); mockVerifyAuthoredApproval.mockReset();
+      mockGetProgramById.mockResolvedValue({ id: authoredMove, currentPhase: 1 });
       deliverableRow = { deliverable_type_key: "charter", title: "Program Charter", current_version: 1 };
       versionRow = { id: "authored-version-1", content: "Program scope and proposed goals.", structured_data: {
-        source: "authored_docx_upload", authoredUpload: { source: "authored_docx_upload", origin: "abarva_uploaded", artifactId: "stored-original-1" } } };
+        source: "authored_docx_upload", authoredUpload: { source: "authored_docx_upload", origin: "abarva_uploaded", artifactId: authoredArtifact,
+          tenantKey: ctx.clientKey, storageTenantKey: ctx.clientKey, moveId: authoredMove, phase: 1, deliverableTypeKey: "charter",
+          requestId: "50000000-0000-4000-8000-000000000001", sha256: "a".repeat(64), artifactVersion: 1, uploadedBy: ctx.userId,
+          authoringBasis: "abarva_authored_unsigned", delegatedReviewReference: null, originalFileName: "charter.docx", parseMethod: "docx-parser",
+          evidenceSnapshotHash: "b".repeat(64), phaseEvidenceSnapshotHash: "c".repeat(64), evidenceSnapshotScope: "phase", observedAt: "2026-10-13T03:00:00Z" } } };
       mockVerifyAuthoredApproval.mockResolvedValue(versionRow.structured_data?.authoredUpload);
+    });
+    function setP2() {
+      mockAuthoredP2Flag.mockReturnValue(true); mockGetProgramById.mockResolvedValue({ id: authoredMove, currentPhase: 2 });
+      deliverableRow = { deliverable_type_key: "discovery_report", title: "Discovery & Diagnosis Report", current_version: 1 };
+      const base = versionRow!.structured_data!.authoredUpload as Record<string, unknown>;
+      versionRow = { ...versionRow!, structured_data: { source: "authored_pptx_upload", authoredUpload: {
+        ...base, source: "authored_pptx_upload", phase: 2, deliverableTypeKey: "discovery_report", fileRole: "primary", fileFormat: "pptx",
+        textSha256: "d".repeat(64), originalFileName: "report.pptx", parseMethod: "pptx-parser",
+        companion: { ...base, phase: 2, deliverableTypeKey: "discovery_report", fileRole: "diagnostic_word", fileFormat: "docx",
+          artifactId: "20000000-0000-4000-8000-000000000002", textSha256: "e".repeat(64) } } } };
+      mockVerifyAuthoredApproval.mockResolvedValue(versionRow.structured_data?.authoredUpload);
+    }
+    it("uses the existing approval seam for the exact complete current-P2 original package", async () => {
+      setP2(); const { POST } = await import("../route");
+      const res = await POST(req(), { params: Promise.resolve({ programId: authoredMove, deliverableId: "deliv-1" }) });
+      expect(res.status).toBe(200); expect(mockVerifyAuthoredApproval).toHaveBeenCalledWith(ctx, {
+        moveId: authoredMove, key: "discovery_report", content: "Program scope and proposed goals.", receipt: versionRow!.structured_data!.authoredUpload, canStoreText: expect.any(Function) });
+      expect(mockSignOffDeliverable.mock.calls[0][3]).toMatchObject({ authoredApprovalReceipt: { phase: 2, fileFormat: "pptx", companion: { fileFormat: "docx" } } });
+      expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
+    });
+    it.each(["flag", "phase", "companion", "source", "unknown-source"])("withholds P2 sign-off when %s is unavailable", async failure => {
+      setP2();
+      if (failure === "flag") mockAuthoredP2Flag.mockReturnValue(false);
+      if (failure === "phase") mockGetProgramById.mockResolvedValue({ id: authoredMove, currentPhase: 3 });
+      const data = versionRow!.structured_data as Record<string, unknown>;
+      if (failure === "companion") delete (data.authoredUpload as Record<string, unknown>).companion;
+      if (failure === "source") data.source = "authored_docx_upload";
+      if (failure === "unknown-source") data.source = "unrecognized-source";
+      const { POST } = await import("../route"); const res = await POST(req(), { params: Promise.resolve({ programId: authoredMove, deliverableId: "deliv-1" }) });
+      expect(res.status).toBe(409); expect(mockVerifyAuthoredApproval).not.toHaveBeenCalled(); expect(mockSignOffDeliverable).not.toHaveBeenCalled();
     });
     it("verifies the exact authored original and passes its receipt to the normal sign-off seam", async () => {
       const { POST } = await import("../route");
-      const res = await POST(req(), { params: Promise.resolve({ programId: "prog-1", deliverableId: "deliv-1" }) });
+      const res = await POST(req(), { params: Promise.resolve({ programId: authoredMove, deliverableId: "deliv-1" }) });
       expect(res.status).toBe(200);
-      expect(mockVerifyAuthoredApproval).toHaveBeenCalledWith(ctx, { moveId: "prog-1", key: "charter", content: "Program scope and proposed goals.", receipt: versionRow?.structured_data?.authoredUpload });
-      expect(mockSignOffDeliverable.mock.calls[0][3]).toMatchObject({ approvedArtifactId: "stored-original-1", authoredApprovalReceipt: { origin: "abarva_uploaded" }, reviewedVersion: { version: 1, versionId: "authored-version-1" } });
+      expect(mockVerifyAuthoredApproval).toHaveBeenCalledWith(ctx, { moveId: authoredMove, key: "charter", content: "Program scope and proposed goals.", receipt: versionRow?.structured_data?.authoredUpload, canStoreText: expect.any(Function) });
+      expect(mockSignOffDeliverable.mock.calls[0][3]).toMatchObject({ approvedArtifactId: authoredArtifact, authoredApprovalReceipt: { origin: "abarva_uploaded" }, reviewedVersion: { version: 1, versionId: "authored-version-1" } });
       expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
     });
     it("refuses the authored approval while its rollout flag is off", async () => {
       mockAuthoredFlag.mockReturnValue(false);
       const { POST } = await import("../route");
-      expect((await POST(req(), { params: Promise.resolve({ programId: "prog-1", deliverableId: "deliv-1" }) })).status).toBe(409);
+      expect((await POST(req(), { params: Promise.resolve({ programId: authoredMove, deliverableId: "deliv-1" }) })).status).toBe(409);
       expect(mockVerifyAuthoredApproval).not.toHaveBeenCalled(); expect(mockSignOffDeliverable).not.toHaveBeenCalled();
     });
     it("surfaces an exact file/basis refusal and applies no sign-off", async () => {
       const { POST } = await import("../route");
       const { AuthoredUploadRefusal } = await import("@/lib/programs/authored-deliverable-upload");
       mockVerifyAuthoredApproval.mockRejectedValue(new AuthoredUploadRefusal("authored_file_hash_changed", 409, "The downloaded original does not match the reviewed file hash."));
-      const res = await POST(req(), { params: Promise.resolve({ programId: "prog-1", deliverableId: "deliv-1" }) });
+      const res = await POST(req(), { params: Promise.resolve({ programId: authoredMove, deliverableId: "deliv-1" }) });
       expect(res.status).toBe(409); expect(await res.json()).toMatchObject({ error: "authored_file_hash_changed" }); expect(mockSignOffDeliverable).not.toHaveBeenCalled();
     });
   });
