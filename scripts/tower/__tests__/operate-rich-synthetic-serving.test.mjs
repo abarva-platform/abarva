@@ -31,7 +31,14 @@ const pages = [
 function fixture() {
   const source = { source_set_hash: "b".repeat(64), files: [], object_count: 987 };
   const pageProof = Object.fromEntries(pages.map((page) => {
-    const rows = [{ row_key: page, source_hash: "c".repeat(64) }];
+    const pageKey = {
+      tower_command_center: "command_center", tower_value_proof: "value_proof",
+      tower_decision_lanes: "decision_lanes", tower_evidence: "evidence",
+      tower_recommended_actions: "recommended_actions", tower_ai_portfolio: "ai_portfolio",
+      tower_cost_lens: "cost_lens", tower_risk_lens: "risk_lens",
+      tower_adoption_lens: "adoption_lens",
+    }[page];
+    const rows = [{ page_key: pageKey, row_key: page, source_hash: "c".repeat(64) }];
     return [page, { row_count: 1, row_fingerprint_sha256: sha(stableJson(rows)), rows }];
   }));
   const selector = [{ assessment_id: "previous", projection_version: 6 }];
@@ -84,6 +91,22 @@ test("stage proof fails if a page, selector, or digest differs", () => {
   changed.summary.readback.active_assessments = [{ assessment_id: "other", projection_version: 6 }];
   assert.ok(validateStageProof(changed.proof, changed.summary,
     changed.source, changed.packageManifest, changed.config).includes("stage_summary_or_selector_mismatch"));
+});
+
+test("stage proof accepts a row key reused on another page and rejects a duplicate within one page", () => {
+  const value = fixture();
+  const first = value.proof.pages.tower_command_center;
+  first.rows.push({ page_key: "decision_lanes", row_key: first.rows[0].row_key, source_hash: "d".repeat(64) });
+  first.row_count = first.rows.length;
+  first.row_fingerprint_sha256 = sha(stableJson(first.rows));
+  value.proof.proof_content_sha256 = sha(stableJson(Object.fromEntries(
+    Object.entries(value.proof).filter(([key]) => key !== "proof_content_sha256"),
+  )));
+  assert.deepEqual(validateStageProof(value.proof, value.summary,
+    value.source, value.packageManifest, value.config), []);
+  first.rows[1].page_key = first.rows[0].page_key;
+  assert.ok(validateStageProof(value.proof, value.summary,
+    value.source, value.packageManifest, value.config).includes("stage_page_fingerprint_invalid"));
 });
 
 test("job config requires digest-pinned ACA lane and scoped stage Blob", () => {

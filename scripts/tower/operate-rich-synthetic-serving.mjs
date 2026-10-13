@@ -244,11 +244,14 @@ export function validateStageProof(proof, summary, source, packageManifest, conf
   }
   if (pages.join() !== expectedPages.join() || pages.some((page) => {
     const entry = proof.pages[page];
+    const expectedPageKey = PAGES[page][1];
     return !Array.isArray(entry.rows) || entry.rows.length < 1 ||
       entry.row_count !== entry.rows.length ||
       entry.row_fingerprint_sha256 !== sha(stableJson(entry.rows)) ||
-      entry.rows.some((row) => typeof row.row_key !== "string" || !SHA256.test(row.source_hash ?? "")) ||
-      new Set(entry.rows.map((row) => row.row_key)).size !== entry.rows.length;
+      entry.rows.some((row) => typeof row.page_key !== "string" || !row.page_key ||
+        (expectedPageKey && row.page_key !== expectedPageKey) ||
+        typeof row.row_key !== "string" || !row.row_key || !SHA256.test(row.source_hash ?? "")) ||
+      new Set(entry.rows.map((row) => `${row.page_key}|${row.row_key}`)).size !== entry.rows.length;
   })) gaps.push("stage_page_fingerprint_invalid");
   if (packageManifest.no_runtime_load !== false ||
       packageManifest.assessment_id !== config.assessment ||

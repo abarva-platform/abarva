@@ -71,7 +71,7 @@ test("private stage receipt binds source, unchanged selector and page fingerprin
     idempotencyKey: "test-key",
   }, [{ assessment_id: "retained-active", projection_version: 2 }], {
     active_assessments: [{ assessment_id: "retained-active", projection_version: 2 }],
-    physical_page_rows: { tower_ai_portfolio: [{ row_key: "case-1", source_hash: "a".repeat(64) }] },
+    physical_page_rows: { tower_ai_portfolio: [{ page_key: "ai_portfolio", row_key: "case-1", source_hash: "a".repeat(64) }] },
   });
   assert.equal(proof.source_set_hash, "c50d17bfb71b92b7392e247ca75f33965b9ee4639b6a6fd295ebf9a5884e0c40");
   assert.deepEqual(proof.prior_active_assessments, proof.post_active_assessments);
