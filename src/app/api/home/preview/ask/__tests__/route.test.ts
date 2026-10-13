@@ -32,32 +32,35 @@ jest.mock("@/lib/home/preview/ecl-projection-bundle", () => ({
 }));
 
 jest.mock("@/lib/home/preview/ava-answer", () => ({
-  answerHomeAvaQuestion: jest.fn(async () => ({
-    surface: "home",
-    mode: "KNOW",
-    status: "answered",
-    directAnswer: "Use the served Home record.",
-    factsUsed: [],
-    metricsUsed: [],
-    relationshipsUsed: [],
-    citations: [],
-    gaps: [],
-    caveats: [],
-    nextSteps: [],
-    artifacts: [],
-    quality: {
-      confidence: "high",
-      evidenceStrength: "strong",
-      tenantGrounding: "complete",
-      answerCompleteness: "complete",
-    },
-    safety: {
-      policyChecked: true,
-      disclosureLevel: "tenant-confidential",
-      containsRestrictedContent: false,
-      redactionsApplied: [],
-    },
-  })),
+  answerHomeAvaQuestion: jest.fn(
+    async ({ question }: { question: string }) => ({
+      surface: "home",
+      question,
+      mode: "KNOW",
+      status: "answered",
+      directAnswer: "Use the served Home record.",
+      factsUsed: [],
+      metricsUsed: [],
+      relationshipsUsed: [],
+      citations: [],
+      gaps: [],
+      caveats: [],
+      nextSteps: [],
+      artifacts: [],
+      quality: {
+        confidence: "high",
+        evidenceStrength: "strong",
+        tenantGrounding: "complete",
+        answerCompleteness: "complete",
+      },
+      safety: {
+        policyChecked: true,
+        disclosureLevel: "tenant-confidential",
+        containsRestrictedContent: false,
+        redactionsApplied: [],
+      },
+    }),
+  ),
 }));
 
 const mockedResolveBundle = jest.mocked(

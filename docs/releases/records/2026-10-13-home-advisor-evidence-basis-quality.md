@@ -36,10 +36,11 @@ Release lane: `global-control-lane`.
 - Consolidate conflicting presentation instructions to at most four default supporting points, rather than silently discarding a fifth point.
 - Preserve authored bold business labels only after the complete label and body have been safety-scrubbed.
 - Retain one short supported next-step or business-implication sentence alongside structured points.
+- Keep three distinct follow-up suggestions without repeating the question just answered.
 
 ## QA / Validation
 
-- Seven focused Home answer, API, conversation, mounted chat, shared-dock, list-marker and tenant-name suites: 159 tests passing.
+- Seven focused Home answer, API, conversation, mounted chat, shared-dock, list-marker and tenant-name suites: 163 tests passing.
 - Full TypeScript and scoped ESLint passed with Node 24. All eleven release controls passed.
 - Existing integration workflow suite set: 4,898 tests passing across 180 suites; its existing one-suite/twenty-test skips are preserved.
 - Behavioral tests cover declared, false and absent reference basis; successful and failed correction; unsafe no-citation and no-data answers; retained safe formatting; internal-label suppression; and four-point correction.

@@ -21,6 +21,31 @@ export type HomeConversationTurn = z.infer<
 
 /** Only question intent and claim references travel back; prior assistant text is not evidence. */
 export function homeFollowUpQuestions(answer: AvaAnswerPacket): string[] {
+  const normalize = (question: string) =>
+    question
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  const asked = normalize(answer.question);
+  const candidates = [
+    ...followUpCandidates(answer),
+    "What should leadership prioritize first, and why?",
+    "Which business outcomes are most affected?",
+    "What evidence should we verify before acting?",
+    "Which assumptions need validation before deciding?",
+  ];
+  const seen = new Set([asked]);
+  return candidates
+    .filter((question) => {
+      const key = normalize(question);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 3);
+}
+
+function followUpCandidates(answer: AvaAnswerPacket): string[] {
   if (answer.status === "no_data") {
     return [
       "What can the available record tell us?",

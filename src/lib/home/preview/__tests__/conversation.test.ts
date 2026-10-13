@@ -49,6 +49,29 @@ it("keeps unknown evidence unknown in its follow-ups", () => {
   ).toContain("missing evidence");
 });
 
+it.each([
+  "What should the CFO prioritize in data and analytics, and why?",
+  "WHAT SHOULD THE CFO PRIORITIZE IN DATA AND ANALYTICS AND WHY",
+  "What can the available record tell us?",
+  "What should leadership prioritize first, and why?",
+])("offers three distinct next questions without repeating %s", (question) => {
+  const status = question.includes("available record") ? "no_data" : "answered";
+  const questions = homeFollowUpQuestions({
+    ...answer,
+    question,
+    status,
+    directAnswer: "Review the available evidence.",
+  });
+  const normalize = (text: string) =>
+    text
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  expect(questions).toHaveLength(3);
+  expect(new Set(questions.map(normalize)).size).toBe(3);
+  expect(questions.map(normalize)).not.toContain(normalize(question));
+});
+
 it("formats a bottom line and supporting bullets while retaining all facts and source state", () => {
   const formatted = formatHomeAdvisorAnswer(answer, source);
   expect(formatted.prose).toContain("**Bottom line**");
