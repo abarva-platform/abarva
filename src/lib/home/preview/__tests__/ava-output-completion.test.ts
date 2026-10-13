@@ -401,7 +401,7 @@ it("gives typed graph gaps precedence over discovery and charter follow-ups", as
   expect(questions).toHaveLength(3);
   expect(questions[0]).toContain("risk-to-application");
   expect(questions[0]).toContain("program-to-application");
-  expect(questions[1]).toContain("endpoint IDs and declared relationship types");
+  expect(questions[1]).toContain("records and source evidence");
   expect(questions[2]).toContain("connections remain unverified");
   expect(questions.join(" ")).not.toMatch(/business priorities|chartering discovery|financial value/i);
   expect(auditedClient).not.toHaveBeenCalled();

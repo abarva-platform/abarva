@@ -116,12 +116,18 @@ export function formatHomeAdvisorAnswer(
       : paragraphs.map((paragraph) => `- ${paragraph}`).join("\n\n");
   const latest = source.contextVersion?.sourceDateCoverage?.latest;
   const basis = `Record basis: ${homeRecordSourceLabel(source)}. ${declaredSyntheticDemo === true ? "Synthetic reference, not client-attested. " : ""}${latest ? `Source files dated through ${latest}. ` : ""}Data currency is not independently attested.`;
+  const referenceLimit = answer.caveats?.find(
+    (caveat) => caveat.id === "home-original-reference-limit",
+  )?.detail;
   return {
     ...answer,
     prose: [
       `**Bottom line**\n\n${direct}`,
       structured ? `**Key points**\n\n${structured}` : "",
       `*${basis}*`,
+      referenceLimit && !detail.includes(referenceLimit)
+        ? `*${referenceLimit}*`
+        : "",
     ]
       .filter(Boolean)
       .join("\n\n"),

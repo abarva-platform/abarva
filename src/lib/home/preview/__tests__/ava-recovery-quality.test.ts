@@ -84,11 +84,13 @@ function expectExactClaim(
 
 beforeEach(() => auditedClient.mockReset());
 
-it("retains the complete graph fallback assertion, decimal and late qualification beyond 42 words", async () => {
+it("keeps complete graph source excerpts in Evidence basis without dumping them into the reply", async () => {
   expect(words(maturityClaim)).toBeGreaterThan(42);
   expect(words(maturityClaim)).toBeLessThanOrEqual(70);
   const answer = await graphAnswer();
-  expect(answer.prose).toContain(`- ${maturityClaim}`);
+  expect(answer.prose).not.toContain(maturityClaim);
+  expect(words(answer.prose!)).toBeLessThan(100);
+  expect(answer.prose?.match(/^- /gm)).toHaveLength(3);
   expect(answer.prose).not.toMatch(/1\.\s+4|level \(1\.(?:\s|$)/);
   expect(answer.citations[0].confidence).toBe("medium");
   expectExactClaim(answer, maturityClaim, "TD-K1");
@@ -128,7 +130,11 @@ it.each(["graph", "recovery"])(
             tenantKey,
             question: "What value risk should the CFO review?",
           });
-    expect(answer.prose).toContain("needs its full context and qualifications");
+    if (mode === "recovery")
+      expect(answer.prose).toContain(
+        "needs its full context and qualifications",
+      );
+    else expect(answer.prose).toContain("not verified connections");
     expect(answer.prose).not.toContain("The compiled summary still requires");
     expect(answer.prose).not.toContain(
       "requires source-owner review. The compiled",
@@ -158,13 +164,13 @@ it("names the requested typed scopes without claiming those links are absent fro
   expect(gap.detail).toContain(
     "Endpoint IDs, declared relationship types and source evidence",
   );
-  expect(answer.prose).toContain("relationship confidence is not established");
+  expect(answer.prose).toContain(
+    "Confidence: Not established for the requested connections.",
+  );
   expect(answer.caveats.map((item) => item.detail).join(" ")).toContain(
     "summary evidence, not inspected relationship records",
   );
-  expect(answer.prose).toContain(
-    "Source currency and owner acceptance are not established",
-  );
+  expect(answer.quality.confidence).toBe("low");
   expect(answer.prose).toContain("Synthetic reference, not client-attested");
 });
 
@@ -185,7 +191,8 @@ it("quarantines unqualified synthetic testimony in the graph fallback", async ()
     chapter(statement, "leadership_perspective"),
   ]);
   expect(answer.prose).not.toContain(statement);
-  expect(answer.prose).toContain("lacks a qualified synthetic reference basis");
+  expect(answer.prose).toContain("not verified connections");
+  expect(answer.prose).toContain("Synthetic reference, not client-attested");
   expectExactClaim(answer, statement, "LP-K1");
 });
 
@@ -300,7 +307,9 @@ it("keeps low-confidence source claims low-confidence in the graph fallback", as
     answer.citations.every((citation) => citation.confidence === "low"),
   ).toBe(true);
   expect(answer.quality.confidence).toBe("low");
-  expect(answer.prose).toContain("Confidence: low for cited claims only");
+  expect(answer.prose).toContain(
+    "Confidence: Not established for the requested connections.",
+  );
 });
 
 it("selects graph follow-ups from the latest question and relationship gaps despite earlier data intent", async () => {
@@ -309,9 +318,7 @@ it("selects graph follow-ups from the latest question and relationship gaps desp
   expect(questions).toHaveLength(3);
   expect(questions[0]).toContain("risk-to-application");
   expect(questions[0]).toContain("program-to-application");
-  expect(questions[1]).toContain(
-    "endpoint IDs and declared relationship types",
-  );
+  expect(questions[1]).toContain("records and source evidence");
   expect(questions[2]).toContain("connections remain unverified");
   expect(questions.join(" ")).not.toContain(
     "CFO prioritize in data and analytics",

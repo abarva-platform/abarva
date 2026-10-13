@@ -1,6 +1,5 @@
-import {
-  checkCapabilityClaims,
-} from "@/lib/agent/product-truth/capability-claim-guard";
+import { checkCapabilityClaims } from "@/lib/agent/product-truth/capability-claim-guard";
+import { isUserProvidedPercentageProposal } from "./proposed-quantities";
 import type {
   AvaAnswerPacket,
   AvaClaimValidationFinding,
@@ -10,7 +9,7 @@ import type {
 
 const DOLLAR_RE =
   /\$\s?[\d,]+(?:\.\d+)?\s?(?:k|m|b|thousand|million|billion)?\b/gi;
-const PERCENT_RE = /\b\d+(?:\.\d+)?\s?%/g;
+const PERCENT_RE = /(?<![\w.])[-+]?\d+(?:\.\d+)?\s?%/g;
 const DATE_RE =
   /\b(?:Q[1-4]\s+20\d{2}|20\d{2}-\d{2}-\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+20\d{2}|20\d{2})\b/g;
 const COUNT_RE =
@@ -120,9 +119,7 @@ function sourceIdsForClaim(answer: AvaAnswerPacket, claim: string): string[] {
   const needle = normalize(claim);
   return answer.citations
     .filter((citation) =>
-      normalize(`${citation.label} ${citation.excerpt ?? ""}`).includes(
-        needle,
-      ),
+      normalize(`${citation.label} ${citation.excerpt ?? ""}`).includes(needle),
     )
     .map((citation) => citation.id);
 }
@@ -146,6 +143,31 @@ export function validateAvaAnswerClaims(
   const support = sourceText(answer);
   const claims = extractClaims(text);
   const findings: AvaClaimValidationFinding[] = claims.map((claim, index) => {
+    const userProposal =
+      answer.surface === "home" &&
+      claim.type === "percentage" &&
+      isUserProvidedPercentageProposal(
+        [
+          answer.directAnswer,
+          answer.prose,
+          answer.interpretation,
+          answer.businessImplication,
+          answer.recommendation,
+        ].filter((item): item is string => typeof item === "string"),
+        answer.question,
+        claim.claim,
+      );
+    if (userProposal)
+      return {
+        id: `claim-${index + 1}`,
+        type: claim.type,
+        claim: claim.claim,
+        support: "assumption" as const,
+        severity: "watch" as const,
+        sourceIds: [],
+        detail:
+          "This locally qualified target was supplied by the user; it is not a sourced fact, measured result or benefit commitment.",
+      };
     const supported = claimHasSupport(claim, support);
     const sourceIds = sourceIdsForClaim(answer, claim.claim);
     const context = localClaimContext(text, claim.claim);
@@ -161,18 +183,18 @@ export function validateAvaAnswerClaims(
         ? "exact_source_fact"
         : safeUnsupportedContext
           ? "caveated_gap"
-        : sourceAsserted
-          ? "unsupported"
-          : "assumption",
+          : sourceAsserted
+            ? "unsupported"
+            : "assumption",
       severity: safeUnsupportedContext ? "pass" : severity,
       sourceIds,
       detail: supported
         ? "Claim appears in the answer packet support material."
         : safeUnsupportedContext
           ? "Claim is framed as missing, unavailable, or unproven rather than asserted as tenant fact."
-        : sourceAsserted
-          ? "Claim is presented with source/evidence language but is not present in packet support material."
-          : "Claim is not traceable inside the packet and should stay caveated as an assumption.",
+          : sourceAsserted
+            ? "Claim is presented with source/evidence language but is not present in packet support material."
+            : "Claim is not traceable inside the packet and should stay caveated as an assumption.",
     };
   });
 

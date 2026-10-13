@@ -2,6 +2,11 @@ import "server-only";
 
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
 import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
+import {
+  quantitativeMentions,
+  proposalClauses,
+  isLocallyQualifiedUserProposal,
+} from "@/lib/ava-answer/proposed-quantities";
 import { splitNarrativeSentences } from "@/lib/home/preview/narrative-sentences";
 import { assertsBlanketContractEvidenceAbsence } from "@/lib/home/preview/stale-claim-guard";
 import type {
@@ -30,6 +35,7 @@ import type {
   TechObjectType,
 } from "@/lib/home/preview/types";
 import type { HomeConversationTurn } from "./conversation";
+import { hasOverstatedConditionalEffects } from "./conditional-effects";
 
 /** Narrower than HomeReviewBundle so tests don't need to fabricate unrelated payload. The route
  * passes the full bundle, so thesis is available when the serving packet carries it; older fixtures
@@ -45,7 +51,7 @@ type AvaAnswerBundleSlice = Pick<
     >
   >;
 
-const PROMPT_VERSION = "home-preview-ava-answer-v10";
+const PROMPT_VERSION = "home-preview-ava-answer-v11";
 const CLAUDE_MODEL = "claude-sonnet-5";
 // Thinking and visible text share this budget; brevity is enforced separately.
 const MAX_TOKENS = 4096;
@@ -1251,7 +1257,8 @@ async function answerHomeAvaQuestionInternal(
           !hasUnqualifiedReferenceTestimony(parsed, context) &&
           !hasBroadenedSpendConcentration(parsed, context) &&
           !hasUnsupportedEvidenceScope(parsed, context) &&
-          !hasUnsupportedQuantities(parsed, context, question)
+          !hasUnsupportedQuantities(parsed, context, question) &&
+          !hasUnsupportedConditionalEffects(parsed, context)
         )
           return packet;
         return {
@@ -1592,36 +1599,6 @@ function visibleKeyPoints(
     : [];
 }
 
-function quantitativeMentions(text: string) {
-  const multipliers: Record<string, number> = {
-    k: 1_000,
-    thousand: 1_000,
-    m: 1_000_000,
-    million: 1_000_000,
-    b: 1_000_000_000,
-    billion: 1_000_000_000,
-  };
-  return Array.from(
-    text.matchAll(
-      /(?<![\w])([+-]?)(?:(\$|USD\b)\s*)?([+-]?\d+(?:,\d{3})*(?:\.\d+)?)(?:\s*(%|percent\b|[KMB]\b|thousand\b|million\b|billion\b))?(?:\s+(USD\b|dollars\b))?/gi,
-    ),
-    (match) => {
-      const value = Number(`${match[1]}${match[3]}`.replace(/,/g, ""));
-      const unit = match[4]?.toLowerCase();
-      const currency = Boolean(match[2] || match[5]);
-      const token =
-        unit === "%" || unit === "percent"
-          ? `${currency ? "usd_percent" : "percent"}:${value}`
-          : `${currency ? "usd" : "number"}:${value * (multipliers[unit] ?? 1)}`;
-      return {
-        token,
-        start: match.index!,
-        end: match.index! + match[0].length,
-      };
-    },
-  );
-}
-
 function quantitativeText(text: string): string {
   return scrubPublicAvaAnswerText(stripInlineClaimTags(text)).replace(
     /^\s*\d+[.)]\s+/gm,
@@ -1630,8 +1607,8 @@ function quantitativeText(text: string): string {
 }
 
 function quantitativeTokens(text: string): string[] {
-  return quantitativeMentions(quantitativeText(text)).map(
-    (mention) => mention.token,
+  return quantitativeMentions(quantitativeText(text)).map((mention) =>
+    mention.malformed ? "invalid" : mention.token,
   );
 }
 
@@ -1660,42 +1637,19 @@ function hasUnsupportedQuantities(
       sanitizeAvaVisibleText(passage, context, Number.POSITIVE_INFINITY),
     ])
     .some((passage) =>
-      splitNarrativeSentences(quantitativeText(passage))
-        .flatMap((sentence) =>
-          sentence.split(/;|:\s+|,\s+(?:but|whereas|while|yet|and)\b\s*/i),
-        )
-        .some((sentence) => {
-          const assertsResult =
-            /\b(?:achieved|delivered|measured|saved|saves|savings)\b/i.test(
-              sentence.replace(
-                /\b(?:not|no|without|un)\s+(?:a\s+)?(?:measured|achieved|delivered|savings)(?:\s+(?:result|commitment))?/gi,
-                "",
-              ),
-            );
-          return quantitativeMentions(sentence).some((mention) => {
-            if (supported.has(mention.token)) return false;
-            const before = sentence.slice(
-              Math.max(0, mention.start - 80),
-              mention.start,
-            );
-            const after = sentence.slice(mention.end, mention.end + 80);
-            const targetOccurrence =
-              (/\b(?:proposed|hypothetical|illustrative|assumed|unmeasured)\s+(?:[\w-]+\s+){0,4}$/i.test(
-                before,
-              ) ||
-                /^\s*(?:(?:is|remains|as|would be)\s+)?(?:(?:only|a|an|the)\s+)?(?:proposed|hypothetical|illustrative|assumed|unmeasured)\b/i.test(
-                  after,
-                )) &&
-              /\b(?:target|assumption|scenario|hypothesis)\b/i.test(
-                `${before} ${after}`,
-              );
-            return !(
-              targetOccurrence &&
-              !assertsResult &&
-              proposed.has(mention.token)
-            );
-          });
-        }),
+      proposalClauses(quantitativeText(passage)).some((sentence) => {
+        const mentions = quantitativeMentions(sentence);
+        return mentions.some((mention, index) => {
+          if (mention.malformed) return true;
+          if (supported.has(mention.token)) return false;
+          return !isLocallyQualifiedUserProposal(
+            sentence,
+            mentions,
+            index,
+            proposed,
+          );
+        });
+      }),
     );
 }
 
@@ -1713,7 +1667,31 @@ function isAdmittedCaveat(
     !hasUnqualifiedReferenceTestimony(candidate, context) &&
     !hasUnsupportedEvidenceScope(candidate, context) &&
     !hasBroadenedSpendConcentration(candidate, context) &&
+    !hasUnsupportedConditionalEffects(candidate, context) &&
     !hasUnsupportedQuantities(candidate, context, question)
+  );
+}
+
+function hasUnsupportedConditionalEffects(
+  parsed: ModelResponseShape,
+  context: GroundingContext,
+): boolean {
+  const cited = (parsed.cited_claim_tags ?? []).flatMap((tag) => {
+    const statement = context.citationIndex.get(tag)?.claim.statement;
+    return statement ? [statement] : [];
+  });
+  const passages = [
+    parsed.direct_answer,
+    parsed.prose,
+    ...(Array.isArray(parsed.key_points) ? parsed.key_points : []),
+    ...(Array.isArray(parsed.caveats) ? parsed.caveats : []),
+  ].filter((value): value is string => typeof value === "string");
+  return hasOverstatedConditionalEffects(
+    passages.flatMap((passage) => [
+      passage,
+      sanitizeAvaVisibleText(passage, context, Number.POSITIVE_INFINITY),
+    ]),
+    cited,
   );
 }
 
@@ -1723,6 +1701,10 @@ function compactAnswerRepairReasons(
   context: GroundingContext,
 ): string[] {
   const reasons: string[] = [];
+  if (hasUnsupportedConditionalEffects(parsed, context))
+    reasons.push(
+      "Preserve the cited source's conditional effect language and scope. A possible outsized factor cannot become a categorical influence or enterprise-wide conclusion without separately cited support. Use the bounded composition and uncertainty instead.",
+    );
   if (hasUnqualifiedReferenceTestimony(parsed, context))
     reasons.push(
       "Each leadership assertion must preserve its modelled or synthetic basis; concern counts do not establish a trust population.",
@@ -2262,22 +2244,23 @@ function buildGraphUnavailablePacket(input: {
           ? "medium"
           : "high",
   }));
-  const bullets = selected.map(
-    ({ claim }) => `- ${recoveryStatement(claim.statement, input.context)}`,
-  );
   const caveat =
     "A graph view is not available from Home aVa for this record yet. Compiled Home claims are summary evidence, not inspected relationship records.";
   const relationshipGap = graphRelationshipGap(input.question);
-  const sourceCaveat = recoveryCaveat(input.question, input.context, []);
   const prose = [
     "Short answer: Home aVa cannot render a graph for this question yet.",
-    bullets.length > 0
-      ? bullets.join("\n\n")
-      : "No cited Home claims are available for a narrative fallback to this question.",
-    relationshipGap,
-    `Confidence: ${recoveryConfidence(citations)} for cited claims only; relationship confidence is not established. Support: ${citations.length} cited Home claim${citations.length === 1 ? "" : "s"}.`,
-    `Caveat: ${caveat} ${sourceCaveat}`,
-  ].join("\n\n");
+    citations.length > 0
+      ? "- **What is available:** Evidence basis contains Home summaries, not verified connections."
+      : "- **What is available:** No cited Home claims are available for this request.",
+    "- **What is unverified:** The connections between these records have not been verified here. That does not mean they are absent from the source.",
+    "- **Next step:** Verify the connected records, relationship meaning and source evidence before presenting a graph.",
+    "Confidence: Not established for the requested connections.",
+    input.context.declaredSyntheticDemo
+      ? "Synthetic reference, not client-attested."
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
   return {
     surface: "home",
@@ -2308,17 +2291,10 @@ function buildGraphUnavailablePacket(input: {
         severity: "medium",
       },
     ],
-    caveats: [
-      { id: "home-ava-caveat-1", label: "Caveat", detail: caveat },
-      {
-        id: "home-ava-source-caveat",
-        label: "Source limit",
-        detail: sourceCaveat,
-      },
-    ],
+    caveats: [{ id: "home-ava-caveat-1", label: "Caveat", detail: caveat }],
     nextSteps: [],
     quality: {
-      confidence: recoveryConfidence(citations),
+      confidence: "low",
       evidenceStrength: citations.length > 0 ? "partial" : "thin",
       tenantGrounding: citations.length > 0 ? "complete" : "missing",
       answerCompleteness: citations.length > 0 ? "partial" : "blocked",
@@ -2856,7 +2832,7 @@ export function homeAvaAnswerFollowUpQuestions(
     const scope = scopes.join(", ") || "the requested typed relationships";
     candidates = [
       `What evidence is needed to verify ${scope}?`,
-      "Which endpoint IDs and declared relationship types can we inspect for the requested graph?",
+      "Which records and source evidence establish the requested connections?",
       answer.citations.length > 0
         ? "What do the cited summaries establish, and which requested connections remain unverified?"
         : "Which records would provide source evidence for the requested connections?",
