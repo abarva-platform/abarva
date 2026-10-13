@@ -84,6 +84,88 @@ beforeEach(() => {
 });
 
 describe("AgentDock · default mode", () => {
+  it("uses a full-width Home chat on narrow displays and preserves desktop preference", () => {
+    const originalWidth = window.innerWidth;
+    try {
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        value: 390,
+      });
+      render(
+        <AgentDock
+          agent={AGENT}
+          surface="home-preview"
+          defaultMode="collapsed"
+          collapsedRestoreMode="side-rail"
+          thread={[]}
+          onMessage={jest.fn()}
+          workspace={<div>workspace</div>}
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: /Restore/ }));
+      expect(
+        screen.getByRole("dialog", { name: "aVa expanded chat" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Pin right" }),
+      ).not.toBeInTheDocument();
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        value: 1440,
+      });
+      fireEvent(window, new Event("resize"));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(screen.getByTestId("agent-dock-panel")).toHaveAttribute(
+        "data-mode",
+        "side-rail",
+      );
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        value: 390,
+      });
+      fireEvent(window, new Event("resize"));
+      fireEvent.keyDown(window, { key: "Escape" });
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /Restore/ }),
+      ).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        value: originalWidth,
+      });
+    }
+  });
+
+  it("does not change another surface's narrow-display mode", () => {
+    const originalWidth = window.innerWidth;
+    try {
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        value: 390,
+      });
+      render(
+        <AgentDock
+          agent={AGENT}
+          surface={SURFACE}
+          thread={[]}
+          onMessage={jest.fn()}
+          workspace={<div>workspace</div>}
+        />,
+      );
+      expect(screen.getByTestId("agent-dock-panel")).toHaveAttribute(
+        "data-mode",
+        "side-rail",
+      );
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    } finally {
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        value: originalWidth,
+      });
+    }
+  });
+
   it("renders in side-rail mode when no preference is stored", () => {
     render(
       <AgentDock

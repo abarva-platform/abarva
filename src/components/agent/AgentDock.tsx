@@ -805,7 +805,20 @@ export function AgentDock(props: AgentDockProps) {
         );
 
   // Mode state (persisted)
-  const [mode, setModeState] = useState<DockMode>(defaultMode);
+  const [storedMode, setModeState] = useState<DockMode>(defaultMode);
+  const [compactHome, setCompactHome] = useState(false);
+  const mode: DockMode =
+    compactHome && storedMode !== "collapsed" ? "expand" : storedMode;
+  useEffect(() => {
+    if (surface !== "home-preview") {
+      setCompactHome(false);
+      return;
+    }
+    const updateViewport = () => setCompactHome(window.innerWidth < 768);
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, [surface]);
   const previousSurfaceRef = useRef(surface);
   // Last non-collapsed mode — used when restoring from the floating chip.
   const [lastRichMode, setLastRichMode] = useState<DockMode>(
@@ -835,7 +848,8 @@ export function AgentDock(props: AgentDockProps) {
     },
     [disableStoredMode, surface],
   );
-  const compactSheet = defaultMode === "collapsed" && disableStoredMode;
+  const compactSheet =
+    compactHome || (defaultMode === "collapsed" && disableStoredMode);
 
   // Esc closes (collapses)
   useEffect(() => {

@@ -37,14 +37,16 @@ Home advisor responses gain a clear bottom line, structured supporting points an
 - Prompt distinguishes partial value validation, exposure and modelled testimony from stronger assertions.
 - Qualitative readouts do not automatically include inventory exhibits; exhibit labels are reader-friendly.
 - Home clears old context and cancels in-flight responses when its selected record changes.
+- Home uses full-width chat on narrow displays without changing other surfaces or overwriting desktop dock preferences.
 - Existing aVa branding, evidence display, approval controls and audited reasoning path are preserved.
 
 ## QA / Validation
 
-- Focused Home answer, API, conversation, record-parity, list-marker, shared-dock and tenant-name preservation tests: 156 passing across nine suites.
+- Focused Home answer, API, conversation, record-parity, list-marker, shared-dock and tenant-name preservation tests: 158 passing across nine suites.
 - Existing integration workflow suite set: 4,898 passing tests across 180 suites, with its existing skips preserved.
 - Full TypeScript validation passed with Node 24 and a 12 GiB heap ceiling; the initial default-heap attempt exhausted its 4 GiB limit.
 - Scoped ESLint passed. All eleven release controls passed.
+- Actual component browser fixture checked at 1440x900 and 390x844: visible bullet markers, three follow-ups, answer-start positioning, jump-to-latest and mobile return-to-page. This is UI proof, not production answer-quality proof.
 - No data-plane load, model regeneration, sign-off, or operator job is part of this release.
 - Signed-in answer, follow-up and scroll proof remains a post-deployment requirement, not a local-test claim.
 
