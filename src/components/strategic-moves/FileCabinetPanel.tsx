@@ -8,6 +8,7 @@
 // lineage. Reads /api/v1/programs/:id/artifacts (no browser-only files).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import styles from "./FileCabinetPanel.module.css";
 import {
   EvidenceReviewEditor,
   type PendingEvidenceReview,
@@ -778,11 +779,13 @@ function ArtifactRow({
   moveId,
   onChanged,
   canApproveGates,
+  workspaceTheme = false,
 }: {
   a: Artifact;
   moveId: string;
   onChanged: () => Promise<void>;
   canApproveGates: boolean;
+  workspaceTheme?: boolean;
 }) {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
@@ -1192,7 +1195,7 @@ function ArtifactRow({
               style={{
                 fontSize: 13,
                 fontWeight: 600,
-                color: "#1A1A18",
+                color: workspaceTheme ? "var(--mv-ink)" : "#1A1A18",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
               }}
@@ -1297,7 +1300,7 @@ function ArtifactRow({
               flexWrap: "wrap",
             }}
           >
-            {a.phase != null && <span>Phase {a.phase}</span>}
+            {a.phase != null && <span>{workspaceTheme ? getPhaseLabel(a.phase) : `Phase ${a.phase}`}</span>}
             {a.qualityScore != null && (
               <span>Automated quality signal {a.qualityScore}/100</span>
             )}
@@ -1327,7 +1330,7 @@ function ArtifactRow({
             style={{
               fontSize: 11.5,
               fontWeight: 600,
-              color: "#1B2B5C",
+              color: workspaceTheme ? "var(--mv-accent)" : "#1B2B5C",
               background: "transparent",
               border: "1px solid #D5DAE2",
               borderRadius: 5,
@@ -1349,7 +1352,7 @@ function ArtifactRow({
             style={{
               fontSize: 11.5,
               fontWeight: 600,
-              color: "#1B2B5C",
+              color: workspaceTheme ? "var(--mv-accent)" : "#1B2B5C",
               background: "transparent",
               border: "1px solid #D5DAE2",
               borderRadius: 5,
@@ -1973,6 +1976,7 @@ export function FileCabinetPanel({
   moveId,
   phase = 0,
   presentationMode = false,
+  explorer = false,
   canApproveGates = false,
   discloseReviewerAttribution = false,
   onEvidenceChanged,
@@ -1981,6 +1985,7 @@ export function FileCabinetPanel({
   moveId: string;
   phase?: number;
   presentationMode?: boolean;
+  explorer?: boolean;
   canApproveGates?: boolean;
   discloseReviewerAttribution?: boolean;
   onEvidenceChanged?: () => void;
@@ -2033,6 +2038,11 @@ export function FileCabinetPanel({
   const [error, setError] = useState<string | null>(null);
   const [family, setFamily] = useState<string>("all");
   const [showSuperseded, setShowSuperseded] = useState(false);
+  const [phaseFilter, setPhaseFilter] = useState<number | "all" | "unassigned">(
+    phase,
+  );
+  const [search, setSearch] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [uploadState, setUploadState] = useState<
     "idle" | "uploading" | "error"
@@ -2194,22 +2204,55 @@ export function FileCabinetPanel({
     setDeclaredFamily("");
   }, [phase]);
 
-  const visible = useMemo(
+  const folderFiles = useMemo(
     () =>
       artifacts
         .filter((a) => showSuperseded || a.lifecycleState === "current")
-        .filter((a) => family === "all" || a.family === family),
-    [artifacts, family, showSuperseded],
+        .filter(
+          (a) =>
+            !explorer ||
+            phaseFilter === "all" ||
+            (phaseFilter === "unassigned"
+              ? a.phase === null
+              : a.phase === phaseFilter),
+        )
+        .filter(
+          (a) =>
+            !explorer ||
+            `${a.title} ${a.fileName}`
+              .toLowerCase()
+              .includes(search.trim().toLowerCase()),
+        ),
+    [artifacts, showSuperseded, explorer, phaseFilter, search],
   );
+  const visible = useMemo(() => folderFiles.filter((a) => family === "all" || a.family === family), [folderFiles, family]);
+
+  const selectedArtifact =
+    visible.find((a) => a.artifactId === selectedId) ?? null;
+  const folderArtifacts = artifacts.filter(
+    (a) => showSuperseded || a.lifecycleState === "current",
+  );
+  const folders = [
+    { id: "all" as const, label: "All phases", count: folderArtifacts.length },
+    ...Array.from({ length: TOTAL_PHASES }, (_, value) => ({
+      id: value,
+      label: getPhaseLabel(value),
+      count: folderArtifacts.filter((a) => a.phase === value).length,
+    })),
+    {
+      id: "unassigned" as const,
+      label: "Shared / unassigned",
+      count: folderArtifacts.filter((a) => a.phase === null).length,
+    },
+  ];
 
   const counts = useMemo(() => {
     const m: Record<string, number> = {};
-    for (const a of artifacts) {
-      if (!showSuperseded && a.lifecycleState !== "current") continue;
+    for (const a of folderFiles) {
       m[a.family] = (m[a.family] ?? 0) + 1;
     }
     return m;
-  }, [artifacts, showSuperseded]);
+  }, [folderFiles]);
 
   const grouped = useMemo(() => {
     const m = new Map<string, Artifact[]>();
@@ -2237,8 +2280,12 @@ export function FileCabinetPanel({
   );
 
   return (
-    <div style={{ padding: "0 4px" }}>
+    <div
+      className={explorer ? styles.cabinet : undefined}
+      style={{ padding: "0 4px" }}
+    >
       <div
+        className={explorer ? styles.toolbar : undefined}
         style={{
           display: "flex",
           alignItems: "baseline",
@@ -2247,96 +2294,37 @@ export function FileCabinetPanel({
         }}
       >
         <div>
-          <h2
-            style={{
-              fontFamily: "Georgia, serif",
-              fontSize: presentationMode ? 17 : 18,
-              fontWeight: 650,
-              color: "#1A1A18",
-              margin: 0,
-            }}
-          >
-            Downloads
-          </h2>
+          {!explorer ? (
+            <h2
+              style={{
+                fontFamily: "Georgia, serif",
+                fontSize: presentationMode ? 17 : 18,
+                fontWeight: 650,
+                color: "#1A1A18",
+                margin: 0,
+              }}
+            >
+              Downloads
+            </h2>
+          ) : null}
           <p style={{ fontSize: 12, color: "#9AA3B2", margin: "3px 0 0" }}>
             Current Move files, review-ready exports, and review items.{" "}
             {downloadSummary || `${totalCurrent} current files.`}
           </p>
         </div>
-        <div
-          style={{
-            display: "flex",
-            gap: 8,
-            alignItems: "end",
-            flexWrap: "wrap",
-          }}
+        <details
+          open={!explorer}
+          className={explorer ? styles.upload : undefined}
         >
-          <label
+          <summary hidden={!explorer}>Upload a file</summary>
+          <div
             style={{
-              display: "grid",
-              gap: 3,
-              color: "#5A6472",
-              fontSize: 10,
-              fontWeight: 700,
+              display: "flex",
+              gap: 8,
+              alignItems: "end",
+              flexWrap: "wrap",
             }}
           >
-            <span>Upload type</span>
-            <select
-              aria-label="File Cabinet upload type"
-              onChange={(event) =>
-                setUploadFamily(event.target.value as typeof uploadFamily)
-              }
-              value={uploadFamily}
-              style={{
-                minHeight: 32,
-                border: "1px solid #D5DAE2",
-                borderRadius: 5,
-                background: "#fff",
-                color: "#1A1A18",
-                fontSize: 11.5,
-                padding: "5px 8px",
-              }}
-            >
-              <option value="uploaded_evidence">Evidence</option>
-              <option value="session_artifact">Workshop / session notes</option>
-            </select>
-          </label>
-          <label
-            style={{
-              display: "grid",
-              gap: 3,
-              color: "#5A6472",
-              fontSize: 10,
-              fontWeight: 700,
-            }}
-          >
-            <span>Evidence applies to phase</span>
-            <select
-              aria-label="Evidence applies to phase"
-              onChange={(event) =>
-                onUploadPhaseChange(Number(event.target.value))
-              }
-              value={uploadPhase}
-              style={{
-                minHeight: 32,
-                border: "1px solid #D5DAE2",
-                borderRadius: 5,
-                background: "#fff",
-                color: "#1A1A18",
-                fontSize: 11.5,
-                padding: "5px 8px",
-              }}
-            >
-              {Array.from({ length: TOTAL_PHASES }, (_, value) => (
-                <option key={value} value={value}>
-                  {getPhaseLabel(value)}
-                </option>
-              ))}
-            </select>
-          </label>
-          {evidenceFamilies.length > 0 &&
-          uploadPhase === phase &&
-          uploadFamily === "uploaded_evidence" ? (
             <label
               style={{
                 display: "grid",
@@ -2346,14 +2334,15 @@ export function FileCabinetPanel({
                 fontWeight: 700,
               }}
             >
-              <span>Covers required evidence</span>
+              <span>Upload type</span>
               <select
-                aria-label="Required evidence this file covers"
-                onChange={(event) => setDeclaredFamily(event.target.value)}
-                value={declaredFamily}
+                aria-label="File Cabinet upload type"
+                onChange={(event) =>
+                  setUploadFamily(event.target.value as typeof uploadFamily)
+                }
+                value={uploadFamily}
                 style={{
                   minHeight: 32,
-                  maxWidth: 260,
                   border: "1px solid #D5DAE2",
                   borderRadius: 5,
                   background: "#fff",
@@ -2362,78 +2351,146 @@ export function FileCabinetPanel({
                   padding: "5px 8px",
                 }}
               >
-                <option value="">Not stated</option>
-                {evidenceFamilies.map((family) => (
-                  <option key={family.id} value={family.id}>
-                    {family.label}
+                <option value="uploaded_evidence">Evidence</option>
+                <option value="session_artifact">
+                  Workshop / session notes
+                </option>
+              </select>
+            </label>
+            <label
+              style={{
+                display: "grid",
+                gap: 3,
+                color: "#5A6472",
+                fontSize: 10,
+                fontWeight: 700,
+              }}
+            >
+              <span>Evidence applies to phase</span>
+              <select
+                aria-label="Evidence applies to phase"
+                onChange={(event) =>
+                  onUploadPhaseChange(Number(event.target.value))
+                }
+                value={uploadPhase}
+                style={{
+                  minHeight: 32,
+                  border: "1px solid #D5DAE2",
+                  borderRadius: 5,
+                  background: "#fff",
+                  color: "#1A1A18",
+                  fontSize: 11.5,
+                  padding: "5px 8px",
+                }}
+              >
+                {Array.from({ length: TOTAL_PHASES }, (_, value) => (
+                  <option key={value} value={value}>
+                    {getPhaseLabel(value)}
                   </option>
                 ))}
               </select>
             </label>
-          ) : null}
-          <input
-            aria-label="Upload Move file"
-            ref={fileRef}
-            type="file"
-            // The two bounds the upload route refuses on, stated by the picker
-            // instead of discovered by waiting out a doomed upload. Derived
-            // from the allowlist the route enforces — and a hint, not a block,
-            // so it cannot hide a file the route would have taken.
-            accept={UPLOAD_ACCEPT_ATTRIBUTE}
-            style={{ display: "none" }}
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) void onUpload(f);
-              e.target.value = "";
-            }}
-          />
-          <button
-            onClick={() => fileRef.current?.click()}
-            disabled={uploadState === "uploading"}
-            style={{
-              fontSize: 11.5,
-              fontWeight: 600,
-              color: "#fff",
-              background: uploadState === "uploading" ? "#9AA3B2" : "#1B2B5C",
-              border: "none",
-              borderRadius: 5,
-              padding: "6px 12px",
-              cursor: uploadState === "uploading" ? "default" : "pointer",
-            }}
-          >
-            {uploadState === "uploading"
-              ? "Uploading…"
-              : uploadFamily === "session_artifact"
-                ? "Upload session file"
-                : "Upload evidence"}
-          </button>
-          <span
-            data-testid="move-upload-bounds"
-            style={{
-              fontSize: 10.5,
-              color: "#5A6472",
-              flexBasis: "100%",
-              marginTop: 2,
-            }}
-          >
-            {describeUploadBounds()}
-          </span>
-          <button
-            onClick={() => void load()}
-            style={{
-              fontSize: 11.5,
-              fontWeight: 600,
-              color: "#5A6472",
-              background: "transparent",
-              border: "1px solid #D5DAE2",
-              borderRadius: 5,
-              padding: "5px 11px",
-              cursor: "pointer",
-            }}
-          >
-            Refresh
-          </button>
-        </div>
+            {evidenceFamilies.length > 0 &&
+            uploadPhase === phase &&
+            uploadFamily === "uploaded_evidence" ? (
+              <label
+                style={{
+                  display: "grid",
+                  gap: 3,
+                  color: "#5A6472",
+                  fontSize: 10,
+                  fontWeight: 700,
+                }}
+              >
+                <span>Covers required evidence</span>
+                <select
+                  aria-label="Required evidence this file covers"
+                  onChange={(event) => setDeclaredFamily(event.target.value)}
+                  value={declaredFamily}
+                  style={{
+                    minHeight: 32,
+                    maxWidth: 260,
+                    border: "1px solid #D5DAE2",
+                    borderRadius: 5,
+                    background: "#fff",
+                    color: "#1A1A18",
+                    fontSize: 11.5,
+                    padding: "5px 8px",
+                  }}
+                >
+                  <option value="">Not stated</option>
+                  {evidenceFamilies.map((family) => (
+                    <option key={family.id} value={family.id}>
+                      {family.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            <input
+              aria-label="Upload Move file"
+              ref={fileRef}
+              type="file"
+              // The two bounds the upload route refuses on, stated by the picker
+              // instead of discovered by waiting out a doomed upload. Derived
+              // from the allowlist the route enforces — and a hint, not a block,
+              // so it cannot hide a file the route would have taken.
+              accept={UPLOAD_ACCEPT_ATTRIBUTE}
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void onUpload(f);
+                e.target.value = "";
+              }}
+            />
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploadState === "uploading"}
+              style={{
+                fontSize: 11.5,
+                fontWeight: 600,
+                color: "#fff",
+                background: uploadState === "uploading" ? "#9AA3B2" : "#1B2B5C",
+                border: "none",
+                borderRadius: 5,
+                padding: "6px 12px",
+                cursor: uploadState === "uploading" ? "default" : "pointer",
+              }}
+            >
+              {uploadState === "uploading"
+                ? "Uploading…"
+                : uploadFamily === "session_artifact"
+                  ? "Upload session file"
+                  : "Upload evidence"}
+            </button>
+            <span
+              data-testid="move-upload-bounds"
+              style={{
+                fontSize: 10.5,
+                color: "#5A6472",
+                flexBasis: "100%",
+                marginTop: 2,
+              }}
+            >
+              {describeUploadBounds()}
+            </span>
+            <button
+              onClick={() => void load()}
+              style={{
+                fontSize: 11.5,
+                fontWeight: 600,
+                color: "#5A6472",
+                background: "transparent",
+                border: "1px solid #D5DAE2",
+                borderRadius: 5,
+                padding: "5px 11px",
+                cursor: "pointer",
+              }}
+            >
+              Refresh
+            </button>
+          </div>
+        </details>
       </div>
       {uploadMsg && (
         <div
@@ -2464,6 +2521,16 @@ export function FileCabinetPanel({
         </div>
       )}
 
+      <details
+        open={!explorer}
+        className={explorer ? styles.reviews : undefined}
+      >
+        <summary hidden={!explorer}>
+          Evidence review
+          {pendingEvidenceReviews.length
+            ? ` · ${pendingEvidenceReviews.length} awaiting review`
+            : ""}
+        </summary>
       {pendingEvidenceReviews.length > 0 && (
         <section
           aria-label="Evidence awaiting review"
@@ -2698,123 +2765,214 @@ export function FileCabinetPanel({
       {contextExtractReview && (
         <ContextExtractReviewPanel model={contextExtractReview} />
       )}
+      </details>
 
-      {/* Family filters */}
-      <div
-        style={{
-          display: "flex",
-          gap: 6,
-          flexWrap: "wrap",
-          margin: "12px 0 6px",
-        }}
-      >
-        <FilterChip
-          label={`All (${visible.length})`}
-          active={family === "all"}
-          onClick={() => setFamily("all")}
-        />
-        {FAMILIES.filter((f) => (counts[f.key] ?? 0) > 0).map((f) => (
-          <FilterChip
-            key={f.key}
-            label={`${f.label} (${counts[f.key] ?? 0})`}
-            active={family === f.key}
-            onClick={() => setFamily(f.key)}
-          />
-        ))}
-        <label
-          style={{
-            marginLeft: "auto",
-            fontSize: 11.5,
-            color: "#5A6472",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 5,
-            cursor: "pointer",
-          }}
+      <div className={explorer ? styles.explorer : undefined}>
+        {explorer ? (
+          <nav className={styles.folders} aria-label="File folders">
+            {folders.map((folder) => (
+              <button
+                type="button"
+                key={folder.id}
+                aria-pressed={phaseFilter === folder.id}
+                onClick={() => {
+                  setPhaseFilter(folder.id);
+                  setSelectedId(null);
+                  if (typeof folder.id === "number") onUploadPhaseChange(folder.id);
+                }}
+              >
+                <span>{folder.label}</span>
+                <span className={styles.count}>
+                  {loading ? "…" : folder.count}
+                </span>
+              </button>
+            ))}
+          </nav>
+        ) : null}
+        <section
+          className={explorer ? styles.fileList : undefined}
+          aria-label={explorer ? "Files in folder" : undefined}
         >
-          <input
-            type="checkbox"
-            checked={showSuperseded}
-            onChange={(e) => setShowSuperseded(e.target.checked)}
-          />
-          Show version history
-        </label>
+          {explorer ? (
+            <label className={styles.search}>
+              <input
+                type="search"
+                aria-label="Search files"
+                placeholder="Search files"
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setSelectedId(null);
+                }}
+              />
+            </label>
+          ) : null}
+
+          {/* Family filters */}
+          <div
+            style={{
+              display: "flex",
+              gap: 6,
+              flexWrap: "wrap",
+              margin: "12px 0 6px",
+            }}
+          >
+            <FilterChip
+              label={`All (${folderFiles.length})`}
+              themed={explorer}
+              active={family === "all"}
+              onClick={() => setFamily("all")}
+            />
+            {FAMILIES.filter((f) => (counts[f.key] ?? 0) > 0).map((f) => (
+              <FilterChip
+                key={f.key}
+                  label={`${f.label} (${counts[f.key] ?? 0})`}
+                  themed={explorer}
+                active={family === f.key}
+                onClick={() => setFamily(f.key)}
+              />
+            ))}
+            <label
+              style={{
+                marginLeft: "auto",
+                fontSize: 11.5,
+                color: "#5A6472",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={showSuperseded}
+                onChange={(e) => setShowSuperseded(e.target.checked)}
+              />
+              Show version history
+            </label>
+          </div>
+
+          {loading && (
+            <div
+              style={{
+                padding: "32px 0",
+                textAlign: "center",
+                fontSize: 12,
+                color: "#9AA3B2",
+              }}
+            >
+              Loading the cabinet…
+            </div>
+          )}
+          {error && !loading && (
+            <div style={{ padding: "20px 0", fontSize: 12, color: "#B71C1C" }}>
+              Could not load artifacts: {error}
+            </div>
+          )}
+          {!loading && !error && visible.length === 0 && (
+            <div
+              style={{
+                padding: "28px 16px",
+                textAlign: "center",
+                fontSize: 12.5,
+                color: "#9AA3B2",
+                border: "1px dashed #D5DAE2",
+                borderRadius: 8,
+                marginTop: 8,
+              }}
+            >
+              {explorer ? (
+                "No files match this folder and filters."
+              ) : (
+                <>
+                  No artifacts yet. Generated deliverables appear here
+                  automatically; use “Upload evidence” to add meeting notes,
+                  session outputs, data exports, or filled templates that ground
+                  deliverables and close gates.
+                </>
+              )}
+            </div>
+          )}
+
+          {!loading &&
+            !error &&
+            Array.from(grouped.entries()).map(([fam, rows]) => {
+              const meta = FAMILIES.find((f) => f.key === fam);
+              return (
+                <section key={fam} style={{ marginTop: 16 }}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: "#5A6472",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.04em",
+                      marginBottom: 4,
+                    }}
+                  >
+                    {meta?.label ?? fam} · {rows.length}
+                  </div>
+                  <div
+                    style={{
+                      border: "1px solid #EEF0F3",
+                      borderRadius: 8,
+                      overflow: "hidden",
+                      background: "#fff",
+                    }}
+                  >
+                    {rows.map((a) =>
+                      explorer ? (
+                        <button
+                          type="button"
+                          key={a.artifactId}
+                          className={styles.file}
+                          aria-label={`Select ${a.title}`}
+                          aria-pressed={selectedId === a.artifactId}
+                          onClick={() => setSelectedId(a.artifactId)}
+                        >
+                          <span>
+                            <strong>{a.title}</strong>
+                            <small>
+                              {artifactFormatLabel(a.fileFormat)} · v{a.version}{" "}
+                              · {artifactStatusLabel(a.status)}
+                            </small>
+                          </span>
+                        </button>
+                      ) : (
+                        <ArtifactRow
+                          key={a.artifactId}
+                          a={a}
+                          moveId={moveId}
+                          onChanged={load}
+                          canApproveGates={canApproveGates}
+                        />
+                      ),
+                    )}
+                  </div>
+                </section>
+              );
+            })}
+        </section>
+        {explorer ? (
+          <section className={styles.detail} aria-label="Selected file">
+            {selectedArtifact ? (
+              <>
+                <h2>File detail</h2>
+                <ArtifactRow
+                  key={selectedArtifact.artifactId}
+                  a={selectedArtifact}
+                  moveId={moveId}
+                  onChanged={load}
+                  canApproveGates={canApproveGates}
+                  workspaceTheme
+                />
+              </>
+            ) : (
+              <p>Select a file</p>
+            )}
+          </section>
+        ) : null}
       </div>
-
-      {loading && (
-        <div
-          style={{
-            padding: "32px 0",
-            textAlign: "center",
-            fontSize: 12,
-            color: "#9AA3B2",
-          }}
-        >
-          Loading the cabinet…
-        </div>
-      )}
-      {error && !loading && (
-        <div style={{ padding: "20px 0", fontSize: 12, color: "#B71C1C" }}>
-          Could not load artifacts: {error}
-        </div>
-      )}
-      {!loading && !error && visible.length === 0 && (
-        <div
-          style={{
-            padding: "28px 16px",
-            textAlign: "center",
-            fontSize: 12.5,
-            color: "#9AA3B2",
-            border: "1px dashed #D5DAE2",
-            borderRadius: 8,
-            marginTop: 8,
-          }}
-        >
-          No artifacts yet. Generated deliverables appear here automatically;
-          use “Upload evidence” to add meeting notes, session outputs, data
-          exports, or filled templates that ground deliverables and close gates.
-        </div>
-      )}
-
-      {!loading &&
-        !error &&
-        Array.from(grouped.entries()).map(([fam, rows]) => {
-          const meta = FAMILIES.find((f) => f.key === fam);
-          return (
-            <section key={fam} style={{ marginTop: 16 }}>
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: "#5A6472",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.04em",
-                  marginBottom: 4,
-                }}
-              >
-                {meta?.label ?? fam} · {rows.length}
-              </div>
-              <div
-                style={{
-                  border: "1px solid #EEF0F3",
-                  borderRadius: 8,
-                  overflow: "hidden",
-                  background: "#fff",
-                }}
-              >
-                {rows.map((a) => (
-                  <ArtifactRow
-                    key={a.artifactId}
-                    a={a}
-                    moveId={moveId}
-                    onChanged={load}
-                    canApproveGates={canApproveGates}
-                  />
-                ))}
-              </div>
-            </section>
-          );
-        })}
     </div>
   );
 }
@@ -2823,10 +2981,12 @@ function FilterChip({
   label,
   active,
   onClick,
+  themed = false,
 }: {
   label: string;
   active: boolean;
   onClick: () => void;
+  themed?: boolean;
 }) {
   return (
     <button
@@ -2834,10 +2994,10 @@ function FilterChip({
       style={{
         fontSize: 11.5,
         fontWeight: active ? 700 : 500,
-        color: active ? "#fff" : "#5A6472",
-        background: active ? "#1B2B5C" : "transparent",
-        border: `1px solid ${active ? "#1B2B5C" : "#D5DAE2"}`,
-        borderRadius: 14,
+        color: themed ? (active ? "var(--mv-accent-ink)" : "var(--mv-muted)") : active ? "#fff" : "#5A6472",
+        background: active ? (themed ? "var(--mv-accent)" : "#1B2B5C") : "transparent",
+        border: `1px solid ${themed ? "var(--mv-line)" : active ? "#1B2B5C" : "#D5DAE2"}`,
+        borderRadius: themed ? 4 : 14,
         padding: "4px 12px",
         cursor: "pointer",
       }}

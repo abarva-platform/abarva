@@ -964,6 +964,41 @@ describe("MovesPhaseStandaloneClient", () => {
     jest.restoreAllMocks();
   });
 
+  it("keeps Files in the step-page workspace instead of restoring the legacy menu", async () => {
+    const { container } = render(
+      <MovesPhaseStandaloneClient
+        canApproveGates={false}
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" })}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+        phaseStepPagesEnabled
+        initialWorkspaceView="files"
+      />,
+    );
+    const workspace = screen.getByRole("navigation", { name: "Workspace" });
+    expect(
+      within(workspace).getByRole("link", { name: "Files" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      within(workspace).getByRole("link", { name: "Steps" }),
+    ).toHaveAttribute("href", expect.stringContaining("?step="));
+    expect(
+      screen.getByRole("navigation", { name: "Phases" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("navigation", { name: "File folders" }),
+    ).toBeInTheDocument();
+    expect(container.querySelector(".mxw-phase-stepper")).toBeNull();
+    expect(
+      screen.queryByRole("tablist", { name: "Move workspace views" }),
+    ).toBeNull();
+    await waitFor(() =>
+      expect(screen.queryByText("Loading the cabinet…")).toBeNull(),
+    );
+  });
+
   it("shows no approval action to a user without workspace approval permission", () => {
     render(
       <MovesPhaseStandaloneClient
@@ -5233,20 +5268,52 @@ describe("MovesPhaseStandaloneClient", () => {
 
     it("mounts both server-authorized P1 authored controls on the normal Files composition and removes them on Steps", () => {
       const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
-      render(<MovesPhaseStandaloneClient captureV2Enabled stepPagesV3Enabled phaseStepPagesEnabled
-        initialWorkspaceView="files" initialPhaseCaptureValues={saved} carriesForwardContent={[]} evidenceNeedPackets={[]}
-        move={move} phaseNum={1} phaseTallies={[...phaseTallies]} initialAuthoredP1Documents={<section>
-          <AuthoredDeliverableUploadAction moveId={move.id} documentKey="charter" />
-          <AuthoredDeliverableUploadAction moveId={move.id} documentKey="discovery_plan" />
-        </section>} />);
-      expect(screen.getByRole("heading", { name: "Files & Evidence" })).toBeInTheDocument();
-      expect(document.querySelector('#authored-file-charter')).toBeInTheDocument();
-      expect(document.querySelector('#authored-file-discovery_plan')).toBeInTheDocument();
-      expect(screen.getAllByRole("button", { name: "Upload authored draft" })).toHaveLength(2);
+      render(
+        <MovesPhaseStandaloneClient
+          captureV2Enabled
+          stepPagesV3Enabled
+          phaseStepPagesEnabled
+          initialWorkspaceView="files"
+          initialPhaseCaptureValues={saved}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={move}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+          initialAuthoredP1Documents={
+            <section>
+              <AuthoredDeliverableUploadAction
+                moveId={move.id}
+                documentKey="charter"
+              />
+              <AuthoredDeliverableUploadAction
+                moveId={move.id}
+                documentKey="discovery_plan"
+              />
+            </section>
+          }
+        />,
+      );
+      expect(
+        screen.getByRole("heading", { name: "Files & Evidence" }),
+      ).toBeInTheDocument();
+      expect(
+        document.querySelector("#authored-file-charter"),
+      ).toBeInTheDocument();
+      expect(
+        document.querySelector("#authored-file-discovery_plan"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getAllByRole("button", { name: "Upload authored draft" }),
+      ).toHaveLength(2);
       expect(screen.getByLabelText("Upload Move file")).toBeInTheDocument();
-      fireEvent.click(workspaceTab("Steps"));
-      expect(document.querySelector('#authored-file-charter')).not.toBeInTheDocument();
-      expect(document.querySelector('#authored-file-discovery_plan')).not.toBeInTheDocument();
+      fireEvent.click(within(screen.getByRole("navigation", { name: "Workspace" })).getByRole("link", { name: "Steps" }));
+      expect(
+        document.querySelector("#authored-file-charter"),
+      ).not.toBeInTheDocument();
+      expect(
+        document.querySelector("#authored-file-discovery_plan"),
+      ).not.toBeInTheDocument();
     });
 
     it("selects Steps during its normal route navigation without retaining the Files view on the reused client", () => {
@@ -5268,7 +5335,7 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(
         screen.getByRole("heading", { name: "Files & Evidence" }),
       ).toBeInTheDocument();
-      const steps = workspaceTab("Steps");
+      const steps = within(screen.getByRole("navigation", { name: "Workspace" })).getByRole("link", { name: "Steps" });
       expect(steps.tagName).toBe("A");
       expect(steps.getAttribute("href")).toContain("?step=p1-sponsor-scope");
       fireEvent.click(steps, { ctrlKey: true });
@@ -6589,24 +6656,15 @@ describe("MovesPhaseStandaloneClient", () => {
         ).toBeInTheDocument();
         expect(mockRouterReplace).not.toHaveBeenCalled();
         expect(
-          within(screen.getByRole("tablist", { name: "Move workspace views" }))
-            .getByRole("tab", { name: "Steps" })
+          within(screen.getByRole("navigation", { name: "Workspace" }))
+            .getByRole("link", { name: "Steps" })
             .getAttribute("href"),
         ).toMatch(
           new RegExp(`/strategic-moves/${p2Move().id}/phase/2\\?step=`),
         );
         expect(
-          within(
-            screen.getByRole("tablist", {
-              name: "Compact workspace views",
-              hidden: true,
-            }),
-          )
-            .getByRole("tab", { name: "Stage", hidden: true })
-            .getAttribute("href"),
-        ).toMatch(
-          new RegExp(`/strategic-moves/${p2Move().id}/phase/2\\?step=`),
-        );
+          screen.queryByRole("tablist", { name: "Compact workspace views", hidden: true }),
+        ).toBeNull();
       },
     );
 
@@ -14233,7 +14291,6 @@ describe("normal step gate transition evidence producer", () => {
     },
   );
 });
-
 
 it("uses the exact server contact readback for P1.1 chrome and keeps participant roles unchanged", () => {
   const move=makeMove({currentPhase:1});

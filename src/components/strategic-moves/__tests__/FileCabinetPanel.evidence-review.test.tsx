@@ -1,7 +1,13 @@
 /** @jest-environment jsdom */
 
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { FileCabinetPanel } from "../FileCabinetPanel";
 import {
   describeMoveUploadRefusal,
@@ -10,6 +16,103 @@ import {
 import { REVIEWED_EXTRACTION_REFUSAL_LIMITS } from "@/lib/programs/evidence-review-contract";
 
 describe("Moves File Cabinet evidence review", () => {
+  it("explores files by declared phase, searches them and opens existing review controls without writing", async () => {
+    const artifact = (
+      id: string,
+      phase: number | null,
+      title: string,
+      lifecycleState = "current",
+    ) => ({
+      artifactId: id,
+      artifactType: "source_record",
+      family: "uploaded_evidence",
+      title,
+      phase,
+      fileFormat: "pdf",
+      fileName: `${id}.pdf`,
+      version: 1,
+      status: "review_required",
+      lifecycleState,
+      qualityScore: null,
+      unsupportedClaims: 0,
+      createdAt: "2026-10-01T00:00:00Z",
+      fileSize: 1000,
+      stored: "azure_blob",
+      openItems: [],
+      downloadUrl: `/api/v1/programs/move-1/artifacts/${id}/download`,
+    });
+    const fetchMock = jest.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        artifacts: [
+          artifact("charter", 1, "Charter evidence"),
+          artifact("handoff", 5, "Handoff evidence"),
+          artifact("shared", null, "Shared context"),
+          artifact("old", 1, "Earlier charter", "superseded"),
+        ],
+        pendingEvidenceReviews: [],
+        evidenceReviewStatus: "available",
+      }),
+    }));
+    global.fetch = fetchMock as unknown as typeof fetch;
+    render(<FileCabinetPanel moveId="move-1" phase={1} explorer />);
+    const folders = screen.getByRole("navigation", { name: "File folders" });
+    expect(
+      await screen.findByRole("button", { name: /Select Charter evidence/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Evidence (1)" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Select Handoff evidence/ }),
+    ).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Select Charter evidence/ }),
+    );
+    expect(
+      screen.getByRole("region", { name: "Selected file" }),
+    ).toHaveTextContent("Charter evidence");
+    expect(
+      screen.getByRole("region", { name: "Selected file" }),
+    ).toHaveTextContent("needs review");
+    fireEvent.click(
+      within(folders).getByRole("button", { name: /P5 Mobilize/ }),
+    );
+    expect(
+      screen.getByRole("button", { name: /Select Handoff evidence/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Select Charter evidence/ }),
+    ).toBeNull();
+    expect(screen.queryByText("Charter evidence")).toBeNull();
+    fireEvent.click(
+      within(folders).getByRole("button", { name: /Shared.*unassigned/i }),
+    );
+    expect(
+      screen.getByRole("button", { name: /Select Shared context/ }),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      within(folders).getByRole("button", { name: /All phases/ }),
+    );
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search files" }), {
+      target: { value: "handoff" },
+    });
+    expect(
+      screen.getByRole("button", { name: /Select Handoff evidence/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Select Shared context/ }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /Select Earlier charter/ }),
+    ).toBeNull();
+    expect(
+      fetchMock.mock.calls.every(
+        (call) =>
+          !((call as unknown[])[1] as RequestInit | undefined)?.method ||
+          ((call as unknown[])[1] as RequestInit).method === "GET",
+      ),
+    ).toBe(true);
+  });
+
   it("does not expose evidence approval controls without workspace approval permission", async () => {
     global.fetch = jest.fn(async () => ({
       ok: true,
