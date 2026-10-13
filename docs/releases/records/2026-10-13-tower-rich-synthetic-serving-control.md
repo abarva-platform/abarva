@@ -45,6 +45,7 @@ Merge through a PR. Build the approved digest-pinned operator image through the 
 - Worker image invariant: Private operator job must use the approved digest.
 - Feature/env flag update path: None.
 - Live signed-in proof required: Yes, after data promotion and any related web release.
+- ACR build policy: The shared web image is built only by the repo-owned main deploy workflow using the Premium registry and its required Buildx cache. This operator does not build or push an image.
 
 ## Rollback Plan
 
