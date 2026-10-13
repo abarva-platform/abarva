@@ -14,7 +14,7 @@
 
 ## Plain-English Summary
 
-This candidate repairs a retained synthetic Tower source package so its Finance budget breakdown agrees with its project portfolio and tool adoption counts make sense. It also marks projected AI benefit and ROI as sponsor scenarios. The candidate is offline and has not changed the served Tower data.
+This candidate repairs a retained synthetic Tower source package so its Finance budget breakdown agrees with its project portfolio and tool adoption counts make sense. It also marks projected AI benefit and ROI as sponsor scenarios. Anand Sundaram approved this exact source version for a private ACA load on 2026-10-13. It has not changed the served Tower data.
 
 ## Layer Impact
 
@@ -46,11 +46,11 @@ This candidate repairs a retained synthetic Tower source package so its Finance 
 - `node scripts/tower/generate-meridian-layer1-source.mjs` regenerated all package layers from the source generator.
 - `node scripts/tower/validate-meridian-layer1-source.mjs` passed 44 offline gates, including physical source/output hashes, exact FY26 domain reconciliation, both budget split identities, conservative ROI formula, source-plan label survival, and active users not exceeding enabled users.
 - Seven focused tests passed for exact approval binding, immutable Blob proof readback, PMO period/lineage display fields, and inactive Layer 4 stage SQL. Layer 2, 3 and 4 SQL builds were dry-run only.
-- Source set identity and the exact assessment ID are recorded in `package_manifest.json`; the candidate remains `no_runtime_load=true`.
+- Source set identity and the exact assessment ID are recorded in `package_manifest.json`. Following the named exact-version approval, the package and proof manifests now mark this candidate eligible for private ACA staging with `no_runtime_load=false`. The load gate still checks every generated file hash and the manifest approval before a write.
 
 ## Rollout Plan
 
-No runtime rollout in this release. A future private ACA job must use the exact package identity and a new assessment ID, after a named declaration and exact-version load approval. The stage proof requires a digest-pinned job image, matching before/after active selectors, nine page row-key/source-hash fingerprints, a passing quality result, and immutable private Blob URI/SHA. Product serving requires a separate exact-version approval and selector promotion review.
+The approved private ACA job must use the exact package identity and assessment ID in the named load approval. The stage proof requires a digest-pinned job image, matching before/after active selectors, nine page row-key/source-hash fingerprints, a passing quality result, and immutable private Blob URI/SHA. Product serving requires a separate exact-version approval and selector promotion review.
 
 ## Deployment Authority
 
@@ -74,7 +74,7 @@ The current served assessment stays untouched during private stage. If this cand
 
 ## Known Gaps
 
-- The draft declaration has no human signoff or exact-version load/serving approval.
+- The exact-version private load has named human approval; serving approval is still absent.
 - The package has not been privately staged, loaded, served or verified in the signed-in product.
-- The offline validator currently requires `no_runtime_load=true`; the future approval-bound load-ready transition must validate its separate exact named approval when setting that flag to false. The current package remains offline.
+- The earlier 44 offline checks evaluated the source and generated data before the load-ready manifest transition. The separate approval-bound write gate must pass again in the ACA job; offline validation alone is not a load receipt.
 - The synthetic scenario does not establish current-client AI spend, Finance-approved benefit, or realized ROI.

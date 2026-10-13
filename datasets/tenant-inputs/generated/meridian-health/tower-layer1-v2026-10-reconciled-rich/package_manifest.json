@@ -6,8 +6,8 @@
   "tenant_key": "meridian-health",
   "generated_at": "2026-10-13T12:00:00.000Z",
   "package_type": "tower_full_synthetic_layer_cube_package",
-  "status": "offline_layer_cube_proof_no_load_no_deploy",
-  "no_runtime_load": true,
+  "status": "approved_for_private_aca_stage_not_served",
+  "no_runtime_load": false,
   "layers": {
     "layer_1_client_intake": "generated",
     "layer_2_source_adapters": "generated",
