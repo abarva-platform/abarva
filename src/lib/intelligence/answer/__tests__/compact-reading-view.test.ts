@@ -135,3 +135,36 @@ it("uses a short reading view for simple questions and honors an explicit longer
     600,
   );
 });
+
+it("gives a short eligibility follow-up enough room to show its actual conditions", () => {
+  const question =
+    "How should we define eligible routine inquiry for the target?";
+  const prose =
+    "An eligible routine inquiry must meet all four conditions:\n\n" +
+    [
+      "1. Channel and intake: Use a defined channel where the inquiry and its resolution can be tracked end to end.",
+      "2. Topic scope: The inquiry must be discrete and answerable without clinical judgment. Exclude licensed clinical decisions and escalation.",
+      "3. Resolution standard: Resolve the inquiry without a later agent contact. Exclude abandoned sessions, unresolved cases and reopened cases within the agreed observation window. The business must approve the observation window and cross-channel matching method before measurement starts.",
+      "4. Data availability: Log intent, channel and outcome independently. The current eligible population and successful resolution baseline remain unknown until that evidence is available.",
+    ].join("\n");
+  expect(wordCount(prose)).toBeGreaterThan(100);
+  const view = compactReadingView(prose, [], executiveReadingBudget(question));
+  expect(view.hasMore).toBe(false);
+  expect(view.prose).toBe(prose);
+  expect(view.prose).toContain("4. Data availability");
+  expect(view.visibleWords).toBeLessThanOrEqual(300);
+});
+
+it.each([
+  "What evidence establishes the resolution baseline?",
+  "Which retained accountabilities require owner sign-off?",
+  "How should we measure successful resolution?",
+])("uses a complete decision view for %s", (question) => {
+  expect(executiveReadingBudget(question)).toBe(300);
+});
+
+it("keeps simple status questions brief and preserves an explicit limit", () => {
+  expect(executiveReadingBudget("Is the baseline known?")).toBe(100);
+  expect(executiveReadingBudget("Who owns eligibility?")).toBe(100);
+  expect(executiveReadingBudget("Define eligibility in 100 words.")).toBe(100);
+});

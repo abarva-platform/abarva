@@ -3,7 +3,15 @@ import type { AvaArtifact } from "@/lib/ava-answer/contract";
 export function executiveReadingBudget(question: string): number {
   const explicit = question.match(/\b(\d{2,4})\s+words?\b/i);
   if (explicit) return Math.max(50, Math.min(3000, Number(explicit[1])));
+  const decisionDetail =
+    /\b(how|which|what|define|establish|measure|validate|assess|evaluate|determine)\b/i.test(
+      question,
+    ) &&
+    /\b(eligible|eligibility|baselines?|measure|measurement|accountability|accountabilities|tradeoffs?|sourcing|(?:human|privacy|security) boundaries)\b/i.test(
+      question,
+    );
   return wordCount(question) <= 25 &&
+    !decisionDetail &&
     !/\b(compare|comparison|options|discovery|plan|brief|portfolio|detailed)\b/i.test(
       question,
     )
