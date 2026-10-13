@@ -18,9 +18,9 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 3034,
-    "coveredTestFiles": 2869,
-    "pullRequestCoveredTestFiles": 2869,
+    "testFiles": 3047,
+    "coveredTestFiles": 2882,
+    "pullRequestCoveredTestFiles": 2882,
     "uncoveredTestFiles": 165,
     "directoriesWithTests": 528,
     "directoriesFullyCovered": 458,
@@ -346,7 +346,7 @@
       ]
     },
     {
-      "directory": "src/lib/intelligence/synthesis/__tests__",
+      "directory": "src/components/agent-answer/__tests__",
       "testFiles": 5,
       "coveredTestFiles": 4,
       "declaredQuarantineTestFiles": 0,
@@ -356,9 +356,9 @@
       ]
     },
     {
-      "directory": "src/components/agent-answer/__tests__",
-      "testFiles": 4,
-      "coveredTestFiles": 3,
+      "directory": "src/lib/intelligence/synthesis/__tests__",
+      "testFiles": 5,
+      "coveredTestFiles": 4,
       "declaredQuarantineTestFiles": 0,
       "untriagedUnrunTestFiles": 1,
       "via": [
@@ -2733,19 +2733,6 @@
       }
     },
     {
-      "directory": "src/components/agent-answer/__tests__",
-      "testFiles": 4,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 4
-      }
-    },
-    {
       "directory": "src/components/context-broker/__tests__",
       "testFiles": 3,
       "unrunTestFiles": 1,
@@ -2782,6 +2769,19 @@
         "band": "unclassified",
         "signals": [],
         "productSourceCount": 4
+      }
+    },
+    {
+      "directory": "src/components/agent-answer/__tests__",
+      "testFiles": 5,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
+        "productSourceCount": 5
       }
     },
     {

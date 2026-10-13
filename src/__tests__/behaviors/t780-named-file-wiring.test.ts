@@ -266,6 +266,7 @@ describe("T-780 — agent-answer and context-broker wired by named file", () => 
         .toEqual({ path: row.path, olderWired: false, olderOwner: "T-780" });
     }
     expect(newlyAdded).toEqual([
+      "src/components/agent-answer/__tests__/ExecutiveReadingView.test.tsx",
       "src/components/agent-answer/__tests__/ModelAuthoredExhibits.test.tsx",
     ]);
   });

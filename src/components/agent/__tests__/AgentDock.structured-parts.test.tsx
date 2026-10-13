@@ -1,17 +1,28 @@
 /** @jest-environment jsdom */
 
 jest.mock("@/hooks/useAgentStream", () => ({
-  useAgentStream: () => ({ thread: [], send: jest.fn(), isStreaming: false, stop: jest.fn() }),
+  useAgentStream: () => ({
+    thread: [],
+    send: jest.fn(),
+    isStreaming: false,
+    stop: jest.fn(),
+  }),
 }));
 
 jest.mock("@/components/shell/AtlasPageStateProvider", () => ({
   useAtlasPageState: () => null,
 }));
 
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { AgentDock, type ChatMessage } from "../AgentDock";
+import { modelAuthoredAnswerPacket } from "@/lib/intelligence/answer/model-authored-answer";
 
-const AGENT = { initials: "aVa", mark: "ava" as const, name: "aVa", role: "Sourcing advisor" };
+const AGENT = {
+  initials: "aVa",
+  mark: "ava" as const,
+  name: "aVa",
+  role: "Sourcing advisor",
+};
 
 const withParts: ChatMessage = {
   id: "m1",
@@ -44,6 +55,36 @@ function renderDock(thread: ChatMessage[]) {
 }
 
 describe("agent dock · structured parts", () => {
+  it("wires the opt-in reading view without duplicating exhibits or changing the packet", () => {
+    const raw =
+      "Validate the baseline before investment.\n\n" +
+      Array(12)
+        .fill(
+          "The decision requires operational evidence, quality measures and a complete cost baseline.",
+        )
+        .join("\n\n") +
+      "\n\nFull analysis conclusion.";
+    const answer = modelAuthoredAnswerPacket(raw, "Plan discovery", "test", []);
+    renderDock([
+      {
+        id: "compact",
+        role: "agent",
+        body: answer.prose!,
+        agentAnswer: answer,
+        readingWordBudget: 100,
+      },
+    ]);
+    expect(screen.getByTestId("executive-reading-view")).toBeTruthy();
+    expect(screen.queryByTestId("agent-dock-artifacts")).toBeNull();
+    expect(
+      screen.getByTestId("executive-reading-content").textContent,
+    ).not.toContain("Full analysis conclusion");
+    fireEvent.click(screen.getByRole("button", { name: "Read full analysis" }));
+    expect(
+      screen.getByTestId("executive-reading-content").textContent,
+    ).toContain("Full analysis conclusion");
+    expect(answer.modelAuthored?.rawText).toBe(raw);
+  });
   it("renders structured response parts instead of fallback prose", () => {
     renderDock([withParts]);
 
