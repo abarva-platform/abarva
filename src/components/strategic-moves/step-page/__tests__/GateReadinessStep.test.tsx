@@ -62,7 +62,7 @@ describe("stored P0 approval projection", () => {
     ).toBe(false);
     expect(onSubmit).not.toHaveBeenCalled();
   });
-  it.each(["unavailable", "foreign", "not-recorded"])(
+  it.each(["unavailable", "foreign", "foreign-not-recorded"])(
     "refuses a %s readback without offering a second approval",
     (mode) => {
       const { container } = render(
@@ -72,8 +72,8 @@ describe("stored P0 approval projection", () => {
             originationApproval:
               mode === "unavailable"
                 ? { state: "unavailable", moveId: "move-1" }
-                : mode === "not-recorded"
-                  ? { state: "not_recorded", moveId: "move-1" }
+                : mode === "foreign-not-recorded"
+                  ? { state: "not_recorded", moveId: "other-move" }
                   : {
                       state: "recorded",
                       moveId: "other-move",
@@ -91,6 +91,26 @@ describe("stored P0 approval projection", () => {
       expect(container.querySelector("textarea")).toBeNull();
     },
   );
+  it("keeps an absent stored approval explicit without reporting a failed read or offering approval", () => {
+    const onSubmit = jest.fn(async () => undefined);
+    const { container, getByRole } = render(
+      <GateReadinessStep
+        {...props({
+          phaseNum: 0,
+          originationApproval: { state: "not_recorded", moveId: "move-1" },
+          onSubmit,
+        })}
+      />,
+    );
+    expect(container.textContent).toContain("No stored phase gate approval was found.");
+    expect(container.textContent).not.toMatch(/unavailable|could not be read/i);
+    expect(getByRole("link", { name: /Review phase history/ }).getAttribute("href")).toBe(
+      "/strategic-moves/move-1/phase/0?workspace=intelligence",
+    );
+    expect(container.querySelector("textarea")).toBeNull();
+    expect((getByRole("button", { name: "Open P1 Charter" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
 });
 
 const KEYS = [

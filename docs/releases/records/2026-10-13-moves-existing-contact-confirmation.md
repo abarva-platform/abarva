@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -70,6 +70,10 @@ A pre-commit refusal leaves contact pointers unchanged. Any post-commit restorat
 
 Inspect the exact source/local QA receipt, mutation detections with source restored, component/style fixtures, immutable-main census regeneration, own current-head CI, stable all-open fetched guard, actual squash, deployment artifact, independent serving/digest proof and separately reviewed runtime audit/native readback. All public evidence remains mechanism-only.
 
+Source release: [PR #9496](https://github.com/abarva-platform/abarva/pull/9496), squash `de1a71a1103a47d350003ed0995172a3ff78e745`. Complete final exact-head checks passed before the stable fetched contender guard. [Automatic deployment 38341751501](https://github.com/abarva-platform/abarva/actions/runs/38341751501) and independent read-only proof verify the web template, sole healthy latest-ready 100-percent traffic revision and both required workers on the approved pinned image.
+
+The phase sample from [automatic walk 38342985738](https://github.com/abarva-platform/abarva/actions/runs/38342985738) embeds that squash and precedes the successor's template/traffic update. It reaches twenty of twenty-nine views: eighteen pass, seventeen settle within 2500 ms, and three observed timings exceed the limit. Missing historical-approval display and composed gate scrolling lower non-speed dimensions versus the actual baseline. The later deck interval crosses a successor rollout and remains separately qualified. These samples do not prove a causal speed effect from contact confirmation or a runtime contact write.
+
 ## Known Gaps
 
-This candidate is unpublished. No live contact appointment, new phase progression or independent human/client attestation is proven. Full 29-view speed and non-speed acceptance, readiness adoption, intake reload and independent deck acceptance remain separate open requirements. Existing protected-fixture approval-display and scrolling failures are outside this narrowly reviewed candidate.
+The source is merged and its deployment is verified. No live contact appointment, new phase progression or independent human/client attestation is proven by those artifacts. Full 29-view speed and non-speed acceptance, readiness adoption, intake reload and independent deck acceptance remain separate open requirements. The observed historical-approval display and composed-page scrolling failures remain outside this contact transaction release.
