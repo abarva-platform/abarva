@@ -72,6 +72,48 @@ function makeRequest(body: unknown): NextRequest {
   } as unknown as NextRequest;
 }
 
+it("rejects unbounded history and raw prior assistant answers before generation", async () => {
+  const response = await POST(
+    makeRequest({
+      tenantKey: "meridian-health",
+      question: "Why?",
+      expectedRecordSource: liveRecordSource(),
+      conversation: [
+        {
+          question: "Data analytics",
+          citedClaimTags: [],
+          answer: "Unverified text",
+        },
+      ],
+    }),
+  );
+  expect(response.status).toBe(400);
+  expect(await response.json()).toEqual({ error: "invalid_conversation" });
+  expect(mockedAnswerHomeAvaQuestion).not.toHaveBeenCalled();
+});
+
+it("passes bounded conversation and returns three follow-ups with the same source marker", async () => {
+  const conversation = [
+    { question: "Data analytics", citedClaimTags: ["TD-K1"] },
+  ];
+  const response = await POST(
+    makeRequest({
+      tenantKey: "meridian-health",
+      question: "What should the CFO prioritize?",
+      expectedRecordSource: liveRecordSource(),
+      conversation,
+    }),
+  );
+  const json = await response.json();
+  expect(response.status).toBe(200);
+  expect(mockedAnswerHomeAvaQuestion).toHaveBeenCalledWith(
+    expect.objectContaining({ conversation }),
+  );
+  expect(json.followUpQuestions).toHaveLength(3);
+  expect(json.answer.prose).toContain("**Bottom line**");
+  expect(json.recordSource).toEqual(liveRecordSource());
+});
+
 function rows(count: number) {
   return Array.from({ length: count }, (_, index) => ({ id: `row-${index}` }));
 }
@@ -223,7 +265,9 @@ it("keeps the reviewed fallback visible to the API caller", async () => {
     kind: "reviewed_snapshot_fallback",
     canonicalSnapshotHash: "reviewed:snapshot:hash",
   });
-  expect(mockedAnswerHomeAvaQuestion.mock.calls[0][0].recordSource).toEqual(json.recordSource);
+  expect(mockedAnswerHomeAvaQuestion.mock.calls[0][0].recordSource).toEqual(
+    json.recordSource,
+  );
 });
 
 it("uses the reviewed bundle when the page selected the legacy provider", async () => {

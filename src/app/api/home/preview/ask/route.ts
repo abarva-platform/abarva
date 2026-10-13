@@ -7,6 +7,12 @@ import { isHomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
 import { resolveHomeRecord } from "@/lib/home/preview/resolve-home-record";
 import { homeRecordSourceToken } from "@/lib/home/preview/record-source-token";
 import type { HomeRecordRenderSource } from "@/lib/home/preview/types";
+import {
+  formatHomeAdvisorAnswer,
+  homeConversationSchema,
+  homeFollowUpQuestions,
+  type HomeConversationTurn,
+} from "@/lib/home/preview/conversation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,6 +24,7 @@ interface AskBody {
   activeChapterId?: string;
   requestedProvider?: string;
   expectedRecordSource?: HomeRecordRenderSource;
+  conversation?: HomeConversationTurn[];
 }
 
 /** Ask aVa, scoped to the Home preview surface: answers are grounded in the same served bundle
@@ -46,6 +53,15 @@ export async function POST(req: NextRequest) {
   }
   if (!question) {
     return NextResponse.json({ error: "question_required" }, { status: 400 });
+  }
+  const conversation = homeConversationSchema.safeParse(
+    body.conversation ?? [],
+  );
+  if (!conversation.success) {
+    return NextResponse.json(
+      { error: "invalid_conversation" },
+      { status: 400 },
+    );
   }
   if (
     !body.expectedRecordSource ||
@@ -86,7 +102,12 @@ export async function POST(req: NextRequest) {
     question,
     activeChapterId: body.activeChapterId,
     recordSource,
+    conversation: conversation.data,
   });
 
-  return NextResponse.json({ answer, recordSource });
+  return NextResponse.json({
+    answer: formatHomeAdvisorAnswer(answer, recordSource),
+    followUpQuestions: homeFollowUpQuestions(answer),
+    recordSource,
+  });
 }
