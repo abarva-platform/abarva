@@ -5,6 +5,9 @@
 // citation numbers are assigned and internal_only evidence is excluded for vendor-facing
 // audiences. The retriever is injectable so the mapping is unit-tested without Azure.
 
+import { admitMoveSources, moveSourceRevision, storedTimestamp, reviewedEvidenceAdmissionSource, MOVE_ADMISSION_ARTIFACT_COLUMNS, MOVE_ADMISSION_EVIDENCE_COLUMNS, MOVE_ADMISSION_REVIEW_COLUMNS, type MoveAdmissionSource, type MoveAdmissionDiagnostic } from "@/lib/programs/move-agent-admission";
+import { canonicalTenantKey } from "@/lib/tenant/aliases";
+import { moveEvidenceReadTenantKeys } from "@/lib/programs/evidence-readiness/tenant-read-scope";
 import { captureValueText } from "@/lib/programs/structured-capture-text";
 import "server-only";
 
@@ -33,8 +36,12 @@ import { DELIVERABLE_REGISTRY } from "@/lib/programs/deliverable-registry";
 import { PROGRAM_MODULE_EVIDENCE_COLUMNS } from "./program-module-evidence-columns";
 import { estimateCaptureStatement } from "./estimate-capture-evidence";
 
+type MoveCandidate = GovernedCandidateLike & { admissionSource?: MoveAdmissionSource | null };
+
 export interface AssembleEvidenceParams {
   tenantClientKey: string;
+  /** Mandatory on the native Move generation path. */
+  requireMoveAdmission?: boolean;
   clientId?: string;
   sourceArtifactRef?: string;
   /** Move phase whose evidence is allowed to inform this generation. */
@@ -52,6 +59,7 @@ export interface AssembledEvidence {
   sourceRegister: SourceRegisterEntry[];
   retrievedCount: number;
   coverage: ContextCoverage;
+  admission?: MoveAdmissionDiagnostic[];
 }
 
 type QueryFn = typeof defaultQueryTenantContext;
@@ -476,11 +484,11 @@ function generatedArtifactToCandidate(
 async function loadMoveCurrentStateCandidates(
   params: Pick<
     AssembleEvidenceParams,
-    "tenantClientKey" | "clientId" | "sourceArtifactRef" | "phase"
+    "tenantClientKey" | "clientId" | "sourceArtifactRef" | "phase" | "requireMoveAdmission"
   >,
   db: FluentDb = getAzureWriteFluentClient(),
 ): Promise<{
-  candidates: GovernedCandidateLike[];
+  candidates: MoveCandidate[];
   approvedAvailable: number;
   unreadable: number;
 }> {
@@ -489,7 +497,22 @@ async function loadMoveCurrentStateCandidates(
   if (!clientId || !moveId)
     return { candidates: [], approvedAvailable: 0, unreadable: 0 };
 
-  const candidates: GovernedCandidateLike[] = [];
+  const candidates: MoveCandidate[] = [];
+  const strict = params.requireMoveAdmission === true;
+  const clientKey = canonicalTenantKey(params.tenantClientKey);
+  const tenantKeys = moveEvidenceReadTenantKeys(params.tenantClientKey);
+  if (strict) {
+    if (!clientKey || params.phase === undefined || !Number.isInteger(params.phase) || params.phase < 0 || params.phase > 5) return { candidates: [], approvedAvailable: 0, unreadable: 1 };
+    try {
+      const { data, error } = await db.from("engagements").select("id, client_id").eq("id", moveId).eq("client_id", clientId).limit(2);
+      if (error || !Array.isArray(data) || data.length !== 1 || data[0].id !== moveId || data[0].client_id !== clientId) return { candidates: [], approvedAvailable: 0, unreadable: 1 };
+    } catch { return { candidates: [], approvedAvailable: 0, unreadable: 1 }; }
+  }
+  const sourceForRow = (table: string, row: Record<string, unknown>, phase: number | null, layer: MoveAdmissionSource["sourceLayer"], revision: unknown = row): MoveAdmissionSource | null => {
+    const id = stringOrNull(row.id);
+    if (!clientKey || !id || phase === null) return null;
+    return { objectTable: table, objectId: id, clientKey, tenantId: clientId, sourceLayer: layer, sourceFile: `${table}:${id}`, changedAt: [row.freshness_at, row.rendered_at, row.completed_at, row.started_at, row.created_at].map(storedTimestamp).filter((value): value is string => value !== null).sort().at(-1) ?? null, binding: { version: 1, move_id: moveId, phase, source_revision_sha256: moveSourceRevision(revision) }, citations: [id] };
+  };
   let approvedAvailable = 0;
   let unreadable = 0;
 
@@ -500,7 +523,7 @@ async function loadMoveCurrentStateCandidates(
   try {
     let moduleQuery = db
       .from("program_modules")
-      .select(PROGRAM_MODULE_EVIDENCE_COLUMNS.join(", "))
+      .select((strict ? [...PROGRAM_MODULE_EVIDENCE_COLUMNS, "engagement_id"] : PROGRAM_MODULE_EVIDENCE_COLUMNS).join(", "))
       .eq("engagement_id", moveId);
     if (params.phase !== undefined) {
       moduleQuery = moduleQuery.lte("phase_number", params.phase);
@@ -530,7 +553,9 @@ async function loadMoveCurrentStateCandidates(
         if (status !== "completed" && status !== "in_progress") continue;
         const moduleKey = stringOrNull(row.module_key);
         if (!moduleKey?.startsWith("phase_")) continue;
-        candidates.push(...phaseCaptureCandidates(row));
+        if (strict && row.engagement_id !== moveId) continue;
+        const admissionSource = sourceForRow("program_modules", row, Number.isInteger(row.phase_number) ? Number(row.phase_number) : null, "move");
+        candidates.push(...phaseCaptureCandidates(row).map(candidate => ({ ...candidate, ...(strict ? { admissionSource } : {}) })));
       }
     }
   } catch (err) {
@@ -549,7 +574,7 @@ async function loadMoveCurrentStateCandidates(
     const { data } = await db
       .from("evidence_ledger")
       .select(
-        "id, artifact_ref, claim_text, source_ref, freshness_at, confidence",
+        strict ? "id, client_id, surface, artifact_ref, claim_text, source_ref, freshness_at, confidence, created_at" : "id, artifact_ref, claim_text, source_ref, freshness_at, confidence",
       )
       .eq("client_id", clientId)
       .eq("surface", "moves")
@@ -558,6 +583,7 @@ async function loadMoveCurrentStateCandidates(
     if (Array.isArray(data)) {
       for (const row of data as Array<Record<string, unknown>>) {
         const sourceRef = sourceRefObject(row.source_ref);
+        if (strict && (row.client_id !== clientId || row.surface !== "moves")) continue;
         if (stringOrNull(sourceRef.moveId) !== moveId) continue;
         if (
           params.phase !== undefined &&
@@ -570,6 +596,7 @@ async function loadMoveCurrentStateCandidates(
           stringOrNull(sourceRef.family) ?? "current_state_evidence";
         const fileRef = stringOrNull(sourceRef.fileRef);
         candidates.push({
+          ...(strict ? { admissionSource: sourceForRow("evidence_ledger", row, Number.isInteger(sourceRef.phase) ? Number(sourceRef.phase) : null, "tenant_context") } : {}),
           label: fileRef ?? family,
           statement,
           evidenceFamily: family,
@@ -590,11 +617,10 @@ async function loadMoveCurrentStateCandidates(
   try {
     let reviewSummaryQuery = db
       .from("program_evidence_reviews")
-      .select("decision, source_ref, phase")
-      .eq("tenant_key", params.tenantClientKey)
-      .eq("program_id", moveId);
+      .select("decision, source_ref, phase");
+    reviewSummaryQuery = (strict ? reviewSummaryQuery.in("tenant_key", tenantKeys) : reviewSummaryQuery.eq("tenant_key", params.tenantClientKey)).eq("program_id", moveId);
     if (params.phase !== undefined) {
-      reviewSummaryQuery = reviewSummaryQuery.lte("phase", params.phase);
+      reviewSummaryQuery = strict ? reviewSummaryQuery.eq("phase", params.phase) : reviewSummaryQuery.lte("phase", params.phase);
     }
     const { data: reviewSummary } =
       await reviewSummaryQuery.limit(MOVE_REVIEW_LIMIT);
@@ -630,20 +656,19 @@ async function loadMoveCurrentStateCandidates(
     let reviewsQuery = db
       .from("program_evidence_reviews")
       .select(
-        "evidence_id, family_key, source_ref, reviewed_at, decision, phase",
+        strict ? MOVE_ADMISSION_REVIEW_COLUMNS.join(", ") : "evidence_id, family_key, source_ref, reviewed_at, decision, phase",
       )
-      .eq("tenant_key", params.tenantClientKey)
-      .eq("program_id", moveId)
-      .eq("decision", "approved");
+      ;
+    reviewsQuery = (strict ? reviewsQuery.in("tenant_key", tenantKeys) : reviewsQuery.eq("tenant_key", params.tenantClientKey)).eq("program_id", moveId).eq("decision", "approved");
     if (params.phase !== undefined) {
-      reviewsQuery = reviewsQuery.lte("phase", params.phase);
+      reviewsQuery = strict ? reviewsQuery.eq("phase", params.phase) : reviewsQuery.lte("phase", params.phase);
     }
     const { data: reviews } = await reviewsQuery.limit(MOVE_REVIEW_LIMIT);
     if (Array.isArray(reviews) && reviews.length > 0) {
       const reviewRows = (reviews as Array<Record<string, unknown>>).filter(
         (review) =>
           params.phase === undefined ||
-          isAtOrBeforePhase(review.phase, params.phase),
+          (strict ? review.phase === params.phase : isAtOrBeforePhase(review.phase, params.phase)),
       );
       if (approvedAvailable === 0) approvedAvailable = reviewRows.length;
       const evidenceIds = reviewRows
@@ -653,13 +678,12 @@ async function loadMoveCurrentStateCandidates(
         let evidenceQuery = db
           .from("program_evidence_items")
           .select(
-            "id, title, summary, extracted_text, extracted_structured, evidence_type, confidence, created_at, phase",
+            strict ? MOVE_ADMISSION_EVIDENCE_COLUMNS.join(", ") : "id, title, summary, extracted_text, extracted_structured, evidence_type, confidence, created_at, phase",
           )
-          .eq("tenant_key", params.tenantClientKey)
-          .eq("program_id", moveId)
-          .in("id", evidenceIds);
+          ;
+        evidenceQuery = (strict ? evidenceQuery.in("tenant_key", tenantKeys) : evidenceQuery.eq("tenant_key", params.tenantClientKey)).eq("program_id", moveId).in("id", evidenceIds);
         if (params.phase !== undefined) {
-          evidenceQuery = evidenceQuery.lte("phase", params.phase);
+          evidenceQuery = strict ? evidenceQuery.eq("phase", params.phase) : evidenceQuery.lte("phase", params.phase);
         }
         const { data: evidenceRows } = await evidenceQuery;
         const byId = new Map(
@@ -668,11 +692,19 @@ async function loadMoveCurrentStateCandidates(
             row as Record<string, unknown>,
           ]),
         );
+        const sourceArtifacts = new Map<string, Record<string, unknown>>();
+        if (strict) {
+          const ids = [...new Set(reviewRows.flatMap(review => { const id = stringOrNull(sourceRefObject(review.source_ref).move_artifact_id); return id ? [id] : []; }))];
+          if (ids.length) {
+            const { data, error } = await db.from("move_artifacts").select(MOVE_ADMISSION_ARTIFACT_COLUMNS.join(", ")).eq("tenant_id", clientId).in("tenant_key", tenantKeys).eq("move_id", moveId).in("artifact_id", ids).limit(MOVE_REVIEW_LIMIT);
+            if (!error && Array.isArray(data)) for (const artifact of data) sourceArtifacts.set(String(artifact.artifact_id), artifact);
+          }
+        }
         for (const review of reviewRows) {
           const evidenceId = stringOrNull(review.evidence_id);
           if (!evidenceId) continue;
           const row = byId.get(evidenceId);
-          if (!row) continue;
+          if (!row || (strict && row.phase !== params.phase)) continue;
           if (
             stringOrNull(row.evidence_type) === "move_context_extract_attached"
           )
@@ -702,7 +734,9 @@ async function loadMoveCurrentStateCandidates(
             title,
             asOf: stringOrNull(review.reviewed_at),
           });
-          if (candidate) candidates.push(candidate);
+          const artifact = sourceArtifacts.get(String(sourceRef.move_artifact_id));
+          const admissionSource = strict && artifact ? reviewedEvidenceAdmissionSource({ clientKey: params.tenantClientKey, tenantId: clientId, moveId, evidence: row, review, artifact }) : null;
+          if (candidate) candidates.push({ ...candidate, ...(strict ? { admissionSource } : {}) });
         }
       }
     }
@@ -765,7 +799,7 @@ async function loadMoveCurrentStateCandidates(
     const { data: artifacts, error: artifactsError } = await db
       .from("generated_artifacts")
       .select(
-        "id, quality_score, rendered_at, source_artifact_ref, superseded_by, quarantine_reason, metadata",
+        strict ? "id, client_id, quality_score, rendered_at, source_artifact_ref, superseded_by, quarantine_reason, metadata" : "id, quality_score, rendered_at, source_artifact_ref, superseded_by, quarantine_reason, metadata",
       )
       .eq("client_id", clientId)
       .eq("source_artifact_ref", moveId)
@@ -783,7 +817,12 @@ async function loadMoveCurrentStateCandidates(
         )
           continue;
         const candidate = generatedArtifactToCandidate(row);
-        if (candidate) candidates.push(candidate);
+        if (strict && (row.client_id !== clientId || row.source_artifact_ref !== moveId || row.quarantine_reason != null)) continue;
+        const typeKey = stringOrNull(sourceRefObject(row.metadata).deliverableTypeKey);
+        const sourcePhase = DELIVERABLE_REGISTRY.find(spec => spec.deliverableTypeKey === typeKey)?.phase ?? null;
+        const approvedVersions = (versions as Array<Record<string, unknown>>).filter(version => sourceRefObject(version.structured_data).generated_artifact_id === row.id && deliverableRows.some(deliverable => deliverable.id === version.deliverable_id && deliverable.signed_off_version === version.version));
+        const admissionSource = sourceForRow("generated_artifacts", row, sourcePhase, "artifact", { artifact: row, approvedVersions, approvals: deliverableRows.filter(deliverable => approvedVersions.some(version => version.deliverable_id === deliverable.id)) });
+        if (candidate) candidates.push({ ...candidate, ...(strict ? { admissionSource } : {}) });
       }
     }
   } catch {
@@ -875,7 +914,9 @@ export async function assembleGovernedEvidence(
   const moveContext = await loadMoveCurrentStateCandidates(params, deps.db);
   const moveCandidates = moveContext.candidates;
   const tenantCandidates = chunks.map(chunkToCandidate);
-  const candidates = [...moveCandidates, ...tenantCandidates];
+  const rawCandidates: MoveCandidate[] = [...moveCandidates, ...tenantCandidates];
+  const admission = params.requireMoveAdmission ? await admitMoveSources(rawCandidates, candidate => candidate.admissionSource, { clientKey: params.tenantClientKey, tenantId: params.clientId ?? "", moveId: params.sourceArtifactRef ?? "", phase: params.phase ?? -1 }) : null;
+  const candidates = admission ? admission.items : rawCandidates;
   const { evidence, register } = buildSourceRegister(candidates, {
     audienceIsVendorFacing: params.audienceIsVendorFacing,
   });
@@ -888,6 +929,7 @@ export async function assembleGovernedEvidence(
     packedCitations.has(entry.citationNumber),
   );
   return {
+    ...(admission ? { admission: admission.diagnostics } : {}),
     evidence: packed.packed,
     sourceRegister: packedRegister,
     retrievedCount: candidates.length,

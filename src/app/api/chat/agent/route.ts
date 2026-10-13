@@ -300,8 +300,8 @@ import {
 import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 import {
   formatProgramEvidenceForPrompt,
-  listProgramEvidenceForPrompt,
 } from "@/lib/programs/evidence-context";
+import { loadProgramEvidenceForAgent } from "@/lib/programs/evidence-agent-context";
 import {
   clientKeyToBrokerTenantKey,
   clientKeyToInventorySubstrateKey,
@@ -709,6 +709,7 @@ export async function POST(request: Request) {
   // Resolved alongside programData below; rendered into the system
   // prompt for program-detail surfaces. Null when no pack authored yet.
   let phasePackBlock = "";
+  let programEvidencePhase: number | null = null;
 
   // Moves aVa chat hardening (flag-gated, default off): grounds Nexus in a
   // deterministic MovesAvaChatPacket built from real Move state instead of a
@@ -767,6 +768,7 @@ export async function POST(request: Request) {
           stage,
         );
         const promptPhase = viewedPhase ?? currentPhase;
+        programEvidencePhase = promptPhase;
         const currentPhaseLabel =
           PHASE_LABEL_MAP[currentPhase as keyof typeof PHASE_LABEL_MAP] ??
           "Unknown";
@@ -935,19 +937,21 @@ export async function POST(request: Request) {
             const mode = movesAvaMode ?? "phase_guidance";
             let approvedEvidenceUnavailable = false;
             let approvedEvidenceItems: Awaited<
-              ReturnType<typeof listProgramEvidenceForPrompt>
-            > = [];
+              ReturnType<typeof loadProgramEvidenceForAgent>
+            >["items"] = [];
             let approvedEvidenceTotal = 0;
             if (
               mode === "evidence_summary" ||
               (mode === "phase_input_draft" && promptPhase > 1)
             ) {
               try {
-                const loadedEvidenceItems = await listProgramEvidenceForPrompt(
+                const evidenceContext = await loadProgramEvidenceForAgent(
                   tenancy,
                   programId,
                   promptPhase,
                 );
+                const loadedEvidenceItems = evidenceContext.items;
+                approvedEvidenceUnavailable = evidenceContext.unavailable;
                 approvedEvidenceTotal = loadedEvidenceItems.length;
                 approvedEvidenceItems = loadedEvidenceItems.slice(0, 8);
               } catch {
@@ -1337,8 +1341,8 @@ export async function POST(request: Request) {
 
   const programEvidenceLedgerBlock =
     programId && tenancy
-      ? await listProgramEvidenceForPrompt(tenancy, programId)
-          .then(formatProgramEvidenceForPrompt)
+      ? await loadProgramEvidenceForAgent(tenancy, programId, programEvidencePhase)
+          .then(({ items }) => formatProgramEvidenceForPrompt(items))
           .catch(() => "")
       : "";
   const requestedMode = readClientSuppliedMode(surfaceContext);
@@ -2437,6 +2441,7 @@ export async function POST(request: Request) {
     // / response guidelines. Empty string off Programs surfaces or when
     // no attachments are in flight.
     programEvidenceLedgerBlock,
+    "MODEL EVIDENCE RULE: This ledger contains only admitted evidence for the viewed phase. Missing evidence here does not mean no files were uploaded or approved. Do not infer zero uploads or approvals; request evidence-readiness validation when source support is unavailable.",
     "",
     // OV2-4c · in-turn attachment context. This covers attachments
     // passed on the current chat turn; the evidence ledger above covers
