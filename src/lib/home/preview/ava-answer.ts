@@ -1019,28 +1019,8 @@ export async function answerHomeAvaQuestion(args: {
       "home-preview-ava-answer",
     );
 
-    if (!parsed) {
-      const recovered = shouldRecoverFromRelevantClaims(question)
-        ? buildClaimBackedRecoveryAnswer({
-            context,
-            tenantKey: args.tenantKey,
-            question,
-            modelCaveats: [
-              "The advisor model returned an unparseable response, so this answer uses cited Home claims only.",
-            ],
-          })
-        : null;
-      if (recovered) return recovered;
-      return buildFallbackPacket(
-        args.tenantKey,
-        question,
-        "no_data",
-        "I couldn't produce a grounded answer to that just now -- try rephrasing the question.",
-        [],
-      );
-    }
-
-    if (needsCompactAnswerRepair(parsed, question, context)) {
+    if (!parsed || needsCompactAnswerRepair(parsed, question, context)) {
+      const original = parsed;
       const repairMessage = `${userMessage}\n\nAnswer correction: use at most four key_points by default, each with a bold business label, one complete sentence, 15-25 words and never more than 30. Respect the requested bullet count. For synthetic_reference=true, explicitly qualify leadership assertions as modelled responses; concern counts are not a measure of how many leaders trust data. All claim tags belong only in cited_claim_tags. Preserve qualifications; do not invent a causal connection. Return the complete JSON schema.`;
       const remainingMs = TIMEOUT_MS - (Date.now() - startedAt);
       if (remainingMs > 3_000) {
@@ -1085,18 +1065,20 @@ export async function answerHomeAvaQuestion(args: {
               parsed = {
                 ...repaired,
                 status:
-                  parsed.status === "partial" ? "partial" : repaired.status,
+                  original?.status === "partial" ? "partial" : repaired.status,
                 cited_claim_tags: Array.from(
                   new Set([
-                    ...(Array.isArray(parsed.cited_claim_tags)
-                      ? parsed.cited_claim_tags
+                    ...(Array.isArray(original?.cited_claim_tags)
+                      ? original.cited_claim_tags
                       : []),
                     ...repaired.cited_claim_tags,
                   ]),
                 ),
                 caveats: Array.from(
                   new Set([
-                    ...(Array.isArray(parsed.caveats) ? parsed.caveats : []),
+                    ...(Array.isArray(original?.caveats)
+                      ? original.caveats
+                      : []),
                     ...(Array.isArray(repaired.caveats)
                       ? repaired.caveats
                       : []),
@@ -1109,7 +1091,7 @@ export async function answerHomeAvaQuestion(args: {
           // Keep the original admitted citations when a presentation repair fails.
         }
       }
-      if (needsCompactAnswerRepair(parsed, question, context)) {
+      if (parsed && needsCompactAnswerRepair(parsed, question, context)) {
         const packet = packageModelResponse(
           parsed,
           context,
@@ -1145,6 +1127,27 @@ export async function answerHomeAvaQuestion(args: {
           },
         };
       }
+    }
+
+    if (!parsed) {
+      const recovered = shouldRecoverFromRelevantClaims(question)
+        ? buildClaimBackedRecoveryAnswer({
+            context,
+            tenantKey: args.tenantKey,
+            question,
+            modelCaveats: [
+              "The advisor model returned an unparseable response, so this answer uses cited Home claims only.",
+            ],
+          })
+        : null;
+      if (recovered) return recovered;
+      return buildFallbackPacket(
+        args.tenantKey,
+        question,
+        "no_data",
+        "I couldn't produce a grounded answer to that just now -- try rephrasing the question.",
+        [],
+      );
     }
 
     return packageModelResponse(parsed, context, args.tenantKey, question);
