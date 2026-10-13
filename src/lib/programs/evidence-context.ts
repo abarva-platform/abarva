@@ -7,6 +7,7 @@ import {
   reviewedExtractionFromStoredSourceRef,
   toStoredReviewedStructured,
 } from "./evidence-review-contract";
+import { MOVE_ADMISSION_ARTIFACT_COLUMNS, MOVE_ADMISSION_EVIDENCE_COLUMNS, MOVE_ADMISSION_REVIEW_COLUMNS, reviewedEvidenceAdmissionSource, storedTimestamp, type MoveAdmissionSource } from "./move-agent-admission";
 import { moveEvidenceReadTenantKeys } from "./evidence-readiness/tenant-read-scope";
 
 export interface ProgramEvidenceCitation {
@@ -30,6 +31,8 @@ export interface ProgramEvidencePromptItem {
   assumptions: string[];
   openQuestions: string[];
   citations: ProgramEvidenceCitation[];
+  /** Internal admission proof locator; never rendered as model prose. */
+  admissionSource?: MoveAdmissionSource | null;
 }
 
 function asString(value: unknown): string | null {
@@ -125,6 +128,7 @@ export async function listProgramEvidenceForPrompt(
    * browser) — never for a generation call.
    */
   phase?: number,
+  options: { modelAdmission?: boolean } = {},
 ): Promise<ProgramEvidencePromptItem[]> {
   if (!programId || !(await canReadProgram(ctx, programId))) return [];
 
@@ -141,7 +145,7 @@ export async function listProgramEvidenceForPrompt(
   if (tenantKeys.length === 0) return [];
   const reviewRows = await azureRead.select<Record<string, unknown>>({
     table: "program_evidence_reviews",
-    columns: ["evidence_id", "reviewed_at", "updated_at", "source_ref"],
+    columns: options.modelAdmission ? [...MOVE_ADMISSION_REVIEW_COLUMNS] : ["evidence_id", "reviewed_at", "updated_at", "source_ref"],
     where: {
       tenant_key: { op: "in", value: tenantKeys },
       program_id: programId,
@@ -152,14 +156,15 @@ export async function listProgramEvidenceForPrompt(
   });
   const approvedReviewByEvidenceId = new Map<
     string,
-    { approvedAt: string | null; sourceRef: unknown }
+    { approvedAt: string | null; sourceRef: unknown; row: Record<string, unknown> }
   >();
   for (const row of reviewRows) {
     const evidenceId = asString(row.evidence_id);
-    if (!evidenceId) continue;
+    if (!evidenceId || approvedReviewByEvidenceId.has(evidenceId)) continue;
     approvedReviewByEvidenceId.set(evidenceId, {
-      approvedAt: asString(row.reviewed_at) ?? asString(row.updated_at),
+      approvedAt: storedTimestamp(row.reviewed_at) ?? storedTimestamp(row.updated_at),
       sourceRef: row.source_ref,
+      row,
     });
   }
   const approvedEvidenceIds = Array.from(approvedReviewByEvidenceId.keys());
@@ -167,7 +172,7 @@ export async function listProgramEvidenceForPrompt(
 
   const rows = await azureRead.select<Record<string, unknown>>({
     table: "program_evidence_items",
-    columns: [
+    columns: options.modelAdmission ? [...MOVE_ADMISSION_EVIDENCE_COLUMNS] : [
       "id",
       "title",
       "evidence_type",
@@ -186,13 +191,30 @@ export async function listProgramEvidenceForPrompt(
     orderBy: { column: "created_at", direction: "desc" },
     limit: EVIDENCE_QUERY_SAFETY_CEILING,
   });
+  const artifacts = new Map<string, Record<string, unknown>>();
+  if (options.modelAdmission) {
+    const artifactIds = [...new Set([...approvedReviewByEvidenceId.values()].flatMap(review => {
+      const ref = review.sourceRef && typeof review.sourceRef === "object" ? review.sourceRef as Record<string, unknown> : {};
+      const id = asString(ref.move_artifact_id); return id ? [id] : [];
+    }))];
+    if (artifactIds.length) {
+      const stored = await azureRead.select<Record<string, unknown>>({
+        table: "move_artifacts", columns: [...MOVE_ADMISSION_ARTIFACT_COLUMNS],
+        where: { tenant_id: ctx.clientId, tenant_key: { op: "in", value: tenantKeys }, move_id: programId, artifact_id: { op: "in", value: artifactIds } }, limit: EVIDENCE_QUERY_SAFETY_CEILING,
+      });
+      for (const artifact of stored) artifacts.set(String(artifact.artifact_id), artifact);
+    }
+  }
   return rows.map((row) => {
     const review = approvedReviewByEvidenceId.get(String(row.id));
     const reviewed = reviewedExtractionFromStoredSourceRef(review?.sourceRef);
     const structured = reviewed
       ? toStoredReviewedStructured(reviewed, row.extracted_structured)
       : row.extracted_structured;
+    const ref = review?.sourceRef && typeof review.sourceRef === "object" ? review.sourceRef as Record<string, unknown> : {};
+    const artifact = artifacts.get(String(ref.move_artifact_id));
     return {
+      ...(options.modelAdmission ? { admissionSource: review && artifact ? reviewedEvidenceAdmissionSource({ clientKey: ctx.clientKey ?? "", tenantId: ctx.clientId, moveId: programId, evidence: row, review: review.row, artifact }) : null } : {}),
       id: String(row.id),
       title: asString(row.title) ?? "Untitled evidence",
       evidenceType: asString(row.evidence_type) ?? "evidence",
@@ -201,7 +223,7 @@ export async function listProgramEvidenceForPrompt(
       parseMethod: readParseMethod(structured),
       structuredSignals: readStructuredSignals(structured),
       extractedText: reviewed ? null : asString(row.extracted_text),
-      createdAt: asString(row.created_at) ?? "",
+      createdAt: storedTimestamp(row.created_at) ?? "",
       approvedAt: review?.approvedAt ?? null,
       observations: readObservations(structured),
       assumptions: readFlexibleField(structured, "assumptions"),

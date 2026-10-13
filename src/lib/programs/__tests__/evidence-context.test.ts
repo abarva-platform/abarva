@@ -150,6 +150,20 @@ describe("program evidence context prompt block", () => {
     );
   });
 
+  it("returns the declared source binding for a model read using current PG review timestamps", async () => {
+    const key = TENANT_SCOPE[0];
+    const at = new Date("2026-10-12T10:00:00.000Z");
+    const review = { id: "review-1", evidence_id: "evidence-1", tenant_key: key, program_id: "program-1", phase: 2, decision: "approved", reviewed_at: at, updated_at: at, source_ref: { move_artifact_id: "artifact-1", reviewed_extraction: { version: 1, summary: "Reviewed summary", structured: { decisions: [], risks: [], baselineCandidates: [], actionItems: [], observations: [], assumptions: [], openQuestions: [], citations: [{ quote: "Source statement", locator: "page 2" }] } } } };
+    const evidence = { id: "evidence-1", tenant_key: key, program_id: "program-1", phase: 2, evidence_type: "document", created_at: at, extracted_text: "Raw unreviewed text", extracted_structured: {} };
+    const artifact = { artifact_id: "artifact-1", tenant_id: CTX.clientId, tenant_key: key, move_id: "program-1", phase: 2, version: 1, blob_sha256: "a".repeat(64), blob_path: "private/source-v1.pdf", lifecycle_state: "current", metadata: { sha256: "a".repeat(64), storage: "azure_blob" }, updated_at: at };
+    mockAzureSelect.mockResolvedValueOnce([review]).mockResolvedValueOnce([evidence]).mockResolvedValueOnce([artifact]);
+    const items = await listProgramEvidenceForPrompt(CTX, "program-1", 2, { modelAdmission: true });
+    expect(items[0].admissionSource).toMatchObject({ objectTable: "program_evidence_items", objectId: "evidence-1", sourceFile: artifact.blob_path, binding: { review_id: review.id, source_artifact_id: artifact.artifact_id, source_artifact_version: 1, source_blob_sha256: artifact.blob_sha256 } });
+    expect(items[0].approvedAt).toBe(at.toISOString());
+    expect(items[0].extractedText).toBeNull();
+    expect(mockAzureSelect).toHaveBeenNthCalledWith(3, expect.objectContaining({ table: "move_artifacts", where: expect.objectContaining({ tenant_id: CTX.clientId, move_id: "program-1" }) }));
+  });
+
   it("scopes the program_evidence_items query to a specific phase when provided", async () => {
     mockAzureSelect
       .mockResolvedValueOnce([

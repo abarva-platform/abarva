@@ -20,13 +20,16 @@ import type { DeliverableArtifactBrief } from "../types";
 import type { TenantContextChunk } from "@/lib/azure-search/tenant-context-retriever";
 import type { DeliverablePlan } from "@/lib/deliverables/planning/deliverable-plan";
 import { p5Hash } from "@/lib/data-plane/write-adapters/p5OutcomeHandoffAdapter";
+let mockResearchFlagOverride: boolean | undefined;
 let mockP5FlagOverride: boolean | string | undefined;
 jest.mock("@/lib/features/is-feature-enabled", () => {
   const actual = jest.requireActual("@/lib/features/is-feature-enabled");
   return {
     ...actual,
     isFeatureEnabled: (ctx: unknown, key: string) =>
-      mockP5FlagOverride === undefined
+      key === "moves_public_source_research" && mockResearchFlagOverride !== undefined
+        ? mockResearchFlagOverride
+        : mockP5FlagOverride === undefined
         ? actual.isFeatureEnabled(ctx, key)
         : key === "moves_p5_tower_handoff_v1"
           ? mockP5FlagOverride
@@ -1670,7 +1673,59 @@ describe("runDeliverableForTenant", () => {
     expect(assembledParams).toMatchObject({
       sourceArtifactRef: "evt-1",
       phase: 3,
+      requireMoveAdmission: true,
     });
+  });
+
+  it.each(["charter", "target_state_architecture", "solution_design"])("blocks %s before research, planning, architecture, document model or persistence when admission is unavailable", async deliverableType => {
+    mockP5FlagOverride = false;
+    mockResearchFlagOverride = true;
+    const generate = jest.fn();
+    const persist = jest.fn();
+    const research = jest.fn();
+    const generatePlan = jest.fn();
+    const generateArchitecture = jest.fn();
+    const assemble = jest.fn(async () => ({ evidence: [], sourceRegister: [], retrievedCount: 0, admission: [{ objectTable: "program_evidence_items", objectId: "source-1", state: "unbound" as const }], coverage: { approvedAvailable: 1, retrieved: 0, packed: 0, droppedForBudget: 0, unreadable: 0, cited: 0, coverageRatio: 0, coverageState: "empty" as never, requiresAttention: true, usedTokens: 0, evidenceTokenBudget: 1000 } }));
+    try {
+      const out = await runDeliverableForTenant({ ...baseInput, module: "moves", deliverableType, phase: 1 }, { assemble, loadPolicy, generate, persist, research, generatePlan, generateArchitecture, loadPublicSources: async () => [] });
+      expect(out.ok).toBe(false);
+      expect(out.blockedReason).toMatch(/^evidence_admission_unavailable:/);
+      expect(assemble).toHaveBeenCalledWith(expect.objectContaining({ requireMoveAdmission: true }));
+      expect(generate).not.toHaveBeenCalled();
+      expect(persist).not.toHaveBeenCalled();
+      expect(research).not.toHaveBeenCalled();
+      expect(generatePlan).not.toHaveBeenCalled();
+      expect(generateArchitecture).not.toHaveBeenCalled();
+    } finally { mockP5FlagOverride = undefined; mockResearchFlagOverride = undefined; }
+  });
+
+  it("excludes raw Move decision and predecessor narratives even after another source is admitted", async () => {
+    mockP5FlagOverride = false;
+    const generate = jest.fn(async (req: Record<string, unknown>) => { expect(req).toBeDefined(); return { ok: false, blockedReason: "test-stop" }; });
+    const persist = jest.fn();
+    try {
+      await runDeliverableForTenant({ ...baseInput, module: "moves", deliverableType: "charter", phase: 1, decisionContext: "UNADMITTED_SOURCE_NARRATIVE\nAPPROVED P3 ASSEMBLY PREDECESSOR RAW", approvedSolutionApproach: "UNADMITTED_OPTION" }, { assemble, loadPolicy, generate: generate as never, persist });
+      expect(generate).toHaveBeenCalledTimes(1);
+      const req = generate.mock.calls[0][0];
+      expect(JSON.stringify(req)).not.toMatch(/UNADMITTED_|ASSEMBLY PREDECESSOR/);
+      expect(req.governedEvidenceBundle).toHaveLength(1);
+    } finally { mockP5FlagOverride = undefined; }
+  });
+
+  it("excludes raw source narratives from architecture planning while preserving admitted evidence", async () => {
+    mockP5FlagOverride = false;
+    const generatePlan = jest.fn(async (req: { contextText: string }) => { expect(req.contextText).toBeDefined(); throw new Error("test-stop"); });
+    const generate = jest.fn();
+    const generateArchitecture = jest.fn();
+    try {
+      await runDeliverableForTenant({ ...baseInput, module: "moves", deliverableType: "target_state_architecture", phase: 3, decisionContext: "UNADMITTED_SOURCE_NARRATIVE", approvedSolutionApproach: "UNADMITTED_OPTION" }, { assemble, loadPolicy, generatePlan, generate, generateArchitecture, persist: jest.fn() });
+      expect(generatePlan).toHaveBeenCalledTimes(1);
+      const planning = generatePlan.mock.calls[0][0];
+      expect(planning.contextText).not.toMatch(/UNADMITTED_/);
+      expect(planning.contextText).toContain("99.9%");
+      expect(generate).not.toHaveBeenCalled();
+      expect(generateArchitecture).not.toHaveBeenCalled();
+    } finally { mockP5FlagOverride = undefined; }
   });
 
   it("returns blocked when persistence quarantines the generated artifact", async () => {
@@ -1827,9 +1882,10 @@ describe("runDeliverableForTenant", () => {
     expect(calls).toEqual(["plan", "architecture"]);
     expect(calledWith.engagement).toBe("AMS 2026");
     expect(calledWith.contextText).toContain("Structured Architecture Brief");
-    expect(calledWith.contextText).toContain(
+    expect(calledWith.contextText).not.toContain(
       "Chosen option: Option B - governed commercial lending agent assist",
     );
+    expect(calledWith.contextText).toContain("[1] SLA");
     expect(persistOpts?.renderViaProfile).toBe(true);
     expect(
       (persistOpts?.structuredModels as { architectureModel?: unknown })

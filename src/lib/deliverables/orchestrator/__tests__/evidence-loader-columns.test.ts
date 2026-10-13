@@ -9,6 +9,8 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import ts from "typescript";
+import { MOVE_ADMISSION_ARTIFACT_COLUMNS, MOVE_ADMISSION_EVIDENCE_COLUMNS, MOVE_ADMISSION_REVIEW_COLUMNS } from "@/lib/programs/move-agent-admission";
 import { PROGRAM_MODULE_EVIDENCE_COLUMNS } from "../program-module-evidence-columns";
 
 const ROOT = path.resolve(__dirname, "../../../../..");
@@ -56,6 +58,45 @@ function tableColumns(table: string): Set<string> {
   return columns;
 }
 
+const SHARED_COLUMNS: Record<string, readonly string[]> = {
+  PROGRAM_MODULE_EVIDENCE_COLUMNS,
+  MOVE_ADMISSION_ARTIFACT_COLUMNS,
+  MOVE_ADMISSION_EVIDENCE_COLUMNS,
+  MOVE_ADMISSION_REVIEW_COLUMNS,
+};
+
+function selectedColumns(expression: ts.Expression): string[] {
+  if (ts.isParenthesizedExpression(expression) || ts.isAsExpression(expression)) return selectedColumns(expression.expression);
+  if (ts.isStringLiteral(expression)) return expression.text.split(",").map(column => column.trim());
+  if (ts.isConditionalExpression(expression)) return [...selectedColumns(expression.whenTrue), ...selectedColumns(expression.whenFalse)];
+  if (ts.isIdentifier(expression) && SHARED_COLUMNS[expression.text]) return [...SHARED_COLUMNS[expression.text]];
+  if (ts.isArrayLiteralExpression(expression)) return expression.elements.flatMap(element => selectedColumns(ts.isSpreadElement(element) ? element.expression : element as ts.Expression));
+  if (ts.isCallExpression(expression) && ts.isPropertyAccessExpression(expression.expression) && expression.expression.name.text === "join") return selectedColumns(expression.expression.expression);
+  throw new Error(`Unresolved evidence select: ${expression.getText()}`);
+}
+
+function loaderSelects(source: string): Array<{ table: string; columns: string[] }> {
+  const tree = ts.createSourceFile("evidence-loader.ts", source, ts.ScriptTarget.Latest, true);
+  const selects: Array<{ table: string; columns: string[] }> = [];
+  const visit = (node: ts.Node) => {
+    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === "select") {
+      const from = node.expression.expression;
+      if (!ts.isCallExpression(from) || !ts.isPropertyAccessExpression(from.expression) || from.expression.name.text !== "from" || !ts.isStringLiteral(from.arguments[0])) throw new Error("Evidence select has no declared table");
+      selects.push({ table: from.arguments[0].text, columns: selectedColumns(node.arguments[0]) });
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(tree);
+  return selects;
+}
+
+function missingSelectedColumns(source: string): string[] {
+  return loaderSelects(source).flatMap(select => {
+    const columns = tableColumns(select.table);
+    return select.columns.filter(column => !columns.has(column)).map(column => `${select.table}.${column}`);
+  });
+}
+
 describe("evidence loader queries name columns that exist", () => {
   it("finds the table definitions it checks against", () => {
     // Not vacuous: an empty column set would make every check below fail,
@@ -76,23 +117,20 @@ describe("evidence loader queries name columns that exist", () => {
     expect(columns.has("updated_at")).toBe(false);
   });
 
-  it("names existing columns in every literal select in the loader", () => {
-    const source = fs.readFileSync(
-      path.join(__dirname, "../evidence-assembler.ts"),
-      "utf8",
-    );
-    const selects = [
-      ...source.matchAll(/\.from\("([a-z_0-9]+)"\)\s*\.select\(\s*"([^"]+)"/g),
-    ];
-    // Not vacuous: the loader has several literal selects.
-    expect(selects.length).toBeGreaterThanOrEqual(5);
-    const problems: string[] = [];
-    for (const [, table, list] of selects) {
-      const columns = tableColumns(table);
-      for (const column of list.split(",").map((c) => c.trim())) {
-        if (!columns.has(column)) problems.push(`${table}.${column}`);
-      }
+  it("checks every literal, conditional and shared-column select against its table", () => {
+    const source = fs.readFileSync(path.join(__dirname, "../evidence-assembler.ts"), "utf8");
+    const tables = [...new Set(loaderSelects(source).map(select => select.table))].sort();
+    expect(tables).toEqual(["engagements", "program_modules", "evidence_ledger", "program_evidence_reviews", "program_evidence_items", "move_artifacts", "deliverables_v2", "deliverable_versions", "generated_artifacts"].sort());
+    expect(missingSelectedColumns(source)).toEqual([]);
+  });
+
+  it("detects a nonexistent column in either conditional branch", () => {
+    for (const select of ['strict ? "id, not_a_column" : "id"', 'strict ? "id" : "id, not_a_column"']) {
+      expect(missingSelectedColumns(`db.from("evidence_ledger").select(${select})`)).toEqual(["evidence_ledger.not_a_column"]);
     }
-    expect(problems).toEqual([]);
+  });
+
+  it("refuses an unresolved select instead of silently omitting it", () => {
+    expect(() => loaderSelects('db.from("evidence_ledger").select(UNKNOWN_COLUMNS.join(", "))')).toThrow(/Unresolved evidence select/);
   });
 });
