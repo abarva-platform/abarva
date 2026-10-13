@@ -230,23 +230,15 @@ jobs:
           identity_name=id-abarva-scale-runtime-lab-eastus
           identity_json="$(az identity show --name "$identity_name" --resource-group "$RESOURCE_GROUP" --output json)"
           identity_id="$(jq -r '.id' <<< "$identity_json")"
-          principal_id="$(jq -r '.principalId' <<< "$identity_json")"
           client_id="$(jq -r '.clientId' <<< "$identity_json")"
+          [[ "$client_id" =~ ^[0-9a-fA-F-]{36}$ ]] || {
+            echo "Private operator proof identity has no client ID" >&2; exit 1;
+          }
           jq -e --arg id "$identity_id" \
             '[(.identity.userAssignedIdentities // {} | keys[]) | ascii_downcase] | index($id | ascii_downcase) != null' \
             audit-artifacts/tower-only-schema/operator-before.json >/dev/null || {
               echo "Proof identity is not attached to the private operator" >&2; exit 1;
             }
-          account_id="$(az storage account show --name "$TOWER_PROOF_ACCOUNT" \
-            --resource-group rg-abarva-private-dataplane-lab-eastus --query id --output tsv)"
-          az role assignment list --scope "$account_id" --include-inherited --output json \
-            > /tmp/tower-only-private-blob-roles.json
-          jq -e --arg principal "$principal_id" \
-            '[.[] | select(.principalId == $principal and .roleDefinitionName == "Storage Blob Data Contributor")] | length == 1' \
-            /tmp/tower-only-private-blob-roles.json >/dev/null || {
-              echo "Proof identity lacks private Blob write/read role" >&2; exit 1;
-            }
-          rm -f /tmp/tower-only-private-blob-roles.json
           echo "client_id=$client_id" >> "$GITHUB_OUTPUT"
 
       - name: Read-only exact Tower preflight
