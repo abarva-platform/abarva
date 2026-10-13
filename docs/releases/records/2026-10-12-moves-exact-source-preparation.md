@@ -64,7 +64,9 @@ actor, source IDs, phases, versions and hashes. No tenant list or filename infer
   no new library/route/export orphans, 19 export audit tests, five corpus gates,
   genuine manual/census/tenancy regeneration and all 11 release gates.
 - PASS: nine Azure/broker regression suites, 128 tests.
-- Census: 3026 to 3029 test files; 2861 to 2864 covered, exactly three new suites.
+- After current-main reconciliation, the genuinely regenerated census records 3033 test files
+  and 2868 covered. This candidate adds three covered suites.
+- PASS: all 15 tenancy-fence coverage tests, including exact committed-artifact drift checks.
 - A broader diagnostic retains 27 failures in the retired Pinecone compatibility
   suite, reproduced from actual fetched-main source in an isolated directory.
   This candidate adds no Pinecone dependency and does not repair retired behavior.

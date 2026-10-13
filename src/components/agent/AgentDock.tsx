@@ -118,7 +118,7 @@ function avaAnswerTextForDock(
   const directAnswer = answer.directAnswer?.trim();
   const prose = answer.prose?.trim();
   const text =
-    (surface === "home-preview"
+    (surface === "home-preview" && !prose?.startsWith("**Bottom line**")
       ? [directAnswer, prose === directAnswer ? "" : prose]
           .filter(Boolean)
           .join("\n\n")
@@ -506,6 +506,8 @@ export interface AgentDockProps {
   suggestedActions?: SuggestedAction[];
   /** Keep suggested actions visible even after an opening advisor turn exists. */
   keepSuggestedActionsVisible?: boolean;
+  /** Opt-in answer anchoring; other surfaces retain their existing streaming follow behavior. */
+  transcriptScroll?: "follow-end" | "answer-start";
   /** Human-facing composer placeholder. Defaults to "Ask {agent.name}…". */
   placeholder?: string;
   /** Optional reason to pause the composer until the host surface is ready. */
@@ -732,6 +734,7 @@ export function AgentDock(props: AgentDockProps) {
     initialQuote: rawInitialQuote,
     suggestedActions: rawSuggestedActions = [],
     keepSuggestedActionsVisible = false,
+    transcriptScroll = "follow-end",
     placeholder: rawPlaceholder,
     composerDisabledReason: rawComposerDisabledReason,
     thread: rawThread,
@@ -774,12 +777,12 @@ export function AgentDock(props: AgentDockProps) {
       ? rawComposerDisabledReason
       : demoSafeClientText(rawComposerDisabledReason)
     : null;
-  const safeThread = preserveVisibleText
-    ? rawThread
-    : sanitizeVisibleStrings(rawThread);
-  const thread = isMovesSurface
-    ? normalizeMovesChromeText(safeThread)
-    : safeThread;
+  const thread = useMemo(() => {
+    const safeThread = preserveVisibleText
+      ? rawThread
+      : sanitizeVisibleStrings(rawThread);
+    return isMovesSurface ? normalizeMovesChromeText(safeThread) : safeThread;
+  }, [rawThread, preserveVisibleText, isMovesSurface]);
   const focused = variant === "focused";
   const chatOnly = layout === "chat-only";
   const showReviewChrome =
@@ -802,7 +805,20 @@ export function AgentDock(props: AgentDockProps) {
         );
 
   // Mode state (persisted)
-  const [mode, setModeState] = useState<DockMode>(defaultMode);
+  const [storedMode, setModeState] = useState<DockMode>(defaultMode);
+  const [compactHome, setCompactHome] = useState(false);
+  const mode: DockMode =
+    compactHome && storedMode !== "collapsed" ? "expand" : storedMode;
+  useEffect(() => {
+    if (surface !== "home-preview") {
+      setCompactHome(false);
+      return;
+    }
+    const updateViewport = () => setCompactHome(window.innerWidth < 768);
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, [surface]);
   const previousSurfaceRef = useRef(surface);
   // Last non-collapsed mode — used when restoring from the floating chip.
   const [lastRichMode, setLastRichMode] = useState<DockMode>(
@@ -832,7 +848,8 @@ export function AgentDock(props: AgentDockProps) {
     },
     [disableStoredMode, surface],
   );
-  const compactSheet = defaultMode === "collapsed" && disableStoredMode;
+  const compactSheet =
+    compactHome || (defaultMode === "collapsed" && disableStoredMode);
 
   // Esc closes (collapses)
   useEffect(() => {
@@ -864,6 +881,7 @@ export function AgentDock(props: AgentDockProps) {
   const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const threadScrollRef = useRef<HTMLDivElement | null>(null);
+  const [showJumpToLatest, setShowJumpToLatest] = useState(false);
   const followThreadRef = useRef(true);
   const lastUserTurnIdRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -934,6 +952,15 @@ export function AgentDock(props: AgentDockProps) {
     if (!scroller) return;
     followThreadRef.current =
       scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight <= 80;
+    setShowJumpToLatest(!followThreadRef.current);
+  }, []);
+
+  const jumpToLatest = useCallback(() => {
+    const scroller = threadScrollRef.current;
+    if (!scroller) return;
+    followThreadRef.current = true;
+    scroller.scrollTop = scroller.scrollHeight;
+    setShowJumpToLatest(false);
   }, []);
 
   // Follow streaming text only while the reader is near the end. Keep all
@@ -950,9 +977,26 @@ export function AgentDock(props: AgentDockProps) {
       return;
     const scroller = threadScrollRef.current;
     if (scroller) {
-      scroller.scrollTop = scroller.scrollHeight;
+      const userTurns = scroller.querySelectorAll<HTMLElement>(
+        '[data-testid="agent-dock-turn-user"]',
+      );
+      const anchor = userTurns[userTurns.length - 1];
+      if (transcriptScroll === "answer-start" && anchor) {
+        scroller.scrollTop = Math.max(
+          0,
+          scroller.scrollTop +
+            anchor.getBoundingClientRect().top -
+            scroller.getBoundingClientRect().top -
+            12,
+        );
+      } else {
+        scroller.scrollTop = scroller.scrollHeight;
+      }
+      setShowJumpToLatest(
+        scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight > 80,
+      );
     }
-  }, [thread, isAgentBusy]);
+  }, [thread, isAgentBusy, transcriptScroll]);
 
   useEffect(() => {
     if (!anyUploading) return;
@@ -1381,6 +1425,7 @@ export function AgentDock(props: AgentDockProps) {
                       <AgentResponseParts parts={turn.parts} />
                     ) : (
                       <AgentMarkdown
+                        showListMarkers={surface === "home-preview"}
                         preserveOutput={Boolean(
                           turn.agentAnswer?.modelAuthored,
                         )}
@@ -1483,6 +1528,41 @@ export function AgentDock(props: AgentDockProps) {
             ? openingSuggestions
             : null}
         </div>
+
+        {transcriptScroll === "answer-start" ? (
+          <div
+            style={{
+              height: 34,
+              flexShrink: 0,
+              display: "flex",
+              justifyContent: "flex-end",
+              paddingRight: 18,
+            }}
+          >
+            <button
+              type="button"
+              title="Jump to latest"
+              aria-label="Jump to latest"
+              onClick={jumpToLatest}
+              style={{
+                visibility: showJumpToLatest ? "visible" : "hidden",
+                width: 30,
+                height: 30,
+                borderRadius: "50%",
+                border: `1px solid ${CANVAS.RULE}`,
+                background: "#FFFFFF",
+                color: CANVAS.INK,
+                display: "grid",
+                placeItems: "center",
+                cursor: "pointer",
+              }}
+            >
+              <span aria-hidden="true" style={{ fontSize: 18, lineHeight: 1 }}>
+                {"\u2193"}
+              </span>
+            </button>
+          </div>
+        ) : null}
 
         {/* Suggested actions */}
         {visibleSuggestedActions.length > 0 && !expanded
@@ -1624,6 +1704,9 @@ export function AgentDock(props: AgentDockProps) {
     onDragOver,
     onDrop,
     onThreadScroll,
+    jumpToLatest,
+    showJumpToLatest,
+    transcriptScroll,
     removeUpload,
     requestRawMode,
     runSessionExport,

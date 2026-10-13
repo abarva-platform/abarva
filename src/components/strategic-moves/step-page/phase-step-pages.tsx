@@ -20,6 +20,7 @@ import { P2_STEP_PAGES } from "./p2-step-pages";
 import { P4_STEP_PAGES } from "./p4-step-pages";
 import { P5_STEP_PAGES } from "./p5-step-pages";
 import type { P4ValueReadback } from "./useP4ValueReadback";
+import type { P1ParticipantBindingControl } from "./useP1ParticipantBinding";
 
 export interface StepPageChrome {
   stepIndex: number;
@@ -42,6 +43,7 @@ export interface StepPageHostProps {
   setValue: (key: string, value: string) => void;
   priorPhaseCapture: Readonly<Record<string, string>> | null;
   canApproveGates: boolean;
+  p1ParticipantBinding?: P1ParticipantBindingControl;
   p5TowerHandoffEnabled?: boolean;
   onP5HandoffState?: (published: boolean) => void;
   currentUser: { email: string | null; role: string | null } | null;

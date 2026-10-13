@@ -2170,3 +2170,6 @@ td .ava-badge,
 .authoredUpload a { color: var(--mv-accent); }
 .authoredUpload :focus-visible { outline: 2px solid var(--mv-accent); outline-offset: 3px; }
 .authoredHash { overflow-wrap: anywhere; font-family: var(--mv-font-mono); }
+/* Canonical IDs remain readable in the narrow contact review. */
+.participant-binding-review dd { overflow-wrap: anywhere; margin-inline-start: 0; }
+.participant-binding-form label { display: block; margin-top: 12px; }

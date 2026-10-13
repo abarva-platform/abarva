@@ -48,6 +48,8 @@ import {
   type P0CorrectionCommand,
 } from "@/lib/data-plane/write-adapters/p0ReviewedCaptureCorrectionAdapter";
 import { P0CaptureCorrectionRefusal } from "@/lib/programs/p0-reviewed-capture-correction";
+import { confirmP1ParticipantBinding, readP1ParticipantBinding, p1ParticipantBindingEnabled } from "@/lib/data-plane/write-adapters/p1ParticipantBindingAdapter";
+import { P1ParticipantBindingRefusal, type P1ParticipantBindingCommand } from "@/lib/programs/p1-participant-binding";
 import { writeTransactionOutcome } from "@/lib/data-plane/postgresCompat";
 import {
   listApprovedPhaseEvidence,
@@ -226,6 +228,13 @@ export async function GET(
     if (!program) return Response.json({ error: "not_found" }, { status: 404 });
 
     const snapshot = await loadCaptureSnapshot(ctx, programId, phase);
+    const p1ParticipantBinding = phase === 1 && p1ParticipantBindingEnabled(ctx)
+      ? await readP1ParticipantBinding(ctx, programId).catch(() => ({
+          moveId: programId, status: "unavailable", reason: "The current participant and protected records could not be read.",
+          current: { sponsorPersonId: null, leadPersonId: null }, choices: [], revision: "",
+          preservationRevision: "", canConfirm: false, confirmed: false, auditId: null,
+        }))
+      : undefined;
     const evaluation = evaluatePhaseCapture(phase, snapshot.values, {
       businessChangeAssessment: snapshot.businessChangeAssessment,
       approvedEvidenceReferences: snapshot.approvedEvidenceReferences.map(
@@ -252,6 +261,7 @@ export async function GET(
         ? { confirmedSolutionRoute: snapshot.confirmedSolutionRoute }
         : {}),
       ...(phase === 1 ? { p1BasisBySection: snapshot.p1BasisBySection } : {}),
+      ...(p1ParticipantBinding ? { p1ParticipantBinding } : {}),
       approvedEvidenceReferences: snapshot.approvedEvidenceReferences,
       approvedP1EvidenceReferences: snapshot.approvedP1EvidenceReferences,
       savePath: `/api/v1/programs/${programId}/phase-capture`,
@@ -273,6 +283,7 @@ export async function POST(
   { params }: { params: Promise<{ programId: string }> },
 ) {
   let reviewedCorrectionAttempted = false;
+  let participantBindingAttempted = false;
   try {
     const ctx = await requireTenancy();
     const { programId } = await params;
@@ -295,7 +306,19 @@ export async function POST(
       expectedRevision?: string;
       p1BasisBySection?: Record<string, unknown>;
       restoreReviewedP0?: Omit<P0CorrectionCommand, "expectedRevision">;
+      action?: string;
+      sponsorPersonId?: string;
+      leadPersonId?: string;
+      requestId?: string;
+      rationale?: string;
     };
+    if (body.action !== undefined) {
+      if (body.action !== "confirm_p1_participant_bindings" || body.phase !== 1 ||
+        Object.keys(body).some((key) => !["action", "phase", "sponsorPersonId", "leadPersonId", "expectedRevision", "requestId", "rationale"].includes(key)))
+        return Response.json({ error: "participant_binding_mixed_input", detail: "Use the contact preview as one separate confirmation command." }, { status: 400 });
+      participantBindingAttempted = true;
+      return Response.json(await confirmP1ParticipantBinding(ctx, programId, body as P1ParticipantBindingCommand));
+    }
     if (body.restoreReviewedP0 !== undefined) {
       if (
         !body.restoreReviewedP0 ||
@@ -839,6 +862,19 @@ export async function POST(
       },
     });
   } catch (err) {
+    if (participantBindingAttempted) {
+      const outcome = writeTransactionOutcome(err);
+      if (outcome === "unknown") return Response.json({ error: "participant_binding_outcome_unknown",
+        detail: "The contact confirmation outcome is unknown. Read the current contacts and audit before retrying.", transactionOutcome: outcome }, { status: 503 });
+      if (err instanceof P1ParticipantBindingRefusal) return Response.json({ error: err.code, detail: err.detail,
+        transactionOutcome: outcome }, { status: err.status });
+      if (outcome === "rolled_back" || outcome === "not_started") return Response.json({
+        error: `participant_binding_${outcome}`, transactionOutcome: outcome,
+        detail: outcome === "rolled_back" ? "The contact confirmation was rolled back. No contacts were changed. Read the current contacts and audit before retrying." : "The contact confirmation did not start. Read the current contacts and audit before retrying.",
+      }, { status: outcome === "rolled_back" ? 500 : 503 });
+      return Response.json({ error: "participant_binding_unconfirmed", transactionOutcome: "not_entered",
+        detail: "The contact confirmation could not be verified. Read the current contacts and audit before retrying." }, { status: 500 });
+    }
     if (writeTransactionOutcome(err) === "unknown") {
       return Response.json(
         {

@@ -50,6 +50,7 @@ export type AvaChatShellProps = {
   defaultMode?: DockMode;
   collapsedRestoreMode?: RestorableDockMode;
   preserveVisibleText?: boolean;
+  transcriptScroll?: "follow-end" | "answer-start";
 };
 
 const DEFAULT_AVA_AGENT: AgentProfile = {
@@ -114,6 +115,7 @@ export function AvaChatShell({
   defaultMode = "side-rail",
   collapsedRestoreMode,
   preserveVisibleText = false,
+  transcriptScroll,
 }: AvaChatShellProps) {
   const profile: AgentProfile = {
     ...DEFAULT_AVA_AGENT,
@@ -153,6 +155,7 @@ export function AvaChatShell({
         isAgentBusy={isBusy}
         placeholder={safePlaceholder}
         preserveVisibleText={preserveVisibleText}
+        transcriptScroll={transcriptScroll}
         collapsedSummary={{
           label: "aVa",
           detail: "Open the advisor chat",

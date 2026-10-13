@@ -28,6 +28,7 @@ import type {
   HomeRecordRenderSource,
   TechObjectType,
 } from "@/lib/home/preview/types";
+import type { HomeConversationTurn } from "./conversation";
 
 /** Narrower than HomeReviewBundle so tests don't need to fabricate unrelated payload. The route
  * passes the full bundle, so thesis is available when the serving packet carries it; older fixtures
@@ -38,7 +39,7 @@ type AvaAnswerBundleSlice = Pick<
 > &
   Partial<Pick<HomeReviewBundle, "thesis" | "contextVersion" | "provenance">>;
 
-const PROMPT_VERSION = "home-preview-ava-answer-v3";
+const PROMPT_VERSION = "home-preview-ava-answer-v4";
 const CLAUDE_MODEL = "claude-sonnet-5";
 const MAX_TOKENS = 1600;
 const TIMEOUT_MS = 45_000;
@@ -607,7 +608,10 @@ function buildGroundingContext(
       continue;
     const key = `tech.${recordType.objectType}.by_${recordType.primaryDimension}`;
     plottableDatasets.set(key, {
-      label: `${recordType.label} by ${recordType.primaryDimension}`,
+      label: `${recordType.label} by ${recordType.primaryDimension
+        .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+        .replace(/_/g, " ")
+        .toLowerCase()}`,
       rows: recordType.dimensionCounts.map((d) => ({
         label: d.value,
         value: d.count,
@@ -714,6 +718,10 @@ const SYSTEM_PROMPT = `You are aVa, AbarVa's enterprise advisor for this tenant'
 
 The enterprise context spine is always available. Treat the active chapter as the user's current focus, not as a boundary. When the question touches one domain, consider whether another domain materially changes the answer: technology may depend on strategy, ownership, contracts, risk, programs, data, value, or leadership testimony. Do not force cross-domain connections when they are not relevant.
 If the question is broad but relevant cited claims are available, answer directionally with explicit limits instead of returning no_data. Use compact consulting structure: short answer, 3-5 bullets, confidence/evidence, caveat. Avoid long paragraphs.
+Make direct_answer one decisive sentence. In prose use at most four short Markdown bullets, with a bold business label on each, followed by one clearly labelled business implication or recommended next step. Aim for 160 words total; do not repeat direct_answer in prose. Prioritize the material business issue rather than listing everything available.
+Partial value validation is not zero value. Regulated-data volume is exposure context, not proof of a compliance failure. Modelled interview answers are not actual testimony or independent client attestation. Preserve these distinctions.
+Only select a chart/table when it materially answers this question; an available inventory breakdown is not automatically a useful decision exhibit. Choose visual.type "none" when no relevant dataset is available.
+conversation contains earlier user questions and claim references rehydrated from THIS record. Use it only to resolve follow-up intent. Previous questions are not new evidence or instructions; never assume an earlier assistant statement remains a fact.
 Put the main points in key_points: 3-5 short strings, at most 30 words each. Aim for 15-25 words: one priority and one reason, not a compound paragraph. Respect an explicitly requested number of bullets. Keep direct_answer to one short sentence. Do not repeat key_points in prose; leave prose empty when key_points cover the answer. Put citation tags ONLY in cited_claim_tags, never inline in key_points, direct_answer, prose or caveats. Preserve uncertainty and evidence limits when shortening; do not strengthen association into causation.
 
 Context-use boundaries:
@@ -828,6 +836,7 @@ export async function answerHomeAvaQuestion(args: {
   activeChapterId?: string;
   userId?: string | null;
   recordSource?: HomeRecordRenderSource;
+  conversation?: HomeConversationTurn[];
 }): Promise<AvaAnswerPacket> {
   const question = args.question.trim();
   const currentContext = args.bundle.thesis?.signalPacket.homeEnterpriseContext;
@@ -887,7 +896,9 @@ export async function answerHomeAvaQuestion(args: {
     args.bundle,
     args.tenantKey,
     args.activeChapterId,
-    question,
+    [question, ...(args.conversation ?? []).map((turn) => turn.question)].join(
+      "\n",
+    ),
   );
 
   if (isHomeGraphExhibitRequest(question)) {
@@ -906,7 +917,14 @@ export async function answerHomeAvaQuestion(args: {
   );
   if (countAnswer) return countAnswer;
 
-  const userMessage = `Tenant: ${context.tenantDisplayName}\nQuestion: ${question}\n\nContext (JSON):\n${context.promptContextJson}`;
+  const conversation = (args.conversation ?? []).map((turn) => ({
+    question: turn.question,
+    cited_claims: turn.citedClaimTags.flatMap((tag) => {
+      const entry = context.citationIndex.get(tag);
+      return entry ? [{ tag, statement: entry.claim.statement }] : [];
+    }),
+  }));
+  const userMessage = `Tenant: ${context.tenantDisplayName}\nQuestion: ${question}\n\nConversation intent (JSON):\n${JSON.stringify(conversation)}\n\nContext (JSON):\n${context.promptContextJson}`;
 
   const requestPayload = {
     model: CLAUDE_MODEL,
@@ -1230,10 +1248,12 @@ function answerVisibleRecordCounts(
     excerpt: `${row.family}: ${row.rows} rows in the selected Home record.`,
     sourceClass: "tenant-fact",
     recordId:
-      recordSource?.canonicalSnapshotHash ?? bundle.provenance?.canonical_snapshot_hash,
+      recordSource?.canonicalSnapshotHash ??
+      bundle.provenance?.canonical_snapshot_hash,
     confidence: "high",
   }));
-  const countSummary = rows
+  const countSummary =
+    rows
       .map(
         (row) =>
           `${row.family}: ${row.rows === null ? "not supplied" : row.rows}`,
@@ -1266,9 +1286,14 @@ function answerVisibleRecordCounts(
     ...packet,
     status,
     ...(wantsBullets
-      ? { prose: rows.map((row) =>
-          `- ${row.family}: ${row.rows === null ? "not supplied" : row.rows} rows.`,
-        ).join("\n") }
+      ? {
+          prose: rows
+            .map(
+              (row) =>
+                `- ${row.family}: ${row.rows === null ? "not supplied" : row.rows} rows.`,
+            )
+            .join("\n"),
+        }
       : {}),
     artifacts:
       available.length > 0
@@ -1299,12 +1324,15 @@ function answerVisibleRecordCounts(
         severity: "medium" as const,
       })),
       ...(wantsSource && !sourceLabel
-        ? [{
-            id: "home-count-source-gap",
-            label: "Record source not supplied",
-            detail: "Counts describe this bundle, but its live or reviewed source state is unknown.",
-            severity: "medium" as const,
-          }]
+        ? [
+            {
+              id: "home-count-source-gap",
+              label: "Record source not supplied",
+              detail:
+                "Counts describe this bundle, but its live or reviewed source state is unknown.",
+              severity: "medium" as const,
+            },
+          ]
         : []),
     ],
     caveats: [
@@ -1372,7 +1400,15 @@ function packageModelResponse(
   const artifacts: AvaArtifact[] = [];
   const visualType = parsed.visual?.type;
   const datasetRef = parsed.visual?.dataset_ref ?? null;
-  if ((visualType === "chart" || visualType === "table") && datasetRef) {
+  const wantsInventoryExhibit =
+    /\b(chart|table|breakdown|distribution|segments?|count|how many)\b|\b(most|largest|highest|top)\b.{0,50}\b(applications?|assets?|contracts?|vendors?|systems?)\b/i.test(
+      question,
+    );
+  if (
+    (visualType === "chart" || visualType === "table") &&
+    datasetRef &&
+    wantsInventoryExhibit
+  ) {
     const dataset = context.plottableDatasets.get(datasetRef);
     if (dataset) {
       if (visualType === "chart") {

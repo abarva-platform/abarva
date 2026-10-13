@@ -41,7 +41,9 @@ describe("Tower tenant display names", () => {
     expect(agentDockSource).toContain("preserveVisibleText?: boolean");
     expect(agentDockSource).toContain("preserveVisibleText = false");
     expect(agentDockSource).toContain("preserveVisibleText\n    ? rawAgent");
-    expect(agentDockSource).toContain("preserveVisibleText\n    ? rawThread");
+    expect(agentDockSource).toMatch(
+      /const safeThread = preserveVisibleText\s*\? rawThread\s*: sanitizeVisibleStrings\(rawThread\)/,
+    );
     expect(atlasChatPanelSource).toContain("preserveVisibleText?: boolean");
     expect(atlasChatPanelSource).toContain("preserveVisibleText={preserveVisibleText}");
     expect(towerAvaShellSource).toContain("preserveVisibleText");

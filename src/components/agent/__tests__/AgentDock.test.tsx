@@ -84,6 +84,88 @@ beforeEach(() => {
 });
 
 describe("AgentDock · default mode", () => {
+  it("uses a full-width Home chat on narrow displays and preserves desktop preference", () => {
+    const originalWidth = window.innerWidth;
+    try {
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        value: 390,
+      });
+      render(
+        <AgentDock
+          agent={AGENT}
+          surface="home-preview"
+          defaultMode="collapsed"
+          collapsedRestoreMode="side-rail"
+          thread={[]}
+          onMessage={jest.fn()}
+          workspace={<div>workspace</div>}
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: /Restore/ }));
+      expect(
+        screen.getByRole("dialog", { name: "aVa expanded chat" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Pin right" }),
+      ).not.toBeInTheDocument();
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        value: 1440,
+      });
+      fireEvent(window, new Event("resize"));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(screen.getByTestId("agent-dock-panel")).toHaveAttribute(
+        "data-mode",
+        "side-rail",
+      );
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        value: 390,
+      });
+      fireEvent(window, new Event("resize"));
+      fireEvent.keyDown(window, { key: "Escape" });
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /Restore/ }),
+      ).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        value: originalWidth,
+      });
+    }
+  });
+
+  it("does not change another surface's narrow-display mode", () => {
+    const originalWidth = window.innerWidth;
+    try {
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        value: 390,
+      });
+      render(
+        <AgentDock
+          agent={AGENT}
+          surface={SURFACE}
+          thread={[]}
+          onMessage={jest.fn()}
+          workspace={<div>workspace</div>}
+        />,
+      );
+      expect(screen.getByTestId("agent-dock-panel")).toHaveAttribute(
+        "data-mode",
+        "side-rail",
+      );
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    } finally {
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        value: originalWidth,
+      });
+    }
+  });
+
   it("renders in side-rail mode when no preference is stored", () => {
     render(
       <AgentDock
@@ -205,7 +287,9 @@ describe("AgentDock · default mode", () => {
     fireEvent.click(screen.getByTestId("agent-dock-collapsed-chip"));
     fireEvent.keyDown(window, { key: "Escape" });
     await waitFor(() =>
-      expect(screen.getByTestId("agent-dock-collapsed-chip")).toBeInTheDocument(),
+      expect(
+        screen.getByTestId("agent-dock-collapsed-chip"),
+      ).toBeInTheDocument(),
     );
   });
 
@@ -509,6 +593,59 @@ describe("AgentDock · default mode", () => {
       "STRONG",
     );
     expect(agentTurn).not.toHaveTextContent("**Start with Treasury**");
+  });
+
+  it("renders a formatted Home bottom line once without dropping supporting points", () => {
+    const directAnswer = "Analytics maturity is below its stated target.";
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface="home-preview"
+        thread={[
+          {
+            id: "a1",
+            role: "agent",
+            body: "Legacy body must not replace the formatted answer.",
+            agentAnswer: {
+              surface: "home",
+              mode: "KNOW",
+              tenantKey: "test-enterprise",
+              question: "What is the analytics priority?",
+              intent: "analytics",
+              directAnswer,
+              prose: `**Bottom line**\n\n${directAnswer}\n\n**Key points**\n\n- **Value:** Validation is partial, not zero.`,
+              status: "answered",
+              citations: [],
+              artifacts: [],
+              factsUsed: [],
+              metricsUsed: [],
+              relationshipsUsed: [],
+              gaps: [],
+              caveats: [],
+              nextSteps: [],
+              quality: {
+                confidence: "medium",
+                evidenceStrength: "partial",
+                tenantGrounding: "partial",
+                answerCompleteness: "complete",
+              },
+              safety: {
+                tenantFencePassed: true,
+                rawIdsSuppressed: true,
+                forbiddenLanguagePassed: true,
+                unsupportedClaimsBlocked: true,
+              },
+            },
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div>workspace</div>}
+      />,
+    );
+    const text = screen.getByTestId("agent-dock-turn-agent").textContent ?? "";
+    expect(text.split(directAnswer)).toHaveLength(2);
+    expect(text).toContain("Validation is partial, not zero.");
+    expect(text).not.toContain("Legacy body");
   });
 
   it("shows a citation gap for substantive uncited agent text without evidence context", () => {
@@ -1437,17 +1574,35 @@ describe("AgentDock · thread render", () => {
   });
 
   it("keeps Home points separate at the markdown renderer boundary", () => {
-    render(<AgentDock agent={{ ...AGENT, name: "aVa" }} surface="home-preview" thread={[{
-      id: "home-points", role: "agent", body: "Summary",
-      agentAnswer: {
-        directAnswer: "Review dependencies and proof before expanding.",
-        prose: "- Confirm the critical dependencies.\n\n- Validate the claimed outcomes.\n\n- Assign the next evidence owner.",
-        citations: [], artifacts: [],
-      } as never,
-    }]} onMessage={jest.fn()} workspace={<div>workspace</div>} />);
+    render(
+      <AgentDock
+        agent={{ ...AGENT, name: "aVa" }}
+        surface="home-preview"
+        thread={[
+          {
+            id: "home-points",
+            role: "agent",
+            body: "Summary",
+            agentAnswer: {
+              directAnswer: "Review dependencies and proof before expanding.",
+              prose:
+                "- Confirm the critical dependencies.\n\n- Validate the claimed outcomes.\n\n- Assign the next evidence owner.",
+              citations: [],
+              artifacts: [],
+            } as never,
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div>workspace</div>}
+      />,
+    );
     const turn = screen.getByTestId("agent-dock-turn-agent");
-    expect(within(turn).getByTestId("agent-markdown").textContent?.match(/^- /gm)).toHaveLength(3);
-    expect(turn).toHaveTextContent("Review dependencies and proof before expanding.");
+    expect(
+      within(turn).getByTestId("agent-markdown").textContent?.match(/^- /gm),
+    ).toHaveLength(3);
+    expect(turn).toHaveTextContent(
+      "Review dependencies and proof before expanding.",
+    );
   });
 
   it("exports the current chat session without making a model call", async () => {
@@ -1914,6 +2069,61 @@ describe("AgentDock · thread render", () => {
     }
   });
 
+  it("anchors Home at the latest question and lets the reader jump to the end", () => {
+    const view = (thread: ChatMessage[]) => (
+      <AgentDock
+        agent={AGENT}
+        surface="home-preview"
+        defaultMode="expand"
+        transcriptScroll="answer-start"
+        thread={thread}
+        onMessage={jest.fn()}
+        workspace={<div>Home</div>}
+      />
+    );
+    const { rerender } = render(
+      view([{ id: "u1", role: "user", body: "Data analytics?" }]),
+    );
+    const transcript = screen.getByTestId("agent-dock-thread");
+    Object.defineProperty(transcript, "scrollHeight", {
+      value: 1000,
+      configurable: true,
+    });
+    Object.defineProperty(transcript, "clientHeight", {
+      value: 200,
+      configurable: true,
+    });
+    jest
+      .spyOn(transcript, "getBoundingClientRect")
+      .mockReturnValue({ top: 100 } as DOMRect);
+    jest
+      .spyOn(
+        screen.getByTestId("agent-dock-turn-user"),
+        "getBoundingClientRect",
+      )
+      .mockReturnValue({ top: 312 } as DOMRect);
+    transcript.scrollTop = 0;
+    rerender(
+      view([
+        { id: "u1", role: "user", body: "Data analytics?" },
+        { id: "a1", role: "agent", body: "A detailed answer." },
+      ]),
+    );
+    expect(transcript.scrollTop).toBe(200);
+    const jump = screen.getByRole("button", { name: "Jump to latest" });
+    fireEvent.click(jump);
+    expect(transcript.scrollTop).toBe(1000);
+    transcript.scrollTop = 100;
+    fireEvent.scroll(transcript);
+    rerender(
+      view([
+        { id: "u1", role: "user", body: "Data analytics?" },
+        { id: "a1", role: "agent", body: "A detailed answer. More evidence." },
+      ]),
+    );
+    expect(transcript.scrollTop).toBe(100);
+  });
+
   it("follows streaming text near the bottom without pulling a reader away from earlier turns", () => {
     const renderDock = (body: string, nextUser = false) => (
       <AgentDock
@@ -2202,11 +2412,17 @@ describe("AgentDock · self-measured top offset", () => {
         </>,
       );
       const shell = screen.getByTestId("agent-dock-chat-only-shell");
-      expect(shell.style.getPropertyValue("--agent-dock-self-top")).toBe("749px");
+      expect(shell.style.getPropertyValue("--agent-dock-self-top")).toBe(
+        "749px",
+      );
       top = 149;
-      act(() => screen.getByTestId("review-disclosure").removeAttribute("open"));
+      act(() =>
+        screen.getByTestId("review-disclosure").removeAttribute("open"),
+      );
       await waitFor(() =>
-        expect(shell.style.getPropertyValue("--agent-dock-self-top")).toBe("149px"),
+        expect(shell.style.getPropertyValue("--agent-dock-self-top")).toBe(
+          "149px",
+        ),
       );
     } finally {
       rect.mockRestore();
