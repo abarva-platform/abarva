@@ -23,6 +23,7 @@
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { FileCabinetPanel } from "../FileCabinetPanel";
+import { AUTHORED_ADMISSION_RECORDED_EVENT } from "@/lib/programs/authored-deliverable-receipt";
 import { describeMoveUploadRefusal } from "@/lib/programs/move-upload-refusal";
 import {
   ACCEPTED_UPLOAD_FORMATS,
@@ -71,6 +72,21 @@ function mockCabinet(artifacts: Array<Record<string, unknown>>) {
     json: async () => cabinetBody(artifacts),
   })) as unknown as typeof fetch;
 }
+
+it("refreshes the real Vault only for a confirmed authored admission to this Move", async () => {
+  mockCabinet([row({ title: "Original stored file" })]);
+  render(<FileCabinetPanel moveId="move-1" phase={1} />);
+  const download = await screen.findByRole("link", { name: "Download" });
+  expect(download).toHaveAttribute("href", "/api/v1/programs/move-1/artifacts/artifact-1/download");
+  const fetchMock = global.fetch as jest.Mock; fetchMock.mockClear();
+  fireEvent(window, new CustomEvent(AUTHORED_ADMISSION_RECORDED_EVENT, { detail: { moveId: "other-move" } }));
+  expect(fetchMock).not.toHaveBeenCalled();
+  fireEvent(window, new CustomEvent(AUTHORED_ADMISSION_RECORDED_EVENT, { detail: { moveId: "move-1" } }));
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+  expect(fetchMock.mock.calls[0][0]).toContain("/move-1/artifacts");
+  expect(fetchMock.mock.calls[0][1]?.method ?? "GET").toBe("GET");
+  expect(await screen.findByRole("link", { name: "Download" })).toHaveAttribute("href", "/api/v1/programs/move-1/artifacts/artifact-1/download");
+});
 
 /**
  * The cabinet read, then one upload answering with `body`. Returns the form

@@ -32,6 +32,7 @@ import {
   type MoveArtifactStoragePresentation,
 } from "@/lib/programs/move-artifact-storage-state";
 import { describeMoveClientApprovalRefusal } from "@/lib/programs/move-client-approval-refusal";
+import { AUTHORED_ADMISSION_RECORDED_EVENT } from "@/lib/programs/authored-deliverable-receipt";
 
 /** The meta row's colours for the storage chip's three tones. */
 const ARTIFACT_STORAGE_TONE_COLOR: Record<
@@ -2084,6 +2085,14 @@ export function FileCabinetPanel({
       setLoading(false);
     }
   }, [moveId]);
+
+  useEffect(() => {
+    const recorded = (event: Event) => {
+      if ((event as CustomEvent<{ moveId?: string }>).detail?.moveId === moveId) void load();
+    };
+    window.addEventListener(AUTHORED_ADMISSION_RECORDED_EVENT, recorded);
+    return () => window.removeEventListener(AUTHORED_ADMISSION_RECORDED_EVENT, recorded);
+  }, [load, moveId]);
 
   const decideEvidenceReview = useCallback(
     async (
