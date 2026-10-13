@@ -142,6 +142,15 @@ export function decodeModelAuthoredAnswer(rawText: string) {
   return { prose, artifacts, followups, sourceIds, protocolIssues };
 }
 
+/** Preview completed prose while transport blocks are still arriving. */
+export function modelAuthoredStreamingProse(rawText: string): string {
+  const { prose } = decodeModelAuthoredAnswer(rawText);
+  // Complete valid blocks are decoded above. Hold an incomplete or malformed
+  // fence, including a split opener, until the final packet can account for it.
+  const pendingFence = prose.search(/^ {0,3}`/m);
+  return pendingFence < 0 ? prose : prose.slice(0, pendingFence);
+}
+
 export function modelAuthoredAnswerPacket(
   rawText: string,
   question: string,

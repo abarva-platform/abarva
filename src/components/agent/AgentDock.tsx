@@ -411,6 +411,8 @@ export interface ChatMessage {
   id: string;
   role: "agent" | "user";
   body: string;
+  /** Presentation status while an answer is still being generated. */
+  streamStatus?: string;
   /** Optional structured UI parts rendered beneath the assistant prose. */
   parts?: AgentResponsePart[];
   /** Optional createdAt for byline rendering. */
@@ -1331,9 +1333,7 @@ export function AgentDock(props: AgentDockProps) {
           style={{
             ...(focused ? FOCUSED_THREAD_STYLE : THREAD_STYLE),
             ...(chatOnly ? CHAT_ONLY_THREAD_STYLE : null),
-            ...(chatOnly && chatOnlyFullWidth
-              ? { maxWidth: "none" }
-              : null),
+            ...(chatOnly && chatOnlyFullWidth ? { maxWidth: "none" } : null),
             ...(chatOnly && thread.length === 0
               ? CHAT_ONLY_EMPTY_THREAD_STYLE
               : null),
@@ -1488,6 +1488,14 @@ export function AgentDock(props: AgentDockProps) {
                         preserveOutput={preserveVisibleText}
                       />
                     )}
+                  </div>
+                ) : null}
+                {turn.role === "agent" && turn.streamStatus ? (
+                  <div
+                    role="status"
+                    style={{ fontSize: 12, opacity: 0.65, paddingTop: 8 }}
+                  >
+                    {turn.streamStatus}
                   </div>
                 ) : null}
                 {!focused && turn.role === "agent" && turn.feedbackEventId ? (

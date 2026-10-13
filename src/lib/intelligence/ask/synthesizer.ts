@@ -7,6 +7,7 @@
 import {
   EXECUTIVE_BRIEF_CONTRACT,
   EXECUTIVE_BRIEF_REMINDER,
+  EXECUTIVE_FOLLOWUP_CONTRACT,
 } from "./executive-brief-contract";
 import { prepareExecutiveContext } from "./executive-context";
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
@@ -301,7 +302,9 @@ const MULTI_PART_EXECUTIVE_FORMAT = `MULTI-PART DISCOVERY FORMAT: The user asked
 
 Choose exhibits for the question rather than defaulting to a 2×2 matrix. A compact table can compare operating options, evidence gaps, or measurement gates. Use a Recharts bar, horizontal-bar, or line chart only when the supplied governed sources contain at least two compatible measured values, with their counting basis and dates. A proposed target alone is not a measured series. A qualitative matrix is useful only when two independently supported tradeoff axes help the decision. Use up to three distinct, useful exhibits when the request warrants them.`;
 
-const MULTI_PART_EXECUTIVE_REMINDER = `Answer every requested area and finish with the requested decision brief. Use clear Markdown headings, short paragraphs, bullets, and suitable evidence-backed exhibits. Aim for roughly 300 prose words, extending when needed to cover requested evidence and decision boundaries. This guidance does not loosen source readiness, tenant isolation, or numeric evidence rules. Do not expose source aliases or private reasoning.`;
+const MULTI_PART_EXECUTIVE_REMINDER = `Answer every requested area and finish with the requested decision brief. Use clear Markdown headings, short paragraphs, bullets, and suitable evidence-backed exhibits. Aim for roughly 300 prose words, extending when needed to cover requested evidence and decision boundaries. This guidance does not loosen source readiness, tenant isolation, or numeric evidence rules. Do not expose source aliases or private reasoning.
+
+${EXECUTIVE_FOLLOWUP_CONTRACT}`;
 
 function chooseModel(intent: AskIntent, query: string): string {
   if (isExplicitConciseAsk(query)) {
@@ -649,7 +652,8 @@ export async function* synthesizeStream(args: {
   // executive prose, NO five-tab / decision-canvas contract, NO advisor
   // artifact obligations — those move to the parallel companion-canvas engine.
   const modelAuthored = args.modelAuthoredOutput === true;
-  const multiPartDiscovery = modelAuthored && isMultiPartDiscoveryAsk(args.query);
+  const multiPartDiscovery =
+    modelAuthored && isMultiPartDiscoveryAsk(args.query);
   const answerOnly = modelAuthored || args.answerOnlyStreaming === true;
   // Light-markdown behavior is enabled for rich-text callers AND for the
   // answer-only stream (which always renders Markdown on the client).
@@ -758,7 +762,9 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
         ? "claude-sonnet-4-6"
         : chooseModel(args.intent, args.query);
     const primaryTokenBudget = modelAuthored
-      ? multiPartDiscovery ? 12_000 : 8192
+      ? multiPartDiscovery
+        ? 12_000
+        : 8192
       : answerOnly
         ? 5000
         : chooseSynthesisTokenBudget(args.query);
@@ -914,7 +920,8 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
             event.type !== "content_block_delta" ||
             event.delta.type !== "text_delta" ||
             !event.delta.text
-          ) continue;
+          )
+            continue;
           const verdict = rollingGuard.push(event.delta.text);
           if (verdict.abort)
             throw new Error("The answer was blocked at the tenant boundary.");

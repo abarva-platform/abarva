@@ -286,6 +286,16 @@ export function AdvisoryIntelligencePage({
     setMessages((c) =>
       c.map((m) => {
         if (m.id !== assistantId || m.role !== "assistant") return m;
+        if (
+          event.type === "answer-progress" &&
+          typeof event.text === "string"
+        ) {
+          return {
+            ...m,
+            answer: event.text,
+            streamStatus: undefined,
+          };
+        }
         if (event.type === "delta") {
           const delta = eventText(event);
           if (!delta)
@@ -386,6 +396,10 @@ export function AdvisoryIntelligencePage({
                   : m.answer || m.streamStatus || "Gathering client context...",
               citations: m.sources.length > 0 ? m.sources : undefined,
               agentAnswer: m.agentAnswer ?? undefined,
+              streamStatus:
+                m.answer.trim() && m.status === "streaming"
+                  ? "Preparing the rest of the answer…"
+                  : undefined,
             },
       ),
     [messages],
@@ -400,9 +414,7 @@ export function AdvisoryIntelligencePage({
     [messages],
   );
   const suggestedActions = useMemo<SuggestedAction[]>(() => {
-    const labels = latestAssistant?.followups.length
-      ? latestAssistant.followups
-      : starterPrompts;
+    const labels = latestAssistant ? latestAssistant.followups : starterPrompts;
     return labels.map((p) => ({
       id: p,
       label: p,

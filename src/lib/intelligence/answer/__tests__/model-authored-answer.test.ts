@@ -3,6 +3,7 @@ import {
   isIntactModelAuthoredPacket,
   measureExecutiveAnswer,
   modelAuthoredAnswerPacket,
+  modelAuthoredStreamingProse,
 } from "../model-authored-answer";
 
 const table = {
@@ -40,46 +41,72 @@ const chart = {
 const fence = (kind: string, value: unknown) =>
   `\`\`\`${kind}\n${JSON.stringify(value)}\n\`\`\``;
 
-it.each(["chart", "quadrant-matrix"])("preserves qualitative matrix categories in a %s fence without inventing numeric priority scores", (kind) => {
-  const matrix = {
-    id: "bets",
-    kind: "quadrant-matrix",
-    title: "Investment tradeoffs",
-    subtitle: "Advisory judgment; validate before investment",
-    xKey: "Effort",
-    yKey: "Potential",
-    data: [
-      {
-        label: "Assist",
-        Effort: "low",
-        Potential: "high",
-        reason: "Needs economics",
-      },
-      {
-        label: "Platform",
-        Effort: "high",
-        Potential: "high",
-        reason: "Needs dependency proof",
-      },
-    ],
-  };
-  const raw = `Validate first.\n\n${fence(kind, matrix)}`;
-  const answer = modelAuthoredAnswerPacket(raw, "Compare the bets", "test", []);
-  expect(answer.artifacts).toEqual([{ ...matrix, artifact: "chart" }]);
-  expect(answer.modelAuthored?.rawText).toBe(raw);
-  expect(isIntactModelAuthoredPacket(answer)).toBe(true);
-  const invalid = fence(kind, {
-    ...matrix,
-    data: [{ label: "Assist", Effort: 40, Potential: 80 }, matrix.data[1]],
-  });
-  expect(decodeModelAuthoredAnswer(invalid)).toEqual({
-    prose: invalid,
-    artifacts: [],
-    followups: [],
-    sourceIds: [],
-    protocolIssues: [`Unrendered ${kind} block; original content retained.`],
-  });
+it("previews prose through character-split exhibit and provenance blocks without exposing transport", () => {
+  const opening = "Validate the opportunity.\n\n";
+  const raw = `${opening}${fence("table", table)}\n\n${fence("chart", chart)}\n\n${fence("graph", graph)}\n\n${fence("sources", ["S1"])}\n\n${fence("followups", ["Which scope?", "Which baseline?", "Which decision?"])}\n\nNext decision.`;
+  for (let i = opening.length; i <= raw.length; i += 1) {
+    const preview = modelAuthoredStreamingProse(raw.slice(0, i));
+    expect(preview).toContain(opening);
+    expect(preview).not.toMatch(
+      /`|citationIds|columns|sources|followups|S1|Which scope/,
+    );
+  }
+  expect(modelAuthoredStreamingProse(raw)).toBe(
+    decodeModelAuthoredAnswer(raw).prose,
+  );
+  expect(
+    modelAuthoredStreamingProse(`${opening}\`\`\`table\n{bad JSON}\n\`\`\``),
+  ).toBe(opening);
 });
+
+it.each(["chart", "quadrant-matrix"])(
+  "preserves qualitative matrix categories in a %s fence without inventing numeric priority scores",
+  (kind) => {
+    const matrix = {
+      id: "bets",
+      kind: "quadrant-matrix",
+      title: "Investment tradeoffs",
+      subtitle: "Advisory judgment; validate before investment",
+      xKey: "Effort",
+      yKey: "Potential",
+      data: [
+        {
+          label: "Assist",
+          Effort: "low",
+          Potential: "high",
+          reason: "Needs economics",
+        },
+        {
+          label: "Platform",
+          Effort: "high",
+          Potential: "high",
+          reason: "Needs dependency proof",
+        },
+      ],
+    };
+    const raw = `Validate first.\n\n${fence(kind, matrix)}`;
+    const answer = modelAuthoredAnswerPacket(
+      raw,
+      "Compare the bets",
+      "test",
+      [],
+    );
+    expect(answer.artifacts).toEqual([{ ...matrix, artifact: "chart" }]);
+    expect(answer.modelAuthored?.rawText).toBe(raw);
+    expect(isIntactModelAuthoredPacket(answer)).toBe(true);
+    const invalid = fence(kind, {
+      ...matrix,
+      data: [{ label: "Assist", Effort: 40, Potential: 80 }, matrix.data[1]],
+    });
+    expect(decodeModelAuthoredAnswer(invalid)).toEqual({
+      prose: invalid,
+      artifacts: [],
+      followups: [],
+      sourceIds: [],
+      protocolIssues: [`Unrendered ${kind} block; original content retained.`],
+    });
+  },
+);
 
 it("decodes source metadata into readable provenance without inserting source codes into prose", () => {
   const raw = `Validate first.\n\n${fence("sources", ["S2"])}\n\n${fence("followups", ["Which gate?", "What economics?", "Who owns it?"])}`;

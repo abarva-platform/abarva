@@ -109,6 +109,7 @@ import {
 import { classifyAbarvaAnswerMode } from "../response-policy";
 import { cleanIntelligenceModelInputText } from "@/lib/intelligence/model-input-cleaner";
 import { askIntelligence } from "../index";
+import { INTELLIGENCE_TENANT_SAFETY_POLICIES } from "../tenant-safety-policy";
 
 /**
  * A query the classifier puts in `strategy_to_moves_execution`, asserted rather
@@ -184,6 +185,8 @@ async function runAsk(args: {
   query: string;
   modelText: string;
   modelAuthoredOutput?: boolean;
+  modelChunks?: string[];
+  tenantClientKey?: string;
 }): Promise<AskRun> {
   getAuditedAnthropicClient.mockReset();
   getAuditedAnthropicClient.mockResolvedValue({
@@ -192,10 +195,11 @@ async function runAsk(args: {
       messages: {
         create: async () => ({
           async *[Symbol.asyncIterator]() {
-            yield {
-              type: "content_block_delta",
-              delta: { type: "text_delta", text: args.modelText },
-            };
+            for (const text of args.modelChunks ?? [args.modelText])
+              yield {
+                type: "content_block_delta",
+                delta: { type: "text_delta", text },
+              };
           },
         }),
       },
@@ -210,7 +214,7 @@ async function runAsk(args: {
     // `tenantId` is required for the synthesizer to reach the model at all;
     // without it the turn refuses before the behaviour under test.
     tenantId: "tenant-c412",
-    tenantClientKey: "skyharbor-air",
+    tenantClientKey: args.tenantClientKey ?? "skyharbor-air",
     // See the header note: this is what makes the fallback case attributable
     // to `ask/index.ts` rather than to the synthesizer.
     richText: true,
@@ -242,6 +246,79 @@ describe("C-412 · answer-mode wiring inside the Ask module", () => {
     else process.env.ANTHROPIC_API_KEY = ORIGINAL_API_KEY;
   });
 
+  it("releases a checked opening paragraph before model completion, without duplicating the final output", async () => {
+    let finishModel!: () => void;
+    const waitForFinish = new Promise<void>((resolve) => {
+      finishModel = resolve;
+    });
+    let modelFinished = false;
+    const opening = "Validate the opportunity before choosing delivery.\n\n";
+    const tail = "Keep the baseline requirement visible.";
+    getAuditedAnthropicClient.mockReset();
+    getAuditedAnthropicClient.mockResolvedValue({
+      auditId: "stream-proof",
+      client: {
+        messages: {
+          create: async () => ({
+            async *[Symbol.asyncIterator]() {
+              yield {
+                type: "content_block_delta",
+                delta: { type: "text_delta", text: opening },
+              };
+              await waitForFinish;
+              yield {
+                type: "content_block_delta",
+                delta: { type: "text_delta", text: tail },
+              };
+              modelFinished = true;
+            },
+          }),
+        },
+      },
+    });
+    const iterator = askIntelligence("What opportunity should we validate?", {
+      tenantId: "tenant-c412",
+      tenantClientKey: "skyharbor-air",
+      richText: true,
+      modelAuthoredOutput: true,
+    });
+    let output = "";
+    try {
+      for (;;) {
+        const event = await iterator.next();
+        expect(event.done).toBe(false);
+        if (event.value?.type === "delta") {
+          output += event.value.text;
+          break;
+        }
+      }
+      expect(output).toBe(opening);
+      expect(modelFinished).toBe(false);
+    } finally {
+      finishModel();
+    }
+    for await (const event of iterator)
+      if (event.type === "delta") output += event.text;
+    expect(modelFinished).toBe(true);
+    expect(output).toBe(opening + tail);
+  }, 30000);
+
+  it("blocks a retired metric split across chunks before its paragraph is released", async () => {
+    const policy = INTELLIGENCE_TENANT_SAFETY_POLICIES.find(
+      (p) => p.staleFactPatterns.length > 0,
+    )!;
+    const result = await runAsk({
+      query: "Give an executive read.",
+      modelText: "",
+      modelAuthoredOutput: true,
+      tenantClientKey: policy.tenantKey,
+      modelChunks: ["Recorded revenue is $54.", "2B.\n\nChoose a scope."],
+    });
+    expect(result.answer).toBe("");
+    expect(result.eventTypes).toContain("error");
+    expect(result.eventTypes).not.toContain("done");
+  }, 30000);
+
   it("preserves the full Claude output on the executive path and sends one unified contract", async () => {
     const modelText =
       '**Validate first.**  Preserve these spaces.\n\n- Keep this action.\n\n```followups\n["Which gate?","What economics?","Who owns it?"]\n```';
@@ -255,8 +332,15 @@ describe("C-412 · answer-mode wiring inside the Ask module", () => {
     expect(result.eventTypes).not.toContain("error");
     expect(result.modelInputs).toHaveLength(1);
     expect(result.modelInputs[0].system).toContain("around 100 words");
-    expect(result.modelInputs[0].system).toContain("roughly 300 words of prose");
+    expect(result.modelInputs[0].system).toContain(
+      "roughly 300 words of prose",
+    );
     expect(result.modelInputs[0].system).toContain("Never invent facts");
+    expect(result.modelInputs[0].system).toContain("FOLLOW-UP DECISION TEST");
+    expect(result.modelInputs[0].user).toContain("business objective");
+    expect(result.modelInputs[0].user).toContain(
+      "Vendor contract details and system/API readiness",
+    );
     expect(result.modelInputs[0].system).not.toContain("valueScore");
     expect(result.modelInputs[0].system).not.toContain("UNIVERSAL aVa ANSWER");
     expect(result.modelInputs[0].user).not.toContain(

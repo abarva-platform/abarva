@@ -1,6 +1,9 @@
 import { NextRequest } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
-import { modelAuthoredAnswerPacket } from "@/lib/intelligence/answer/model-authored-answer";
+import {
+  modelAuthoredAnswerPacket,
+  modelAuthoredStreamingProse,
+} from "@/lib/intelligence/answer/model-authored-answer";
 import { askIntelligence } from "@/lib/intelligence/ask";
 import {
   buildClientSafeRetiredFactMessage,
@@ -338,6 +341,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               })
             : surfaceContext;
       const structuredFenceStreamFilter = createStructuredFenceStreamFilter();
+      let streamedExecutiveProse = "";
       // Agent-trace capture (aVa Intelligence path).
       let traceSources: RawAskSource[] = [];
       let traceModelInputHash: string | undefined;
@@ -1218,6 +1222,9 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           activePersonGraphNodeId,
           activePersonDisplayName,
           traceEnabled: payload.traceEnabled,
+          onTiming: enqueueTiming,
+          latencyTraceId: routeTrace.requestId,
+          latencyStartedAt: routeTrace.startedAt,
           onModelInput: (parts) => {
             traceModelInputHash = hashModelInput(parts);
           },
@@ -1264,7 +1271,27 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           }
           if (event.type === "delta" && event.text) {
             assistantText += event.text;
-            if (modelAuthoredOutput) continue;
+            if (modelAuthoredOutput) {
+              const prose = modelAuthoredStreamingProse(assistantText);
+              if (!prose.replace(/^ {0,3}#{1,6}[ \t]+[^\n]*$/gm, "").trim())
+                continue;
+              if (prose.trim() !== streamedExecutiveProse.trim()) {
+                if (!streamedExecutiveProse.trim())
+                  enqueueTiming(
+                    routeTrace.mark("route.executive.first_prose", {
+                      proseChars: prose.length,
+                    }),
+                  );
+                streamedExecutiveProse = prose;
+                controller.enqueue(
+                  encoder.encode(
+                    JSON.stringify({ type: "answer-progress", text: prose }) +
+                      "\n",
+                  ),
+                );
+              }
+              continue;
+            }
             const displayText = displaySafeIntelligenceDelta(
               structuredFenceStreamFilter.push(event.text),
             );

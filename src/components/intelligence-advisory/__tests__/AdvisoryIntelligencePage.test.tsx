@@ -17,6 +17,7 @@ import {
 } from "../AdvisoryIntelligencePage";
 import { getEnterpriseLandscapeViewModel } from "@/lib/home/enterprise-landscape-view-model";
 import { rememberHomeQuestion } from "@/lib/home/preview/intelligence-handoff";
+import { modelAuthoredAnswerPacket } from "@/lib/intelligence/answer/model-authored-answer";
 
 describe("AdvisoryIntelligencePage", () => {
   const viewModel = getEnterpriseLandscapeViewModel({
@@ -219,7 +220,9 @@ describe("AdvisoryIntelligencePage stream chunk boundaries", () => {
     const intervalSpy = jest.spyOn(window, "setInterval");
     try {
       const stream = await askFirstStarter();
-      const callback = intervalSpy.mock.calls.find(([, delay]) => delay === 10_000)?.[0];
+      const callback = intervalSpy.mock.calls.find(
+        ([, delay]) => delay === 10_000,
+      )?.[0];
       expect(typeof callback).toBe("function");
       if (typeof callback === "function") {
         act(() => callback());
@@ -276,5 +279,40 @@ describe("AdvisoryIntelligencePage stream chunk boundaries", () => {
     expect(agentTurnText()).toContain(
       "First paragraph ends here.\n\nSecond paragraph follows it.",
     );
+  });
+
+  it("shows executive progress before completion and replaces it once with the final packet and relevant questions", async () => {
+    const stream = await askFirstStarter();
+    for (const starter of buildStarterPrompts(viewModel))
+      expect(
+        screen.queryByTestId(`agent-dock-suggestion-${starter}`),
+      ).toBeNull();
+    const opening =
+      "Charter discovery before selecting the delivery model.\n\n";
+    await stream.push(line({ type: "answer-progress", text: opening }));
+    expect(agentTurnText()).toContain("Charter discovery");
+    expect(screen.getByText("Preparing the rest of the answer…")).toBeTruthy();
+    const questions = [
+      "Which inquiries belong in discovery?",
+      "How should successful resolution be measured?",
+      "Compare delivery options for the discovery scope?",
+    ];
+    const raw = `${opening}Establish the baseline.\n\n\`\`\`followups\n${JSON.stringify(questions)}\n\`\`\``;
+    const packet = modelAuthoredAnswerPacket(
+      raw,
+      "Explore an opportunity.",
+      "reference-enterprise",
+      [],
+    );
+    await stream.push(line({ type: "agent-answer", answer: packet }));
+    await stream.close();
+    expect(screen.queryByText("Preparing the rest of the answer…")).toBeNull();
+    expect(agentTurnText().match(/Charter discovery/g)).toHaveLength(1);
+    expect(agentTurnText()).toContain("Establish the baseline.");
+    for (const question of questions)
+      expect(
+        screen.getByTestId(`agent-dock-suggestion-${question}`),
+      ).toBeTruthy();
+    expect(agentTurnText()).not.toMatch(/```|followups/);
   });
 });
