@@ -321,3 +321,91 @@ describe('azure programs write adapter', () => {
     ).resolves.toBe(false);
   });
 });
+describe('initial authored P1 admission transaction', () => {
+  const receipt = {
+    source: 'authored_docx_upload' as const, origin: 'abarva_uploaded' as const, tenantKey: 'meridian-health', storageTenantKey: 'meridian',
+    moveId: '10000000-0000-4000-8000-000000000001', deliverableTypeKey: 'charter' as const, phase: 1 as const,
+    requestId: '50000000-0000-4000-8000-000000000001', sha256: 'a'.repeat(64),
+    artifactId: '20000000-0000-4000-8000-000000000001', artifactVersion: 1, uploadedBy: 'operator-1',
+    authoringBasis: 'abarva_authored_unsigned' as const, delegatedReviewReference: null, originalFileName: 'charter.docx', parseMethod: 'docx-parser',
+    evidenceSnapshotHash: null, phaseEvidenceSnapshotHash: null, evidenceSnapshotScope: 'phase' as const, observedAt: '2026-10-12T18:00:00Z',
+  };
+  const approvedReceipt = { ...receipt, evidenceSnapshotHash: 'approved-basis', phaseEvidenceSnapshotHash: 'approved-phase-basis' };
+  const input = { programId: receipt.moveId, clientId: 'tenant-id', title: 'Program Charter', content: 'Unsigned authored words', receipt };
+  it('creates the document, immutable uploaded version and lifecycle in one transaction with no authority pointer', async () => {
+    const calls: Array<[string, readonly unknown[]]> = [];
+    const { session, state } = fakeTxSession((sql, params) => {
+      calls.push([sql, params]);
+      if (sql.startsWith('SELECT id FROM engagements')) return [{ id: receipt.moveId }];
+      if (sql.startsWith('SELECT type_key')) return [{ type_key: 'charter' }];
+      if (sql.startsWith('INSERT INTO deliverables_v2')) return [{ id: 'document-1' }];
+      if (sql.startsWith('INSERT INTO deliverable_versions')) return [{ id: 'version-1' }];
+      return [];
+    });
+    expect(await createAzureProgramsWriteAdapter(session).runInitialAuthoredDeliverable(input)).toMatchObject({ ok: true, data: { kind: 'created', version: 1, receipt } });
+    expect(state.transactions).toBe(1);
+    expect(calls[0][0]).toContain('pg_advisory_xact_lock');
+    expect(calls.find(([sql]) => sql.startsWith('SELECT id FROM engagements'))?.[1]).toEqual([receipt.moveId, 'tenant-id']);
+    expect(calls.find(([sql]) => sql.startsWith('INSERT INTO deliverables_v2'))?.[0]).toContain("'draft'");
+    const version = calls.find(([sql]) => sql.startsWith('INSERT INTO deliverable_versions'))!;
+    expect(version[0]).toContain("'abarva_uploaded'"); expect(JSON.parse(String(version[1][2]))).toEqual({ source: 'authored_docx_upload', authoredUpload: receipt });
+    expect(calls.some(([sql]) => /UPDATE engagements|signed_off_by|signed_off_version|approval_granted/.test(sql))).toBe(false);
+  });
+  it.each([1, 2])('refuses %i existing rows without overwriting or creating a version', async count => {
+    const { session, statements } = fakeTxSession(sql => sql.startsWith('SELECT id FROM engagements') ? [{ id: receipt.moveId }]
+      : sql.startsWith('SELECT id, current_version') ? Array.from({ length: count }, () => ({ id: 'signed-document', current_version: 4 })) : []);
+    expect(await createAzureProgramsWriteAdapter(session).runInitialAuthoredDeliverable(input)).toMatchObject({ ok: true, data: { kind: 'conflict' } });
+    expect(statements.some(sql => sql.startsWith('INSERT') || sql.startsWith('UPDATE'))).toBe(false);
+  });
+  it('replays only the exact stored receipt and returns its immutable IDs', async () => {
+    const { session, statements } = fakeTxSession(sql => sql.startsWith('SELECT id FROM engagements') ? [{ id: receipt.moveId }]
+      : sql.startsWith('SELECT id, current_version') ? [{ id: 'document-1', current_version: 2 }]
+      : sql.startsWith('SELECT id, version, structured_data') ? [{ id: 'version-1', version: 1, structured_data: { authoredUpload: receipt } }] : []);
+    expect(await createAzureProgramsWriteAdapter(session).runInitialAuthoredDeliverable(input)).toMatchObject({ ok: true, data: { kind: 'replay', versionId: 'version-1', version: 1, currentVersion: 2 } });
+    expect(statements.some(sql => sql.startsWith('INSERT') || sql.startsWith('UPDATE'))).toBe(false);
+  });
+  it('provisions only the declared missing catalog identity inside the same admission transaction', async () => {
+    const calls: Array<[string, readonly unknown[]]> = [];
+    const { session, state } = fakeTxSession((sql, params) => {
+      calls.push([sql, params]);
+      if (sql.startsWith('SELECT id FROM engagements')) return [{ id: receipt.moveId }];
+      if (sql.startsWith('INSERT INTO deliverables_v2')) return [{ id: 'document-1' }];
+      if (sql.startsWith('INSERT INTO deliverable_versions')) return [{ id: 'version-1' }];
+      return [];
+    });
+    expect((await createAzureProgramsWriteAdapter(session).runInitialAuthoredDeliverable(input)).ok).toBe(true);
+    const catalog = calls.find(([sql]) => sql.startsWith('INSERT INTO deliverable_types'))!;
+    expect(catalog[0]).toContain('ON CONFLICT (type_key) DO NOTHING'); expect(catalog[1]).toEqual(['charter', 'Program Charter']);
+    expect(catalog[1]).not.toContain(input.content); expect(state.transactions).toBe(1);
+  });
+  it('refuses missing tenancy and stops a version-write failure before reporting admission', async () => {
+    const missing = fakeTxSession(); expect((await createAzureProgramsWriteAdapter(missing.session).runInitialAuthoredDeliverable(input)).ok).toBe(false);
+    const failing = fakeTxSession(sql => {
+      if (sql.startsWith('SELECT id FROM engagements')) return [{ id: receipt.moveId }];
+      if (sql.startsWith('SELECT type_key')) return [{ type_key: 'charter' }];
+      if (sql.startsWith('INSERT INTO deliverables_v2')) return [{ id: 'document-1' }];
+      if (sql.startsWith('INSERT INTO deliverable_versions')) throw new Error('version write refused');
+      return [];
+    });
+    expect((await createAzureProgramsWriteAdapter(failing.session).runInitialAuthoredDeliverable(input)).ok).toBe(false);
+    expect(failing.statements.some(sql => sql.includes('deliverable_lifecycle_events'))).toBe(false);
+  });
+  it('approves only the current authored file/version, updating the file, pointer and lifecycle in one transaction', async () => {
+    const calls: Array<[string, readonly unknown[]]> = [];
+    const { session, state } = fakeTxSession((sql, params) => { calls.push([sql, params]); return sql.startsWith('SELECT d.id') ? [{ id: 'document-1' }] : []; });
+    const result = await createAzureProgramsWriteAdapter(session).runAuthoredApproval({ ...input, receipt: approvedReceipt, deliverableId: 'document-1', versionId: 'version-1', version: 1, userId: 'reviewer-1', reviewerRole: 'other', approvalRationale: 'Workspace review' });
+    expect(result).toEqual({ ok: true, data: { applied: true } }); expect(state.transactions).toBe(1);
+    const guard = calls[0]; expect(guard[0]).toContain('d.signed_off_version IS NULL'); expect(guard[0]).toContain('v.content = $6');
+    expect(guard[0]).toContain("v.origin = 'abarva_uploaded'"); expect(guard[0]).toContain("v.structured_data->'authoredUpload' = $7::jsonb");
+    expect(guard[0]).toContain('a.tenant_key = $10'); expect(guard[0]).toContain('a.blob_sha256 = $12'); expect(guard[0]).toContain('FOR UPDATE OF d, v, a');
+    expect(guard[1]).toEqual(['document-1', receipt.moveId, 'tenant-id', 1, 'version-1', input.content, JSON.stringify(approvedReceipt), 'charter', receipt.artifactId, 'meridian', 1, receipt.sha256, receipt.requestId]);
+    expect(calls.some(([sql]) => sql.startsWith('INSERT INTO deliverable_versions'))).toBe(false);
+    const event = calls.find(([sql]) => sql.startsWith('INSERT INTO deliverable_lifecycle_events'))!;
+    expect(event[0]).toContain("'abarva_uploaded'"); expect(event[0]).toContain("CASE WHEN $4 = 'other'");
+  });
+  it('leaves approval state untouched when its locked exact-version guard no longer matches', async () => {
+    const { session, statements } = fakeTxSession();
+    expect(await createAzureProgramsWriteAdapter(session).runAuthoredApproval({ ...input, receipt: approvedReceipt, deliverableId: 'document-1', versionId: 'version-1', version: 1, userId: 'reviewer-1', reviewerRole: 'artifact_owner', approvalRationale: null })).toEqual({ ok: true, data: { applied: false } });
+    expect(statements.some(sql => sql.startsWith('UPDATE') || sql.startsWith('INSERT'))).toBe(false);
+  });
+});

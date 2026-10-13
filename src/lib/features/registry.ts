@@ -105,6 +105,7 @@ export type FeatureFlagKey =
   | "moves_home_v2"
   | "moves_charter_basis_v1"
   | "moves_charter_assumptions_discover_v1"
+  | "moves_authored_p1_draft_upload_v1"
   | "moves_capture_p0_v1"
   | "moves_capture_composition_v1"
   | "moves_workspace_v2"
@@ -526,6 +527,12 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     key: "moves_charter_basis_v1",
     summary:
       "2026-10-04: Relaxes the P1 Charter advance gate from a per-field approved-evidence lock to minimum-viable evidence. Each Charter field records a BASIS - approved evidence, a workspace-user assertion, or an assumption with an owner and a P2 validation plan - and an assertion or owned assumption is enough to advance without an upload. Unsupported fields stay visibly classified as assumptions (never shown as 'evidence covered') and carry into Discover to be validated. P2+ evidence gates are unchanged. Enabled for the synthetic demo tenant for signed-in review; the legacy approved-evidence lock stays in force elsewhere.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
+  {
+    key: "moves_authored_p1_draft_upload_v1",
+    summary: "Allows an authorized author to upload an unsigned authored DOCX to the declared P1 Charter or Discovery Workshop Guide when no document exists. The stored original, hash, uploaded origin and version receipt are preserved; separate approval verifies the exact file and current evidence. No model, capture promotion, input acceptance or phase advance runs on upload. Enabled for the synthetic demo tenant; existing paths remain unchanged elsewhere.",
     policy: "tenant",
     includeTenants: ["meridian"],
   },
