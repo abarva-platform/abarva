@@ -76,6 +76,7 @@ export function homeFollowUpQuestions(answer: AvaAnswerPacket): string[] {
 export function formatHomeAdvisorAnswer(
   answer: AvaAnswerPacket,
   source: HomeRecordRenderSource,
+  declaredSyntheticDemo?: boolean,
 ): AvaAnswerPacket {
   const direct = answer.directAnswer.trim();
   let detail = answer.prose?.trim() ?? "";
@@ -89,7 +90,7 @@ export function formatHomeAdvisorAnswer(
       ? detail
       : paragraphs.map((paragraph) => `- ${paragraph}`).join("\n\n");
   const latest = source.contextVersion?.sourceDateCoverage?.latest;
-  const basis = `Record basis: ${homeRecordSourceLabel(source)}. ${latest ? `Source files dated through ${latest}. ` : ""}Data currency is not independently attested.`;
+  const basis = `Record basis: ${homeRecordSourceLabel(source)}. ${declaredSyntheticDemo === true ? "Synthetic reference, not client-attested. " : ""}${latest ? `Source files dated through ${latest}. ` : ""}Data currency is not independently attested.`;
   return {
     ...answer,
     prose: [

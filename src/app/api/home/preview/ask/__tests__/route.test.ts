@@ -190,6 +190,30 @@ beforeEach(() => {
   });
 });
 
+it("carries the resolved registry declaration into the answer's visible basis", async () => {
+  const bundle = { ...homeBundle(), declaredSyntheticDemo: true };
+  mockedResolveBundle.mockResolvedValue({
+    bundle,
+    recordSource: liveRecordSource(),
+  });
+  const response = await POST(
+    makeRequest({
+      tenantKey: "meridian-health",
+      question: "What should leadership prioritize?",
+      expectedRecordSource: liveRecordSource(),
+    }),
+  );
+  const json = await response.json();
+  expect(response.status).toBe(200);
+  expect(mockedAnswerHomeAvaQuestion).toHaveBeenCalledWith(
+    expect.objectContaining({ bundle }),
+  );
+  expect(json.answer.prose).toContain(
+    "Synthetic reference, not client-attested",
+  );
+  expect(json.recordSource).toEqual(liveRecordSource());
+});
+
 it("answers from the same served Home bundle source that renders the page", async () => {
   const response = await POST(
     makeRequest({

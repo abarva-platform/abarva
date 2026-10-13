@@ -106,7 +106,11 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({
-    answer: formatHomeAdvisorAnswer(answer, recordSource),
+    answer: formatHomeAdvisorAnswer(
+      answer,
+      recordSource,
+      bundle.declaredSyntheticDemo,
+    ),
     followUpQuestions: homeFollowUpQuestions(answer),
     recordSource,
   });

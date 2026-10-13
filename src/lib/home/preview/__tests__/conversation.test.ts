@@ -73,6 +73,18 @@ it("preserves structured bullets and caveats rather than cutting them to fit", (
   );
 });
 
+it.each([true, false, undefined])(
+  "renders the declared synthetic basis only when supplied (%s)",
+  (declared) => {
+    const formatted = formatHomeAdvisorAnswer(answer, source, declared);
+    expect(
+      formatted.prose?.includes("Synthetic reference, not client-attested"),
+    ).toBe(declared === true);
+    expect(formatted.citations).toEqual(answer.citations);
+    expect(formatted.prose).toContain("Reviewed stored record");
+  },
+);
+
 it("bounds conversation and rejects assistant prose and arbitrary extra fields", () => {
   const turn = { question: "Why does that matter?", citedClaimTags: ["TD-K1"] };
   expect(homeConversationSchema.safeParse([turn]).success).toBe(true);
