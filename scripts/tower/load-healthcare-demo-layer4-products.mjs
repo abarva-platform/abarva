@@ -93,6 +93,8 @@ function envFlag(name) {
 }
 
 function gitSha() {
+  const operatorCommit = process.env.ABARVA_OPERATOR_BRANCH_COMMIT?.trim();
+  if (/^[0-9a-f]{40}$/.test(operatorCommit ?? "")) return operatorCommit;
   const result = spawnSync("git", ["rev-parse", "HEAD"], {
     cwd: ROOT,
     encoding: "utf8",
@@ -597,7 +599,7 @@ function buildRows(options) {
   };
   const summaryEntry = addProjectionRow(ctx, "command_center", "executive_summary", "portfolio_summary", summaryPayload, summaryRefs);
   commandRows.push({
-    id: sqlText(stableUuid("tower_command_center", options.tenantKey, "command_center", "executive_summary")),
+    id: sqlText(stableUuid("tower_command_center", options.tenantKey, options.assessmentId, "command_center", "executive_summary")),
     tenant_key: sqlText(options.tenantKey),
     assessment_id: sqlText(options.assessmentId),
     snapshot_id: sqlText(snapshotId),
@@ -756,7 +758,7 @@ function buildRows(options) {
     };
     const commandEntry = addProjectionRow(ctx, "decision_lanes", row.business_case_id, "ai_business_case", display, refs);
     commandRows.push({
-      id: sqlText(stableUuid("tower_command_center", options.tenantKey, "decision_lanes", row.business_case_id)),
+      id: sqlText(stableUuid("tower_command_center", options.tenantKey, options.assessmentId, "decision_lanes", row.business_case_id)),
       tenant_key: sqlText(options.tenantKey),
       assessment_id: sqlText(options.assessmentId),
       snapshot_id: sqlText(snapshotId),
@@ -809,7 +811,7 @@ function buildRows(options) {
     };
     const valueEntry = addProjectionRow(ctx, "value_proof", row.business_case_id, "value_claim", valueDisplay, refs);
     valueRows.push({
-      id: sqlText(stableUuid("tower_value_chain", options.tenantKey, "value_proof", row.business_case_id)),
+      id: sqlText(stableUuid("tower_value_chain", options.tenantKey, options.assessmentId, "value_proof", row.business_case_id)),
       tenant_key: sqlText(options.tenantKey),
       assessment_id: sqlText(options.assessmentId),
       snapshot_id: sqlText(snapshotId),
@@ -854,7 +856,7 @@ function buildRows(options) {
     };
     const costEntry = addProjectionRow(ctx, "cost_lens", row.business_case_id, "top_investment", costDisplay, refs);
     valueRows.push({
-      id: sqlText(stableUuid("tower_value_chain", options.tenantKey, "cost_lens", row.business_case_id)),
+      id: sqlText(stableUuid("tower_value_chain", options.tenantKey, options.assessmentId, "cost_lens", row.business_case_id)),
       tenant_key: sqlText(options.tenantKey),
       assessment_id: sqlText(options.assessmentId),
       snapshot_id: sqlText(snapshotId),
@@ -900,7 +902,7 @@ function buildRows(options) {
     };
     const aiEntry = addProjectionRow(ctx, "ai_portfolio", row.business_case_id, "ai_business_case", aiDisplay, refs);
     aiRows.push({
-      id: sqlText(stableUuid("tower_ai_portfolio", options.tenantKey, "ai_portfolio", row.business_case_id)),
+      id: sqlText(stableUuid("tower_ai_portfolio", options.tenantKey, options.assessmentId, "ai_portfolio", row.business_case_id)),
       tenant_key: sqlText(options.tenantKey),
       assessment_id: sqlText(options.assessmentId),
       snapshot_id: sqlText(snapshotId),
@@ -955,7 +957,7 @@ function buildRows(options) {
       };
       const entry = addProjectionRow(ctx, pageKey, queueRow.business_case_id, "evidence_gap", payload, refs);
       evidenceRows.push({
-        id: sqlText(stableUuid("tower_evidence_queue", options.tenantKey, pageKey, queueRow.business_case_id)),
+        id: sqlText(stableUuid("tower_evidence_queue", options.tenantKey, options.assessmentId, pageKey, queueRow.business_case_id)),
         tenant_key: sqlText(options.tenantKey),
         assessment_id: sqlText(options.assessmentId),
         snapshot_id: sqlText(snapshotId),
@@ -997,7 +999,7 @@ function buildRows(options) {
     };
     const actionEntry = addProjectionRow(ctx, "recommended_actions", queueRow.business_case_id, "recommended_action", actionPayload, refs);
     commandRows.push({
-      id: sqlText(stableUuid("tower_command_center", options.tenantKey, "recommended_actions", queueRow.business_case_id)),
+      id: sqlText(stableUuid("tower_command_center", options.tenantKey, options.assessmentId, "recommended_actions", queueRow.business_case_id)),
       tenant_key: sqlText(options.tenantKey),
       assessment_id: sqlText(options.assessmentId),
       snapshot_id: sqlText(snapshotId),
@@ -1081,7 +1083,7 @@ function buildRows(options) {
     };
     const entry = addProjectionRow(ctx, "adoption_lens", tool.tool_rollout_id, "ai_tool_rollout", payload, refs);
     aiRows.push({
-      id: sqlText(stableUuid("tower_ai_portfolio", options.tenantKey, "adoption_lens", tool.tool_rollout_id)),
+      id: sqlText(stableUuid("tower_ai_portfolio", options.tenantKey, options.assessmentId, "adoption_lens", tool.tool_rollout_id)),
       tenant_key: sqlText(options.tenantKey),
       assessment_id: sqlText(options.assessmentId),
       snapshot_id: sqlText(snapshotId),
@@ -2328,4 +2330,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   await main();
 }
 
-export { privateStageProof, readbackSql, validateReadback };
+export { buildRows, gitSha, privateStageProof, readbackSql, validateReadback };

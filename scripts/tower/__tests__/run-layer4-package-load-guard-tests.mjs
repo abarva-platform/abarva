@@ -37,14 +37,17 @@ function runMutation(manifest, mode, projectYear = "", projectAmount = 100) {
 }
 
 try {
-  for (const mode of ["--write", "--purge-only"]) {
-    for (const manifest of [{ no_runtime_load: true }, {}]) {
-      const { result, outDir } = runMutation(manifest, mode);
-      assert.notEqual(result.status, 0);
-      assert.match(result.stderr, /no_runtime_load=false/);
-      assert.equal(fs.existsSync(outDir), false, "refusal must happen before output or SQL is created");
-    }
+  for (const manifest of [{ no_runtime_load: true }, {}]) {
+    const { result, outDir } = runMutation(manifest, "--write");
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /no_runtime_load=false/);
+    assert.equal(fs.existsSync(outDir), false, "refusal must happen before output or SQL is created");
   }
+
+  const purge = runMutation({ no_runtime_load: false }, "--purge-only");
+  assert.notEqual(purge.result.status, 0);
+  assert.match(purge.result.stderr, /Refusing Layer 4 purge/);
+  assert.equal(fs.existsSync(purge.outDir), false, "purge refusal must precede SQL creation");
 
   const missingPeriod = runMutation({ no_runtime_load: false }, "--write");
   assert.match(missingPeriod.result.stderr, /project_budget_fiscal_year/);
