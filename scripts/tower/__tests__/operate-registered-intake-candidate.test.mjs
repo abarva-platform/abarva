@@ -9,11 +9,26 @@ import { fileURLToPath } from "node:url";
 import {
   validateCandidate, validateReceipt, validatePhysicalPage, validateFactLineage,
   verifyProofBundleContents, physicalSubstrate, physicalMeasures, proofValue,
+  validateRollbackCandidateGeneration,
 } from "../operate-registered-intake-candidate.mjs";
 
 const sha = (value) => crypto.createHash("sha256").update(value).digest("hex");
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const pages = ["command_center", "decision_lanes", "recommended_actions", "value_proof", "cost_lens", "evidence", "risk_lens", "ai_portfolio", "adoption_lens"];
+
+test("rollback refuses a changed or missing staged page before the pointer swap", () => {
+  const counts = { command_center: 1, foundations: 2 };
+  const hashes = { command_center: sha("command"), foundations: sha("foundation") };
+  const receipt = { view_counts: counts, view_fingerprints: hashes };
+  const fingerprints = Object.fromEntries(Object.keys(counts)
+    .map((page) => [page, { rows: counts[page], fingerprint_sha256: hashes[page] }]));
+  assert.doesNotThrow(() => validateRollbackCandidateGeneration(fingerprints, receipt));
+  assert.throws(() => validateRollbackCandidateGeneration({ ...fingerprints,
+    foundations: { ...fingerprints.foundations, fingerprint_sha256: sha("changed") } }, receipt),
+  /rollback_candidate_generation_changed/);
+  assert.throws(() => validateRollbackCandidateGeneration({ command_center: fingerprints.command_center }, receipt),
+    /rollback_candidate_generation_changed/);
+});
 
 function fixture() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "tower-promote-test-"));

@@ -551,6 +551,7 @@ type MdComponents = NonNullable<
 
 function buildComponents(
   inlineNodes: ReadonlyMap<string, ReactNode> | undefined,
+  showListMarkers = false,
 ): MdComponents {
   return {
     p: ({ children }) => {
@@ -732,10 +733,26 @@ function buildComponents(
     ),
 
     ul: ({ children }) => (
-      <ul style={{ margin: "0.4em 0", paddingLeft: "1.4em" }}>{children}</ul>
+      <ul
+        style={{
+          margin: "0.4em 0",
+          paddingLeft: "1.4em",
+          ...(showListMarkers ? { listStyleType: "disc" } : {}),
+        }}
+      >
+        {children}
+      </ul>
     ),
     ol: ({ children }) => (
-      <ol style={{ margin: "0.4em 0", paddingLeft: "1.4em" }}>{children}</ol>
+      <ol
+        style={{
+          margin: "0.4em 0",
+          paddingLeft: "1.4em",
+          ...(showListMarkers ? { listStyleType: "decimal" } : {}),
+        }}
+      >
+        {children}
+      </ol>
     ),
 
     blockquote: ({ children }) => (
@@ -828,6 +845,7 @@ export interface AgentMarkdownProps {
   text: string;
   /** Render authored Markdown without language normalization or token substitution. */
   preserveOutput?: boolean;
+  showListMarkers?: boolean;
   /**
    * Optional placeholder→React-node substitutions applied before any
    * other tokenization. Use this to embed pre-built nodes (e.g.
@@ -848,8 +866,12 @@ export function AgentMarkdown({
   text,
   inlineNodes,
   preserveOutput = false,
+  showListMarkers = false,
 }: AgentMarkdownProps) {
-  const components = useMemo(() => buildComponents(inlineNodes), [inlineNodes]);
+  const components = useMemo(
+    () => buildComponents(inlineNodes, showListMarkers),
+    [inlineNodes, showListMarkers],
+  );
   const normalizedText = useMemo(
     () => (preserveOutput ? text : normalizeAbarvaAgentMarkup(text)),
     [text, preserveOutput],

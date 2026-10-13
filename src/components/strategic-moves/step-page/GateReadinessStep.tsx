@@ -867,6 +867,8 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
       stored &&
       (stored.moveId !== props.moveId || stored.state === "unavailable");
     if (stored) {
+      const approvalAbsent =
+        !approvalUnavailable && stored.state === "not_recorded";
       const recorded =
         !approvalUnavailable && stored.state === "recorded" ? stored : null;
       const correction = recorded?.captureCorrection;
@@ -959,7 +961,7 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
           intro={
             recorded
               ? "The stored phase gate approval is retained. The origination request has a separate lifecycle."
-              : stored.state === "not_recorded" && !approvalUnavailable
+              : approvalAbsent
                 ? "No stored phase gate approval was found."
                 : "The stored approval could not be checked."
           }
@@ -973,14 +975,18 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
               ? "Review retained input"
               : recorded
                 ? "Phase gate approval recorded"
-                : "Approval unavailable",
+                : approvalAbsent
+                  ? "Approval record missing"
+                  : "Approval unavailable",
             sentence: needsCorrection
               ? "Review the retained input and record why it should be restored."
               : correctionUnavailable
                 ? "Wait for the retained input binding to be verified."
                 : recorded
                   ? "Open P1 Charter."
-                  : "Wait for the stored origination approval to be read.",
+                  : approvalAbsent
+                    ? "Review the phase history for the missing P0 approval record."
+                    : "Wait for the stored origination approval to be read.",
             settled: recorded ? 1 : 0,
             total: needsCorrection || correctionUnavailable ? 2 : 1,
             continueEnabled: needsCorrection
@@ -1001,13 +1007,25 @@ export function GateReadinessStep(props: GateReadinessStepProps) {
               ? `${correction.fields.length} retained input field${correction.fields.length === 1 ? "" : "s"} to review`
               : recorded
                 ? "1 phase gate approval recorded"
-                : "Approval readback unavailable"
+                : approvalAbsent
+                  ? "No stored phase approval found"
+                  : "Approval readback unavailable"
           }
           context={{ items: ["Stored phase approval"], details: [] }}
+          blockedLink={
+            approvalAbsent
+              ? {
+                  href: `/strategic-moves/${encodeURIComponent(props.moveId)}/phase/0?workspace=intelligence`,
+                  label: "Review phase history",
+                }
+              : undefined
+          }
           blockedWork={
             correctionUnavailable
               ? correction.reason
-              : "Approval and saved answers are unchanged. Refresh to read the stored approval."
+              : approvalAbsent
+                ? "No stored P0 approval record was found. Approval and saved answers are unchanged."
+                : "Approval and saved answers are unchanged. Refresh to read the stored approval."
           }
           rows={
             recorded

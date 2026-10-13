@@ -389,7 +389,23 @@ async function measureUxVariants(
       const violations = axe.violations as Array<{
         id: string;
         impact?: string | null;
+        nodes?: ReadonlyArray<{ target?: readonly unknown[] }>;
       }>;
+      await testInfo.attach(`${phase}-${view}-${variant.key}-axe-targets`, {
+        body: Buffer.from(
+          JSON.stringify({
+            phase,
+            view,
+            variant: variant.key,
+            violations: violations.map((item) => ({
+              id: item.id,
+              impact: item.impact ?? null,
+              targets: (item.nodes ?? []).map((node) => node.target ?? []),
+            })),
+          }),
+        ),
+        contentType: "application/json",
+      });
       if (variant.colorScheme === "light") {
         observation.allAxeIds = violations.map((item) => item.id);
         observation.seriousCriticalAxeIds = violations
