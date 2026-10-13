@@ -1,7 +1,10 @@
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
 import { validateAvaAnswerPacket } from "@/lib/ava-answer/validateAvaAnswerPacket";
 
-import { answerHomeAvaQuestion } from "../ava-answer";
+import {
+  answerHomeAvaQuestion,
+  homeAvaAnswerFollowUpQuestions,
+} from "../ava-answer";
 import type { ChapterView, TechnologyEstateBundle } from "../types";
 import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
 
@@ -238,6 +241,392 @@ describe("answerHomeAvaQuestion", () => {
     visual: { type: "none" },
     caveats: [],
   };
+
+  describe("quantitative narrative grounding", () => {
+    const safe = {
+      status: "partial",
+      direct_answer:
+        "The named system is relevant context, not a feasibility baseline.",
+      key_points: [
+        "**Context:** The cited application claim does not establish inquiry volumes or successful self-service resolution.",
+      ],
+      cited_claim_tags: ["TD-K1"],
+      visual: { type: "none" },
+      caveats: [],
+    };
+
+    it.each([
+      { direct_answer: "The member data domain has 33 assets." },
+      { key_points: ["**Context:** The member data domain has 33 assets."] },
+      { prose: "The member data domain has 33 assets." },
+      { caveats: ["The member data domain has 33 assets."] },
+      {
+        key_points: ["**Context:** Clinical Informatics has 99 applications."],
+      },
+      { key_points: ["**Context:** The system reaches 80% of applications."] },
+      {
+        key_points: ["**Context:** The proposal has achieved 20% resolution."],
+      },
+      {
+        key_points: [
+          "**Baseline:** Current resolution is 20% against a proposed target of 20%.",
+        ],
+      },
+      {
+        key_points: [
+          "**Baseline:** Current resolution is 20% against the unmeasured proposed 20% target.",
+        ],
+      },
+    ])(
+      "corrects uncited quantitative material rather than licensing it from summaries: %j",
+      async (unsafe) => {
+        const create = jest
+          .fn()
+          .mockResolvedValueOnce({
+            content: [
+              { type: "text", text: JSON.stringify({ ...safe, ...unsafe }) },
+            ],
+          })
+          .mockResolvedValueOnce({
+            content: [{ type: "text", text: JSON.stringify(safe) }],
+          });
+        mockGetAuditedAnthropicClient.mockResolvedValue({
+          client: { messages: { create } },
+        } as never);
+        const answer = await answerHomeAvaQuestion({
+          bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+          tenantKey: CANONICAL_TENANT_KEYS[0],
+          question:
+            "Assess a proposed 20% successful resolution target for discovery.",
+        });
+        expect(create).toHaveBeenCalledTimes(2);
+        expect(
+          mockGetAuditedAnthropicClient.mock.calls[1][0].metadata,
+        ).toMatchObject({
+          presentationRepairReasons: expect.arrayContaining([
+            expect.stringContaining("Quantities in narrative"),
+          ]),
+        });
+        expect(answer.prose).toContain("does not establish inquiry volumes");
+        expect(JSON.stringify(answer.caveats)).not.toContain("33 assets");
+        expect(answer.artifacts).toEqual([]);
+        expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+      },
+    );
+
+    it("withholds persistent unsupported quantities and removes unsafe caveats", async () => {
+      mockClaudeJson({
+        ...safe,
+        key_points: ["**Context:** The member domain has 33 assets."],
+        caveats: ["There are 33 assets."],
+      });
+      const answer = await answerHomeAvaQuestion({
+        bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question: "Assess business fit.",
+      });
+      expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(2);
+      expect(answer.status).toBe("partial");
+      expect(answer.prose).toBeUndefined();
+      expect(answer.caveats).toEqual([]);
+      expect(answer.citations.map((citation) => citation.id)).toContain(
+        "TD-K1",
+      );
+    });
+
+    it.each([
+      "**Target:** 20% is a proposed target, not a measured result.",
+      "**Target:** The proposed 20 percent target remains an unmeasured assumption.",
+    ])(
+      "retains a user-supplied proposal with its local qualification: %s",
+      async (point) => {
+        mockClaudeJson({ ...safe, key_points: [point] });
+        const answer = await answerHomeAvaQuestion({
+          bundle: { chapters: CHAPTERS },
+          tenantKey: CANONICAL_TENANT_KEYS[0],
+          question: "Assess a proposed 20% target.",
+        });
+        expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(1);
+        expect(answer.prose).toContain(point);
+      },
+    );
+
+    it("does not treat an arbitrary user-supplied figure as measured evidence", async () => {
+      mockClaudeJson({
+        ...safe,
+        key_points: ["**Result:** Successful resolution is 20%."],
+      });
+      const answer = await answerHomeAvaQuestion({
+        bundle: { chapters: CHAPTERS },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question: "Is successful resolution 20%?",
+      });
+      expect(answer.prose).toBeUndefined();
+      expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(2);
+    });
+
+    it.each([
+      [
+        "Recorded value is $1.5M, with 24% validated.",
+        "**Value:** Recorded value is USD 1,500,000, with 24 percent validated.",
+      ],
+      [
+        "Recorded value is $1.5M.",
+        "**Value:** Recorded value is 1.5 million USD.",
+      ],
+      [
+        "The target is 3.5 by 2028.",
+        "**Target:** The cited target is 3.5 by 2028 [PV-K1].",
+      ],
+      [
+        "The system reaches 80 other systems.",
+        "**Context:** The cited system reaches 80 other systems; P0/P1 discovery still needs a baseline.",
+      ],
+    ])(
+      "accepts cited quantities across equivalent display formats: %s",
+      async (statement, point) => {
+        const chapter = {
+          ...CHAPTERS[1],
+          key_insights: [{ ...CHAPTERS[1].key_insights[0], statement }],
+        };
+        mockClaudeJson({
+          ...safe,
+          key_points: [point],
+          cited_claim_tags: ["PV-K1"],
+        });
+        const answer = await answerHomeAvaQuestion({
+          bundle: { chapters: [chapter] },
+          tenantKey: CANONICAL_TENANT_KEYS[0],
+          question: "Summarize the cited record.",
+        });
+        expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(1);
+        expect(answer.prose).not.toBeUndefined();
+      },
+    );
+
+    it("does not admit a number from a claim that was offered but not cited", async () => {
+      mockClaudeJson({
+        ...safe,
+        key_points: ["**Value:** Only 23 of 50 tracked metrics are ready."],
+        cited_claim_tags: ["TD-K1", "FAKE-K1"],
+      });
+      const answer = await answerHomeAvaQuestion({
+        bundle: { chapters: CHAPTERS },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question: "Summarize value proof.",
+      });
+      expect(answer.prose).toBeUndefined();
+      expect(answer.citations.map((citation) => citation.id)).not.toContain(
+        "PV-K1",
+      );
+    });
+
+    it.each([
+      "**Rate:** Change is -20%.",
+      "**Volume:** The named system integrates with -80 systems.",
+    ])(
+      "does not drop a sign when matching cited quantities: %s",
+      async (point) => {
+        const source = {
+          ...CHAPTERS[1],
+          key_insights: [
+            {
+              ...CHAPTERS[1].key_insights[0],
+              statement:
+                "Change is 20%; the named system integrates with 80 systems.",
+            },
+          ],
+        };
+        mockClaudeJson({
+          ...safe,
+          key_points: [point],
+          cited_claim_tags: ["PV-K1"],
+        });
+        const answer = await answerHomeAvaQuestion({
+          bundle: { chapters: [source] },
+          tenantKey: CANONICAL_TENANT_KEYS[0],
+          question: "Summarize the cited context.",
+        });
+        expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(2);
+        expect(answer.prose).toBeUndefined();
+      },
+    );
+
+    it("does not let count formatting upgrade a cited pilot population to the full inventory", async () => {
+      const source = {
+        ...CHAPTERS[1],
+        key_insights: [
+          {
+            ...CHAPTERS[1].key_insights[0],
+            statement: "The pilot covers 50 tracked data assets/integrations.",
+          },
+        ],
+      };
+      mockClaudeJson({
+        ...safe,
+        key_points: [
+          "**Pilot:** The pilot covers 50 tracked data assets/integrations.",
+        ],
+        caveats: ["The pilot covers 50 tracked data assets/integrations."],
+        cited_claim_tags: ["PV-K1"],
+      });
+      const answer = await answerHomeAvaQuestion({
+        bundle: { chapters: [source], technologyEstate: TECHNOLOGY_ESTATE },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question: "Summarize the pilot context.",
+      });
+      expect(
+        JSON.stringify({ prose: answer.prose, caveats: answer.caveats }),
+      ).not.toContain("1710");
+      expect(answer.prose).toBeUndefined();
+      expect(answer.caveats).toEqual([]);
+    });
+
+    it("filters uncited numerical limitations from recovery copy and its gap", async () => {
+      const source = {
+        ...CHAPTERS[0],
+        limitations: ["33 applications need owner confirmation."],
+      };
+      mockClaudeJson({ status: "no_data", cited_claim_tags: [], caveats: [] });
+      const answer = await answerHomeAvaQuestion({
+        bundle: { chapters: [source] },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question: "What technology context should the CFO know?",
+      });
+      expect(answer.status).toBe("partial");
+      expect(
+        JSON.stringify({
+          prose: answer.prose,
+          caveats: answer.caveats,
+          gaps: answer.gaps,
+        }),
+      ).not.toContain("33 applications");
+      expect(answer.citations.map((citation) => citation.id)).toContain(
+        "TD-K1",
+      );
+    });
+
+    it("does not restore unqualified reference testimony from the original caveats after repair", async () => {
+      const create = jest
+        .fn()
+        .mockResolvedValueOnce({
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                ...referenceAnswer,
+                caveats: ["36 of 44 leaders reported data trust concerns."],
+              }),
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          content: [{ type: "text", text: JSON.stringify(referenceAnswer) }],
+        });
+      mockGetAuditedAnthropicClient.mockResolvedValue({
+        client: { messages: { create } },
+      } as never);
+      const answer = await answerHomeAvaQuestion({
+        bundle: {
+          chapters: [...CHAPTERS, leadershipChapter],
+          declaredSyntheticDemo: true,
+        },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question: "What data trust issue matters?",
+      });
+      expect(create).toHaveBeenCalledTimes(2);
+      expect(answer.prose).toContain("Modelled responses");
+      expect(JSON.stringify(answer.caveats)).not.toContain("leaders reported");
+    });
+  });
+
+  it("keeps an explicit business overview business-primary despite technology focus and earlier questions", async () => {
+    const business = {
+      ...CHAPTERS[1],
+      chapterId: "our_business" as const,
+      title: "Our Business",
+      key_insights: [
+        {
+          ...CHAPTERS[1].key_insights[0],
+          statement:
+            "The enterprise operates across two declared business segments.",
+        },
+      ],
+    };
+    mockClaudeJson({
+      status: "partial",
+      direct_answer:
+        "The record describes the business model, not segment profitability.",
+      key_points: [
+        "**Business:** The enterprise operates across two declared business segments.",
+      ],
+      cited_claim_tags: ["OB-K1"],
+      visual: { type: "none" },
+      caveats: [],
+    });
+    const answer = await answerHomeAvaQuestion({
+      bundle: {
+        chapters: [...CHAPTERS, business],
+        technologyEstate: TECHNOLOGY_ESTATE,
+      },
+      tenantKey: CANONICAL_TENANT_KEYS[0],
+      activeChapterId: "technology_data",
+      question: "What do we know about the business, not just technology?",
+      conversation: [
+        {
+          question: "Tell me about data platforms and technology.",
+          citedClaimTags: ["TD-K1"],
+        },
+      ],
+    });
+    const prompt = mockGetAuditedAnthropicClient.mock.calls[0][0].prompt;
+    const context = JSON.parse(
+      prompt.match(/Context \(JSON\):\n([\s\S]*)$/)![1],
+    );
+    expect(context.question_context_plan.primary_domains).toEqual([
+      "business_model",
+      "applications_technology",
+    ]);
+    const followUps = homeAvaAnswerFollowUpQuestions(answer);
+    expect(followUps).toHaveLength(3);
+    expect(followUps.join(" ")).toContain("business model");
+    expect(followUps.join(" ")).not.toContain("applications and technology");
+    expect(mockGetAuditedAnthropicClient.mock.calls[0][0].prompt).toContain(
+      "A share attributed jointly to two populations cannot be attributed to one component",
+    );
+  });
+
+  it("states the original-reference limit when the request needs source titles or document references", async () => {
+    mockClaudeJson({ ...referenceAnswer });
+    const answer = await answerHomeAvaQuestion({
+      bundle: {
+        chapters: [...CHAPTERS, leadershipChapter],
+        declaredSyntheticDemo: true,
+      },
+      tenantKey: CANONICAL_TENANT_KEYS[0],
+      question:
+        "What context supports discovery? Give original source/page/date references, or say when unavailable.",
+    });
+    expect(answer.caveats.map((caveat) => caveat.detail)).toContain(
+      "Original source title/page/passage/date references are not verified here; Evidence basis identifies Home claims or record references.",
+    );
+    expect(answer.citations.map((citation) => citation.id)).toContain("LP-K1");
+    expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps source-date disclosure on the claim-backed recovery path", async () => {
+    mockClaudeJson({ status: "no_data", cited_claim_tags: [], caveats: [] });
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS },
+      tenantKey: CANONICAL_TENANT_KEYS[0],
+      question: "What technology context should the CFO know? Provide source dates.",
+    });
+    expect(answer.status).toBe("partial");
+    expect(answer.citations.map((citation) => citation.id)).toContain("TD-K1");
+    expect(answer.caveats.map((caveat) => caveat.id)).toContain(
+      "home-original-reference-limit",
+    );
+  });
 
   it.each([true, false, undefined])(
     "uses the registry's declared reference basis (%s), not the tenant alias",
@@ -651,7 +1040,9 @@ describe("answerHomeAvaQuestion", () => {
           tenantKey: CANONICAL_TENANT_KEYS[0],
           question: "Talk to me about the current state of data analytics",
         });
-        expect(create).toHaveBeenCalledTimes(1);
+        expect(create).toHaveBeenCalledTimes(
+          budget === "consumed_by_audit" ? 0 : 1,
+        );
         expect(answer.status).toBe("no_data");
         expect(answer.prose).toBeUndefined();
       } finally {
@@ -1516,7 +1907,7 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.citations.map((citation) => citation.id)).toEqual(["TD-K2"]);
   });
 
-  it("scrubs stale family counts in model caveats against the served record counts", async () => {
+  it("withholds an uncited whole-family absence claim rather than replacing its count", async () => {
     mockClaudeJson({
       status: "answered",
       direct_answer:
@@ -1535,13 +1926,12 @@ describe("answerHomeAvaQuestion", () => {
       question: "Where are we commercially exposed?",
     });
 
-    expect(answer.caveats[0].detail).toContain(
-      "all 230 declared vendor contracts",
-    );
-    expect(answer.caveats[0].detail).not.toContain("72 declared");
+    expect(answer.caveats).toEqual([]);
+    expect(answer.prose).toBeUndefined();
+    expect(answer.directAnswer).toContain("evidence qualifications");
   });
 
-  it("scrubs stale total-universe vendor contract wording in visible model caveats", async () => {
+  it("withholds an uncited total-universe contract evidence assertion", async () => {
     mockClaudeJson({
       status: "answered",
       direct_answer:
@@ -1561,13 +1951,11 @@ describe("answerHomeAvaQuestion", () => {
         "I'm on Technology & Data. What should the CFO care about first?",
     });
 
-    expect(answer.caveats[0].detail).toContain(
-      "none of the 230 vendor contracts",
-    );
-    expect(answer.caveats[0].detail).not.toContain("72 vendor contracts");
+    expect(answer.caveats).toEqual([]);
+    expect(answer.prose).toBeUndefined();
   });
 
-  it("scrubs internal terms from model caveats before the UI renders them", async () => {
+  it("does not publish an internally worded uncited family count caveat", async () => {
     mockClaudeJson({
       status: "answered",
       direct_answer:
@@ -1586,17 +1974,13 @@ describe("answerHomeAvaQuestion", () => {
       question: "Where are we commercially exposed?",
     });
 
-    expect(answer.caveats[0].detail).toContain(
-      "all 230 declared vendor contracts",
-    );
-    expect(answer.caveats[0].detail).not.toMatch(
-      /\b(ECL|projection|source rows|72 declared)\b/i,
-    );
-    expect(answer.gaps).toHaveLength(0);
+    expect(answer.caveats).toEqual([]);
+    expect(answer.prose).toBeUndefined();
+    expect(answer.gaps).toHaveLength(1);
     expect(validateAvaAnswerPacket(answer).passed).toBe(true);
   });
 
-  it("scrubs stale family counts in claim-backed recovery answers", async () => {
+  it("recovers from cited claims without reintroducing an uncited model caveat", async () => {
     mockClaudeJson({
       status: "no_data",
       direct_answer: "Not enough data.",
@@ -1615,10 +1999,10 @@ describe("answerHomeAvaQuestion", () => {
     });
 
     expect(answer.status).toBe("partial");
-    expect(answer.prose).toContain("all 230 declared vendor contracts");
+    expect(answer.prose).not.toContain("all 230 declared vendor contracts");
     expect(answer.prose).not.toContain("72 declared");
-    expect(answer.caveats[0].detail).toContain(
-      "all 230 declared vendor contracts",
+    expect(answer.caveats.map((caveat) => caveat.detail)).not.toEqual(
+      expect.arrayContaining([expect.stringContaining("72 declared")]),
     );
   });
 
@@ -1653,7 +2037,7 @@ describe("answerHomeAvaQuestion", () => {
     ]);
   });
 
-  it("recovers broad model answers that would fail export validation", async () => {
+  it("withholds persistent unsupported quantitative claims before export validation", async () => {
     mockClaudeJson({
       status: "answered",
       direct_answer:
@@ -1675,7 +2059,7 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.status).toBe("partial");
     expect(answer.directAnswer).not.toContain("70%");
     expect(answer.gaps).toHaveLength(1);
-    expect(answer.prose).toContain("Support:");
+    expect(answer.prose).toBeUndefined();
     expect(validateAvaAnswerPacket(answer).passed).toBe(true);
   });
 
