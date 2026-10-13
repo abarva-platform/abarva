@@ -128,22 +128,30 @@ export default async function StrategicMovesPage() {
     redirect("/sign-in");
   }
 
-  // Include archived rows so the landing can power the Archived chip and an
-  // accurate active/archived split client-side. The list view shows the full
-  // portfolio, so the prior limit of 8 is raised.
+  const activeClient = await getActiveClientRow().catch(() => null);
+  const tenantName = activeClient?.name ?? "Active tenant";
+  const homeV2Enabled = isFeatureEnabled(
+    {
+      clientKey: activeClient?.key ?? null,
+      clientId: activeClient?.id ?? null,
+    },
+    "moves_home_v2",
+  );
+
+  // The redesigned landing uses active records for every summary and row.
+  // The legacy landing still needs archived records for its Archived filter.
   // The stored phase is the furthest a Move was advanced, not necessarily the
   // phase that is open. Show the phase the Move's own workspace would show, so
   // a row never links to a phase its page will refuse.
   const [portfolio, prefs] = await Promise.all([
-    getStrategicMovePortfolio(ctx, { limit: 100, includeArchived: true }).then(
-      (stored) => applyEffectivePhasesToPortfolio(ctx, stored),
-    ),
+    getStrategicMovePortfolio(ctx, {
+      limit: 100,
+      includeArchived: !homeV2Enabled,
+    }).then((stored) => applyEffectivePhasesToPortfolio(ctx, stored)),
     getStrategicMovesPreferences(ctx).catch(
       () => DEFAULT_STRATEGIC_MOVES_PREFERENCES,
     ),
   ]);
-  const activeClient = await getActiveClientRow().catch(() => null);
-  const tenantName = activeClient?.name ?? "Active tenant";
 
   // Canonical holds what the client declared they are running. Moves holds what is being tracked.
   // These are reconciled and shown, never merged: overwriting live operational rows from a
@@ -153,17 +161,6 @@ export default async function StrategicMovesPage() {
     canonicalTenantKey(activeClient?.key ?? null),
     portfolio.moves.map((m) => m.name),
   ).catch(() => null);
-
-  // moves_home_v2 (flag, default OFF): the redesigned portfolio landing. Reads
-  // the SAME portfolio + reconciliation; value numbers come from the governed
-  // valueAtStake / reconciliation totals (never invented here).
-  const homeV2Enabled = isFeatureEnabled(
-    {
-      clientKey: activeClient?.key ?? null,
-      clientId: activeClient?.id ?? null,
-    },
-    "moves_home_v2",
-  );
 
   if (homeV2Enabled) {
     const moveInputs = portfolio.moves.map((m) => strategicMoveToHomeInput(m));
