@@ -67,6 +67,10 @@ actor, source IDs, phases, versions and hashes. No tenant list or filename infer
 - After current-main reconciliation, the genuinely regenerated census records 3033 test files
   and 2868 covered. This candidate adds three covered suites.
 - PASS: all 15 tenancy-fence coverage tests, including exact committed-artifact drift checks.
+- The Source builder-vocabulary import-closure artifact is genuinely regenerated: the
+  analytics root gains 16 governed proof dependencies, from 440 to 456 import files.
+  The audited roots, population, covered upper bound and remainder are unchanged.
+  All 23 declaration checks pass; this is import reachability, not rendered UI proof.
 - A broader diagnostic retains 27 failures in the retired Pinecone compatibility
   suite, reproduced from actual fetched-main source in an isolated directory.
   This candidate adds no Pinecone dependency and does not repair retired behavior.
