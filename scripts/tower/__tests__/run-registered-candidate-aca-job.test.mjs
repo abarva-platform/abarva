@@ -8,8 +8,8 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 import { blobPathFromUri, configFromEnv, operatorEnv, preflightProofLog, servingReadbackProofLog,
-  promotionErrorState, stageInputs, validateReviewedProof,
-  validateServingPage, servingRowsForPage } from "../run-registered-candidate-aca-job.mjs";
+  promotionErrorState, stageInputs, validatePromotionRollbackProof, validateReviewedProof,
+  validateRollbackPage, validateServingPage, servingRowsForPage } from "../run-registered-candidate-aca-job.mjs";
 
 const sha = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
 const assessment = "tower-registry-candidate-aaaaaaaaaaaaaaaa";
@@ -37,15 +37,30 @@ function env(overrides = {}) {
     TOWER_PROMOTION_PREFLIGHT_PROOF_SHA256: sha("reviewed"), ...overrides };
 }
 
+function rollbackEnv(overrides = {}) {
+  return env({
+    TOWER_PROMOTION_PROMOTION_PROOF_URI: `https://${account}.blob.core.windows.net/${container}/operator-proof/tower-registered-promotion/fixture/${assessment}/promoted/promotion.json`,
+    TOWER_PROMOTION_PROMOTION_PROOF_SHA256: sha("promotion"), ...overrides,
+  });
+}
+
 test("job configuration requires exact digest, release, approval, and private proof scope", () => {
   assert.equal(configFromEnv("preflight", env()).mode, "preflight");
   assert.equal(configFromEnv("promote", env()).approvalRef, releaseRecord);
   assert.equal(configFromEnv("verify", env()).reviewedSha, sha("reviewed"));
+  assert.equal(configFromEnv("rollback", rollbackEnv()).promotionSha, sha("promotion"));
   assert.throws(() => configFromEnv("promote", env({ TOWER_PROMOTION_APPROVAL_REF: "other" })), /Serving approval reference/);
   assert.throws(() => configFromEnv("preflight", env({ ABARVA_OPERATOR_IMAGE_DIGEST: `sha256:${"c".repeat(64)}` })), /identity or release binding/);
   assert.throws(() => configFromEnv("preflight", env({ TOWER_PROMOTION_INPUT_SHA256: "bad" })), /input SHA-256/);
   assert.throws(() => configFromEnv("preflight", env({ TOWER_PROMOTION_STAGE_PROOF_URI: "https://other.blob.core.windows.net/private-proof/proof.zip" })), /outside the declared Blob scope/);
   assert.throws(() => blobPathFromUri(`https://${account}.blob.core.windows.net/${container}/../outside`, account, container), /outside the declared Blob scope/);
+  assert.throws(() => configFromEnv("rollback", rollbackEnv({ TOWER_PROMOTION_PROMOTION_PROOF_SHA256: "bad" })),
+    /promotion proof SHA-256/);
+  assert.throws(() => configFromEnv("rollback", rollbackEnv({ TOWER_PROMOTION_PROMOTION_PROOF_URI:
+    `https://${account}.blob.core.windows.net/${container}/operator-proof/tower-registered-promotion/other/${assessment}/run/promotion.json` })),
+  /outside the candidate proof lane/);
+  assert.throws(() => configFromEnv("rollback", rollbackEnv({ TOWER_PROMOTION_APPROVAL_REF: "different" })),
+    /Serving approval reference/);
 });
 
 test("staged ZIP must bind exact candidate bytes, receipt, and passing quality proof", async () => {
@@ -98,6 +113,51 @@ test("reviewed preflight proof must be ready and bound to the exact stage", () =
   const foundationReceiptBytes = Buffer.from(JSON.stringify({ view_counts: { ...JSON.parse(receiptBytes).view_counts, foundations: 1 } }));
   assert.throws(() => validateReviewedProof({ ...proof, stage_receipt_sha256: sha(foundationReceiptBytes) },
     config, foundationReceiptBytes), /not ready/);
+});
+
+test("rollback accepts only an exact promoted proof with the prior generation census", () => {
+  const config = configFromEnv("rollback", rollbackEnv());
+  const receiptBytes = Buffer.from(JSON.stringify({ projection_version: 6 }));
+  const pages = ["command_center", "decision_lanes", "recommended_actions", "value_proof", "cost_lens",
+    "evidence", "risk_lens", "ai_portfolio", "adoption_lens"];
+  const prior = Object.fromEntries(pages.map((page) => [page,
+    { rows: page === "evidence" ? 0 : 1, fingerprint_sha256: sha(page) }]));
+  const proof = { contract_version: "tower-candidate-promotion/v1", status: "promoted",
+    tenant_key: config.tenant, promoted: { assessment_id: config.assessment, projection_version: 6 },
+    candidate_file_sha256: config.candidateSha, stage_receipt_sha256: sha(receiptBytes),
+    input_fingerprint_sha256: config.sourceSha, approval_ref: config.approvalRef,
+    prior_active: { assessment_id: "tower-registry-candidate-bbbbbbbbbbbbbbbb", projection_version: 5 },
+    prior_view_fingerprints: prior };
+  assert.doesNotThrow(() => validatePromotionRollbackProof(proof, config, receiptBytes));
+  for (const changed of [
+    { status: "promotion_pending" }, { tenant_key: "other" },
+    { candidate_file_sha256: sha("different") }, { stage_receipt_sha256: sha("different") },
+    { input_fingerprint_sha256: sha("different") }, { approval_ref: "other" },
+    { promoted: { ...proof.promoted, projection_version: 5 } },
+    { prior_view_fingerprints: { ...prior, foundations: { rows: 0, fingerprint_sha256: sha("[]") } } },
+  ]) assert.throws(() => validatePromotionRollbackProof({ ...proof, ...changed }, config, receiptBytes),
+    /not bound to this exact rollback/);
+});
+
+test("rollback page readback rejects another served generation and changed sibling", () => {
+  const old = "tower-registry-candidate-bbbbbbbbbbbbbbbb";
+  const pages = ["command_center", "decision_lanes", "recommended_actions"];
+  const rows = Object.fromEntries(pages.map((page) => [page,
+    { row_key: page, source_hash: sha(page) }]));
+  const promotion = { prior_active: { assessment_id: old, projection_version: 5 },
+    prior_view_fingerprints: Object.fromEntries(pages.map((page) => [page,
+      { rows: 1, fingerprint_sha256: sha(JSON.stringify([rows[page]])) }])) };
+  const served = pages.map((page) => ({ ...rows[page], assessment_id: old,
+    projection_version: 5, page_key: page }));
+  assert.equal(validateRollbackPage("command_center", [rows.command_center], served, promotion).rows, 1);
+  assert.throws(() => validateRollbackPage("command_center", [rows.command_center],
+    served.map((row) => row.page_key === "decision_lanes" ? { ...row, source_hash: sha("changed") } : row),
+    promotion), /Rollback serving population differs/);
+  assert.throws(() => validateRollbackPage("command_center", [rows.command_center],
+    served.map((row) => ({ ...row, assessment_id: assessment })), promotion),
+  /Rollback serving generation differs/);
+  assert.throws(() => validateRollbackPage("command_center", [{ ...rows.command_center,
+    source_hash: sha("changed") }], served, promotion), /Rollback prior generation differs/);
 });
 
 test("guarded operator receives the validated private Blob scope", () => {
@@ -238,7 +298,7 @@ test("ACA wrapper binds promotion job metadata before planning either script", (
       "--script", script, "--job", "operator-job", "--timeout", "1800", "--out-dir", out,
       ...binding, ...overrides], { cwd: repo, encoding: "utf8" });
   for (const script of ["tower:registered-intake:preflight-job", "tower:registered-intake:promote-job",
-    "tower:registered-intake:verify-job"]) {
+    "tower:registered-intake:verify-job", "tower:registered-intake:rollback-job"]) {
     assert.equal(plan(script).status, 0);
     const saved = JSON.parse(fs.readFileSync(path.join(out, "plan.json"), "utf8"));
     assert.ok(saved.commands.start.includes(script));

@@ -52,7 +52,7 @@ function boundedInteger(env, key, minimum) {
 }
 
 export function configFromEnv(mode, env = process.env) {
-  if (!["preflight", "promote", "verify"].includes(mode)) throw new Error("Use preflight, promote, or verify");
+  if (!["preflight", "promote", "verify", "rollback"].includes(mode)) throw new Error("Use preflight, promote, verify, or rollback");
   const get = (suffix) => required(env, `TOWER_PROMOTION_${suffix}`);
   const config = {
     mode,
@@ -66,12 +66,15 @@ export function configFromEnv(mode, env = process.env) {
     retryCount: boundedInteger(env, "TOWER_PROMOTION_RETRY_COUNT", 0),
     timeoutSeconds: boundedInteger(env, "TOWER_PROMOTION_TIMEOUT_SECONDS", 1),
     releaseRecord: get("RELEASE_RECORD"),
-    approvalRef: mode === "promote" ? get("APPROVAL_REF") : null,
-    reviewedUri: mode !== "preflight" ? get("PREFLIGHT_PROOF_URI") : null,
-    reviewedSha: mode !== "preflight" ? get("PREFLIGHT_PROOF_SHA256") : null,
+    approvalRef: ["promote", "rollback"].includes(mode) ? get("APPROVAL_REF") : null,
+    reviewedUri: ["promote", "verify"].includes(mode) ? get("PREFLIGHT_PROOF_URI") : null,
+    reviewedSha: ["promote", "verify"].includes(mode) ? get("PREFLIGHT_PROOF_SHA256") : null,
+    promotionUri: mode === "rollback" ? get("PROMOTION_PROOF_URI") : null,
+    promotionSha: mode === "rollback" ? get("PROMOTION_PROOF_SHA256") : null,
   };
   for (const [key, value] of [["stage proof", config.stageSha], ["candidate", config.candidateSha],
-    ["input", config.sourceSha], ["reviewed preflight", config.reviewedSha]]) {
+    ["input", config.sourceSha], ["reviewed preflight", config.reviewedSha],
+    ["promotion proof", config.promotionSha]]) {
     if (value !== null && !SHA256.test(value)) throw new Error(`${key} SHA-256 is invalid`);
   }
   if (!/^tower-registry-candidate-[a-f0-9]{16}$/.test(config.assessment) ||
@@ -84,7 +87,7 @@ export function configFromEnv(mode, env = process.env) {
       !fs.existsSync(path.join(ROOT, config.releaseRecord))) {
     throw new Error("Tower promotion job identity or release binding is invalid");
   }
-  if (mode === "promote" && (!/^docs\/releases\/records\/[a-zA-Z0-9._-]+\.md$/.test(config.approvalRef) ||
+  if (["promote", "rollback"].includes(mode) && (!/^docs\/releases\/records\/[a-zA-Z0-9._-]+\.md$/.test(config.approvalRef) ||
       config.approvalRef !== config.releaseRecord)) throw new Error("Serving approval reference must match the release record");
   if (!env.DATABASE_URL) throw new Error("DATABASE_URL is required");
   if (!env.AZURE_STORAGE_CONNECTION_STRING && !env.AZURE_CLIENT_ID) throw new Error("Private Blob credential is required");
@@ -93,6 +96,12 @@ export function configFromEnv(mode, env = process.env) {
     const reviewedPath = blobPathFromUri(config.reviewedUri, config.account, config.container);
     if (!new RegExp(`^operator-proof/tower-registered-promotion/${config.tenant}/${config.assessment}/[a-zA-Z0-9_-]+/preflight\\.json$`).test(reviewedPath)) {
       throw new Error("Reviewed preflight URI is outside the candidate proof lane");
+    }
+  }
+  if (config.promotionUri) {
+    const proofPath = blobPathFromUri(config.promotionUri, config.account, config.container);
+    if (!new RegExp(`^operator-proof/tower-registered-promotion/${config.tenant}/${config.assessment}/[a-zA-Z0-9_-]+/(?:promotion|promotion-operator-status)\\.json$`).test(proofPath)) {
+      throw new Error("Promotion proof URI is outside the candidate proof lane");
     }
   }
   return config;
@@ -185,6 +194,26 @@ export function validateReviewedProof(proof, config, receiptBytes) {
   }
 }
 
+export function validatePromotionRollbackProof(proof, config, receiptBytes) {
+  const receipt = JSON.parse(receiptBytes);
+  const prior = proof?.prior_active;
+  const expectedPages = Number(prior?.projection_version) >= 6 ? PAGE_TABLE : LEGACY_PAGE_TABLE;
+  if (proof?.contract_version !== "tower-candidate-promotion/v1" || proof.status !== "promoted" ||
+      proof.tenant_key !== config.tenant || proof.promoted?.assessment_id !== config.assessment ||
+      proof.promoted?.projection_version !== receipt.projection_version ||
+      proof.candidate_file_sha256 !== config.candidateSha ||
+      proof.stage_receipt_sha256 !== sha(receiptBytes) ||
+      proof.input_fingerprint_sha256 !== config.sourceSha || proof.approval_ref !== config.approvalRef ||
+      typeof prior?.assessment_id !== "string" || !Number.isInteger(prior.projection_version) ||
+      prior.assessment_id === config.assessment ||
+      JSON.stringify(Object.keys(proof.prior_view_fingerprints ?? {}).sort()) !==
+        JSON.stringify(Object.keys(expectedPages).sort()) ||
+      Object.values(proof.prior_view_fingerprints ?? {}).some((entry) =>
+        !Number.isInteger(entry?.rows) || entry.rows < 0 || !SHA256.test(entry?.fingerprint_sha256 ?? ""))) {
+    throw new Error("Promotion proof is not bound to this exact rollback");
+  }
+}
+
 export function operatorEnv(config, env = process.env) {
   return { ...env, TOWER_RELOAD_PROOF_BLOB_ACCOUNT: config.account,
     TOWER_RELOAD_PROOF_BLOB_CONTAINER: config.container };
@@ -196,6 +225,8 @@ function runOperator(mode, candidatePath, receiptPath, outPath, config, reviewed
   if (mode === "promote") args.push("--preflight-proof", reviewedPath,
     "--expected-proof-sha256", config.reviewedSha, "--expected-input-sha256", config.sourceSha,
     "--approval-ref", config.approvalRef);
+  if (mode === "rollback") args.push("--promotion-proof", reviewedPath,
+    "--expected-proof-sha256", config.promotionSha, "--approval-ref", config.approvalRef);
   const result = spawnSync(process.execPath, args, { cwd: ROOT, encoding: "utf8", timeout: config.timeoutSeconds * 1000,
     maxBuffer: 5 * 1024 * 1024, env: operatorEnv(config) });
   if (result.error || ![0, ...(mode === "preflight" ? [2] : [])].includes(result.status) || !fs.existsSync(outPath)) {
@@ -206,7 +237,8 @@ function runOperator(mode, candidatePath, receiptPath, outPath, config, reviewed
   const bytes = fs.readFileSync(outPath);
   const proof = JSON.parse(bytes);
   if ((mode === "preflight" && (result.status === 0) !== (proof.status === "ready")) ||
-      (mode === "promote" && proof.status !== "promoted")) {
+      (mode === "promote" && proof.status !== "promoted") ||
+      (mode === "rollback" && proof.status !== "rolled_back")) {
     const error = new Error(`Tower ${mode} proof status mismatch`);
     error.operatorProofBytes = bytes;
     throw error;
@@ -312,6 +344,94 @@ export async function servingReadback(config, receipt, reviewed) {
   }
 }
 
+export function validateRollbackPage(page, rows, servedAll, promotion) {
+  const prior = promotion.prior_active;
+  const expected = promotion.prior_view_fingerprints[page];
+  const pages = promotion.prior_view_fingerprints;
+  const allowed = (AGGREGATE_SERVING_PAGES[page] ?? [page]).filter((key) => Object.hasOwn(pages, key));
+  if (servedAll.some((row) => !allowed.includes(row.page_key) || row.assessment_id !== prior.assessment_id ||
+      Number(row.projection_version) !== prior.projection_version)) {
+    throw new Error(`Rollback serving generation differs: ${page}`);
+  }
+  for (const sibling of allowed) {
+    const expectedSibling = pages[sibling];
+    const served = servedAll.filter((row) => row.page_key === sibling)
+      .map(({ row_key, source_hash }) => ({ row_key, source_hash }));
+    if (served.length !== expectedSibling.rows ||
+        sha(JSON.stringify(served)) !== expectedSibling.fingerprint_sha256) {
+      throw new Error(`Rollback serving population differs: ${sibling}`);
+    }
+  }
+  const fingerprint = sha(JSON.stringify(rows));
+  if (rows.length !== expected.rows || fingerprint !== expected.fingerprint_sha256) {
+    throw new Error(`Rollback prior generation differs: ${page}`);
+  }
+  return { rows: rows.length, fingerprint_sha256: fingerprint };
+}
+
+export async function rollbackServingReadback(config, receipt, promotion) {
+  const { default: pg } = await import("pg");
+  const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  await client.connect();
+  try {
+    await client.query("begin transaction read only");
+    await client.query("select set_config('app.tenant_key', $1, true)", [config.tenant]);
+    const lifecycle = (await client.query(
+      "select assessment_id, projection_version, state from ecl_projection.tower_assessment_lifecycle where tenant_key=$1",
+      [config.tenant],
+    )).rows;
+    const selected = (await client.query(
+      "select assessment_id, projection_version from serving.tower_active_assessment_keys() where tenant_key=$1",
+      [config.tenant],
+    )).rows;
+    const prior = promotion.prior_active;
+    if (selected.length !== 1 || selected[0].assessment_id !== prior.assessment_id ||
+        Number(selected[0].projection_version) !== prior.projection_version ||
+        lifecycle.filter((row) => row.state === "active").length !== 1 ||
+        !lifecycle.some((row) => row.assessment_id === prior.assessment_id &&
+          Number(row.projection_version) === prior.projection_version && row.state === "active") ||
+        !lifecycle.some((row) => row.assessment_id === config.assessment &&
+          Number(row.projection_version) === receipt.projection_version && row.state === "retired")) {
+      throw new Error("Rollback selector or lifecycle readback differs");
+    }
+    const priorViews = {};
+    const candidateViews = {};
+    const pageTable = Number(prior.projection_version) >= 6 ? PAGE_TABLE : LEGACY_PAGE_TABLE;
+    for (const [page, [table, column]] of Object.entries(pageTable)) {
+      const predicate = column === "page_key" ? "page_key=$4" : "display_payload_json->>'page_key'=$4";
+      const query = `select row_key, source_hash from ecl_projection.${table} where tenant_key=$1 and assessment_id=$2 and projection_version=$3 and ${predicate} order by row_key, source_hash`;
+      const rows = (await client.query(query, [config.tenant, prior.assessment_id, prior.projection_version, page])).rows;
+      const servingView = page === "foundations" ? "tower_command_center" : `tower_${page}`;
+      const servedAll = (await client.query(
+        `select assessment_id, projection_version, page_key, row_key, source_hash from serving.${servingView} where tenant_key=$1 order by row_key, source_hash`,
+        [config.tenant],
+      )).rows;
+      priorViews[page] = validateRollbackPage(page, rows, servedAll, promotion);
+    }
+    for (const [page, [table, column]] of Object.entries(pageTableFor(receipt))) {
+      const predicate = column === "page_key" ? "page_key=$4" : "display_payload_json->>'page_key'=$4";
+      const rows = (await client.query(
+        `select row_key, source_hash from ecl_projection.${table} where tenant_key=$1 and assessment_id=$2 and projection_version=$3 and ${predicate} order by row_key, source_hash`,
+        [config.tenant, config.assessment, receipt.projection_version, page],
+      )).rows;
+      const fingerprint = pageFingerprint(rows);
+      if (rows.length !== receipt.view_counts[page] || fingerprint !== receipt.view_fingerprints[page]) {
+        throw new Error(`Rollback candidate generation differs: ${page}`);
+      }
+      candidateViews[page] = { rows: rows.length, fingerprint_sha256: fingerprint };
+    }
+    await client.query("commit");
+    return { contract_version: "tower-candidate-rollback-serving-readback/v1", status: "pass",
+      tenant_key: config.tenant, assessment_id: config.assessment, restored_selector: selected[0],
+      lifecycle, prior_view_fingerprints: priorViews, candidate_view_fingerprints: candidateViews };
+  } catch (error) {
+    await client.query("rollback").catch(() => {});
+    throw error;
+  } finally {
+    await client.end();
+  }
+}
+
 export function promotionErrorState(selected, lifecycle, config) {
   const candidateActive = selected.length === 1 && selected[0].assessment_id === config.assessment &&
     lifecycle.filter((row) => row.state === "active").length === 1 &&
@@ -358,6 +478,7 @@ function jobMetadata(config, startedAt, status, outputs = {}, error = null) {
     stage_proof_uri: config.stageUri, stage_proof_sha256: config.stageSha,
     candidate_sha256: config.candidateSha, reviewed_preflight_uri: config.reviewedUri,
     reviewed_preflight_sha256: config.reviewedSha, release_record: config.releaseRecord,
+    promotion_proof_uri: config.promotionUri, promotion_proof_sha256: config.promotionSha,
     progress_output_uri: blobUri(config, outputPath(config, "progress.json")),
     validation_output_uri: outputs.validation?.uri ?? null,
     quality_gate_output_uri: outputs.quality?.uri ?? null,
@@ -390,7 +511,10 @@ export async function execute(mode, env = process.env) {
   const outputs = {};
   let stage;
   let reviewed;
+  let promotion;
   let promotionAttempted = false;
+  let rollbackAttempted = false;
+  let operatorProofBytes;
   try {
     await progress(container, config, startedAt, "running", { checkpoint: "fetch_stage_proof" });
     stage = await stageInputs(container, config);
@@ -416,6 +540,31 @@ export async function execute(mode, env = process.env) {
       process.stdout.write(preflightProofLog(result.bytes, outputs.proof));
       return { status: result.proof.status === "ready" ? "succeeded" : "blocked", outputs, gaps: result.proof.gaps };
     }
+    if (mode === "rollback") {
+      const promotionBytes = await downloadExact(container, config, config.promotionUri, config.promotionSha);
+      promotion = JSON.parse(promotionBytes);
+      validatePromotionRollbackProof(promotion, config, stage.receiptBytes);
+      const promotionPath = path.join(dir, "reviewed-promotion.json");
+      fs.writeFileSync(promotionPath, promotionBytes);
+      await progress(container, config, startedAt, "running", { checkpoint: "guarded_rollback" });
+      rollbackAttempted = true;
+      const result = runOperator("rollback", candidatePath, receiptPath, path.join(dir, "rollback.json"),
+        config, promotionPath);
+      operatorProofBytes = result.bytes;
+      outputs.proof = await uploadAndReadback(container, config, "rollback.json", result.bytes);
+      await progress(container, config, startedAt, "running", { checkpoint: "rollback_serving_readback",
+        rollback_proof_sha256: outputs.proof.sha256 });
+      const readback = await rollbackServingReadback(config, stage.receipt, promotion);
+      const readbackBytes = jsonBytes(readback);
+      outputs.quality = await uploadAndReadback(container, config, "rollback-serving-readback.json", readbackBytes);
+      outputs.validation = outputs.quality;
+      await progress(container, config, startedAt, "succeeded", { checkpoint: "rollback_verified",
+        rollback_proof_sha256: outputs.proof.sha256, serving_readback_sha256: outputs.quality.sha256 });
+      outputs.job_contract = await uploadAndReadback(container, config, "job-contract.json",
+        jsonBytes(jobMetadata(config, startedAt, "succeeded", outputs)));
+      process.stdout.write(servingReadbackProofLog(readbackBytes, outputs.quality));
+      return { status: "succeeded", outputs, gaps: [] };
+    }
     const reviewedBytes = await downloadExact(container, config, config.reviewedUri, config.reviewedSha);
     reviewed = JSON.parse(reviewedBytes);
     validateReviewedProof(reviewed, config, stage.receiptBytes);
@@ -438,6 +587,7 @@ export async function execute(mode, env = process.env) {
     await progress(container, config, startedAt, "running", { checkpoint: "guarded_promotion" });
     promotionAttempted = true;
     const result = runOperator("promote", candidatePath, receiptPath, path.join(dir, "promotion.json"), config, reviewedPath);
+    operatorProofBytes = result.bytes;
     outputs.proof = await uploadAndReadback(container, config, "promotion.json", result.bytes);
     await progress(container, config, startedAt, "running", { checkpoint: "serving_readback", proof_sha256: outputs.proof.sha256 });
     const readback = await servingReadback(config, stage.receipt, reviewed);
@@ -450,21 +600,35 @@ export async function execute(mode, env = process.env) {
     return { status: "succeeded", outputs, gaps: [] };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    if (promotionAttempted) {
-      if (error.operatorProofBytes) {
+    if (promotionAttempted || rollbackAttempted) {
+      if (error.operatorProofBytes || operatorProofBytes) {
         try {
-          outputs.operator_status = await uploadAndReadback(container, config, "promotion-operator-status.json",
-            error.operatorProofBytes);
+          outputs.operator_status = await uploadAndReadback(container, config,
+            rollbackAttempted ? "rollback-operator-status.json" : "promotion-operator-status.json",
+            error.operatorProofBytes ?? operatorProofBytes);
         } catch (proofError) {
           outputs.operator_status_gap = String(proofError);
         }
       }
       try {
         const selector = await selectorAfterPromotionError(config);
-        outputs.selector_after_error_state = selector.candidate_active ? "candidate_active" : "candidate_not_selected";
+        outputs.selector_after_error_state = rollbackAttempted
+          ? (selector.active_selector.length === 1 &&
+            selector.active_selector[0].assessment_id === promotion?.prior_active?.assessment_id &&
+            Number(selector.active_selector[0].projection_version) === promotion?.prior_active?.projection_version
+            ? "prior_restored" : "prior_not_verified")
+          : (selector.candidate_active ? "candidate_active" : "candidate_not_selected");
         outputs.selector_after_error = await uploadAndReadback(container, config,
           "selector-after-error.json", jsonBytes(selector));
-        if (selector.candidate_active && stage && reviewed) {
+        if (rollbackAttempted && outputs.selector_after_error_state === "prior_restored" && stage && promotion) {
+          try {
+            const readback = await rollbackServingReadback(config, stage.receipt, promotion);
+            outputs.serving_after_error = await uploadAndReadback(container, config,
+              "serving-after-error.json", jsonBytes(readback));
+          } catch (readbackError) {
+            outputs.serving_after_error_gap = String(readbackError);
+          }
+        } else if (selector.candidate_active && stage && reviewed) {
           try {
             const readback = await servingReadback(config, stage.receipt, reviewed);
             outputs.serving_after_error = await uploadAndReadback(container, config,
