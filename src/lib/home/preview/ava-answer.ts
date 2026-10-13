@@ -1546,7 +1546,8 @@ function answerVisibleRecordCounts(
     .replace(/\b(?:how many|counts?|number of)\b/i, "")
     .replace(sourceRequest, "")
     .replace(bulletRequest, "")
-    .replace(/\bdo not substitute another assessment or version\b/i, "");
+    .replace(/\bdo not substitute another assessment or version\b/i, "")
+    .replace(/\bdo not infer enterprise totals\b/i, "");
   for (const family of requested)
     remainder = remainder.replace(family.test, "");
   remainder = remainder

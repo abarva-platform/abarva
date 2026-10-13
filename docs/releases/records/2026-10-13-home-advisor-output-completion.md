@@ -32,10 +32,11 @@ Home's advisor now reserves output capacity for reasoning and a concise visible 
 - A single repair stays within the existing total deadline. Citation admission, tenant fencing, source version, spend denominator and concise-answer guards remain in force.
 - Failure diagnostics include only lengths, stop reason and token counts, never raw generated text.
 - Focused mocked response tests cover thinking-only output, repair, genuine evidence gaps and discovery follow-up intent.
+- An explicit exclusion of enterprise totals stays on the existing deterministic visible-row count path; filtered counts, unique vendors, spend and other interpretive requests remain excluded from that path.
 
 ## QA / Validation
 
-- Pass: 863 Home tests across 61 suites, including 15 output-completion cases.
+- Pass: 864 Home tests across 61 suites, including 15 output-completion cases and an explicit visible-row counting-basis regression.
 - Pass: Repo-owned Node 24 typecheck, focused ESLint and diff whitespace checks.
 - Pass: Independent bounded review of SDK request compatibility, failure safety and preserved guards.
 - Pass: All 11 repository release checks.
