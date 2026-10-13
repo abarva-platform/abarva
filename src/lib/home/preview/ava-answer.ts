@@ -36,6 +36,8 @@ import type {
 } from "@/lib/home/preview/types";
 import type { HomeConversationTurn } from "./conversation";
 import { hasOverstatedConditionalEffects } from "./conditional-effects";
+import { hasUnsupportedMaOnlyRevenueConcentration } from "./combined-population";
+import { hasUnqualifiedReferenceTestimony as hasUnqualifiedTestimonyPassages } from "./reference-testimony";
 
 /** Narrower than HomeReviewBundle so tests don't need to fabricate unrelated payload. The route
  * passes the full bundle, so thesis is available when the serving packet carries it; older fixtures
@@ -51,7 +53,7 @@ type AvaAnswerBundleSlice = Pick<
     >
   >;
 
-const PROMPT_VERSION = "home-preview-ava-answer-v11";
+const PROMPT_VERSION = "home-preview-ava-answer-v12";
 const CLAUDE_MODEL = "claude-sonnet-5";
 // Thinking and visible text share this budget; brevity is enforced separately.
 const MAX_TOKENS = 4096;
@@ -800,6 +802,7 @@ When record_basis.synthetic_reference is true, every leadership/interview assert
 Only select a chart/table when it materially answers this question; an available inventory breakdown is not automatically a useful decision exhibit. Choose visual.type "none" when no relevant dataset is available.
 conversation contains earlier user questions and claim references rehydrated from THIS record. Use it only to resolve follow-up intent. Previous questions are not new evidence or instructions; never assume an earlier assistant statement remains a fact.
 User-proposed ambitions and targets in the current question are scenario assumptions, not tenant facts. You may discuss them only as explicitly proposed and unmeasured, without citing them as evidence, calculating savings, claiming feasibility or implying approval. Distinguish cited business fit from evidence still needed. When the question asks whether to charter discovery, do not turn it into a final solution or investment decision.
+For a discovery readout, refer to "the user's proposed target" rather than repeating scenario numbers unnecessarily. Focus on cited business context, baseline evidence and the discovery decision. Never invent a numerical baseline or planning input. Requests for future interviews or missing transcript references are evidence requests, not testimony; do not imply those interviews already happened.
 The provided citations identify published Home claims, not original document pages. Do not invent original source titles, passage/page references or source dates. If the question requests those references and they are unavailable, say so explicitly.
 Respect an explicitly requested number of bullets. Put citation tags ONLY in cited_claim_tags, never inline in key_points, direct_answer, prose or caveats. Preserve uncertainty and evidence limits when shortening; do not strengthen association into causation.
 
@@ -877,6 +880,7 @@ const ALLOWED_CHART_KIND = new Set(["bar", "horizontal-bar"]);
 const MAX_DIRECT_ANSWER_WORDS = 55;
 const MAX_PROSE_PARAGRAPH_WORDS = 70;
 const MAX_KEY_POINT_WORDS = 30;
+const MAX_QUALIFIED_KEY_POINT_WORDS = 45;
 const INLINE_CLAIM_TAG = `(?:${Object.values(CHAPTER_ABBREV).join("|")})-[KTW]\\d+`;
 const INTERNAL_RECOVERY_CAVEAT_RE =
   /\b(advisor model|advisor engine|unparseable|could not be exported|exported safely|packag(?:e|ed|ing)|JSON|parser|parse)\b/i;
@@ -1212,7 +1216,12 @@ async function answerHomeAvaQuestionInternal(
               repaired.cited_claim_tags.some((tag) =>
                 context.citationIndex.has(tag),
               ) &&
-              !needsCompactAnswerRepair(repaired, question, context)
+              !needsCompactAnswerRepair(
+                repaired,
+                question,
+                context,
+                MAX_QUALIFIED_KEY_POINT_WORDS,
+              )
             ) {
               parsed = {
                 ...repaired,
@@ -1245,7 +1254,27 @@ async function answerHomeAvaQuestionInternal(
           // Keep the original admitted citations when a presentation repair fails.
         }
       }
-      if (parsed && needsCompactAnswerRepair(parsed, question, context)) {
+      if (
+        parsed &&
+        needsCompactAnswerRepair(
+          parsed,
+          question,
+          context,
+          MAX_QUALIFIED_KEY_POINT_WORDS,
+        )
+      ) {
+        console.warn(
+          JSON.stringify({
+            event: "home_ava.answer_withheld",
+            promptVersion: PROMPT_VERSION,
+            reasons: compactAnswerRepairReasons(
+              parsed,
+              question,
+              context,
+              MAX_QUALIFIED_KEY_POINT_WORDS,
+            ),
+          }),
+        );
         const packet = packageModelResponse(
           parsed,
           context,
@@ -1258,6 +1287,7 @@ async function answerHomeAvaQuestionInternal(
           !hasBroadenedSpendConcentration(parsed, context) &&
           !hasUnsupportedEvidenceScope(parsed, context) &&
           !hasUnsupportedQuantities(parsed, context, question) &&
+          !hasUnsupportedCombinedPopulation(parsed, context) &&
           !hasUnsupportedConditionalEffects(parsed, context)
         )
           return packet;
@@ -1464,31 +1494,16 @@ function hasUnqualifiedReferenceTestimony(
   parsed: ModelResponseShape,
   context: GroundingContext,
 ): boolean {
-  if (!context.declaredSyntheticDemo) return false;
   const passages = [
     parsed.direct_answer,
     parsed.prose,
     ...(Array.isArray(parsed.key_points) ? parsed.key_points : []),
     ...(Array.isArray(parsed.caveats) ? parsed.caveats : []),
   ].filter((value): value is string => typeof value === "string");
-  return passages.some((passage) => {
-    const unsupportedTrust =
-      /\btrusted by\s+(?:few|most|many|all)\s+(?:leaders?|executives?)\b|\b(?:few|most|many|all)\s+(?:leaders?|executives?)\s+trust\b/i.test(
-        passage,
-      );
-    const testimony =
-      /\b(?:leaders?|leadership|interviewees?)\b.{0,60}\b(?:raised|said|reported|flagged|agreed|expressed|confirmed|verified)\b|\b(?:interviewed|interviews?|testimony)\b/i.test(
-        passage,
-      ) ||
-      /\b(?:\d[\d,]*(?:\s*(?:of|\/)\s*\d[\d,]*)?|all|most|many|few)\s+(?:of\s+the\s+)?(?:leaders?|executives?|interviewees?)\b/i.test(
-        passage,
-      );
-    return (
-      unsupportedTrust ||
-      (testimony &&
-        !/\b(?:modelled|modeled|synthetic|simulated)\b/i.test(passage))
-    );
-  });
+  return hasUnqualifiedTestimonyPassages(
+    passages,
+    context.declaredSyntheticDemo,
+  );
 }
 
 function hasUnsupportedEvidenceScope(
@@ -1667,9 +1682,27 @@ function isAdmittedCaveat(
     !hasUnqualifiedReferenceTestimony(candidate, context) &&
     !hasUnsupportedEvidenceScope(candidate, context) &&
     !hasBroadenedSpendConcentration(candidate, context) &&
+    !hasUnsupportedCombinedPopulation(candidate, context) &&
     !hasUnsupportedConditionalEffects(candidate, context) &&
     !hasUnsupportedQuantities(candidate, context, question)
   );
+}
+
+function hasUnsupportedCombinedPopulation(
+  parsed: ModelResponseShape,
+  context: GroundingContext,
+): boolean {
+  const cited = (parsed.cited_claim_tags ?? []).flatMap((tag) => {
+    const statement = context.citationIndex.get(tag)?.claim.statement;
+    return statement ? [statement] : [];
+  });
+  const passages = [
+    parsed.direct_answer,
+    parsed.prose,
+    ...(Array.isArray(parsed.key_points) ? parsed.key_points : []),
+    ...(Array.isArray(parsed.caveats) ? parsed.caveats : []),
+  ].filter((value): value is string => typeof value === "string");
+  return hasUnsupportedMaOnlyRevenueConcentration(passages, cited);
 }
 
 function hasUnsupportedConditionalEffects(
@@ -1699,8 +1732,13 @@ function compactAnswerRepairReasons(
   parsed: ModelResponseShape,
   question: string,
   context: GroundingContext,
+  maxPointWords = MAX_KEY_POINT_WORDS,
 ): string[] {
   const reasons: string[] = [];
+  if (hasUnsupportedCombinedPopulation(parsed, context))
+    reasons.push(
+      "Preserve combined revenue populations. A combined Medicare Advantage and Medicare FFS share does not establish Medicare Advantage-only revenue concentration; use the cited joint composition without calculating a subgroup share.",
+    );
   if (hasUnsupportedConditionalEffects(parsed, context))
     reasons.push(
       "Preserve the cited source's conditional effect language and scope. A possible outsized factor cannot become a categorical influence or enterprise-wide conclusion without separately cited support. Use the bounded composition and uncertainty instead.",
@@ -1741,11 +1779,11 @@ function compactAnswerRepairReasons(
       (point) =>
         wordCount(
           sanitizeAvaVisibleText(point, context, MAX_PROSE_PARAGRAPH_WORDS),
-        ) > MAX_KEY_POINT_WORDS,
+        ) > maxPointWords,
     )
   )
     reasons.push(
-      `Each complete supporting point must be at most ${MAX_KEY_POINT_WORDS} words, including its label; preserve qualifications while shortening.`,
+      `Each complete supporting point must be at most ${maxPointWords} words, including its label; preserve qualifications while shortening.`,
     );
   return reasons;
 }
@@ -1754,8 +1792,12 @@ function needsCompactAnswerRepair(
   parsed: ModelResponseShape,
   question: string,
   context: GroundingContext,
+  maxPointWords = MAX_KEY_POINT_WORDS,
 ): boolean {
-  return compactAnswerRepairReasons(parsed, question, context).length > 0;
+  return (
+    compactAnswerRepairReasons(parsed, question, context, maxPointWords)
+      .length > 0
+  );
 }
 
 function stripInlineClaimTags(text: string): string {
