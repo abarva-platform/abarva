@@ -595,11 +595,9 @@ describe("answerHomeAvaQuestion", () => {
       if (budget === "insufficient") now.mockReturnValue(44_001);
       else now.mockReturnValueOnce(40_000).mockReturnValue(46_000);
       try {
-        const create = jest
-          .fn()
-          .mockResolvedValue({
-            content: [{ type: "text", text: '{"direct_answer":"unfinished' }],
-          });
+        const create = jest.fn().mockResolvedValue({
+          content: [{ type: "text", text: '{"direct_answer":"unfinished' }],
+        });
         mockGetAuditedAnthropicClient.mockResolvedValue({
           client: { messages: { create } },
         } as never);
@@ -745,6 +743,37 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.status).toBe("no_data");
     expect(answer.directAnswer).toContain("not supplied");
     expect(answer.gaps[0].detail).toContain("unknown, not zero");
+    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+  });
+
+  it("keeps the explicit enterprise-total exclusion on the visible-row path", async () => {
+    const answer = await answerHomeAvaQuestion({
+      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+      tenantKey: CANONICAL_TENANT_KEYS[0],
+      recordSource: {
+        kind: "reviewed_snapshot",
+        canonicalSnapshotHash: "record-count-version-test",
+      },
+      question:
+        "How many Vendor Contracts and Data Assets & Integrations are in the record on screen? Include the record source and do not infer enterprise totals.",
+    });
+    expect(mockGetAuditedAnthropicClient).not.toHaveBeenCalled();
+    expect(answer.status).toBe("answered");
+    expect(answer.directAnswer).toBe(
+      "Vendor Contracts: 230; Data Assets & Integrations: 1710. Record source: Reviewed stored record.",
+    );
+    expect(answer.artifacts[0]).toMatchObject({
+      rows: [
+        { family: "Vendor Contracts", rows: 230 },
+        { family: "Data Assets & Integrations", rows: 1710 },
+      ],
+    });
+    expect(
+      answer.citations.every(
+        (citation) => citation.recordId === "record-count-version-test",
+      ),
+    ).toBe(true);
+    expect(answer.caveats[0].detail).toContain("not unique vendors");
     expect(validateAvaAnswerPacket(answer).passed).toBe(true);
   });
 
@@ -1811,8 +1840,8 @@ describe("answerHomeAvaQuestion", () => {
     });
 
     expect(answer.status).toBe("no_data");
-    expect(
-      answer.caveats.some((c) => c.detail.includes("no ANTHROPIC_API_KEY")),
-    ).toBe(true);
+    expect(answer.gaps[0].label).toBe("Answer unavailable");
+    expect(answer.gaps[0].detail).not.toContain("No cited Home evidence");
+    expect(JSON.stringify(answer)).not.toContain("ANTHROPIC_API_KEY");
   });
 });
