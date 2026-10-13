@@ -21,7 +21,7 @@ Release lane: `global-control-lane`. The P2 authored surface remains an experime
 
 ## Client Applicability
 
-- All clients: existing governed evidence decisions and generated-document creators use shared transaction serialization. No new document identity or model operation is enabled.
+- All clients: existing evidence decisions lock the Move. Azure document creators share the canonical slot lock. P2 authored controls remain within the registry-declared flag scope; no document identity or model operation is added.
 - Specific clients: the registry-declared synthetic demo tenant under its phase-specific flag.
 - Internal only: no operator or data-build entry.
 - Public/demo only: generic mechanisms and synthetic fixtures.
