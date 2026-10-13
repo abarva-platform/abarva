@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Intelligence now gives a visible progress update while a response is being prepared, retries once when the model produces no answer text, and formats responses according to the depth of the question. Its chat and exhibits use the available content width. Short executive answers can lead into specific follow-up questions; broad requests can cover each required area. Visuals are selected from available evidence rather than a default matrix.
+Intelligence now gives a visible progress update while a response is being prepared, retries once when the model produces no answer text, and formats responses according to the depth of the question. Its chat and exhibits use the available content width. Short executive answers can lead into specific follow-up questions; broad requests can cover each required area. Visuals are selected from available evidence rather than a default matrix. The quality-review panel is removed from the advisor page.
 
 ## Layer Impact
 
@@ -30,12 +30,13 @@ Intelligence now gives a visible progress update while a response is being prepa
 - Intelligence model request configuration and empty-text retry.
 - Question-scaled executive response and follow-up instructions.
 - Visible waiting updates, full-width chat and exhibit layout, and Markdown styling.
+- Removal of the quality-review panel from the advisor page.
 - Focused behavior tests for multi-part requests, empty-text retry, and waiting state.
 
 ## QA / Validation
 
 - Scoped ESLint: passed.
-- Scoped Jest: passed, 40 tests across five suites.
+- Scoped Jest: passed, 44 tests across six suites; the page suite was rerun after removing the quality-review panel.
 - TypeScript `tsc --noEmit`: passed.
 - `git diff --check`: passed.
 - Live signed-in answer generation remains to be validated after deployment.

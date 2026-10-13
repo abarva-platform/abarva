@@ -13,7 +13,6 @@ import type {
   SuggestedAction,
 } from "@/components/agent/AgentDock";
 import { executiveReviewQuestions } from "@/lib/intelligence/answer/quality-review";
-import { IntelligenceQualityReview } from "./IntelligenceQualityReview";
 import { AvaChatShell } from "@/components/ava-chat/AvaChatShell";
 import type { AskSource } from "@/lib/intelligence/ask/types";
 import {
@@ -135,7 +134,6 @@ export function AdvisoryIntelligencePage({
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
   const [isAsking, setIsAsking] = useState(false);
-  const [isReviewRunning, setIsReviewRunning] = useState(false);
   const [homeQuestion, setHomeQuestion] = useState<string | null>(null);
   const continuationBlocked = homeHandoff && homeHandoff.status !== "ready";
   useEffect(() => {
@@ -159,7 +157,7 @@ export function AdvisoryIntelligencePage({
 
   async function submitAsk(input: string = question) {
     const trimmed = input.trim();
-    if (!trimmed || isAsking || isReviewRunning || continuationBlocked) return;
+    if (!trimmed || isAsking || continuationBlocked) return;
     const messageIndex = messages.length;
 
     const userMsg: UserMessage = {
@@ -412,7 +410,7 @@ export function AdvisoryIntelligencePage({
       onClick: () => void submitAsk(p),
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [latestAssistant, starterPrompts, isAsking, isReviewRunning, homeHandoff]);
+  }, [latestAssistant, starterPrompts, isAsking, homeHandoff]);
 
   // onMessage handler for AvaChatShell
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -451,15 +449,6 @@ export function AdvisoryIntelligencePage({
           </a>
         </section>
       )}
-      {!homeHandoff && (
-        <IntelligenceQualityReview
-          key={viewModel.clientKey}
-          viewModel={viewModel}
-          surfaceContext={buildSurfaceContext(viewModel, sectionList)}
-          disabled={isAsking}
-          onRunningChange={setIsReviewRunning}
-        />
-      )}
       <AvaChatShell
         surface="intelligence"
         agent={AVA_INTELLIGENCE_AGENT}
@@ -473,7 +462,7 @@ export function AdvisoryIntelligencePage({
         canvas={null}
         suggestedActions={continuationBlocked ? [] : suggestedActions}
         keepSuggestedActionsVisible={true}
-        isBusy={isAsking || isReviewRunning || Boolean(continuationBlocked)}
+        isBusy={isAsking || Boolean(continuationBlocked)}
         preserveVisibleText
         surfaceContext={buildSurfaceContext(viewModel, sectionList)}
       />
