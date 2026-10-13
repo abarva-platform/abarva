@@ -446,11 +446,9 @@ describe("answerHomeAvaQuestion", () => {
         mockGetAuditedAnthropicClient.mockResolvedValue({
           client: {
             messages: {
-              create: jest
-                .fn()
-                .mockResolvedValue({
-                  content: [{ type: "text", text: "not json" }],
-                }),
+              create: jest.fn().mockResolvedValue({
+                content: [{ type: "text", text: "not json" }],
+              }),
             },
           },
         } as never);
@@ -504,6 +502,120 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.prose).toContain("Modelled reference responses");
     expect(answer.citations.map((c) => c.id)).toContain("LP-K1");
   });
+
+  it("repairs malformed output through the existing single audited correction", async () => {
+    const create = jest
+      .fn()
+      .mockResolvedValueOnce({
+        content: [
+          {
+            type: "text",
+            text: '{"status":"answered","direct_answer":"unfinished',
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        content: [{ type: "text", text: JSON.stringify(referenceAnswer) }],
+      });
+    mockGetAuditedAnthropicClient.mockResolvedValue({
+      client: { messages: { create } },
+    } as never);
+    const answer = await answerHomeAvaQuestion({
+      bundle: {
+        chapters: [...CHAPTERS, leadershipChapter],
+        declaredSyntheticDemo: true,
+      },
+      tenantKey: CANONICAL_TENANT_KEYS[0],
+      question: "Talk to me about the current state of data analytics",
+    });
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(2);
+    expect(
+      mockGetAuditedAnthropicClient.mock.calls[1][0].metadata,
+    ).toMatchObject({ presentationRepair: true });
+    expect(create.mock.calls[1][0].messages[0].content).toContain(
+      "Return the complete JSON schema.",
+    );
+    expect(answer.status).toBe("answered");
+    expect(answer.prose).toContain("Modelled responses");
+    expect(answer.citations.map((c) => c.id)).toContain("LP-K1");
+    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+  });
+
+  it.each([
+    "not json",
+    JSON.stringify({
+      ...referenceAnswer,
+      key_points: ["All 44 leaders interviewed raised data trust concerns."],
+    }),
+    JSON.stringify({ ...referenceAnswer, status: "no_data" }),
+    JSON.stringify({ ...referenceAnswer, cited_claim_tags: ["UNKNOWN-CLAIM"] }),
+    JSON.stringify({
+      ...referenceAnswer,
+      key_points: [
+        `**Leadership:** Modelled responses ${"need verification ".repeat(20)}.`,
+      ],
+    }),
+  ])(
+    "does not chain another correction or publish unsafe repaired material",
+    async (repairText) => {
+      const create = jest
+        .fn()
+        .mockResolvedValueOnce({
+          content: [{ type: "text", text: '{"direct_answer":"unfinished' }],
+        })
+        .mockResolvedValueOnce({
+          content: [{ type: "text", text: repairText }],
+        });
+      mockGetAuditedAnthropicClient.mockResolvedValue({
+        client: { messages: { create } },
+      } as never);
+      const answer = await answerHomeAvaQuestion({
+        bundle: {
+          chapters: [...CHAPTERS, leadershipChapter],
+          declaredSyntheticDemo: true,
+        },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question: "Talk to me about the current state of data analytics",
+      });
+      expect(create).toHaveBeenCalledTimes(2);
+      expect(answer.status).toBe("no_data");
+      expect(answer.directAnswer).not.toContain("unfinished");
+      expect(answer.prose).toBeUndefined();
+      expect(answer.artifacts).toEqual([]);
+      expect(answer.citations).toEqual([]);
+      expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+    },
+  );
+
+  it.each(["insufficient", "consumed_by_audit"])(
+    "keeps malformed-output correction inside the original deadline (%s)",
+    async (budget) => {
+      const now = jest.spyOn(Date, "now").mockReturnValueOnce(0);
+      if (budget === "insufficient") now.mockReturnValue(44_001);
+      else now.mockReturnValueOnce(40_000).mockReturnValue(46_000);
+      try {
+        const create = jest
+          .fn()
+          .mockResolvedValue({
+            content: [{ type: "text", text: '{"direct_answer":"unfinished' }],
+          });
+        mockGetAuditedAnthropicClient.mockResolvedValue({
+          client: { messages: { create } },
+        } as never);
+        const answer = await answerHomeAvaQuestion({
+          bundle: { chapters: CHAPTERS },
+          tenantKey: CANONICAL_TENANT_KEYS[0],
+          question: "Talk to me about the current state of data analytics",
+        });
+        expect(create).toHaveBeenCalledTimes(1);
+        expect(answer.status).toBe("no_data");
+        expect(answer.prose).toBeUndefined();
+      } finally {
+        now.mockRestore();
+      }
+    },
+  );
 
   it.each(["answered", "no_data"])(
     "does not publish unsafe testimony without citations (%s)",
