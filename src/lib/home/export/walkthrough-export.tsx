@@ -183,11 +183,11 @@ function exhibitSummary(bundle: HomeReviewBundle) {
   return [
     {
       label: "Architecture",
-      summary: `${(applications?.rows.length ?? 0).toLocaleString()} applications and ${(infrastructure?.rows.length ?? 0).toLocaleString()} platforms in the exported Home record.`,
+      summary: `Applications: ${applications ? `${applications.rows.length.toLocaleString()} records` : "Not supplied"}; platforms: ${infrastructure ? `${infrastructure.rows.length.toLocaleString()} records` : "Not supplied"}. Counts reflect the exported Home bundle.`,
     },
     {
       label: "Data flow",
-      summary: `${(data?.rows.length ?? 0).toLocaleString()} data asset and integration records available for the exhibit; this is not a count of verified flows.`,
+      summary: `${data ? `${data.rows.length.toLocaleString()} data asset and integration records available for the exhibit` : "Data asset and integration records: Not supplied"}; this is not a count of verified flows.`,
     },
     {
       label: "Record browser",
@@ -411,9 +411,28 @@ export function renderHomeWalkthroughHtml({
 const pdfStyles = StyleSheet.create({
   page: {
     padding: 34,
+    paddingTop: 48,
+    paddingBottom: 46,
     fontFamily: "Helvetica",
     color: "#171717",
     backgroundColor: "#fffaf2",
+  },
+  runningSection: {
+    position: "absolute",
+    top: 19,
+    left: 34,
+    right: 34,
+    fontSize: 7,
+    color: "#64748b",
+  },
+  pageNumber: {
+    position: "absolute",
+    bottom: 19,
+    left: 34,
+    right: 34,
+    fontSize: 7,
+    textAlign: "right",
+    color: "#64748b",
   },
   eyebrow: {
     fontSize: 8,
@@ -489,7 +508,7 @@ const pdfStyles = StyleSheet.create({
   },
 });
 
-function PdfTable({ table }: { table: TableSpec }) {
+function PdfTable({ table, sectionTitle }: { table: TableSpec; sectionTitle?: string }) {
   const chunks: TableSpec["rows"][] = [];
   for (let index = 0; index < table.rows.length; index += 6) {
     chunks.push(table.rows.slice(index, index + 6));
@@ -499,6 +518,9 @@ function PdfTable({ table }: { table: TableSpec }) {
     <>
       {chunks.map((rows, chunkIndex) => (
         <View key={`${table.caption}-${chunkIndex}`} wrap={false}>
+          {chunkIndex === 0 && sectionTitle ? (
+            <Text style={pdfStyles.h3}>{sectionTitle}</Text>
+          ) : null}
           <Text style={pdfStyles.h3}>
             {table.caption}
             {chunkIndex ? " (continued)" : ""}
@@ -533,10 +555,24 @@ function PdfTable({ table }: { table: TableSpec }) {
               </View>
             ) : null}
           </View>
+          {chunkIndex === chunks.length - 1 && table.note ? (
+            <Text style={pdfStyles.meta}>{table.note}</Text>
+          ) : null}
         </View>
       ))}
-      {table.note ? <Text style={pdfStyles.meta}>{table.note}</Text> : null}
     </>
+  );
+}
+
+function PdfPageNumber() {
+  return (
+    <Text
+      fixed
+      style={pdfStyles.pageNumber}
+      render={({ pageNumber, totalPages }) =>
+        `Page ${pageNumber} of ${totalPages}`
+      }
+    />
   );
 }
 
@@ -564,6 +600,7 @@ function PdfChapter({
   narrativeDate,
   enterpriseContext,
   evidenceById,
+  declaredSyntheticDemo,
 }: {
   chapter: ChapterView;
   index: number;
@@ -572,6 +609,7 @@ function PdfChapter({
   narrativeDate: string;
   enterpriseContext: HomeEnterpriseContext | null | undefined;
   evidenceById: Record<string, string[]>;
+  declaredSyntheticDemo: boolean | undefined;
 }) {
   const depth = chapterDepth(chapter.chapterId, estate);
   const mixed = mixedNarrative(recordSource);
@@ -592,31 +630,46 @@ function PdfChapter({
     </View>
   ) : null;
   const priorLabel = homePriorInterpretationLabel(recordSource, narrativeDate);
+  const leadership = chapter.chapterId === "leadership_perspective";
+  const leadershipBasis = declaredSyntheticDemo === true
+    ? "Illustrative leadership excerpts - Synthetic reference - Not client-attested. Stored quotations and testimony language do not establish what leaders actually said. Theme mentions do not establish agreement."
+    : "Leadership response basis: client attestation is not established by this export. Compiled summaries and evidence references alone do not establish interview testimony or agreement.";
   const currentDepth = (
     <>
       {depth.findings.length > 0 ? (
         <>
-          <Text style={pdfStyles.h3}>Deterministic Findings</Text>
-          {depth.findings.map((finding) => (
-            <PdfFinding key={finding.claim} finding={finding} />
+          {depth.findings.map((finding, findingIndex) => (
+            <View key={finding.claim} wrap={false}>
+              {findingIndex === 0 ? (
+                <Text style={pdfStyles.h3}>Deterministic Findings</Text>
+              ) : null}
+              <PdfFinding finding={finding} />
+            </View>
           ))}
         </>
       ) : null}
       {depth.tables.length > 0 ? (
         <>
-          <Text style={pdfStyles.h3}>Deterministic Tables</Text>
-          {depth.tables.map((table) => (
-            <PdfTable key={table.caption} table={table} />
+          {depth.tables.map((table, tableIndex) => (
+            <PdfTable
+              key={table.caption}
+              table={table}
+              sectionTitle={tableIndex === 0 ? "Deterministic Tables" : undefined}
+            />
           ))}
         </>
       ) : null}
       {depth.unsupported.length > 0 ? (
         <>
-          <Text style={pdfStyles.h3}>Evidence Gaps</Text>
-          {depth.unsupported.map((view) => (
-            <Text key={view.caption} style={pdfStyles.text}>
-              {view.caption}: {view.why}
-            </Text>
+          {depth.unsupported.map((view, viewIndex) => (
+            <View key={view.caption} wrap={false}>
+              {viewIndex === 0 ? (
+                <Text style={pdfStyles.h3}>Evidence Gaps</Text>
+              ) : null}
+              <Text style={pdfStyles.text}>
+                {view.caption}: {view.why}
+              </Text>
+            </View>
           ))}
         </>
       ) : null}
@@ -630,17 +683,25 @@ function PdfChapter({
           {chapter.headline}
         </Text>
         <Text style={pdfStyles.meta}>{chapter.guidingQuestion}</Text>
+        {leadership ? (
+          <Text style={pdfStyles.text}>{leadershipBasis}</Text>
+        ) : null}
         <Text style={pdfStyles.text}>{chapter.executive_synthesis}</Text>
       </View>
       {claimSections(chapter).map(([label, claims]) =>
         claims.length ? (
           <View key={label}>
-            <Text style={pdfStyles.h3}>{label}</Text>
             {claims.map((claim, claimIndex) => (
               <View
                 key={claim.claim_ref ?? `${label}-${claimIndex}`}
                 wrap={false}
               >
+                {claimIndex === 0 ? (
+                  <Text style={pdfStyles.h3}>{label}</Text>
+                ) : null}
+                {leadership ? (
+                  <Text style={pdfStyles.meta}>{leadershipBasis}</Text>
+                ) : null}
                 <Text style={pdfStyles.text}>{claim.statement}</Text>
                 <Text style={pdfStyles.meta}>
                   {claim.claim_type === "ADVISORY_INFERENCE"
@@ -659,21 +720,21 @@ function PdfChapter({
           </View>
         ) : null,
       )}
-      {chapter.questions_to_ask.length ? (
-        <Text style={pdfStyles.h3}>Questions to ask</Text>
-      ) : null}
       {chapter.questions_to_ask.map((question, questionIndex) => (
-        <Text key={`question-${questionIndex}`} style={pdfStyles.text}>
-          {question}
-        </Text>
+        <View key={`question-${questionIndex}`} wrap={false}>
+          {questionIndex === 0 ? (
+            <Text style={pdfStyles.h3}>Questions to ask</Text>
+          ) : null}
+          <Text style={pdfStyles.text}>{question}</Text>
+        </View>
       ))}
-      {chapter.limitations.length ? (
-        <Text style={pdfStyles.h3}>Limitations</Text>
-      ) : null}
       {chapter.limitations.map((limit, limitIndex) => (
-        <Text key={`limit-${limitIndex}`} style={pdfStyles.text}>
-          {limit}
-        </Text>
+        <View key={`limit-${limitIndex}`} wrap={false}>
+          {limitIndex === 0 ? (
+            <Text style={pdfStyles.h3}>Limitations</Text>
+          ) : null}
+          <Text style={pdfStyles.text}>{limit}</Text>
+        </View>
       ))}
     </View>
   );
@@ -683,6 +744,13 @@ function PdfChapter({
       orientation={contextSection ? "landscape" : "portrait"}
       style={pdfStyles.page}
     >
+      <Text fixed style={pdfStyles.runningSection}>
+        Chapter {String(index + 1).padStart(2, "0")} - {chapter.title}
+        {leadership && declaredSyntheticDemo === true
+          ? " | Synthetic reference - Not client-attested"
+          : ""}
+      </Text>
+      <PdfPageNumber />
       <Text style={pdfStyles.eyebrow}>
         Chapter {String(index + 1).padStart(2, "0")} · {chapter.title}
       </Text>
@@ -765,12 +833,28 @@ export function buildHomeWalkthroughPdf({
   const dataAsOf = recordSource.contextVersion?.dataAsOf ?? "not established";
   const types = bundle.technologyEstate?.recordTypes ?? [];
   return (
-    <Document title={`Home walkthrough export - ${tenantLabel}`}>
+    <Document title={`Home text and table briefing - ${tenantLabel}`}>
       <Page size="LETTER" style={pdfStyles.page}>
+        <Text fixed style={pdfStyles.runningSection}>
+          AbarVa Home | Text and table briefing
+        </Text>
+        <PdfPageNumber />
         <Text style={pdfStyles.eyebrow}>AbarVa Home Walkthrough Export</Text>
         <Text style={pdfStyles.title}>{tenantLabel}</Text>
+        <View wrap={false}>
+          <Text style={pdfStyles.h2}>Text and table briefing</Text>
+          <Text style={pdfStyles.text}>
+            Charts and architecture/data-flow maps are not included. Exhibits
+            are textual summaries.
+          </Text>
+          <Text style={pdfStyles.text}>
+            {bundle.declaredSyntheticDemo === true
+              ? "Synthetic reference - Not client-attested."
+              : "Client attestation is not established by this export."}
+          </Text>
+        </View>
         <Text style={pdfStyles.meta}>
-          Narrative generated {compiled}. Data as of {dataAsOf}. From{" "}
+          Narrative generated {compiled}. Data as of {dataAsOf}. Compiled packet: From{" "}
           {bundle.thesis.signalPacket.signals.length.toLocaleString()} signals
           and {bundle.thesis.signalPacket.contextItems.length.toLocaleString()}{" "}
           governed facts.
@@ -796,12 +880,22 @@ export function buildHomeWalkthroughPdf({
           </Text>
           <Text style={pdfStyles.meta}>{markerScope(recordSource)}</Text>
           <Text style={pdfStyles.meta}>
+            Record counts and deterministic tables use only rows in this Home
+            bundle. Compiled signals, facts and narrative summaries do not
+            establish inspectable detail rows or independent source verification.
+            Evidence references are not proof that source rows can be opened.
+          </Text>
+          <Text style={pdfStyles.meta}>
             This export contains Home chapters, deterministic tables, findings,
             evidence labels, architecture/data-flow summaries, and record-source
             state. It is not an aVa chat transcript.
           </Text>
         </View>
-        <Text style={pdfStyles.h2}>Evidence Families</Text>
+        <Text style={pdfStyles.h2} minPresenceAhead={48}>Evidence Families</Text>
+        <Text style={pdfStyles.meta}>
+          Counting basis: rows present in each record family in this Home bundle;
+          these are not verified enterprise totals. An absent family is not zero.
+        </Text>
         <View style={pdfStyles.table}>
           {types.map((type) => (
             <View key={type.objectType} style={pdfStyles.row}>
@@ -812,7 +906,7 @@ export function buildHomeWalkthroughPdf({
             </View>
           ))}
         </View>
-        <Text style={pdfStyles.h2}>Current-State Exhibits</Text>
+        <Text style={pdfStyles.h2} minPresenceAhead={48}>Current-State Exhibits</Text>
         {exhibitSummary(bundle).map((exhibit) => (
           <View key={exhibit.label} wrap={false}>
             <Text style={pdfStyles.h3}>{exhibit.label}</Text>
@@ -830,6 +924,7 @@ export function buildHomeWalkthroughPdf({
           narrativeDate={compiled}
           enterpriseContext={bundle.thesis.signalPacket.homeEnterpriseContext}
           evidenceById={exportEvidenceReferences(bundle)}
+          declaredSyntheticDemo={bundle.declaredSyntheticDemo}
         />
       ))}
     </Document>

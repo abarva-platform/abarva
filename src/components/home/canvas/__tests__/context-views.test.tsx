@@ -107,6 +107,7 @@ describe("context-rich canvas views", () => {
         screen.getByText(/supplies no function-to-segment links/),
       ).toBeInTheDocument();
     }
+    fireEvent.click(screen.getByText("System accountability (application register)"));
     fireEvent.click(
       screen.getByRole("button", { name: "All 22 recorded functions" }),
     );

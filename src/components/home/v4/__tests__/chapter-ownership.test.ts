@@ -95,7 +95,7 @@ describe("a family still argues where it is relevant", () => {
       "Renewal exposure",
     );
     expect(
-      depth.findings.some((f) => /renew without a decision/.test(f.claim)),
+      depth.findings.some((f) => /eligible for automatic renewal/.test(f.claim)),
     ).toBe(true);
   });
 

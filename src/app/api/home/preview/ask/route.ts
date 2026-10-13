@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isFoundationPreviewOperatorSession } from "@/lib/auth/foundation-preview-session";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin-session";
-import { answerHomeAvaQuestion } from "@/lib/home/preview/ava-answer";
+import { answerHomeAvaQuestion, homeAvaAnswerFollowUpQuestions } from "@/lib/home/preview/ava-answer";
 import { isHomePreviewTenantKey } from "@/lib/home/preview/golden-snapshot";
 import { resolveHomeRecord } from "@/lib/home/preview/resolve-home-record";
 import { homeRecordSourceToken } from "@/lib/home/preview/record-source-token";
@@ -10,7 +10,6 @@ import type { HomeRecordRenderSource } from "@/lib/home/preview/types";
 import {
   formatHomeAdvisorAnswer,
   homeConversationSchema,
-  homeFollowUpQuestions,
   type HomeConversationTurn,
 } from "@/lib/home/preview/conversation";
 
@@ -111,7 +110,7 @@ export async function POST(req: NextRequest) {
       recordSource,
       bundle.declaredSyntheticDemo,
     ),
-    followUpQuestions: homeFollowUpQuestions(answer),
+    followUpQuestions: homeAvaAnswerFollowUpQuestions(answer),
     recordSource,
   });
 }

@@ -30,12 +30,14 @@ import {
   canvasEstate,
   canvasMetrics,
   narrativeIsCurrent,
+  recordCount,
+  type CanvasMetric,
   type CanvasView,
   type CanvasPanel,
 } from "./canvas-model";
 import styles from "./HomeCanvas.module.css";
 import { LeadershipCanvas, OperatingCanvas } from "./ContextViews";
-import { chapterContext } from "./context-coverage";
+import { chapterContext, recordCoverage } from "./context-coverage";
 
 export interface CanvasInspection {
   title: string;
@@ -76,6 +78,24 @@ export function ChapterCanvas({
     [chapter, bundle],
   );
   const current = narrativeIsCurrent(source);
+  const metrics = canvasMetrics(chapter.chapterId, bundle, source).map((metric) => {
+    const coverage = metric.objectType ? recordCoverage(bundle, source, metric.objectType) : null;
+    return coverage ? {
+      ...metric,
+      value: coverage.rowCount !== null
+        ? coverage.rowCount.toLocaleString("en-US")
+        : coverage.summaryState === "available" ? "Summary available" : "Detail not supplied",
+      basis: coverage.rowCount !== null
+        ? "Rows in selected record"
+        : coverage.summaryState === "available"
+          ? "Compiled summary; detail rows not supplied"
+          : "Detail rows not supplied",
+      coverage,
+    } : { ...metric, coverage: null };
+  });
+  const businessOverview =
+    chapter.chapterId === "executive_brief" ||
+    chapter.chapterId === "our_business";
   const findings = rankFindings(depth.findings);
   const claims =
     bands.follows.length > bands.record.length
@@ -119,6 +139,15 @@ export function ChapterCanvas({
           <span className={styles.eyebrow}>
             {current ? "Published interpretation" : "Prior interpretation"}
           </span>
+          <div className={styles.basis} style={{ marginBottom: 15 }}>
+            {source.kind === "ecl_serving_projection"
+              ? "Served record"
+              : "Reviewed stored record"}
+            {" · "}Narrative generated {bundle.provenance.generated_at.slice(0, 10)}.
+            {" "}Data as of {source.contextVersion?.dataAsOf ?? bundle.contextVersion?.dataAsOf ?? "not established"}.
+            {" "}Version alignment does not establish data currency or independent attestation.
+          </div>
+          <ReadingCaveats chapter={chapter} bundle={bundle} />
           {chapter.chapterId === "how_we_operate" &&
             chapter.key_insights.every((claim) =>
               claim.evidence_ids.every(
@@ -234,13 +263,35 @@ export function ChapterCanvas({
           not verified against this version and is kept in Full reading.
         </div>
       )}
+      {businessOverview && (
+        <section className={styles.section} style={{ marginBottom: 19 }}>
+          <h2>
+            {business.revenueMix.length
+              ? `The declared model combines ${business.revenueMix.map((item) => `${item.label} (${item.share}% of revenue)`).join(" and ")}.`
+              : business.businessModel || "Business model not recorded in this version"}
+          </h2>
+          <p>
+            {chapter.chapterId === "executive_brief"
+              ? "Declared priorities set the agenda; delivery, value proof and exposure each need their own evidence."
+              : "Revenue composition and customer populations describe the business footing; segment profitability is not established here."}
+          </p>
+          <span className={styles.basis}>
+            Declared profile in this {source.kind === "ecl_serving_projection" ? "served" : "stored"} record.
+            {bundle.declaredSyntheticDemo || business.context?.evidenceClass === "synthetic_reference"
+              ? " Synthetic reference; not client-attested."
+              : " Independent attestation not established."}
+            {" "}Profile as of {business.context?.profile.asOf ?? source.contextVersion?.dataAsOf ?? bundle.contextVersion?.dataAsOf ?? "not established"}.
+          </span>
+        </section>
+      )}
       <div className={styles.metrics}>
-        {canvasMetrics(chapter.chapterId, bundle, source).map((metric) => (
+        {metrics.map((metric) => (
           <div key={metric.label} className={styles.metric}>
             <strong
               data-unknown={
                 metric.value === "Not recorded" ||
-                metric.value === "Not supplied"
+                metric.value === "Not supplied" ||
+                metric.coverage?.rowCount === null
               }
             >
               {metric.value}
@@ -260,6 +311,27 @@ export function ChapterCanvas({
               <span>{metric.label}</span>
             )}
             <small>{metric.basis}</small>
+            {metric.coverage && (
+              <button
+                className={styles.textButton}
+                style={{ marginTop: 5 }}
+                aria-label={`Inspect ${metric.label} basis`}
+                onClick={() => {
+                  const coverage = metric.coverage!;
+                  inspect({
+                    title: `${metric.label}: record basis`,
+                    text: [metric.value, JSON.stringify({ coverage, provenance: bundle.provenance }, null, 2), ...coverage.summaryDatasetKeys.map((key) =>
+                      `${key}: ${JSON.stringify(bundle.thesis.signalPacket.visualDatasets[key])}`,
+                    )].join("\n\n"),
+                    basis: coverage.basis,
+                    evidenceIds: [...coverage.summaryEvidenceIds, ...coverage.profileEvidenceIds],
+                    sourceRefs: [...(coverage.rowSourceRefs?.flat() ?? []), ...coverage.profileSourceRefs],
+                  });
+                }}
+              >
+                Basis
+              </button>
+            )}
           </div>
         ))}
       </div>
@@ -276,32 +348,15 @@ export function ChapterCanvas({
             chapter.chapterId === "strategy_value_creation") && (
             <PriorityList priorities={business.priorities} inspect={inspect} />
           )}
-          {chapter.chapterId === "our_business" && (
-            <>
-              <h3>Operating segments</h3>
-              {business.segments.length ? (
-                <ol className={styles.list}>
-                  {business.segments.map((segment, i) => (
-                    <li key={segment}>
-                      <span className={styles.number}>
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                      <span>{segment}</span>
-                    </li>
-                  ))}
-                </ol>
-              ) : (
-                <div className={styles.empty}>
-                  Operating segments are not recorded in this version.
-                </div>
-              )}
-            </>
-          )}
         </section>
         <section className={styles.section}>
           <div className={styles.sectionLabel}>
             <h2>
-              {current && bands.follows.length > bands.record.length
+              {businessOverview
+                ? chapter.chapterId === "executive_brief"
+                  ? "Executive context"
+                  : "Business context"
+                : current && bands.follows.length > bands.record.length
                 ? "What follows from the record"
                 : "Signals that matter"}
             </h2>
@@ -313,7 +368,18 @@ export function ChapterCanvas({
               All claims
             </Link>
           </div>
-          {current && claims.length ? (
+          {businessOverview ? (
+            <BusinessStoryContext
+              chapterId={chapter.chapterId}
+              business={business}
+              bundle={bundle}
+              metrics={metrics}
+              chapter={chapter}
+              claims={current ? claims : []}
+              href={href}
+              inspect={inspect}
+            />
+          ) : current && claims.length ? (
             claims
               .slice(0, 3)
               .map((claim, i) => (
@@ -343,7 +409,7 @@ export function ChapterCanvas({
               substitute it for current evidence.
             </div>
           )}
-          {current && claims.length > 3 && (
+          {!businessOverview && current && claims.length > 3 && (
             <Link
               className={styles.textButton}
               href={href(chapter.chapterId, "reading")}
@@ -395,7 +461,7 @@ export function ChapterCanvas({
           </strong>
           <p>
             {depth.tables.length} deterministic tables · {findings.length}{" "}
-            row-derived findings · {current ? claims.length : 0} current
+            row-derived findings · {current ? claims.length : 0} version-aligned
             published claims
           </p>
         </div>
@@ -418,6 +484,189 @@ export function ChapterCanvas({
   );
 }
 
+function interpretationCaveats(
+  text: string,
+  evidenceIds: string[],
+  bundle: HomeReviewBundle,
+  leadershipChapter = false,
+): string[] {
+  const evidence = resolveEvidence(evidenceIds, bundle.thesis.signalPacket);
+  const voices = leadershipChapter ||
+    /\b(leadership|leaders?|interviews?|testimony|testified|CEO|CFO)\b/i.test(text) ||
+    evidence.some((item) =>
+      item.signalKind === "testimony" ||
+      item.domains.some((domain) =>
+        ["ai_value_interview_evidence", "executive_interview"].includes(domain),
+      ),
+    );
+  const caveats: string[] = [];
+  if (voices) {
+    const synthetic = bundle.declaredSyntheticDemo ||
+      bundle.thesis.signalPacket.homeEnterpriseContext?.evidenceClass === "synthetic_reference";
+    const modelled = bundle.technologyEstate?.recordTypes.some((family) =>
+      family.objectType === "executive_interview" &&
+      family.rows.some((row) => /modelled|modeled/i.test(String(row.responseBasis ?? ""))),
+    );
+    caveats.push(
+      `${synthetic
+        ? "Synthetic leadership reference; not client-attested testimony."
+        : modelled
+          ? "Modelled responses present; published transcript basis not established."
+          : "Leadership response basis not established."} Mentions are not agreement.`,
+    );
+  }
+  if (/(Medicare Advantage|\bMA\b)/i.test(text) && /(Medicare FFS|fee.for.service|\bFFS\b)/i.test(text))
+    caveats.push(
+      "Combined MA + Medicare FFS share is not an MA-only share or Star Rating exposure.",
+    );
+  if (/vendor|third-party/i.test(text) && /spend|budget|internal.control/i.test(text))
+    caveats.push(
+      "Vendor spend does not establish an internal-control deficit.",
+    );
+  return caveats;
+}
+
+function ReadingCaveats({
+  chapter,
+  bundle,
+}: {
+  chapter: ChapterView;
+  bundle: HomeReviewBundle;
+}) {
+  const claims = [...chapter.key_insights, ...chapter.tensions, ...chapter.what_to_watch];
+  const caveats = interpretationCaveats(
+    [chapter.headline, chapter.executive_synthesis, ...claims.map((claim) => claim.statement)].join(" "),
+    claims.flatMap((claim) => claim.evidence_ids),
+    bundle,
+    chapter.chapterId === "leadership_perspective",
+  );
+  return caveats.length ? (
+    <div className={styles.notice} data-reading-basis>
+      <strong>Published interpretation limits</strong>
+      {caveats.map((caveat) => <div key={caveat}>{caveat}</div>)}
+    </div>
+  ) : null;
+}
+
+function BusinessStoryContext({
+  chapterId,
+  business,
+  bundle,
+  metrics,
+  chapter,
+  claims,
+  href,
+  inspect,
+}: {
+  chapterId: ChapterView["chapterId"];
+  business: ReturnType<typeof canvasBusiness>;
+  bundle: HomeReviewBundle;
+  metrics: CanvasMetric[];
+  chapter: ChapterView;
+  claims: GroundedClaim[];
+  href: Href;
+  inspect: (detail: CanvasInspection) => void;
+}) {
+  if (chapterId === "our_business")
+    return (
+      <>
+        <article className={styles.signal}>
+          <span className={styles.signalType}>Declared business model</span>
+          <p style={{ overflowWrap: "anywhere" }}>
+            {business.businessModel || "Business-model detail is not recorded in this version."}
+          </p>
+          {interpretationCaveats(business.businessModel, [], bundle).map((caveat) => (
+            <span key={caveat} className={styles.basis}>{caveat}</span>
+          ))}
+          {business.businessModel && (
+            <button
+              className={styles.textButton}
+              style={{ marginTop: 8 }}
+              onClick={() => inspect({
+                title: "Declared business model",
+                text: business.businessModel,
+                evidenceIds: business.profileRefs.filter((ref) => ref.startsWith("ctx_")),
+                sourceRefs: business.profileRefs.filter((ref) => !ref.startsWith("ctx_")),
+                basis: "Declared profile; no inferred segment dollars or MA-only share.",
+              })}
+            >
+              Profile basis
+            </button>
+          )}
+        </article>
+        <article className={styles.signal}>
+          <span className={styles.signalType}>Who is served</span>
+          {business.customers.length ? (
+            <ul className={`${styles.list} ${styles.contextList}`}>
+              {business.customers.map((customer) => <li key={customer}>{customer}</li>)}
+            </ul>
+          ) : <p>Customer / member populations are not recorded in this version.</p>}
+          <span className={styles.basis}>Declared populations; no population size or payer share inferred.</span>
+        </article>
+        <article className={styles.signal}>
+          <span className={styles.signalType}>Declared operating segments</span>
+          <p>{business.segments.length ? business.segments.join("; ") : "Operating segments are not recorded in this version."}</p>
+          <Link href={href("how_we_operate", "overview")} scroll={false} prefetch={false}>
+            Operating context
+          </Link>
+        </article>
+      </>
+    );
+  const execution = metrics.find((metric) => metric.label === "Programs in execution exhibit");
+  const completion = metrics.find((metric) => metric.label === "Below 10% complete");
+  const outcomes = recordCount(bundle, "metric_outcome");
+  const risks = recordCount(bundle, "risk_control");
+  const contexts = [
+    {
+      label: "Delivery context", link: "Delivery evidence", view: "strategy_value_creation" as const,
+      domains: ["program_initiative"],
+      text: execution && completion && execution.value !== "Not recorded" && completion.value !== "Not recorded"
+            ? `Below 10% complete: ${completion.value} programs in the ${execution.value}-program execution exhibit.`
+            : "Aligned execution exhibit not supplied.",
+      basis: "Completion is not schedule variance; planned milestones are not shown.",
+    },
+    {
+      label: "Value proof", link: "Value evidence", view: "performance_value" as const,
+      domains: ["metric_outcome", "ai_value_realization_signal"],
+      text: outcomes === null ? "Outcome detail rows not supplied." : `${outcomes.toLocaleString("en-US")} outcome rows in this record.`,
+      basis: "Compiled value summaries are separate from inspectable outcomes.",
+    },
+    {
+      label: "Exposure context", link: "Exposure evidence", view: "what_needs_attention" as const,
+      domains: ["risk_control", "risk_or_control"],
+      text: risks === null ? "Risk detail rows not supplied." : `${risks.toLocaleString("en-US")} risk rows in this record.`,
+      basis: "Missing detail is not absence of exposure.",
+    },
+  ];
+  return contexts.map((context) => {
+    const cited = claims.filter((claim) => resolveEvidence(claim.evidence_ids, bundle.thesis.signalPacket)
+      .some((item) => item.domains.some((domain) => context.domains.includes(domain))));
+    const delivery = context.label === "Delivery context" && execution?.value !== "Not recorded";
+    const visuals = chapter.visual_opportunities.filter((visual) =>
+      visual.dataset_ref === "stalled_programs" && delivery,
+    );
+    return (
+      <article key={context.label} className={styles.signal}>
+        <span className={styles.signalType}>{context.label}</span>
+        <p>{context.text}</p>
+        <span className={styles.basis}>{context.basis}</span>
+        <div className={styles.signalFooter} style={{ flexWrap: "wrap" }}>
+          <Link href={href(context.view, "evidence")} scroll={false} prefetch={false}>{context.link}</Link>
+          <button className={styles.textButton} onClick={() => inspect({
+            title: "Claim and evidence",
+            text: [context.text,
+              ...(delivery ? [JSON.stringify(bundle.thesis.signalPacket.visualDatasets.stalled_programs ?? [])] : []),
+              ...cited.map((claim) => claim.statement),
+            ].join("\n\n"),
+            evidenceIds: [...cited.flatMap((claim) => claim.evidence_ids), ...visuals.flatMap((visual) => visual.evidence_ids)],
+            basis: context.basis,
+          })}>Read & verify</button>
+        </div>
+      </article>
+    );
+  });
+}
+
 function ClaimSignal({
   claim,
   bundle,
@@ -429,6 +678,7 @@ function ClaimSignal({
 }) {
   const source = claimSource(claim, bundle.thesis.signalPacket);
   const interpretation = !["FACT", "OBSERVATION"].includes(claim.claim_type);
+  const caveats = interpretationCaveats(claim.statement, claim.evidence_ids, bundle);
   return (
     <article className={styles.signal}>
       <span
@@ -437,6 +687,11 @@ function ClaimSignal({
       >
         {interpretation ? "Interpretation" : "Record claim"}
       </span>
+      {caveats.map((caveat) => (
+        <span key={caveat} className={styles.basis} style={{ marginBottom: 7, overflowWrap: "anywhere" }}>
+          {caveat}
+        </span>
+      ))}
       <p className={styles.signalSummary}>{cxoText(claim.statement)}</p>
       <div className={styles.signalFooter}>
         <small>{source.label}</small>
@@ -449,7 +704,10 @@ function ClaimSignal({
                 : "Claim and evidence",
               text: cxoText(claim.statement),
               evidenceIds: claim.evidence_ids,
-              basis: `${claim.claim_type} · ${claim.confidence} confidence · ${source.ids}`,
+              basis: [
+                `${claim.claim_type} · ${claim.confidence} confidence · ${source.ids}`,
+                ...caveats,
+              ].join(" "),
             })
           }
         >
@@ -516,7 +774,7 @@ function FindingSignal({
           scroll={false}
           prefetch={false}
         >
-          Open matching record
+          {finding.openRows!.filter ? "Open matching record" : "Open record family"}
         </Link>
       )}
     </article>
@@ -1132,6 +1390,9 @@ function EvidenceCanvas({
                 {contextItems.map((item) => (
                   <li key={item.id}>
                     <span>
+                      {interpretationCaveats(item.statement, [item.id], bundle).map((caveat) => (
+                        <small key={caveat}>{caveat}</small>
+                      ))}
                       {cxoText(item.statement)}
                       <button
                         className={styles.textButton}
@@ -1141,6 +1402,7 @@ function EvidenceCanvas({
                             title: "On-topic record context",
                             text: item.statement,
                             evidenceIds: [item.id],
+                            basis: interpretationCaveats(item.statement, [item.id], bundle).join(" "),
                           })
                         }
                       >
@@ -1189,11 +1451,15 @@ export function InspectionEvidence({
   bundle: HomeReviewBundle;
 }) {
   const evidence = resolveEvidence(
-    detail.evidenceIds ?? [],
+    [...new Set(detail.evidenceIds ?? [])],
     bundle.thesis.signalPacket,
   );
+  const caveats = interpretationCaveats(detail.text, detail.evidenceIds ?? [], bundle);
   return (
     <>
+      {caveats.filter((caveat) => !detail.basis?.includes(caveat)).map((caveat) => (
+        <p key={caveat}><small>{caveat}</small></p>
+      ))}
       <p style={{ whiteSpace: "pre-line" }}>{detail.text}</p>
       {detail.basis && (
         <p>
@@ -1209,19 +1475,32 @@ export function InspectionEvidence({
                 ? "Recorded signal"
                 : "Declared context"}
           </h3>
+          {interpretationCaveats(item.statement, [item.id], bundle).map((caveat) => (
+            <p key={caveat}><small>{caveat}</small></p>
+          ))}
           <p>{cxoText(item.statement)}</p>
           <small>
             {item.evidenceRefs?.length
-              ? `${item.evidenceRefs.length} linked source records`
-              : "Source-row links are not present in this reviewed packet."}
+              ? `${item.evidenceRefs.length} declared source references`
+              : "Source-row links are not supplied for this reference."}
           </small>
+          {item.evidenceRefs?.length ? (
+            <>
+              <ul aria-label="Supplied reference identities">
+                {[...new Set(item.evidenceRefs)].map((ref) => (
+                  <li key={ref} style={{ overflowWrap: "anywhere" }}>{ref}</li>
+                ))}
+              </ul>
+              <small>Compiled reference identities; source-row or document links are not resolved here.</small>
+            </>
+          ) : null}
         </section>
       ))}
       {detail.sourceRefs?.length ? (
         <>
           <h3>Declared source records</h3>
           <ul>
-            {detail.sourceRefs.map((ref) => (
+            {[...new Set(detail.sourceRefs)].map((ref) => (
               <li key={ref}>{ref}</li>
             ))}
           </ul>

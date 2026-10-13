@@ -130,6 +130,7 @@ export function HomeCanvasApp({
   }, [bundle, params, requestedProvider, router, tenantKey]);
   useEffect(() => {
     viewport.current?.scrollTo?.({ top: 0 });
+    window.scrollTo({ top: 0, behavior: "instant" });
   }, [view, panel, query]);
   useEffect(() => {
     if (inspection && !dialog.current?.open) dialog.current?.showModal();
@@ -273,7 +274,7 @@ export function HomeCanvasApp({
               </Link>
               <a
                 href={`/api/home/walkthrough-export?${exportParams}`}
-                title="Download the existing full Home walkthrough PDF"
+                title="Download the Home text and table briefing PDF; interactive charts and maps are not included"
               >
                 Download PDF
               </a>

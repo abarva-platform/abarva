@@ -877,13 +877,34 @@ export async function answerHomeAvaQuestion(args: {
       return currentAnswer;
     }
     if (isHomeGraphExhibitRequest(question)) {
-      return buildFallbackPacket(
+      const packet = buildFallbackPacket(
         args.tenantKey,
         question,
         "no_data",
         "A verified relationship graph is not available for this current record. I cannot draw or infer those connections yet.",
         [],
       );
+      return {
+        ...packet,
+        gaps: [
+          ...packet.gaps,
+          {
+            id: "home-ava-relationship-scope-gap",
+            label: "Typed relationship scope not verified",
+            detail: graphRelationshipGap(question),
+            severity: "medium",
+          },
+        ],
+        caveats: args.bundle.declaredSyntheticDemo
+          ? [
+              {
+                id: "home-ava-source-caveat",
+                label: "Source limit",
+                detail: "Synthetic reference, not client-attested.",
+              },
+            ]
+          : [],
+      };
     }
   }
   if (
@@ -1725,7 +1746,7 @@ function buildGraphUnavailablePacket(input: {
 }): AvaAnswerPacket {
   const selected = selectRecoveryClaims(input.context, input.question).slice(
     0,
-    4,
+    requestedKeyPointLimit(input.question),
   );
   const citations: AvaCitation[] = selected.map(({ tag, claim }) => ({
     id: tag,
@@ -1740,17 +1761,20 @@ function buildGraphUnavailablePacket(input: {
           : "high",
   }));
   const bullets = selected.map(
-    ({ claim }) => `- ${compactStatement(claim.statement)}`,
+    ({ claim }) => `- ${recoveryStatement(claim.statement, input.context)}`,
   );
   const caveat =
-    "A graph view is not available from Home aVa for this record yet. Use this as a cited narrative read, not as a relationship exhibit.";
+    "A graph view is not available from Home aVa for this record yet. Compiled Home claims are summary evidence, not inspected relationship records.";
+  const relationshipGap = graphRelationshipGap(input.question);
+  const sourceCaveat = recoveryCaveat(input.question, input.context, []);
   const prose = [
     "Short answer: Home aVa cannot render a graph for this question yet.",
     bullets.length > 0
       ? bullets.join("\n\n")
-      : "- I can answer from cited Home claims, but I cannot turn those claims into a graph view yet.",
-    `Confidence: ${recoveryConfidence(citations)}. Support: ${citations.length} cited Home claim${citations.length === 1 ? "" : "s"}.`,
-    `Caveat: ${caveat}`,
+      : "No cited Home claims are available for a narrative fallback to this question.",
+    relationshipGap,
+    `Confidence: ${recoveryConfidence(citations)} for cited claims only; relationship confidence is not established. Support: ${citations.length} cited Home claim${citations.length === 1 ? "" : "s"}.`,
+    `Caveat: ${caveat} ${sourceCaveat}`,
   ].join("\n\n");
 
   return {
@@ -1759,9 +1783,9 @@ function buildGraphUnavailablePacket(input: {
     tenantKey: input.tenantKey,
     question: input.question,
     intent: "home_preview_qa",
-    status: "partial",
+    status: citations.length > 0 ? "partial" : "no_data",
     directAnswer:
-      "Home aVa cannot render a graph for this question yet; it can only provide a cited narrative read.",
+      "Home aVa cannot render a graph for this question yet; the requested typed relationships are not verified here.",
     prose,
     factsUsed: [],
     metricsUsed: [],
@@ -1774,16 +1798,28 @@ function buildGraphUnavailablePacket(input: {
         label: "Graph view unavailable",
         detail: caveat,
         severity: "medium",
-        citationIds: citations.map((citation) => citation.id),
+      },
+      {
+        id: "home-ava-relationship-scope-gap",
+        label: "Typed relationship scope not verified",
+        detail: relationshipGap,
+        severity: "medium",
       },
     ],
-    caveats: [{ id: "home-ava-caveat-1", label: "Caveat", detail: caveat }],
+    caveats: [
+      { id: "home-ava-caveat-1", label: "Caveat", detail: caveat },
+      {
+        id: "home-ava-source-caveat",
+        label: "Source limit",
+        detail: sourceCaveat,
+      },
+    ],
     nextSteps: [],
     quality: {
-      confidence: citations.length > 0 ? "medium" : "low",
+      confidence: recoveryConfidence(citations),
       evidenceStrength: citations.length > 0 ? "partial" : "thin",
-      tenantGrounding: "complete",
-      answerCompleteness: "partial",
+      tenantGrounding: citations.length > 0 ? "complete" : "missing",
+      answerCompleteness: citations.length > 0 ? "partial" : "blocked",
     },
     safety: {
       tenantFencePassed: true,
@@ -2036,17 +2072,20 @@ function buildClaimBackedRecoveryAnswer(input: {
     MAX_PROSE_PARAGRAPH_WORDS,
   );
   const bullets = selected
-    .slice(0, 4)
-    .map(({ claim }) => `- ${compactStatement(claim.statement)}`);
+    .slice(0, requestedKeyPointLimit(input.question))
+    .map(
+      ({ claim }) => `- ${recoveryStatement(claim.statement, input.context)}`,
+    );
   if (
     input.context.declaredSyntheticDemo &&
-    needsCompactAnswerRepair(
+    hasUnqualifiedReferenceTestimony(
       {
         status: "partial",
         direct_answer: "Cited Home claims are available for review.",
-        key_points: bullets,
+        key_points: selected
+          .slice(0, requestedKeyPointLimit(input.question))
+          .map(({ claim }) => claim.statement),
       },
-      input.question,
       input.context,
     )
   ) {
@@ -2078,7 +2117,7 @@ function buildClaimBackedRecoveryAnswer(input: {
     prose: sanitizeAvaVisibleText(
       prose,
       input.context,
-      MAX_PROSE_PARAGRAPH_WORDS,
+      Number.POSITIVE_INFINITY,
     ),
     factsUsed: [],
     metricsUsed: [],
@@ -2168,16 +2207,27 @@ function recoveryClaimScore(entry: TaggedClaim, question: string): number {
   return score;
 }
 
-function compactStatement(statement: string): string {
+function recoveryStatement(
+  statement: string,
+  context: GroundingContext,
+): string {
   const cleaned = statement.replace(/\s+/g, " ").trim();
-  const words = cleaned.split(/\s+/);
-  if (words.length <= 42) return cleaned;
-  return `${words.slice(0, 42).join(" ")}.`;
+  if (hasUnqualifiedReferenceTestimony({ direct_answer: cleaned }, context)) {
+    return "A supporting leadership claim lacks a qualified synthetic reference basis; inspect Evidence basis before using it.";
+  }
+  if (wordCount(cleaned) > MAX_PROSE_PARAGRAPH_WORDS) {
+    return "A supporting claim needs its full context and qualifications; review Evidence basis before drawing a conclusion.";
+  }
+  if (sanitizeRecordCountContradictions(cleaned, context) !== cleaned) {
+    return "A compiled claim does not match the selected record; review Evidence basis and the current records before using it.";
+  }
+  return sanitizeAvaVisibleText(cleaned, context, Number.POSITIVE_INFINITY);
 }
 
 function recoveryConfidence(
   citations: AvaCitation[],
 ): "low" | "medium" | "high" {
+  if (citations.some((citation) => citation.confidence === "low")) return "low";
   return citations.length >= 4 &&
     citations.every((citation) => citation.confidence === "high")
     ? "high"
@@ -2194,7 +2244,6 @@ function recoveryCaveat(
   const explicit = modelCaveats.find(
     (item) => item.trim().length > 0 && !INTERNAL_RECOVERY_CAVEAT_RE.test(item),
   );
-  if (explicit) return explicit.trim();
   const selectedChapters = new Set(
     selectRecoveryClaims(context, question).map((entry) => entry.chapterId),
   );
@@ -2205,7 +2254,120 @@ function recoveryCaveat(
     ?.filter((chapter) => selectedChapters.has(chapter.chapterId as ChapterId))
     .flatMap((chapter) => chapter.limitations ?? [])
     .find((item) => item.trim().length > 0);
-  return limitation?.trim() ?? DEFAULT_RECOVERY_CAVEAT;
+  return [
+    explicit?.trim() ?? limitation?.trim() ?? DEFAULT_RECOVERY_CAVEAT,
+    context.declaredSyntheticDemo
+      ? "Synthetic reference, not client-attested."
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function graphRelationshipScopes(question: string): string[] {
+  return [
+    { test: /\b(risks?|controls?)\b/i, scope: "risk-to-application" },
+    {
+      test: /\b(vendors?|suppliers?|contracts?)\b/i,
+      scope: "vendor/contract-to-application",
+    },
+    {
+      test: /\b(data|integrations?|analytics)\b/i,
+      scope: "application-to-data asset",
+    },
+    { test: /\b(programs?|initiatives?)\b/i, scope: "program-to-application" },
+    {
+      test: /\b(platforms?|infrastructure|hosting)\b/i,
+      scope: "application-to-platform",
+    },
+    {
+      test: /\b(organizations?|organisations?|ownership|capabilities)\b/i,
+      scope: "organization-to-capability",
+    },
+  ]
+    .filter(({ test }) => test.test(question))
+    .map(({ scope }) => scope);
+}
+
+function graphRelationshipGap(question: string): string {
+  const scope =
+    graphRelationshipScopes(question).join(", ") ||
+    "requested typed relationships";
+  return `Typed relationship scope not verified here: ${scope}. Endpoint IDs, declared relationship types and source evidence need inspection. This does not establish that these links are absent from the source.`;
+}
+
+/** The route's follow-up selector can use this without earlier conversation or new model input. */
+export function homeAvaAnswerFollowUpQuestions(
+  answer: AvaAnswerPacket,
+): string[] {
+  const normalize = (question: string) =>
+    question
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  const details = [
+    answer.directAnswer,
+    answer.prose ?? "",
+    ...answer.gaps.map((gap) => `${gap.label} ${gap.detail}`),
+    ...answer.caveats.map((caveat) => caveat.detail),
+    ...answer.citations.map((citation) => citation.excerpt ?? ""),
+  ].join(" ");
+  const graphGap = answer.gaps.some((gap) =>
+    /graph|typed relationship/i.test(`${gap.label} ${gap.detail}`),
+  );
+  let candidates: string[];
+  if (graphGap) {
+    const scopes = graphRelationshipScopes(answer.question);
+    const scope = scopes.join(", ") || "the requested typed relationships";
+    candidates = [
+      `What evidence is needed to verify ${scope}?`,
+      "Which endpoint IDs and declared relationship types can we inspect for the requested graph?",
+      answer.citations.length > 0
+        ? "What do the cited summaries establish, and which requested connections remain unverified?"
+        : "Which records would provide source evidence for the requested connections?",
+    ];
+  } else {
+    const topics: Record<string, string> = {
+      enterprise_profile: "enterprise context",
+      business_model: "the business model",
+      strategy_priorities: "strategic priorities",
+      operating_model: "operating ownership",
+      programs_transformation: "program delivery",
+      applications_technology: "applications and technology",
+      data_analytics_ai: "data and analytics",
+      infrastructure_hosting: "hosting and resilience",
+      vendors_contracts: "vendor and contract exposure",
+      financials_value: "financial value",
+      risks_controls: "risk and controls",
+      leadership_themes: "leadership themes",
+    };
+    const topicFor = (text: string) =>
+      matchedQuestionDomains(text)
+        .map((domain) => topics[domain])
+        .find(Boolean);
+    const topic =
+      topicFor(answer.question) ?? topicFor(details) ?? "this question";
+    const gapTopic =
+      topicFor(answer.gaps.map((gap) => gap.detail).join(" ")) ?? topic;
+    candidates = [
+      answer.citations.length > 0
+        ? `How do the cited claims about ${topic} affect the decision in this question?`
+        : `What can the selected Home record establish about ${topic}?`,
+      answer.gaps.length > 0 || answer.caveats.length > 0
+        ? `Which evidence gaps about ${gapTopic} should we verify first?`
+        : `Which assumptions about ${topic} need validation before acting?`,
+      `Which supporting sources can we inspect for ${topic}?`,
+    ];
+  }
+  const seen = new Set([normalize(answer.question)]);
+  return candidates
+    .filter((candidate) => {
+      const key = normalize(candidate);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 3);
 }
 
 function buildFallbackPacket(

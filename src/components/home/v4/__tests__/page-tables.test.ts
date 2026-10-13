@@ -222,7 +222,7 @@ describe("money figures carry how they were arrived at", () => {
     const finding = applicationFindings(apps).find((f) =>
       /modelled, not booked/.test(f.claim),
     );
-    expect(finding?.owner).toBe("Chief Financial Officer");
+    expect(finding?.owner).toBe("Suggested review owner: Chief Financial Officer");
     expect(finding?.because).toMatch(
       /relative scale and not for a spend statement/,
     );
@@ -310,15 +310,16 @@ describe("commercial and platform depth", () => {
     expect(Number(table!.total?.[1])).toBe(contracts.length);
   });
 
-  it("names the contracts with no right to test their price", () => {
+  it("keeps undeclared benchmark-clause coverage unknown in the shipped bundle", () => {
     const finding = vendorFindings(contracts).find((f) =>
-      /test their price/.test(f.claim),
+      /unknown benchmark-clause coverage/.test(f.claim),
     );
     const expected = contracts.filter(
-      (c) => !/^yes/i.test(String(c.benchmarkClause ?? "")),
+      (c) => String(c.benchmarkClause ?? "").trim() === "",
     ).length;
     expect(finding?.claim).toMatch(new RegExp(`^${expected} contracts`));
     expect(finding?.kind).toBe("absence");
+    expect(vendorFindings(contracts).some((item) => /no right|record no benchmark clause/.test(item.claim))).toBe(false);
   });
 
   // Measured against the record's own as-of date, never the clock — so the finding is reproducible
@@ -328,7 +329,8 @@ describe("commercial and platform depth", () => {
       /already passed/.test(f.claim),
     );
     expect(finding?.claim).toMatch(/auto-renewing/);
-    expect(finding?.because).toMatch(/which of the two happened is not/);
+    expect(finding?.because).toMatch(/do not establish whether a decision was taken/);
+    expect(finding?.because).toMatch(/do not establish an overdue action/);
   });
 
   it("does not report expiry at all without an as-of date to measure against", () => {
@@ -498,15 +500,16 @@ describe("programmes and AI", () => {
     },
   ];
 
-  // Status and completion are declared separately and can disagree. That disagreement is a
-  // governance fact rather than a delivery one, and it is invisible in either column alone.
+  // Completion and status may both be accurate; a schedule comparison needs a recorded baseline.
   it("names programmes reporting on track at single-digit completion", () => {
     const finding = programFindings(programs).find((f) =>
       /report on track at under 10%/.test(f.claim),
     );
     expect(finding?.claim).toMatch(/^1 programmes? report/);
     expect(finding?.claim).toContain("P1");
-    expect(finding?.because).toMatch(/judgement behind it is not written down/);
+    expect(finding?.kind).toBe("established");
+    expect(finding?.because).toMatch(/can both be true/);
+    expect(finding?.because).toMatch(/planned milestone or schedule baseline/);
   });
 
   it("reports the expected-value ratio as a forecast, not a return", () => {

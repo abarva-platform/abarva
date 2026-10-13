@@ -32,6 +32,7 @@ jest.mock("@/lib/home/preview/ecl-projection-bundle", () => ({
 }));
 
 jest.mock("@/lib/home/preview/ava-answer", () => ({
+  homeAvaAnswerFollowUpQuestions: jest.requireActual("@/lib/home/preview/ava-answer").homeAvaAnswerFollowUpQuestions,
   answerHomeAvaQuestion: jest.fn(
     async ({ question }: { question: string }) => ({
       surface: "home",

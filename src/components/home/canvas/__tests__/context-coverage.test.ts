@@ -10,6 +10,7 @@ import {
   flowRecords,
   leadershipContext,
   operatingContext,
+  recordCoverage,
   selectedTestimony,
 } from "../context-coverage";
 
@@ -56,6 +57,226 @@ function family(
     .concat(result);
   return result;
 }
+
+function coverageBundle(): HomeReviewBundle {
+  const record = bundle();
+  const packet = record.thesis.signalPacket;
+  packet.contextItems = [];
+  packet.signals = [];
+  packet.visualDatasets = {};
+  packet.enterpriseIdentity = {
+    businessModel: null,
+    industry: null,
+    revenue: null,
+    employeeCount: null,
+  };
+  packet.businessEconomics = {
+    operatingSegments: [],
+    customerSegments: [],
+    technologyBudget: null,
+    technologyBudgetShareOfRevenue: null,
+  };
+  packet.strategicPriorities = [];
+  packet.homeEnterpriseContext = null;
+  return record;
+}
+
+describe("summary and detail coverage", () => {
+  it("labels stored four-family coverage as compiled summaries without inventing detail counts", () => {
+    const record = bundle();
+    const original = JSON.stringify(record);
+    expect(record.technologyEstate!.recordTypes).toHaveLength(4);
+    for (const subject of [
+      "program_initiative", "ai_use_case", "metric_outcome",
+      "risk_control", "executive_interview",
+    ] as const) {
+      const coverage = recordCoverage(record, reviewed, subject);
+      expect(coverage).toMatchObject({
+        state: "summary",
+        value: "Summary available",
+        detailState: "not_supplied",
+        rowCount: null,
+        rowSourceRefs: null,
+        summaryState: "available",
+      });
+      expect(coverage.basis).toContain("Reviewed stored record");
+      expect(coverage.basis).toContain("enterprise coverage is unknown");
+      expect(coverage.basis).toContain("Synthetic reference, not client-attested");
+      expect(coverage.recordSource).toBe(reviewed);
+    }
+    expect(JSON.stringify(record)).toBe(original);
+  });
+  it("distinguishes declared profile and segment names from detailed operating rows", () => {
+    const record = bundle();
+    for (const subject of ["tenant_profile", "business_segment"] as const) {
+      const coverage = recordCoverage(record, reviewed, subject);
+      expect(coverage).toMatchObject({
+        state: "profile",
+        value: "Profile declared",
+        detailState: "not_supplied",
+        rowCount: null,
+        summaryState: "not_supplied",
+        profileState: "available",
+        profileSourceRefs: [],
+      });
+      expect(coverage.profileEvidenceIds.length).toBeGreaterThan(0);
+      expect(coverage.basis).toContain("not independently attested");
+    }
+  });
+  it("recognizes a compiled chart without signals and never uses its rows as a portfolio count", () => {
+    const record = coverageBundle();
+    record.thesis.signalPacket.visualDatasets.stalled_programs = [
+      { program: "Program A", pctComplete: 0, blocked: null },
+    ];
+    expect(recordCoverage(record, reviewed, "program_initiative")).toMatchObject({
+      state: "summary",
+      value: "Summary available",
+      rowCount: null,
+      summaryEvidenceIds: [],
+      summaryDatasetKeys: ["stalled_programs"],
+    });
+  });
+  it("does not promote a coverage manifest, empty chart or unrelated summary into subject coverage", () => {
+    const record = coverageBundle();
+    record.thesis.signalPacket.visualDatasets.stalled_programs = [];
+    record.thesis.signalPacket.signals = [{
+      id: "sig_reference",
+      kind: "dependency",
+      statement: "A declared relationship connects two records.",
+      domains: ["relationship_source_row"],
+      evidenceRefs: ["Reference A"],
+    }];
+    expect(recordCoverage(record, reviewed, "program_initiative")).toMatchObject({
+      state: "missing",
+      value: "Detail not supplied",
+      rowCount: null,
+      summaryState: "not_supplied",
+      summaryEvidenceIds: [],
+      summaryDatasetKeys: [],
+    });
+  });
+  it("preserves served row counts, row references and version markers for a non-synthetic bundle", () => {
+    const record = coverageBundle();
+    record.declaredSyntheticDemo = false;
+    const rows = family(record, "program_initiative", [
+      { programId: "PROGRAM-001", programName: "Program A", pctComplete: 0 },
+      { programId: "PROGRAM-002", programName: "Program B", pctComplete: null },
+    ]);
+    const source = {
+      ...unverified,
+      contextVersion: {
+        assessmentId: "assessment-a",
+        projectionContentHash: "projection-a",
+        sourceLineageHash: "lineage-a",
+        sourceCoverage: { totalRecordRows: 2, linkedRecordRows: 2, families: [] },
+        deterministicPacketHash: "packet-a",
+        narrativePacketHash: null,
+        narrativeGeneratedAt: null,
+        dataAsOf: null,
+        coherence: "unverified" as const,
+      },
+    };
+    const original = JSON.stringify(source);
+    const coverage = recordCoverage(record, source, "program_initiative");
+    expect(coverage).toMatchObject({
+      state: "detail",
+      value: "2",
+      detailState: "available",
+      rowCount: 2,
+      summaryState: "not_supplied",
+      rowSourceRefs: [["row-0"], ["row-1"]],
+    });
+    expect(coverage.rowSourceRefs).toBe(rows.rowSourceRefs);
+    expect(coverage.recordSource).toBe(source);
+    expect(coverage.basis).toContain("Live governed rows");
+    expect(coverage.basis).toContain("not a whole-enterprise count");
+    expect(coverage.basis).not.toContain("Synthetic");
+    expect(JSON.stringify(source)).toBe(original);
+    const coherent = {
+      ...source,
+      contextVersion: { ...source.contextVersion, coherence: "coherent" as const },
+    };
+    record.thesis.signalPacket.visualDatasets.stalled_programs = [
+      { program: "Program A", pctComplete: 0 },
+    ];
+    const aligned = recordCoverage(record, coherent, "program_initiative");
+    expect(aligned).toMatchObject({
+      state: "detail", rowCount: 2, summaryState: "available",
+      summaryDatasetKeys: ["stalled_programs"],
+    });
+    expect(aligned.basis).toContain("Live governed record");
+    expect(aligned.recordSource).toBe(coherent);
+  });
+  it("reports detail and compiled summary independently when both are supplied", () => {
+    const record = coverageBundle();
+    family(record, "program_initiative", [{ programName: "Program A" }]);
+    record.thesis.signalPacket.signals = [{
+      id: "sig_program",
+      kind: "portfolio",
+      statement: "Program A has a declared delivery priority.",
+      domains: ["program_initiative"],
+      evidenceRefs: ["Program A"],
+    }];
+    expect(recordCoverage(record, reviewed, "program_initiative")).toMatchObject({
+      state: "detail",
+      rowCount: 1,
+      summaryState: "available",
+      summaryEvidenceIds: ["sig_program"],
+    });
+  });
+  it("distinguishes a supplied empty family from an omitted family even when a chart exists", () => {
+    const record = coverageBundle();
+    family(record, "program_initiative", []);
+    record.thesis.signalPacket.visualDatasets.stalled_programs = [
+      { program: "Program A", pctComplete: 0 },
+    ];
+    expect(recordCoverage(record, reviewed, "program_initiative")).toMatchObject({
+      state: "summary", value: "Summary available", rowCount: 0, detailState: "empty",
+    });
+    record.thesis.signalPacket.visualDatasets = {};
+    const empty = recordCoverage(record, reviewed, "program_initiative");
+    expect(empty).toMatchObject({
+      state: "missing", value: "0", rowCount: 0, detailState: "empty",
+    });
+    expect(empty.basis).toContain("enterprise coverage is unknown");
+    record.technologyEstate = undefined;
+    expect(recordCoverage(record, reviewed, "program_initiative")).toMatchObject({
+      state: "missing", value: "Detail not supplied", rowCount: null,
+      detailState: "not_supplied",
+    });
+  });
+  it("quarantines earlier summaries for unaligned serving while retaining supplied detail", () => {
+    const record = bundle();
+    expect(recordCoverage(record, unverified, "program_initiative")).toMatchObject({
+      state: "missing",
+      summaryState: "not_aligned",
+      summaryEvidenceIds: [],
+      summaryDatasetKeys: [],
+      rowCount: null,
+    });
+    family(record, "program_initiative", [{ programName: "Program A" }]);
+    const coverage = recordCoverage(record, unverified, "program_initiative");
+    expect(coverage).toMatchObject({
+      state: "detail", value: "1", rowCount: 1, summaryState: "not_aligned",
+    });
+    expect(coverage.basis).toContain("Earlier compiled summary is not aligned");
+    expect(recordCoverage(record, unverified, "tenant_profile").profileState).toBe(
+      "not_supplied",
+    );
+  });
+  it("keeps reviewed fallback provenance and a declared zero distinct from a missing profile", () => {
+    const record = coverageBundle();
+    const fallback = { ...reviewed, kind: "reviewed_snapshot_fallback" as const };
+    expect(recordCoverage(record, fallback, "tenant_profile").profileState).toBe(
+      "not_supplied",
+    );
+    record.thesis.signalPacket.enterpriseIdentity.revenue = 0;
+    const coverage = recordCoverage(record, fallback, "tenant_profile");
+    expect(coverage).toMatchObject({ state: "profile", profileState: "available" });
+    expect(coverage.basis).toContain("Reviewed stored record fallback");
+    expect(coverage.recordSource).toBe(fallback);
+  });
+});
 
 describe("canvas context coverage", () => {
   it("surfaces subject-aligned context for every chapter, without broadening provenance into a subject", () => {
