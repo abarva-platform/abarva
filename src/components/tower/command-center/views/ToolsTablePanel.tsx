@@ -134,6 +134,9 @@ export function ToolsTablePanel({
           {needingSourceCheck} tool {needingSourceCheck === 1 ? "row needs" : "rows need"} a source check because monthly active users exceed enabled users. Their adoption rates are withheld from the target comparison.
         </p>
       ) : null}
+      <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5, color: "var(--canon-gray-700)" }}>
+        This view shows named tool rollouts and adoption. Subscription and partner charges are not loaded as tool bills; project spending shown under AI cases comes from separate project portfolio records.
+      </p>
       <div style={{ background: "var(--canon-bg-surface)", border: "1px solid var(--canon-border)" }}>
         <div
           style={{

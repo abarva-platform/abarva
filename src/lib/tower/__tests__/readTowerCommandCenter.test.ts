@@ -412,6 +412,11 @@ describe("readTowerCommandCenter", () => {
         display_payload_json: {
           page_key: "ai_portfolio",
           source_plan_basis: "synthetic_sponsor_scenario_not_finance_actual",
+          project_id: "project-2",
+          project_name: "AI delivery project",
+          project_budget_fiscal_year: "FY26",
+          project_spend_as_of_date: "2026-08-24",
+          actual_spend_ytd_usd: 2_000_000,
           approved_funding_usd: 9_000_000,
           projected_annual_value_low_usd: 20_000_000,
           projected_annual_value_high_usd: 24_000_000,
@@ -423,6 +428,10 @@ describe("readTowerCommandCenter", () => {
       tenant_key: "fixture-tenant",
       assessment_id: "newer-projection",
       projection_version: 7,
+      source_refs_json: [
+        { source_file: "ai-cases.csv", source_row: 2, ecl_source_record_id: "case-source" },
+        { source_file: "project-portfolio.csv", source_row: 2, ecl_source_record_id: "project-source", project_id: "project-2" },
+      ],
     };
     mockServingRows({
       tower_command_center: [summary],
@@ -431,6 +440,11 @@ describe("readTowerCommandCenter", () => {
     const mart = await readTowerCommandCenter({ tenantKeyCandidates: ["fixture-tenant"] });
     expect(mart?.aiPortfolio[0]?.sourcePlan?.fundingUsd).toBe(9_000_000);
     expect(mart?.aiPortfolio[0]?.sourcePlan?.roiLowMultiple).toBe(2.2);
+    expect(mart?.aiPortfolio[0]?.projectId).toBe("project-2");
+    expect(mart?.aiPortfolio[0]?.projectBudgetFiscalYear).toBe("FY26");
+    expect(mart?.aiPortfolio[0]?.projectSpendAsOfDate).toBe("2026-08-24");
+    expect(mart?.aiPortfolio[0]?.projectSpendSourceFile).toBe("project-portfolio.csv");
+    expect(mart?.aiPortfolio[0]?.projectSpendSourceLinked).toBe(true);
     expect(mart?.aiPortfolio[0]?.aiAmountBasis).toBe("unknown");
     expect(mart?.aiPortfolio[0]?.promisedValueUsd).toBeNull();
   });

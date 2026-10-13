@@ -4,6 +4,7 @@ import type React from "react";
 
 import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
 import { formatCount } from "@/lib/tower/command-center/format";
+import { isBusinessCase } from "./portfolio-kind";
 
 type WorkAreaRow = {
   readonly functionId: string;
@@ -63,6 +64,35 @@ export function buildAffectedWorkAreaCoverage(
 }
 
 export function BudgetDomainPanel({ view }: { view: TowerCommandCenterView }) {
+  const sourcePlanCases = view.allInitiatives.filter((item) => isBusinessCase(item) && item.sourcePlan != null);
+  if (sourcePlanCases.length > 0) {
+    const byDomain = new Map<string, number>();
+    for (const item of sourcePlanCases) {
+      const name = item.domainName ?? "Work area not stated";
+      byDomain.set(name, (byDomain.get(name) ?? 0) + 1);
+    }
+    const rows = [...byDomain.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    return (
+      <section style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+        <h2 style={{ margin: 0, fontFamily: "var(--abarva-serif)", fontWeight: 500, fontSize: 26 }}>
+          The synthetic AI plan spans {formatCount(rows.length)} work areas. Each case counts once where its source places it.
+        </h2>
+        <p style={{ margin: 0, maxWidth: 980, lineHeight: 1.6 }}>
+          Use this map to find who owns a proposal, then inspect the linked project spend, expected result, and tool use on that case. A work area count is not an approved funding split.
+        </p>
+        <div style={PANEL}>
+          {rows.map(([name, count]) => (
+            <div key={name} style={{ display: "grid", gridTemplateColumns: "minmax(200px, 1fr) 100px", gap: 16, padding: "14px 22px", borderBottom: "1px solid var(--canon-border)" }}>
+              <strong>{name}</strong><span style={{ textAlign: "right" }}>{formatCount(count)} {count === 1 ? "case" : "cases"}</span>
+            </div>
+          ))}
+        </div>
+        <p style={{ margin: 0, fontSize: 13, color: "var(--canon-gray-500)" }}>
+          Source-stated synthetic classification. No domain funding or spend total is shown because case funding and linked PMO project spend have different bases and may overlap.
+        </p>
+      </section>
+    );
+  }
   const coverage = buildAffectedWorkAreaCoverage(view);
   const missingCount = coverage.unlinkedPrograms.length;
 

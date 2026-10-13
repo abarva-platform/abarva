@@ -867,7 +867,8 @@ describe("mechanical Tower Command Center panels", () => {
       expect.objectContaining({ vendor: "Vendor Alpha", activeUsers: 150, toolCount: 3 }),
     ]));
     render(<ToolsVendorPanel view={view} />);
-    expect(document.body.textContent).toContain("Active-user counts across tools by vendor");
+    expect(document.body.textContent).toContain("Tool-user counts across rollouts by vendor");
+    expect(document.body.textContent).toContain("the same employee may appear more than once");
     expect(document.body.textContent).toContain("one person using two tools can be counted twice");
     expect(document.body.textContent).toContain("Rollout counts here cover only tool rows with a usage metric");
     expect(document.body.textContent).not.toContain("1,150");

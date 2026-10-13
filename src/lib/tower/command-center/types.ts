@@ -352,6 +352,7 @@ export interface TowerAiView {
   displayBucketBasis: TowerAiDisplayBucketBasis;
   mappingPolicyVersion: string;
   category: string | null;
+  domainName?: string | null;
   vendor: string | null;
   system: string | null;
   /** 0–100, mart `value_score`. Bubble Y axis. */
@@ -403,6 +404,11 @@ export interface TowerAiView {
   } | null;
   /** Initiative-detail fields for the drill-down. Null where the source recorded nothing. */
   projectName: string | null;
+  projectId?: string | null;
+  projectBudgetFiscalYear?: string | null;
+  projectSpendAsOfDate?: string | null;
+  projectSpendSourceLinked?: boolean;
+  projectSpendSourceFile?: string | null;
   lifecycleStage: string | null;
   financePartnerRole: string | null;
   successMetric: string | null;

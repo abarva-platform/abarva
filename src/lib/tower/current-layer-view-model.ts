@@ -243,6 +243,7 @@ export interface TowerMartAiPortfolioItem {
   /** Declared serving page and canonical object relationship, not a source filename. */
   populationKind?: TowerAiPopulationKind;
   vendorName: string | null;
+  domainName?: string | null;
   systemName: string | null;
   aiSpendType: string | null;
   aiSpendCategory: string | null;
@@ -264,6 +265,11 @@ export interface TowerMartAiPortfolioItem {
   } | null;
   /** Initiative-detail fields, each carried from its own canonical column. */
   projectName?: string | null;
+  projectId?: string | null;
+  projectBudgetFiscalYear?: string | null;
+  projectSpendAsOfDate?: string | null;
+  projectSpendSourceLinked?: boolean;
+  projectSpendSourceFile?: string | null;
   lifecycleStage?: string | null;
   financePartnerRole?: string | null;
   successMetric?: string | null;

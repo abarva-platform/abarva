@@ -30,6 +30,7 @@ import {
 
 import type { TowerCommandCenterView } from "@/lib/tower/command-center/types";
 import { approvedAiCaseFunding, isBusinessCase } from "./portfolio-kind";
+import { sourceSpendDate, syntheticProjectSpendYtd } from "./synthetic-project-spend";
 
 const AMBER = "#ba7517";
 const AMBER_LIGHT = "#e8c98f";
@@ -296,6 +297,7 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
 
   const sourcePlanCases = cases.filter((item) => item.sourcePlan !== null && item.sourcePlan !== undefined);
   if (sourcePlanCases.length > 0) {
+    const projectSpend = syntheticProjectSpendYtd(view);
     const toolCount = view.allInitiatives.filter((item) => item.populationKind === "tool_rollout").length;
     const fundingPlans = sourcePlanCases.filter((item) => item.sourcePlan?.fundingUsd !== null).length;
     const benefitPlans = sourcePlanCases.filter((item) => item.sourcePlan?.yearlyBenefitLowUsd !== null).length;
@@ -314,6 +316,7 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
           <MetricCard label="AI tool rollouts" value={String(toolCount)} caption="Usage and adoption are checked separately from case value" />
           <MetricCard label="Cases with a funding plan" value={`${fundingPlans} of ${cases.length}`} caption="Source-stated synthetic plans; approved funding is not established" accent="var(--canon-amber)" />
           <MetricCard label="Cases with an ROI estimate" value={`${roiPlans} of ${cases.length}`} caption="Projected return, not savings earned" accent="var(--canon-teal)" />
+          {projectSpend ? <MetricCard label="AI project spending in FY26 source" value={bigMoney(projectSpend.amountUsd)} caption={`Synthetic project portfolio source · through ${sourceSpendDate(projectSpend.asOfDate)} · ${projectSpend.projectCount} distinct projects; not tool bills or cleared value`} accent="var(--canon-teal)" /> : null}
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
           <div style={{ ...PANEL, flex: "1 1 560px" }}>
@@ -339,9 +342,9 @@ export function VerdictPanel({ view }: { view: TowerCommandCenterView }) {
             ))}
           </div>
           <div style={{ ...PANEL, flex: "1 1 340px" }}>
-            <h3 style={{ margin: "0 0 8px", fontSize: 16 }}>Finance stage stated in the source</h3>
+            <h3 style={{ margin: "0 0 8px", fontSize: 16 }}>Finance stage stated in the synthetic source</h3>
             <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--canon-gray-700)" }}>
-              The status describes a case&apos;s review stage. It does not independently verify a cleared dollar result.
+              The status describes a demo case&apos;s review stage. It is not independent CFO sign-off or a cleared dollar result.
             </p>
             <HBar data={statusData} axisLabel="AI use cases" height={210} labelWidth={140} right={40} axisFmt={(v) => String(v)} />
           </div>

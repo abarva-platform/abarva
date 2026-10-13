@@ -4,10 +4,18 @@ import { designFixtureMart } from "@/lib/tower/command-center/__fixtures__/desig
 import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-model";
 
 import { CommandCenterView } from "../CommandCenterView";
-import { EvidenceActionsContractView, ValueProofContractView } from "../ContractTabs";
+import { AiPortfolioContractView, EvidenceActionsContractView, ValueProofContractView } from "../ContractTabs";
 import { VerdictPanel } from "../VerdictPanel";
+import { BudgetDomainPanel } from "../BudgetDomainPanel";
 import { BudgetShapePanel } from "../BudgetShapePanel";
+import { ConstraintPanel } from "../ConstraintPanel";
+import { FoundationsPanel } from "../FoundationsPanel";
+import { InitiativesDistributionPanel } from "../InitiativesDistributionPanel";
 import { InitiativesTablePanel } from "../InitiativesTablePanel";
+import { QueueOwnerPanel } from "../QueueOwnerPanel";
+import { ToolsTablePanel } from "../ToolsTablePanel";
+import { ToolsVendorPanel } from "../ToolsVendorPanel";
+import { syntheticProjectSpendYtd } from "../synthetic-project-spend";
 import { evidenceGapAmount } from "../evidence-gap-amount";
 
 function fixtureView() {
@@ -26,6 +34,127 @@ function fixtureView() {
 }
 
 describe("Tower financial story boundaries", () => {
+  it("renders a substantive six-tab story from source-plan cases and named tool rollouts", () => {
+    const view = fixtureView();
+    const first = view.allInitiatives[0];
+    if (!first) throw new Error("Fixture needs an AI row");
+    const caseRow = {
+      ...first,
+      id: "case-plan",
+      name: "Coding assistant rollout",
+      populationKind: "ai_case" as const,
+      category: "Build faster",
+      businessValueType: "Build faster",
+      domainName: "Technology",
+      vendor: "Example partner",
+      projectName: "Delivery productivity project",
+      projectId: "project-one",
+      projectBudgetFiscalYear: "FY26",
+      projectSpendAsOfDate: "2026-08-24",
+      projectSpendSourceLinked: true,
+      projectSpendSourceFile: "project-portfolio.csv",
+      actualSpendYtdUsd: 3_000_000,
+      sourcePlan: {
+        fundingUsd: 12_000_000,
+        yearlyBenefitLowUsd: 30_000_000,
+        yearlyBenefitHighUsd: 36_000_000,
+        roiLowMultiple: 2.5,
+        roiHighMultiple: 3,
+      },
+    };
+    const foundation = {
+      ...caseRow,
+      id: "foundation-plan",
+      name: "AI platform foundation",
+      projectId: "project-two",
+      category: "Foundation",
+      businessValueType: "Foundation",
+    };
+    const tool = {
+      ...first,
+      id: "tool-rollout",
+      name: "Coding assistant license rollout",
+      populationKind: "tool_rollout" as const,
+      sourcePlan: null,
+      usageHeadline: "50 monthly active users",
+      enabledUsers: 100,
+      monthlyActiveUsers: 50,
+      adoptionActualPct: 50,
+      adoptionTargetPct: 70,
+      linkedBusinessCaseCount: 1,
+    };
+    const richView = { ...view, allInitiatives: [caseRow, foundation, tool] };
+    const tabs = {
+      verdict: renderToStaticMarkup(<VerdictPanel view={richView} />),
+      money: renderToStaticMarkup(<BudgetShapePanel view={richView} />),
+      ai: renderToStaticMarkup(<InitiativesDistributionPanel view={richView} />),
+      tools: renderToStaticMarkup(<ToolsTablePanel view={richView} />),
+      foundations: renderToStaticMarkup(<FoundationsPanel view={richView} />),
+      next: renderToStaticMarkup(<CommandCenterView view={richView} onOpenGap={() => undefined} onGoToFunnel={() => undefined} onGoToAi={() => undefined} onGoToActions={() => undefined} />),
+    };
+    expect(tabs.verdict).toContain("synthetic assessment");
+    expect(tabs.money).toContain("AI project spending in the FY26 synthetic source");
+    expect(tabs.money).toContain("Project spend through Aug 24, 2026");
+    expect(tabs.verdict).toContain("AI project spending in FY26 source");
+    expect(tabs.verdict).toContain("$6.0M");
+    expect(tabs.money).toContain("Largest planned AI cases");
+    expect(tabs.ai).toContain("Where the AI cases aim to create value");
+    expect(tabs.ai).toContain("Build faster");
+    expect(tabs.tools).toContain("Coding assistant license rollout");
+    expect(tabs.tools).toContain("Subscription and partner charges are not loaded as tool bills");
+    expect(tabs.foundations).toContain("AI platform foundation");
+    expect(tabs.foundations).toContain("Link to cases with measured outcomes");
+    expect(tabs.next).toContain("Decide which AI bets to scale, repair, or stop");
+    expect(tabs.money).not.toContain("<svg");
+    expect(tabs.ai).not.toContain("<svg");
+
+    const subViews = {
+      workAreas: renderToStaticMarkup(<BudgetDomainPanel view={richView} />),
+      constraints: renderToStaticMarkup(<ConstraintPanel view={richView} />),
+      businessCases: renderToStaticMarkup(<InitiativesTablePanel view={richView} />),
+      results: renderToStaticMarkup(<ValueProofContractView view={richView} onOpenProgram={() => undefined} />),
+      vendors: renderToStaticMarkup(<ToolsVendorPanel view={richView} />),
+      allToolsAndCases: renderToStaticMarkup(<AiPortfolioContractView view={richView} onOpenAi={() => undefined} onOpenAction={() => undefined} onOpenGap={() => undefined} />),
+      proofQueue: renderToStaticMarkup(<EvidenceActionsContractView view={richView} onOpenAction={() => undefined} onOpenGap={() => undefined} />),
+      byOwner: renderToStaticMarkup(<QueueOwnerPanel view={richView} />),
+    };
+    expect(Object.values(subViews).every((html) => html.length > 100)).toBe(true);
+    expect(subViews.results).toContain("Plans, results, and proof");
+    expect(subViews.results).not.toContain("Quarterly plan and recorded results");
+    expect(subViews.workAreas).toContain("Technology");
+    expect(subViews.proofQueue).toContain("What proof is missing");
+    expect(subViews.byOwner).toContain("need an owner to connect projected return");
+    expect(subViews.allToolsAndCases).toContain("AI cases and tool rollouts");
+    expect(subViews.allToolsAndCases).not.toContain("Approved FY budget");
+  });
+
+  it("withholds a project-spend total if identity, period, source, or amount does not reconcile", () => {
+    const view = fixtureView();
+    const first = view.allInitiatives[0];
+    if (!first) throw new Error("Fixture needs an AI row");
+    const caseRow = {
+      ...first,
+      populationKind: "ai_case" as const,
+      projectId: "project-one",
+      projectBudgetFiscalYear: "FY26",
+      projectSpendAsOfDate: "2026-08-24",
+      projectSpendSourceLinked: true,
+      projectSpendSourceFile: "project-portfolio.csv",
+      actualSpendYtdUsd: 3_000_000,
+      sourcePlan: { fundingUsd: 4_000_000, yearlyBenefitLowUsd: null, yearlyBenefitHighUsd: null, roiLowMultiple: null, roiHighMultiple: null },
+    };
+    const second = { ...caseRow, id: "second", projectId: "project-two", actualSpendYtdUsd: 2_000_000 };
+    const total = (rows: typeof view.allInitiatives) => syntheticProjectSpendYtd({ ...view, allInitiatives: rows });
+    expect(total([caseRow, second])).toEqual({ amountUsd: 5_000_000, projectCount: 2, asOfDate: "2026-08-24" });
+    expect(total([caseRow, { ...second, projectId: "project-one" }])).toBeNull();
+    expect(total([caseRow, { ...second, projectBudgetFiscalYear: "FY25" }])).toBeNull();
+    expect(total([caseRow, { ...second, projectSpendAsOfDate: "2026-09-01" }])).toBeNull();
+    expect(total([caseRow, { ...second, projectSpendSourceFile: "another-source.csv" }])).toBeNull();
+    expect(total([caseRow, { ...second, projectSpendSourceLinked: false }])).toBeNull();
+    expect(total([caseRow, { ...second, actualSpendYtdUsd: null }])).toBeNull();
+    expect(total([caseRow, { ...second, sourcePlan: null }])).toBeNull();
+  });
+
   it("shows an older synthetic case plan without presenting it as approved or achieved", () => {
     const view = fixtureView();
     const first = view.allInitiatives[0];

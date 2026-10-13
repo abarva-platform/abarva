@@ -1084,6 +1084,12 @@ function sourceSyntheticCasePlan(row: TowerServingRow): TowerMartAiPortfolioItem
 
 function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
   const refs = sourceRefs(row);
+  const projectId = payloadTextFrom(row, ["project_id"]);
+  const projectRef = projectId === null ? null : refs.find((ref) =>
+    ref.project_id === projectId && nullableText(ref.source_file) !== null &&
+    nullableText(ref.ecl_source_record_id) !== null &&
+    (nullableNum(ref.source_row as Numeric) ?? 0) >= 2,
+  ) ?? null;
   const declaredPage = nullableText(displayPayload(row).page_key);
   const canonicalUseCaseId = nullableText(payload(row).use_case_object_id);
   const canonicalToolId = nullableText(payload(row).tool_object_id);
@@ -1143,6 +1149,7 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
       payloadTextFrom(row, ["item_kind", "itemKind"]) ?? "unknown",
     populationKind,
     vendorName: payloadTextFrom(row, ["vendor_name"]),
+    domainName: payloadTextFrom(row, ["domain_name"]),
     systemName: payloadTextFrom(row, ["system_name"]) ??
       (populationKind === "tool_rollout" ? payloadTextFrom(row, ["tool_name"]) : null),
     aiSpendType: payloadTextFrom(row, ["ai_spend_type"]),
@@ -1158,6 +1165,11 @@ function mapAiItem(row: TowerServingRow): TowerMartAiPortfolioItem {
     sourcePlan: sourceSyntheticCasePlan(row),
     // Initiative-detail fields. Each reads its own key; none falls back to another.
     projectName: payloadTextFrom(row, ["project_name"]),
+    projectId,
+    projectBudgetFiscalYear: payloadTextFrom(row, ["project_budget_fiscal_year"]),
+    projectSpendAsOfDate: payloadTextFrom(row, ["project_spend_as_of_date"]),
+    projectSpendSourceLinked: displayPayload(row).source_plan_basis === "synthetic_sponsor_scenario_not_finance_actual" && projectRef !== null,
+    projectSpendSourceFile: projectRef === null ? null : nullableText(projectRef.source_file),
     lifecycleStage: payloadTextFrom(row, ["lifecycle_stage"]),
     financePartnerRole: payloadTextFrom(row, ["finance_partner_role"]),
     successMetric: payloadTextFrom(row, ["success_metric"]),

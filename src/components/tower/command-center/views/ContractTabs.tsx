@@ -40,6 +40,8 @@ import { approvedAiCaseFunding, isBusinessCase } from "./portfolio-kind";
 import { byEvidencePriority, evidenceGapAmount } from "./evidence-gap-amount";
 import { expectedBenefitKindLabel } from "./expected-benefit-kind";
 import { SourceValueAssertionsPanel } from "./SourceValueAssertionsPanel";
+import { InitiativesTablePanel } from "./InitiativesTablePanel";
+import { ToolsTablePanel } from "./ToolsTablePanel";
 
 type Tone = "teal" | "amber" | "red" | "gray";
 type AiLens = "cost" | "risk" | "adoption" | "table";
@@ -450,6 +452,24 @@ export function ValueProofContractView({
   view: TowerCommandCenterView;
   onOpenProgram: (id: string) => void;
 }) {
+  const sourcePlanCases = view.allInitiatives.filter((item) => isBusinessCase(item) && item.sourcePlan != null);
+  if (sourcePlanCases.length > 0) {
+    return (
+      <div className={styles.contractView}>
+        <SectionTitle
+          title="Plans, results, and proof"
+          subtitle={`${formatCount(sourcePlanCases.length)} synthetic AI case plans · estimates and recorded results have different meanings`}
+        />
+        <p className={styles.contractCallout}>
+          Each case shows its proposed funding, expected yearly benefit, and projected ROI alongside its source Finance stage and any recorded result. A projected return is not an achieved return. The source does not provide a reconciled portfolio benefit or a verified quarterly financial trajectory, so neither is charted here.
+        </p>
+        <InitiativesTablePanel view={view} />
+        <p className={styles.contractCallout}>
+          Decide which claims to report only after matching adoption, measured outcomes, and Finance-cleared values for the same case and period. Synthetic source statuses are not independent sign-off.
+        </p>
+      </div>
+    );
+  }
   const s = view.summary;
   const recordedPAndL = trajectoryRecordedPAndLUsd(view);
   const programs = topPrograms(view, 20);
@@ -864,6 +884,19 @@ export function AiPortfolioContractView({
   ) ?? false;
   const adoptionLensRows = adoptionRows(view);
   const [lens, setLens] = useState<AiLens>("table");
+  const hasSourcePlans = view.allInitiatives.some((item) => isBusinessCase(item) && item.sourcePlan != null);
+  if (hasSourcePlans) {
+    return (
+      <div className={styles.contractView}>
+        <SectionTitle title="AI cases and tool rollouts" subtitle="Synthetic case plans and named rollouts use different cost and evidence records" />
+        <p className={styles.contractCallout}>
+          Compare a case with its linked project spending and proposed return, then check the tool rollout and actual use. Project spending can repeat across cases. Tool subscription charges are not loaded as bills, so this view does not total them or call a vendor cost approved.
+        </p>
+        <ToolsTablePanel view={view} onOpenAi={onOpenAi} />
+        <InitiativesTablePanel view={view} onOpenAi={onOpenAi} />
+      </div>
+    );
+  }
   const lensOptions = [
     {
       key: "table" as const,
@@ -1321,6 +1354,37 @@ export function EvidenceActionsContractView({
   onOpenAction: (id: string) => void;
   onOpenGap: (id: string) => void;
 }) {
+  const sourcePlanCases = view.allInitiatives.filter((item) => isBusinessCase(item) && item.sourcePlan != null);
+  if (sourcePlanCases.length > 0) {
+    const actions = [...view.actions].sort((a, b) => a.sequence - b.sequence).slice(0, 10);
+    const gaps = [...view.gaps].sort(byEvidencePriority).slice(0, 8);
+    return (
+      <div className={styles.contractView}>
+        <SectionTitle title="What proof is missing" subtitle="Synthetic source recommendations and evidence gaps for owner review" />
+        <p className={styles.contractCallout}>
+          Use this queue to test which cases can scale, need repair, or should be considered for a stop decision. A recommendation is not a completed task or a Finance-approved outcome. The same case may appear more than once, so counts and amounts are not added.
+        </p>
+        <section className={styles.ownerQueue}>
+          <h3>Recommended reviews</h3>
+          {actions.length === 0 ? <p>No source recommendations are loaded.</p> : actions.map((action) => (
+            <button key={action.id} type="button" onClick={() => onOpenAction(action.id)}>
+              <span><strong>{action.title}</strong><i>{action.why}</i></span>
+              <b>{action.ownerRole || "Owner not stated"}</b>
+            </button>
+          ))}
+        </section>
+        <section className={styles.ownerQueue}>
+          <h3>Evidence to collect</h3>
+          {gaps.length === 0 ? <p>No evidence gap rows are loaded. This does not mean every case has proof.</p> : gaps.map((gap) => (
+            <button key={gap.id} type="button" onClick={() => onOpenGap(gap.id)}>
+              <span><strong>{gap.missing}</strong><i>{gap.blockedDecision}</i></span>
+              <b>{gap.owner ?? "Owner not stated"}</b>
+            </button>
+          ))}
+        </section>
+      </div>
+    );
+  }
   const s = view.summary;
   // This is the loaded review-row count, not a count of unique claims or missing dollar values.
   const economicRows = s.economicReviewQueueCount;

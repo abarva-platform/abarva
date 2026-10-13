@@ -15,7 +15,7 @@ Tower can explain a source-stated synthetic AI plan case by case: proposed fundi
 ## Layer Impact
 
 - Release lane: `global-control-lane`.
-- Layer 4: the Tower reader carries source-stated planning fields through a separate presentation channel. Verdict, budget, case table, and case detail show the plan in plain language. Tool views flag inconsistent usage counts.
+- Layer 4: the Tower reader carries source-stated planning fields through a separate presentation channel. The six Tower tabs and their subviews present case plans, linked project spend, tool adoption, and proof needs in plain language. Tool views flag inconsistent usage counts.
 - Layers 1–3: no change in this release.
 
 ## Client Applicability
@@ -32,11 +32,13 @@ Tower can explain a source-stated synthetic AI plan case by case: proposed fundi
 - Read newer synthetic plans only with the explicit `source_plan_basis` marker and source references.
 - Keep those plan fields separate from independently approved funding and Finance-cleared value.
 - Show case-level plans and ROI ranges without publishing an unreconciled portfolio money total.
+- Show source-stated project spend on linked cases. Show a distinct-project FY26 total only when every case has a unique project ID, a common project-source date and file, a valid project reference, and a nonnegative amount.
+- Replace unsupported aggregate charts with case-level plans and proof questions across the Tower tabs when a synthetic plan is served.
 - Withhold a tool adoption rate when active users exceed enabled users in the same source row.
 
 ## QA / Validation
 
-- Focused Tower reader and financial story Jest tests: 41 passed.
+- Focused Tower reader, view-model, financial story, and panel Jest tests: 117 passed.
 - ESLint on all changed source and test files: passed.
 - TypeScript `tsc --noEmit`: passed with an 8 GB heap.
 - Signed-in runtime and served-data checks: pending deployment and any separately governed data decision.
@@ -53,7 +55,7 @@ Review and merge through a protected PR. The repository-owned ACA main deploymen
 - ACA runtime invariant: verify template, traffic revision, and required worker image digests after deployment.
 - Worker image invariant: no worker job change in this release.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes, across Verdict, budget, AI cases, and tools.
+- Live signed-in proof required: yes, across all six tabs and their subviews.
 
 ## Rollback Plan
 
@@ -65,4 +67,4 @@ Inspect the PR diff, focused test results, release check, deployment digest pari
 
 ## Known Gaps
 
-Source-stated plan figures remain synthetic estimates. Overall budget, combined AI funding, combined benefit, Finance-cleared result, and tool license spend require independent source reconciliation and governed readback before Tower can state them as facts. A historic synthetic source package cannot be reloaded through this presentation release.
+Source-stated plan figures remain synthetic estimates. Overall budget, combined AI funding, combined benefit, Finance-cleared result, and tool license spend require independent source reconciliation and governed readback before Tower can state them as facts. The conditional FY26 project spend total is a single synthetic source measure through its recorded source date, not a current spend figure or a tool bill. A historic synthetic source package cannot be reloaded through this presentation release.

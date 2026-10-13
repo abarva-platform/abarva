@@ -19,6 +19,7 @@ import {
 import styles from "../TowerCommandCenter.module.css";
 import { expectedBenefitKindLabel } from "./expected-benefit-kind";
 import { isBusinessCase, unclassifiedPortfolioCount } from "./portfolio-kind";
+import { sourceSpendDate } from "./synthetic-project-spend";
 
 type FilterKey = "all" | TowerAiKind;
 type SortKey = "name" | "valueType" | "constraint" | "investment" | "value" | "claimable";
@@ -195,7 +196,7 @@ export function InitiativesTablePanel({
             ["constraint", "Constraint"],
             ["investment", hasSourcePlans ? "Case funding plan" : "Approved AI funding"],
             ["value", hasSourcePlans ? "Yearly benefit plan / ROI" : "Projected yearly benefit"],
-            ["claimable", "Finance validated in loaded months"],
+            ["claimable", hasSourcePlans ? "Finance amount in synthetic source" : "Finance validated in loaded months"],
             ["detail", "Detail"],
           ].map(([key, label], i) => (
             <button
@@ -236,8 +237,14 @@ export function InitiativesTablePanel({
                 {item.name}
               </button>
               <span style={{ fontFamily: "var(--abarva-mono)", fontSize: 10, letterSpacing: "0.06em", color: "var(--canon-gray-500)" }}>
-                {item.id} · Source Finance status: {statusLabel(item)}
+                {item.id} · {item.sourcePlan ? "Synthetic source Finance stage" : "Source Finance status"}: {statusLabel(item)}
               </span>
+              {item.sourcePlan ? (
+                <small style={{ color: "var(--canon-gray-500)" }}>
+                  {item.projectName ? `Linked project: ${item.projectName}` : "Linked project name not recorded"}
+                  {item.vendor ? ` · Source partner: ${item.vendor}` : ""}
+                </small>
+              ) : null}
             </span>
             <span style={{ color: "var(--canon-gray-700)", minWidth: 0, display: "grid", gap: 4 }}>
               <span>{expectedBenefitKindLabel(item.expectedValueArchetype) ?? "Not recorded in intake"}</span>
@@ -259,8 +266,13 @@ export function InitiativesTablePanel({
               />
             </span>
             <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right" }}>
-              {item.aiAmountBasis === "approved_funding" ? formatUsdM(item.aiSpendUsd) :
-                item.sourcePlan?.fundingUsd != null ? formatUsdM(item.sourcePlan.fundingUsd) : "Not verified"}
+              <span>{item.aiAmountBasis === "approved_funding" ? formatUsdM(item.aiSpendUsd) :
+                item.sourcePlan?.fundingUsd != null ? formatUsdM(item.sourcePlan.fundingUsd) : "Not verified"}</span>
+              {item.sourcePlan && item.projectName && item.actualSpendYtdUsd !== null ? (
+                <small style={{ display: "block", marginTop: 4, color: "var(--canon-gray-500)" }}>
+                  Project spending through {sourceSpendDate(item.projectSpendAsOfDate)} {formatUsdM(item.actualSpendYtdUsd)}
+                </small>
+              ) : null}
             </span>
             <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right", display: "grid", gap: 3 }}>
               <span>{valueLabel(item)}</span>
@@ -271,8 +283,8 @@ export function InitiativesTablePanel({
                 </small>
               ) : null}
             </span>
-            <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right", color: item.financeValidatedAmountLoaded === true && item.financeValidatedUsd > 0 ? "var(--canon-teal-dark)" : "var(--canon-gray-500)" }}>
-              {financeActualLabel(item)}
+            <span style={{ fontFamily: "var(--abarva-mono)", textAlign: "right", color: !item.sourcePlan && item.financeValidatedAmountLoaded === true && item.financeValidatedUsd > 0 ? "var(--canon-teal-dark)" : "var(--canon-gray-500)" }}>
+              {item.sourcePlan && item.financeValidatedAmountLoaded === true ? `Source records ${financeActualLabel(item)}` : financeActualLabel(item)}
             </span>
             <span style={{ textAlign: "right" }}>
               <button
