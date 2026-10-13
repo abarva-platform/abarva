@@ -56,7 +56,7 @@ function readback() {
     serving_base_counts: { tower_command_center: 0 },
     serving_bridge_counts: { tower_command_center: 0 },
     bridge_source_counts: { tower_command_center: 1 },
-    physical_page_rows: { tower_command_center: [{ row_key: "executive_summary", source_hash: "a".repeat(64) }] },
+    physical_page_rows: { tower_command_center: [{ page_key: "command_center", row_key: "executive_summary", source_hash: "a".repeat(64) }] },
     source_ref_missing: 0,
     tower_value_chain_measure_drift: 0,
     tower_ai_primary_object_drift: 0,
@@ -94,6 +94,20 @@ for (const view of ["tower_ai_portfolio", "tower_adoption_lens"]) {
 }
 
 assert.deepEqual(validateReadback(readback(), expected, options), []);
+
+const crossSection = readback();
+crossSection.physical_page_rows.tower_command_center.push({
+  page_key: "decision_lanes", row_key: "executive_summary", source_hash: "b".repeat(64),
+});
+const crossSectionExpected = {
+  ...expected,
+  serving: { ...expected.serving, tower_command_center: 2 },
+};
+assert.ok(!validateReadback(crossSection, crossSectionExpected, options)
+  .includes("staged_tower_command_center_row_identity_or_hash_invalid"));
+crossSection.physical_page_rows.tower_command_center[1].page_key = "command_center";
+assert.ok(validateReadback(crossSection, crossSectionExpected, options)
+  .includes("staged_tower_command_center_row_identity_or_hash_invalid"));
 
 const leakedGeneration = readback();
 leakedGeneration.serving_target_counts.tower_command_center = 7;

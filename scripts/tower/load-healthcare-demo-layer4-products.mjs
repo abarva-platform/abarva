@@ -1606,12 +1606,15 @@ function physicalPageRowsSql(tenant, assessment) {
     ["tower_adoption_lens", "tower_ai_portfolio", "adoption_lens"],
   ];
   return pages.map(([surface, table, pageKey]) => {
+    const pageExpression = table === "tower_ai_portfolio"
+      ? "coalesce(display_payload_json ->> 'page_key', 'ai_portfolio')"
+      : "page_key";
     const pageClause = pageKey === null
       ? "true"
       : table === "tower_ai_portfolio"
       ? `coalesce(display_payload_json ->> 'page_key', 'ai_portfolio') = ${sqlText(pageKey)}`
       : `page_key = ${sqlText(pageKey)}`;
-    return `'${surface}', (select coalesce(jsonb_agg(jsonb_build_object('row_key', row_key, 'source_hash', source_hash) order by row_key), '[]'::jsonb) from ecl_projection.${table} where tenant_key = ${tenant} and assessment_id = ${assessment} and projection_version = ${PROJECTION_VERSION} and ${pageClause})`;
+    return `'${surface}', (select coalesce(jsonb_agg(jsonb_build_object('page_key', ${pageExpression}, 'row_key', row_key, 'source_hash', source_hash) order by ${pageExpression}, row_key, source_hash), '[]'::jsonb) from ecl_projection.${table} where tenant_key = ${tenant} and assessment_id = ${assessment} and projection_version = ${PROJECTION_VERSION} and ${pageClause})`;
   }).join(",\n    ");
 }
 
@@ -1928,11 +1931,14 @@ function validateReadback(readback, expected, options) {
   }
   for (const [surface, count] of Object.entries(expected.serving)) {
     const physicalRows = readback.physical_page_rows?.[surface];
+    const expectedPageKey = SERVING_SURFACES.find(([page]) => page === surface)?.[2];
     if (!Array.isArray(physicalRows) || physicalRows.length !== Number(count)) {
       issues.push(`staged_${surface}_physical_count_expected_${count}_got_${physicalRows?.length ?? "missing"}`);
     } else if (
-      new Set(physicalRows.map((row) => row.row_key)).size !== physicalRows.length ||
-      physicalRows.some((row) => !row.row_key || !/^[0-9a-f]{64}$/.test(row.source_hash ?? ""))
+      new Set(physicalRows.map((row) => `${row.page_key}|${row.row_key}`)).size !== physicalRows.length ||
+      physicalRows.some((row) => !row.page_key || !row.row_key ||
+        (expectedPageKey && row.page_key !== expectedPageKey) ||
+        !/^[0-9a-f]{64}$/.test(row.source_hash ?? ""))
     ) {
       issues.push(`staged_${surface}_row_identity_or_hash_invalid`);
     }
