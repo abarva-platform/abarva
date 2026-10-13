@@ -1,4 +1,4 @@
-# 2026-10-13 Tower tool identity projection
+# 2026-10-13 Tower tool identity and case source trails
 
 ## Release ID
 
@@ -10,15 +10,15 @@
 
 ## Plain-English Summary
 
-Tower now recognizes a tool rollout when an adoption row declares a tool ID, even if the row also links to an AI use case. A row linked only to a use case remains a usage observation. This lets the Tools view include declared tools without treating separate case usage as another tool.
+Tower now recognizes a tool rollout when an adoption row declares a tool ID, even if the row also links to an AI use case. A row linked only to a use case remains a usage observation. Tower also shows dated case observations and Finance events as source-reported history, while keeping unverified money out of verified and reportable totals.
 
 ## Layer Impact
 
-`global-control-lane`. Layer 4 Tower read-model presentation only. Source records, canonical identities, loaded data, and the serving selector are unchanged.
+`global-control-lane`. Layer 4 Tower read-model and case-drawer presentation only. Source records, canonical identities, loaded data, and the serving selector are unchanged.
 
 ## Client Applicability
 
-- All clients: The read-model rule applies to every tenant with Tower adoption rows.
+- All clients: These presentation rules apply to every tenant with Tower adoption or dated case source rows.
 - Specific clients: None.
 - Internal only: None.
 - Public/demo only: The same rule applies to synthetic demonstrations.
@@ -26,11 +26,11 @@ Tower now recognizes a tool rollout when an adoption row declares a tool ID, eve
 
 ## Changes Included
 
-The Tower read-model population rule and a regression test covering a declared tool linked to a case and a case-only usage observation.
+The Tower read-model population rule, dated source-event mapping and drawer wording, and regression tests covering tool identity, case-only usage, and source-reported history without verified totals.
 
 ## QA / Validation
 
-The focused Tower read-model suite passed all 29 tests. Targeted ESLint and all 11 release checks passed locally. A signed-in check of the Tools view is required after deployment.
+Focused Tower read-model and drawer tests passed (42/42). Targeted ESLint passed. The release check passed all 11 gates. Signed-in checks of Tools and the case drawer remain not run until deployment.
 
 ## Rollout Plan
 
@@ -44,15 +44,15 @@ Merge through a PR. The repo-owned ACA main deploy workflow builds and deploys t
 - ACA runtime invariant: Template and 100% traffic revision must match the approved digest.
 - Worker image invariant: Required worker jobs must match the approved digest.
 - Feature/env flag update path: None.
-- Live signed-in proof required: Yes.
+- Live signed-in proof required: Yes, for Tools and the case drawer.
 
 ## Rollback Plan
 
-Revert the read-model change through a PR and the repo-owned ACA main deploy workflow. Verify the restored digest and signed-in Tower view.
+Revert the read-model and drawer changes through a PR and the repo-owned ACA main deploy workflow. Verify the restored digest and signed-in Tower views.
 
 ## Audit Evidence
 
-PR checks, the focused test output, release validation, ACA deploy run and digest, runtime invariant readback, and signed-in Tower evidence.
+PR checks, focused read-model and drawer test output, release validation, ACA deploy run and digest, runtime invariant readback, and signed-in Tower evidence.
 
 ## Known Gaps
 
