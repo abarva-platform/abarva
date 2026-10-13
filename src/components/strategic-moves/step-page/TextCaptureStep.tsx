@@ -4,7 +4,6 @@ import { useState, type ReactNode } from "react";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import { resolveStepNextAction } from "@/lib/programs/step-page-model";
 import {
-  captureTextStepNotes,
   hasUncitedPlanningFigure,
   parseCaptureTextStepRecord,
   type CaptureTextStepEntry,
@@ -12,12 +11,7 @@ import {
 import { isBusinessChangeAssessmentComplete } from "@/lib/programs/solution-route-assessment";
 import type { StepPageHostProps } from "./phase-step-pages";
 import { useStepEvidence } from "./StepEvidence";
-import {
-  MovesStepPage,
-  StepNotesPanel,
-  SourceLine,
-  type StepPageRow,
-} from "./MovesStepPage";
+import { MovesStepPage, SourceLine, type StepPageRow } from "./MovesStepPage";
 import { BusinessChangeAssessmentForm } from "../BusinessChangeAssessmentForm";
 import { CharterBasisField } from "../CharterBasisField";
 import styles from "./MovesStepPage.module.css";
@@ -66,8 +60,6 @@ export function TextCaptureStep({
   );
   const [editors, setEditors] = useState<Record<string, string>>({});
   const [edited, setEdited] = useState<ReadonlySet<string>>(new Set());
-  const [notes, setNotes] = useState("");
-  const [reply, setReply] = useState<string | null>(null);
   const [error, setError] = useState<Record<string, string>>({});
   const evidence = useStepEvidence({
     moveId: host.move.id,
@@ -125,32 +117,6 @@ export function TextCaptureStep({
       next.delete(key);
       return next;
     });
-  };
-  const fillFromNotes = () => {
-    const occupied = Object.fromEntries(
-      fields.map((field) => [
-        field.key,
-        host.values[field.key] ||
-          editors[field.key] ||
-          record.entries[field.key]?.text ||
-          "",
-      ]),
-    );
-    const proposals = captureTextStepNotes(notes, fields, occupied);
-    const count = Object.keys(proposals).length;
-    if (count)
-      host.setValue(
-        config.recordKey,
-        JSON.stringify({
-          version: 1,
-          entries: { ...record.entries, ...proposals },
-        }),
-      );
-    setReply(
-      count
-        ? `Filled ${count} empty ${count === 1 ? "field" : "fields"} from your notes as drafts. Existing words were left alone. Accept each draft to save it as the team's answer.`
-        : "Nothing open matched a labelled note. Existing words were left alone.",
-    );
   };
   const rows: StepPageRow[] = fields.map((field, index) => {
     const accepted = host.values[field.key] ?? "";
@@ -384,12 +350,27 @@ export function TextCaptureStep({
     for (const row of pendingFieldRows.slice(1)) row.clause = null;
   }
   if (config.sponsorCheck && host.p1ParticipantBinding?.enabled) {
-    const confirmed = p1ParticipantBindingsReady(host.p1ParticipantBinding.preview);
-    rows.push({ id: "sponsor-role", eyebrow: "Operational contacts", rank: fields.length,
-      subject: confirmed ? "Sponsor contact and lead confirmed" : "Confirm sponsor contact and lead",
-      shortName: "sponsor contact and lead", state: confirmed ? "settled" : "decision",
+    const confirmed = p1ParticipantBindingsReady(
+      host.p1ParticipantBinding.preview,
+    );
+    rows.push({
+      id: "sponsor-role",
+      eyebrow: "Operational contacts",
+      rank: fields.length,
+      subject: confirmed
+        ? "Sponsor contact and lead confirmed"
+        : "Confirm sponsor contact and lead",
+      shortName: "sponsor contact and lead",
+      state: confirmed ? "settled" : "decision",
       clause: "confirm the existing sponsor contact and lead",
-      middle: <P1ParticipantBindingForm control={host.p1ParticipantBinding} captureBusy={host.charterBasis?.busy}/>, actions: null });
+      middle: (
+        <P1ParticipantBindingForm
+          control={host.p1ParticipantBinding}
+          captureBusy={host.charterBasis?.busy}
+        />
+      ),
+      actions: null,
+    });
   } else if (config.sponsorCheck) {
     const sponsor = host.move.participants.find(
       (participant) =>
@@ -449,27 +430,6 @@ export function TextCaptureStep({
     emptySentence: `Record ${fields[0]?.label.toLowerCase() ?? "this step"}`,
   });
   const phaseBase = `/strategic-moves/${encodeURIComponent(host.move.id)}/phase/${host.phase}`;
-  const notesPanel = (
-    <StepNotesPanel>
-      <div className={cx("warn-inline")}>
-        <label className={cx("q-label")} htmlFor={`${config.view}-notes`}>
-          Paste labelled session notes
-        </label>
-        <textarea
-          id={`${config.view}-notes`}
-          className={cx("q-input")}
-          rows={5}
-          value={notes}
-          onChange={(event) => setNotes(event.target.value)}
-          placeholder={fields.map((field) => `${field.label}: …`).join("\n")}
-        />
-        <button type="button" className={cx("btn-ink")} onClick={fillFromNotes}>
-          Fill this step from my notes
-        </button>
-        {reply ? <p role="status">{reply}</p> : null}
-      </div>
-    </StepNotesPanel>
-  );
   const page = (
     <MovesStepPage
       moveName={host.move.displayCode || host.move.name}
@@ -559,14 +519,8 @@ export function TextCaptureStep({
     />
   );
   return host.dock(page, {
-    briefing: `I read the saved ${config.title.toLowerCase()} answers and left your existing words alone. Paste labelled session notes to fill empty fields as drafts. Drafts stay drafts until you accept them. I don't write figures.`,
-    actions: [
-      {
-        id: `${config.view}-fill`,
-        label: "Fill this step from my notes",
-        onClick: fillFromNotes,
-      },
-    ],
-    notesPanel,
+    briefing: `Review the saved ${config.title.toLowerCase()} answers and edit each field where needed. Existing drafts remain available for your review. I don't write figures.`,
+    actions: [],
+    notesPanel: null,
   });
 }

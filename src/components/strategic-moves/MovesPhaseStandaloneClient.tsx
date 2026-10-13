@@ -72,6 +72,7 @@ import { readSolutionPatternFromCharter } from "@/lib/programs/solution-pattern"
 import { solutionPatternOptionsFor } from "@/lib/programs/solution-pattern-catalog";
 import {
   PhaseCatchUpContext,
+  MovesWorkspacePage,
   StepPageTabs,
 } from "@/components/strategic-moves/step-page/MovesStepPage";
 import {
@@ -420,7 +421,9 @@ interface MovesPhaseStandaloneClientProps {
   stepPagesV3Enabled?: boolean;
   phaseStepPagesEnabled?: boolean;
   p1ParticipantBindingEnabled?: boolean;
-  initialP1ParticipantBinding?: import("@/lib/programs/p1-participant-binding").P1ParticipantBindingPreview | null;
+  initialP1ParticipantBinding?:
+    | import("@/lib/programs/p1-participant-binding").P1ParticipantBindingPreview
+    | null;
   catchUpEnabled?: boolean;
   p2RootCausesForCatchUp?: string;
   p2GateRecordConfirmed?: boolean;
@@ -1181,7 +1184,11 @@ export function MovesPhaseStandaloneClient({
       ? `${currentUser.email} · ${currentUser.role}`
       : (currentUser?.email ?? null);
   const phase = phaseFor(phaseNum);
-  const p1ParticipantBinding = useP1ParticipantBinding(move.id, p1ParticipantBindingEnabled && phaseNum === 1, initialP1ParticipantBinding);
+  const p1ParticipantBinding = useP1ParticipantBinding(
+    move.id,
+    p1ParticipantBindingEnabled && phaseNum === 1,
+    initialP1ParticipantBinding,
+  );
   const phaseStepPagesEnabled =
     requestedPhaseStepPagesEnabled ??
     ((phaseNum === 2 || phaseNum === 3) &&
@@ -4033,7 +4040,11 @@ export function MovesPhaseStandaloneClient({
 
   // Shared chrome for every step page: the phase bar, the step bar (each
   // step links to its own page when it has one) and the tabs.
-  const stepPageChrome = (phaseNumber: number, stepId: string) => {
+  const stepPageChrome = (
+    phaseNumber: number,
+    stepId: string,
+    current: "steps" | "files" | "record" = "steps",
+  ) => {
     const workflow = resolvePhaseWorkflow(phaseNumber, confirmedSolutionRoute);
     const stepIndex = Math.max(
       0,
@@ -4045,7 +4056,13 @@ export function MovesPhaseStandaloneClient({
       phaseHref,
       tabs: (
         <StepPageTabs
-          current="steps"
+          current={current}
+          onSelect={current === "steps" ? undefined : (view) => {
+            if (view === "steps") {
+              phaseLinkNavigationPending.current = true;
+              setWorkspaceView("phase");
+            }
+          }}
           hrefs={{
             steps: phaseStepPageHref(
               move.id,
@@ -4068,7 +4085,7 @@ export function MovesPhaseStandaloneClient({
           current: p.phase === phaseNumber,
           href:
             tally && tally.state !== "upcoming"
-              ? phaseHref(p.phase)
+              ? `${phaseHref(p.phase)}${current === "files" ? "?workspace=files" : current === "record" ? "?workspace=intelligence" : ""}`
               : undefined,
         };
       }),
@@ -4241,6 +4258,54 @@ export function MovesPhaseStandaloneClient({
         )?.title
       : null;
     return <p role="status">Opening {label ?? "step"}…</p>;
+  }
+
+  if (
+    phaseStepPagesEnabled &&
+    !legacyCaptureRequested &&
+    (workspaceView === "files" || workspaceView === "intelligence")
+  ) {
+    const workflow = resolvePhaseWorkflow(phase.phase, confirmedSolutionRoute);
+    const chrome = stepPageChrome(phase.phase, workflow[0]?.id ?? "", workspaceView === "files" ? "files" : "record");
+    return renderAvaDock({
+      content: (
+        <MovesWorkspacePage
+          moveName={displayMoveName}
+          clientDisplayName={move.tenant.name}
+          syntheticNote="Synthetic demo data"
+          tabs={chrome.tabs}
+          phases={chrome.phases}
+          title={workspaceView === "files" ? "Files & Evidence" : "Phase Intelligence"}
+        >
+          {workspaceView === "files" ? <>
+          <FileCabinetPanel
+            key={`${move.id}:${phase.phase}`}
+            moveId={move.id}
+            phase={phase.phase}
+            explorer
+            canApproveGates={canApproveGates}
+            discloseReviewerAttribution
+            onEvidenceChanged={refreshPhase}
+            evidenceFamilies={declarableEvidenceFamilies}
+          />
+          {phase.phase === 1 && initialAuthoredP1Documents ? (
+            <details>
+              <summary>Author an original phase document</summary>
+              {initialAuthoredP1Documents}
+            </details>
+          ) : null}
+          <PublicSourcesReviewPanel
+            programId={move.id}
+            enabled={publicSourceReviewEnabled}
+            canDecide={canApproveGates}
+          />
+          </> : <>
+            <PhaseIntelligencePanel moveId={move.id} phase={phase.phase} />
+            <AssumptionRegisterPanel register={assumptionRegister} variant="full" />
+          </>}
+        </MovesWorkspacePage>
+      ),
+    });
   }
 
   if (

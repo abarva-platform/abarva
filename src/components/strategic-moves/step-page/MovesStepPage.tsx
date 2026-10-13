@@ -454,10 +454,121 @@ export function StepNotesPanel({ children }: { children: ReactNode }) {
   );
 }
 
+type WorkspaceIdentity = Pick<
+  MovesStepPageProps,
+  "moveName" | "clientDisplayName" | "syntheticNote" | "tabs" | "phases"
+>;
+
+function WorkspaceHeader({
+  identity,
+  theme,
+  currentStepLabel,
+}: {
+  identity: WorkspaceIdentity;
+  theme: ReturnType<typeof useStepPageTheme>;
+  currentStepLabel?: string;
+}) {
+  return (
+    <>
+      <div className={cx("topline")}>
+        <div className={cx("topline-identity")}>
+          <span className={cx("eyebrow")}>{identity.moveName}</span>
+          <span className={cx("tenant-identity")}>
+            {identity.clientDisplayName}
+          </span>
+        </div>
+        <div className={cx("topline-right")}>
+          {identity.syntheticNote ? (
+            <span className={cx("demo-note")}>{identity.syntheticNote}</span>
+          ) : null}
+          <button
+            type="button"
+            className={cx("link-btn")}
+            onClick={theme.toggle}
+            disabled={!theme.mounted}
+          >
+            {theme.effective === "dark" ? "Light" : "Dark"} mode
+          </button>
+        </div>
+      </div>
+      {identity.tabs}
+      <nav className={cx("phase-bar")} aria-label="Phases">
+        <ol>
+          {identity.phases.map((phase) => {
+            const body = (
+              <>
+                <span className={cx("code")}>
+                  {phase.code}
+                  {phase.status.startsWith("Done") ? (
+                    <span
+                      className={cx("tick")}
+                      role="img"
+                      aria-label="complete"
+                    >
+                      ✓
+                    </span>
+                  ) : null}
+                </span>
+                <span className={cx("name")}>{phase.name}</span>
+                <span className={cx("count")}>
+                  {phase.current &&
+                  currentStepLabel &&
+                  !phase.status.includes("to confirm")
+                    ? currentStepLabel
+                    : phase.status}
+                </span>
+              </>
+            );
+            return (
+              <li key={phase.code}>
+                {phase.href && !phase.current ? (
+                  <a className={cx("phase-tab")} href={phase.href}>
+                    {body}
+                  </a>
+                ) : (
+                  <span
+                    className={cx("phase-tab")}
+                    aria-current={phase.current ? "page" : undefined}
+                  >
+                    {body}
+                  </span>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+    </>
+  );
+}
+
+export function MovesWorkspacePage({
+  title,
+  children,
+  ...identity
+}: WorkspaceIdentity & {
+  title: string;
+  children: ReactNode;
+}) {
+  const theme = useStepPageTheme();
+  return (
+    <div className={cx("root")} data-theme={theme.theme ?? undefined}>
+      <div className={cx("shell")}>
+        <WorkspaceHeader identity={identity} theme={theme} />
+        <main className={cx("workspace-main")} aria-label={title}>
+          <h1 className={cx("workspace-title")}>{title}</h1>
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}
+
 export function MovesStepPage(props: MovesStepPageProps) {
   const inheritedCatchUp = useContext(PhaseCatchUpContext);
   const catchUp = props.catchUp ?? inheritedCatchUp;
-  const { theme, effective, toggle, mounted } = useStepPageTheme();
+  const themeControls = useStepPageTheme();
+  const { theme } = themeControls;
   const { nextAction, stepIndex, steps } = props;
   const state = nextAction.state;
   const groups = groupStepRows(props.rows);
@@ -496,74 +607,11 @@ export function MovesStepPage(props: MovesStepPageProps) {
   return (
     <div className={cx("root")} data-theme={theme ?? undefined}>
       <div className={cx("shell")}>
-        <div className={cx("topline")}>
-          <div className={cx("topline-identity")}>
-            <span className={cx("eyebrow")}>{props.moveName}</span>
-            <span className={cx("tenant-identity")}>
-              {props.clientDisplayName}
-            </span>
-          </div>
-          <div className={cx("topline-right")}>
-            {props.syntheticNote ? (
-              <span className={cx("demo-note")}>{props.syntheticNote}</span>
-            ) : null}
-            <button
-              type="button"
-              className={cx("link-btn")}
-              onClick={toggle}
-              disabled={!mounted}
-            >
-              {effective === "dark" ? "Light" : "Dark"} mode
-            </button>
-          </div>
-        </div>
-
-        {props.tabs}
-
-        <nav className={cx("phase-bar")} aria-label="Phases">
-          <ol>
-            {props.phases.map((phase) => {
-              const body = (
-                <>
-                  <span className={cx("code")}>
-                    {phase.code}
-                    {phase.status.startsWith("Done") ? (
-                      <span
-                        className={cx("tick")}
-                        role="img"
-                        aria-label="complete"
-                      >
-                        ✓
-                      </span>
-                    ) : null}
-                  </span>
-                  <span className={cx("name")}>{phase.name}</span>
-                  <span className={cx("count")}>
-                    {phase.current && !phase.status.includes("to confirm")
-                      ? `Step ${stepIndex + 1} of ${steps.length}`
-                      : phase.status}
-                  </span>
-                </>
-              );
-              return (
-                <li key={phase.code}>
-                  {phase.href && !phase.current ? (
-                    <a className={cx("phase-tab")} href={phase.href}>
-                      {body}
-                    </a>
-                  ) : (
-                    <span
-                      className={cx("phase-tab")}
-                      aria-current={phase.current ? "page" : undefined}
-                    >
-                      {body}
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
-        </nav>
+        <WorkspaceHeader
+          identity={props}
+          theme={themeControls}
+          currentStepLabel={`Step ${stepIndex + 1} of ${steps.length}`}
+        />
 
         {catchUp?.items.length ? (
           <aside className={cx("catch-up")} aria-label="Items to confirm">
@@ -950,9 +998,11 @@ export function MovesStepPage(props: MovesStepPageProps) {
 export function StepPageTabs({
   current,
   hrefs,
+  onSelect,
 }: {
   current: "steps" | "files" | "record";
   hrefs: Record<"steps" | "files" | "record", string>;
+  onSelect?: (view: "steps" | "files" | "record") => void;
 }) {
   const tabs = [
     ["steps", "Steps"],
@@ -967,6 +1017,9 @@ export function StepPageTabs({
             key={key}
             className={cx("tab")}
             href={hrefs[key]}
+            onClick={(event) => {
+              if (!event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && event.button === 0) onSelect?.(key);
+            }}
             aria-current={key === current ? "page" : undefined}
           >
             {label}

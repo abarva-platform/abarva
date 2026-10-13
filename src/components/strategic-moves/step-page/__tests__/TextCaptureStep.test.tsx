@@ -1,6 +1,12 @@
 /** @jest-environment jsdom */
 import "@testing-library/jest-dom";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import { renderToString } from "react-dom/server";
 import type { StepPageHostProps } from "../phase-step-pages";
@@ -153,21 +159,20 @@ const views: Array<[StepPageView, number, string]> = [
 ];
 
 describe("P0 and P1 text capture step pages", () => {
-  it("keeps the notes sibling on the same theme as its step without changing saved answers", () => {
+  it("keeps the step theme switch without changing saved answers or restoring bulk notes", () => {
     window.localStorage.removeItem("mv-theme");
     const props = host(0, {
       business_trigger: "A recorded signal",
       problem_statement: "A recorded problem",
     });
     const mounted = page("p0-signal", props);
-    const notes = screen.getByRole("region", { name: "Session notes" });
+    expect(screen.queryByRole("region", { name: "Session notes" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Dark mode" }));
-    expect(notes.getAttribute("data-theme")).toBe("dark");
     expect(
       mounted.container.querySelector(".root")?.getAttribute("data-theme"),
     ).toBe("dark");
     fireEvent.click(screen.getByRole("button", { name: "Light mode" }));
-    expect(notes.getAttribute("data-theme")).toBe("light");
+    expect(mounted.container.querySelector(".root")?.getAttribute("data-theme")).toBe("light");
     expect(props.setValue).not.toHaveBeenCalled();
     window.localStorage.removeItem("mv-theme");
   });
@@ -287,29 +292,19 @@ describe("P0 and P1 text capture step pages", () => {
     expect(props.setValue).not.toHaveBeenCalledWith("business_trigger", "");
   });
 
-  it("copies exact session-note lines into a draft without overwriting a saved answer", () => {
+  it("keeps saved answers without mounting the removed bulk notes panel", () => {
     const props = host(0, { business_trigger: "Already recorded" });
     page("p0-signal", props);
-    fireEvent.change(
-      screen.getByRole("textbox", { name: "Paste labelled session notes" }),
-      {
-        target: {
-          value:
-            "Business trigger: Overwrite attempt\nProblem statement: Verbatim team note",
-        },
-      },
-    );
-    fireEvent.click(
-      screen.getByRole("button", { name: "Fill this step from my notes" }),
-    );
-    expect(props.setValue).toHaveBeenCalledWith(
-      "p0_signal_step",
-      expect.stringContaining("Verbatim team note"),
-    );
-    expect(props.setValue).not.toHaveBeenCalledWith(
-      "business_trigger",
-      "Overwrite attempt",
-    );
+    expect(
+      screen.queryByRole("textbox", { name: "Paste labelled session notes" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Fill this step from my notes" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText("Already recorded", { selector: ".item-name" }),
+    ).toBeInTheDocument();
+    expect(props.setValue).not.toHaveBeenCalled();
   });
 
   it("does not infer sponsor assignment from contact text", () => {
