@@ -31,12 +31,13 @@ Intelligence now gives a visible progress update while a response is being prepa
 - Question-scaled executive response and follow-up instructions.
 - Visible waiting updates, full-width chat and exhibit layout, and Markdown styling.
 - Removal of the quality-review panel from the advisor page.
+- Retirement of the panel's component, dedicated test, and active test-inventory entry; prior test evidence remains archived in the triage record.
 - Focused behavior tests for multi-part requests, empty-text retry, and waiting state.
 
 ## QA / Validation
 
 - Scoped ESLint: passed.
-- Scoped Jest: passed, 44 tests across six suites; the page suite was rerun after removing the quality-review panel.
+- Scoped Jest: passed, 49 tests across seven suites; the page suite was rerun after removing the quality-review panel, and the inventory suite passed after retiring the deleted test.
 - TypeScript `tsc --noEmit`: passed.
 - `git diff --check`: passed.
 - Route reachability check: passed after removing the unused quality-review component.
