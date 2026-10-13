@@ -1151,7 +1151,10 @@ function hasUnqualifiedReferenceTestimony(
         passage,
       );
     const testimony =
-      /\b(?:leaders?|interviewees?)\b.{0,60}\b(?:raised|said|reported|agreed|expressed|confirmed|verified)\b|\b(?:interviewed|interviews?|testimony)\b/i.test(
+      /\b(?:leaders?|leadership|interviewees?)\b.{0,60}\b(?:raised|said|reported|flagged|agreed|expressed|confirmed|verified)\b|\b(?:interviewed|interviews?|testimony)\b/i.test(
+        passage,
+      ) ||
+      /\b(?:\d[\d,]*(?:\s*(?:of|\/)\s*\d[\d,]*)?|all|most|many|few)\s+(?:of\s+the\s+)?(?:leaders?|executives?|interviewees?)\b/i.test(
         passage,
       );
     return (

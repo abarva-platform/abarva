@@ -71,3 +71,5 @@ export { CONTEXT_DEMO_QUERY_MAX_LENGTH } from './demo-contract';
 // INT-WV-2 · worldview chunk hit type — re-exported alongside the
 // other bundle shapes so panel + tests don't reach into ./types.
 export type { WorldviewChunkHit } from './types';
+
+export { proveReviewedSourceCitation } from './source-citation-proof';
