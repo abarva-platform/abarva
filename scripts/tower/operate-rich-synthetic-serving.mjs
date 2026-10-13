@@ -289,9 +289,12 @@ export async function pageReadback(client, schema, tenant, assessment, version) 
     const pageExpression = schema === "ecl_projection" && table === "tower_ai_portfolio"
       ? "coalesce(display_payload_json ->> 'page_key', 'ai_portfolio')"
       : "page_key";
+    const params = predicate === "true"
+      ? [tenant, assessment, version]
+      : [tenant, assessment, version, pageKey];
     const rows = (await client.query(
       `select ${pageExpression} as page_key, row_key, source_hash from ${schema}.${schema === "serving" ? page : table} where tenant_key=$1 and assessment_id=$2 and projection_version=$3 and ${predicate} order by ${pageExpression}, row_key, source_hash`,
-      [tenant, assessment, version, pageKey],
+      params,
     )).rows;
     result[page] = { row_count: rows.length, row_fingerprint_sha256: pageFingerprint(rows) };
   }

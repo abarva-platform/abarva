@@ -143,20 +143,23 @@ test("job config requires digest-pinned ACA lane and scoped stage Blob", () => {
 
 test("physical and serving reads use their respective page partitions", async () => {
   const queries = [];
-  const client = { query: async (sql) => {
-    queries.push(sql);
+  const client = { query: async (sql, params) => {
+    queries.push({ sql, params });
     return { rows: [{ page_key: "ai_portfolio", row_key: "same", source_hash: "f".repeat(64) }] };
   } };
   const physical = await pageReadback(client, "ecl_projection", tenant, assessment, 2);
   assert.equal(Object.keys(physical).length, 9);
-  assert.ok(queries.some((sql) => sql.includes("display_payload_json ->> 'page_key'")));
-  assert.ok(queries.every((sql) => sql.includes("as page_key")));
+  assert.ok(queries.some(({ sql }) => sql.includes("display_payload_json ->> 'page_key'")));
+  assert.ok(queries.every(({ sql }) => sql.includes("as page_key")));
+  assert.ok(queries.every(({ sql, params }) =>
+    params.length === (sql.includes("= $4") ? 4 : 3)));
   queries.length = 0;
   const serving = await pageReadback(client, "serving", tenant, assessment, 2);
   assert.equal(Object.keys(serving).length, 9);
-  assert.ok(queries.every((sql) => !sql.includes("display_payload_json")));
-  assert.ok(queries.every((sql) => sql.includes("order by page_key, row_key, source_hash")));
-  assert.ok(queries.some((sql) => sql.includes("from serving.tower_adoption_lens")));
+  assert.ok(queries.every(({ sql }) => !sql.includes("display_payload_json")));
+  assert.ok(queries.every(({ sql }) => sql.includes("order by page_key, row_key, source_hash")));
+  assert.ok(queries.every(({ params }) => params.length === 3));
+  assert.ok(queries.some(({ sql }) => sql.includes("from serving.tower_adoption_lens")));
 });
 
 test("serving readback fingerprint matches the staged page and row identity", async () => {
