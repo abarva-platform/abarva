@@ -57,4 +57,4 @@ The private stage tar URI and SHA-256, stage proof, quality gate, active-selecto
 
 ## Known Gaps
 
-The candidate is privately staged but inactive. Serving approval, check proof, promotion, and signed-in readback are still outstanding.
+The candidate is privately staged but inactive. Exact-version serving approval is recorded; the check proof, promotion, and signed-in readback are still outstanding.

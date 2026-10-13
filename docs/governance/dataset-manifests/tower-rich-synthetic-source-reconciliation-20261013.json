@@ -21,6 +21,13 @@
     "source_set_hash": "c50d17bfb71b92b7392e247ca75f33965b9ee4639b6a6fd295ebf9a5884e0c40",
     "release_record": "docs/releases/records/2026-10-13-tower-rich-synthetic-source-reconciliation.md"
   },
-  "serving_approval": null,
-  "notes": "Named exact-version approval authorizes private ACA loading of this synthetic candidate only. Serving approval remains separate and is not recorded. Source project budgets name FY26 and reconcile by domain to the synthetic Finance envelope. Source-stated annual benefit and ROI are sponsor scenarios, not Finance actuals. No current-client spend, realized ROI, Finance attestation, private load, or Tower serving is claimed by this declaration."
+  "serving_approval": {
+    "approved_by": "Anand Sundaram",
+    "approved_at": "2026-10-13",
+    "assessment_id": "tower-rich-synthetic-candidate-c50d17bfb71b92b7",
+    "source_set_hash": "c50d17bfb71b92b7392e247ca75f33965b9ee4639b6a6fd295ebf9a5884e0c40",
+    "release_record": "docs/releases/records/2026-10-13-tower-rich-synthetic-serving-control.md",
+    "surface": "tower"
+  },
+  "notes": "Named exact-version approvals authorize the private load and guarded Tower serving review of this synthetic candidate. The private stage passed its quality gate and preserved the prior active selector. Source project budgets name FY26 and reconcile by domain to the synthetic Finance envelope. Source-stated annual benefit and ROI are sponsor scenarios, not Finance actuals. No current-client spend, realized ROI, Finance attestation, or completed Tower serving switch is claimed by this declaration."
 }
