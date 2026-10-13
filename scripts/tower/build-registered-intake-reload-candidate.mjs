@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { adaptRegisteredSyntheticFinanceBudget, FINANCE_BUDGET_SOURCE_FILE } from "./adapters/registered-synthetic-finance-budget.mjs";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const REGISTRY = "datasets/tenant-inputs/tenant-input-registry.json";
@@ -204,11 +205,21 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
   if (variant !== null && ![SOURCE_FIELDS_VARIANT, SOURCE_ASSERTIONS_VARIANT].includes(variant)) throw new Error(`Unknown candidate variant: ${variant}`);
   const sourceFieldsEnabled = variant === SOURCE_FIELDS_VARIANT || variant === SOURCE_ASSERTIONS_VARIANT;
   const sourceAssertionsEnabled = variant === SOURCE_ASSERTIONS_VARIANT;
-  const selectedInputFiles = sourceAssertionsEnabled ? [...INPUT_FILES, ...SOURCE_ASSERTION_EXTRA_FILES] : INPUT_FILES;
   if (!tenantKey) throw new Error("--tenant-key is required; tenancy must be declared in the active registry");
   const registry = JSON.parse(fs.readFileSync(path.join(repoRoot, REGISTRY), "utf8"));
   const tenant = registry.activeTenants?.find((entry) => entry.tenantKey === tenantKey);
   if (!tenant) throw new Error("Tenant is not active in the input registry");
+  const demoBudgetSelection = sourceAssertionsEnabled ? tenant.syntheticDemoBudgetSelection : null;
+  if (demoBudgetSelection && (demoBudgetSelection.sourceFile !== FINANCE_BUDGET_SOURCE_FILE ||
+      demoBudgetSelection.fiscalYear !== "FY26" ||
+      demoBudgetSelection.selectionStatus !== "approved_for_synthetic_demo" ||
+      demoBudgetSelection.independentFinanceAttestation !== false ||
+      !/^[a-f0-9]{64}$/.test(demoBudgetSelection.sourceSha256 ?? ""))) {
+    throw new Error("Registered synthetic demo budget selection is invalid");
+  }
+  const financeBudgetFile = demoBudgetSelection?.sourceFile ?? null;
+  const selectedInputFiles = sourceAssertionsEnabled ? [...INPUT_FILES, ...SOURCE_ASSERTION_EXTRA_FILES,
+    ...(financeBudgetFile ? [financeBudgetFile] : [])] : INPUT_FILES;
   const inputRoot = path.resolve(repoRoot, tenant.canonicalInputRoot);
   const canonicalRoot = path.resolve(repoRoot, registry.canonicalRoot);
   if (!inputRoot.startsWith(`${canonicalRoot}${path.sep}`)) throw new Error("Active input root is outside the canonical registry root");
@@ -218,6 +229,9 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
     const full = path.join(inputRoot, file);
     if (!fs.existsSync(full)) throw new Error(`Required active intake file is missing: ${file}`);
     const bytes = fs.readFileSync(full);
+    if (file === financeBudgetFile && sha256(bytes) !== demoBudgetSelection.sourceSha256) {
+      throw new Error("Selected synthetic demo budget source hash changed; renew source-selection approval");
+    }
     const rows = csvRows(bytes.toString("utf8")).map((row, index) => ({ ...row, __source_row: index + 2 }));
     const wrongTenant = rows.filter((row) => row.tenant_key !== tenantKey);
     if (wrongTenant.length) throw new Error(`${file} has ${wrongTenant.length} rows outside the registered tenant`);
@@ -237,6 +251,11 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
   }
 
   const spend = inputs["08_spend_value.csv"];
+  const financeBudget = financeBudgetFile ? inputs[financeBudgetFile] : [];
+  const adaptedFinanceBudget = financeBudgetFile ? adaptRegisteredSyntheticFinanceBudget({
+    rows: financeBudget, selection: demoBudgetSelection, metadata: sourceManifest[financeBudgetFile],
+  }) : null;
+  const syntheticDemoFy26Budget = adaptedFinanceBudget?.amount_usd ?? null;
   const owners = inputs["02_org_ownership.csv"];
   const applications = inputs["04_applications_systems.csv"];
   const assets = inputs["05_data_assets_integrations.csv"];
@@ -362,7 +381,10 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
   const plannedProgramBudgets = sumKnown(programs, "budget_usd");
 
   const canonical = {
-    budget: { approved_fy_budget_usd: approvedBudget, status: approvedBudget === null ? "unknown_no_approved_finance_extract" : "source_recorded" },
+    budget: { approved_fy_budget_usd: approvedBudget,
+      status: approvedBudget !== null ? "source_recorded" :
+        adaptedFinanceBudget ? "no_independent_finance_attestation" : "unknown_no_approved_finance_extract" },
+    ...(adaptedFinanceBudget ? { synthetic_demo_fy26_budget: adaptedFinanceBudget } : {}),
     modeled_annual_spend: {
       amount_usd: modeledAnnualSpend,
       status: "planning_estimate_one_source",
@@ -487,7 +509,7 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
       };
     }),
     foundations: {
-      ...(sourceAssertionsEnabled ? {
+      ...(financeBudgetFile ? {
         enterprise_profile_rows: inputs["00_enterprise_profile.csv"].length,
         business_function_rows: inputs["01_business_functions.csv"].length,
         workforce_role_rows: inputs["03_workforce_roles.csv"].length,
@@ -570,9 +592,24 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
   const selectedPages = sourceAssertionsEnabled ? [...PAGES, "foundations"] : PAGES;
   const pages = Object.fromEntries(selectedPages.map((key) => [key, []]));
   addPage(pages, "command_center", "executive_summary", "Tower at a glance",
-    "Approved FY budget is not supplied. The annual spend figure is a planning estimate from one source; program budgets cover unspecified periods. No realized AI value is ready to claim.",
-    null, canonical.modeled_annual_spend.source_refs, {
+    adaptedFinanceBudget ?
+      "The FY26 synthetic demo budget and its run/change split come from one selected Finance extract. Independent Finance sign-off is not recorded. Annual modeled spend is a separate planning scenario. No realized AI value is ready to claim." :
+      "Approved FY budget is not supplied. The annual spend figure is a planning estimate from one source; program budgets cover unspecified periods. No realized AI value is ready to claim.",
+    null, [...canonical.modeled_annual_spend.source_refs,
+      ...(canonical.synthetic_demo_fy26_budget?.source_refs || [])], {
       approved_fy_budget_usd: approvedBudget,
+      ...(sourceAssertionsEnabled ? {
+        synthetic_demo_fy26_budget_usd: syntheticDemoFy26Budget,
+        synthetic_demo_fy26_run_usd: adaptedFinanceBudget?.run_change_split.run.amount_usd ?? null,
+        synthetic_demo_fy26_change_usd: adaptedFinanceBudget?.run_change_split.change.amount_usd ?? null,
+        synthetic_demo_fy26_run_row_count: adaptedFinanceBudget?.run_change_split.run.line_item_count ?? 0,
+        synthetic_demo_fy26_change_row_count: adaptedFinanceBudget?.run_change_split.change.line_item_count ?? 0,
+        budget_fiscal_year: "FY26",
+        budget_approval_status: "approved_for_synthetic_demo",
+        budget_approval_basis: "user_selected_synthetic_source_not_finance_attestation",
+        budget_extract_period: "FY26-Q2-YTD",
+        independent_finance_attestation: false,
+      } : {}),
       modeled_annual_spend_usd: modeledAnnualSpend,
       modeled_spend_narrative_total_usd: sourceNarrativeModelTotal,
       modeled_spend_row_difference_usd: canonical.modeled_annual_spend.row_sum_difference_usd,
@@ -588,6 +625,20 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
       use_case_to_benefit_ids_joined: declaredCrosswalk,
       foundations: foundationSummary,
     });
+  if (financeBudgetFile) {
+    addPage(pages, "cost_lens", "synthetic_demo_fy26_budget", "FY26 synthetic demo budget",
+      "Selected synthetic Finance extract: 70 FY26 line items. Approved for this demo only; no independent Finance sign-off. This is separate from the revenue-derived annual cost scenario and no variance is calculated.",
+      syntheticDemoFy26Budget, canonical.synthetic_demo_fy26_budget.source_refs, {
+        metric_label: "FY26 synthetic demo budget", fiscal_year: "FY26",
+        extract_period: "FY26-Q2-YTD", budget_approval_status: "approved_for_synthetic_demo",
+        budget_approval_basis: "user_selected_synthetic_source_not_finance_attestation",
+        independent_finance_attestation: false, additive_to_aggregate_spend: false,
+        run_budget_usd: adaptedFinanceBudget.run_change_split.run.amount_usd,
+        change_budget_usd: adaptedFinanceBudget.run_change_split.change.amount_usd,
+        run_row_count: adaptedFinanceBudget.run_change_split.run.line_item_count,
+        change_row_count: adaptedFinanceBudget.run_change_split.change.line_item_count,
+      });
+  }
   if (sourceAssertionsEnabled) {
     for (const item of foundationObjects) {
       addPage(pages, "foundations", `foundation:${item.object_type}:${item.id}`, item.name,
@@ -904,6 +955,15 @@ export function buildRegisteredIntakeCandidate({ repoRoot = REPO_ROOT, tenantKey
       "Conflicting benefit and usage dollars remain source-specific and unclaimed."),
     check("modeled_spend_not_budget", approvedBudget !== null || canonical.budget.approved_fy_budget_usd === null,
       "Modeled annual spend must not be called an approved FY budget."),
+    ...(financeBudgetFile ? [check("synthetic_demo_budget_source_coverage", adaptedFinanceBudget !== null &&
+      syntheticDemoFy26Budget === 650000000 &&
+      canonical.synthetic_demo_fy26_budget.source_refs.length === financeBudget.length &&
+      canonical.synthetic_demo_fy26_budget.run_change_split.run.line_item_count === 31 &&
+      canonical.synthetic_demo_fy26_budget.run_change_split.change.line_item_count === 39 &&
+      canonical.synthetic_demo_fy26_budget.run_change_split.run.amount_usd +
+        canonical.synthetic_demo_fy26_budget.run_change_split.change.amount_usd === syntheticDemoFy26Budget &&
+      canonical.budget.approved_fy_budget_usd === null,
+    "The selected synthetic Finance extract must have 70 unique FY26 source IDs, six numeric fields per row, forecast-less-budget variance, an exact 31/39 run/change split, and no independent Finance approval claim.")] : []),
     check(sourceAssertionsEnabled ? "all_views_mapped" : "all_nine_views_mapped",
       selectedPages.every((key) => pages[key].length > 0), "Each Tower view needs at least one source-backed candidate row."),
     check("no_claimable_value_without_proof", [...canonical.ai_use_cases, ...canonical.ai_claims].every((row) => row.claimable_value_usd === null), "No AI dollars become claimable while financial and evidence gates fail."),

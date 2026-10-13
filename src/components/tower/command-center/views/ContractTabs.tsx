@@ -930,7 +930,11 @@ export function AiPortfolioContractView({
               <div className={styles.contractMiniKicker}>Annual IT spend from source rows</div>
               <strong className={styles.costStoryTotal}>{usd.format(view.costLens.modeledAnnualSpendUsd)}</strong>
               <p>One-source planning estimate from {formatCount(view.costLens.categories.length)} spend categories. The source does not name a fiscal year. This is not an approved budget or verified savings.</p>
-              <p><b>Approved FY budget:</b> {s.budgetUsd === null ? "Unknown" : usd.format(s.budgetUsd)}</p>
+              {s.budgetUsd !== null ? <p><b>Approved FY budget:</b> {usd.format(s.budgetUsd)}.</p> : null}
+              {s.syntheticDemoBudgetUsd !== null && s.syntheticDemoBudgetUsd !== undefined ? (
+                <p><b>FY26 synthetic demo budget:</b> {usd.format(s.syntheticDemoBudgetUsd)}. {s.syntheticDemoRunUsd !== null && s.syntheticDemoRunUsd !== undefined && s.syntheticDemoChangeUsd !== null && s.syntheticDemoChangeUsd !== undefined ?
+                  `Source split: ${usd.format(s.syntheticDemoRunUsd)} run and ${usd.format(s.syntheticDemoChangeUsd)} change. ` : ""}Selected from a synthetic Finance extract; independent Finance sign-off is not recorded. This budget and the annual spend scenario use different bases, so no variance or overspend is calculated.</p>
+              ) : s.budgetUsd === null ? <p><b>Approved FY budget:</b> Unknown</p> : null}
               {view.costLens.sourceNarrativeDifferenceUsd !== null && view.costLens.sourceNarrativeDifferenceUsd !== 0 ? (
                 <p>The source summary and category rows differ by {usd.format(Math.abs(view.costLens.sourceNarrativeDifferenceUsd))}. This total uses the category rows.</p>
               ) : null}

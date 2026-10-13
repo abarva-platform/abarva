@@ -38,6 +38,7 @@ import { resolveDataPlaneForTenant } from '../read-adapters/resolveDataPlane';
 import type { DataPlane } from './types';
 import { embedDiscoveryPlanInCharter } from '@/lib/programs/discovery/charter-transformers';
 import type { DiscoveryPlan } from '@/lib/programs/discovery/discovery-intake';
+import type { AuthoredUploadReceipt } from '@/lib/programs/authored-deliverable-receipt';
 
 // --- domain shapes ----------------------------------------------------------
 
@@ -134,8 +135,27 @@ export interface UpdateEngagementCharterTxInput {
   readonly charter: Record<string, unknown>;
 }
 
+export interface InitialAuthoredDeliverableInput {
+  programId: string;
+  clientId: string;
+  title: string;
+  content: string;
+  receipt: AuthoredUploadReceipt;
+}
+export type InitialAuthoredDeliverableResult =
+  | { kind: 'conflict' }
+  | { kind: 'created' | 'replay'; deliverableId: string; versionId: string;
+      version: number; currentVersion: number; receipt: AuthoredUploadReceipt };
+export interface AuthoredApprovalInput {
+  programId: string; clientId: string; deliverableId: string; versionId: string;
+  version: number; content: string; receipt: AuthoredUploadReceipt;
+  userId: string; reviewerRole: string; approvalRationale: string | null;
+}
+
 export interface ProgramsWriteAdapter {
   readonly name: DataPlane;
+  runInitialAuthoredDeliverable(input: InitialAuthoredDeliverableInput): Promise<ProgramsWriteOutcome<InitialAuthoredDeliverableResult>>;
+  runAuthoredApproval(input: AuthoredApprovalInput): Promise<ProgramsWriteOutcome<{ applied: boolean }>>;
   /**
    * Insert one participant row. Resolves to `true` on success, `false` on a
    * write error (the route logs a soft warning and continues, unchanged from
@@ -202,6 +222,8 @@ export function createSupabaseProgramsWriteAdapter(
 ): ProgramsWriteAdapter {
   return {
     name: 'supabase',
+    async runInitialAuthoredDeliverable() { return { ok: false, error: 'authored_upload_requires_azure_transaction' }; },
+    async runAuthoredApproval() { return { ok: false, error: 'authored_approval_requires_azure_transaction' }; },
 
     async seedParticipant(seed) {
       const sb = getClient();
@@ -438,6 +460,108 @@ export function createAzureProgramsWriteAdapter(
 ): ProgramsWriteAdapter {
   return {
     name: 'azure-postgres',
+
+    async runInitialAuthoredDeliverable(input) {
+      try {
+        const data = await session(async (run): Promise<InitialAuthoredDeliverableResult> => {
+          const r = input.receipt;
+          if (r.moveId !== input.programId || r.phase !== 1 || r.origin !== 'abarva_uploaded' ||
+              !['charter', 'discovery_plan'].includes(r.deliverableTypeKey) || !input.content.trim())
+            throw new Error('authored_receipt_invalid');
+          // Serialize this admission operation. Original storage is completed
+          // before entering this transaction, avoiding a nested pool write.
+          await run('SELECT pg_advisory_xact_lock(64833, hashtext($1))',
+            [`${canonicalTenantKey(r.tenantKey)}:${input.programId}:${r.deliverableTypeKey}`]);
+          const programs = await run('SELECT id FROM engagements WHERE id = $1 AND client_id::text = $2',
+            [input.programId, input.clientId]);
+          if (programs.length !== 1) throw new Error('authored_move_scope_unavailable');
+          const existing = await run<{ id: string; current_version: number }>(
+            'SELECT id, current_version FROM deliverables_v2 WHERE engagement_id = $1 AND deliverable_type_key = $2 FOR UPDATE',
+            [input.programId, r.deliverableTypeKey]);
+          if (existing.length) {
+            if (existing.length !== 1) return { kind: 'conflict' };
+            const replay = await run<{ id: string; version: number; structured_data: { authoredUpload: AuthoredUploadReceipt } }>(
+              'SELECT id, version, structured_data FROM deliverable_versions WHERE deliverable_id = $1 '
+              + "AND origin = 'abarva_uploaded' AND structured_data->'authoredUpload' @> $2::jsonb",
+              [existing[0].id, JSON.stringify({ source: r.source, origin: r.origin, tenantKey: r.tenantKey,
+                moveId: r.moveId, phase: r.phase, deliverableTypeKey: r.deliverableTypeKey, requestId: r.requestId,
+                sha256: r.sha256, uploadedBy: r.uploadedBy, authoringBasis: r.authoringBasis })]);
+            if (replay.length !== 1) return { kind: 'conflict' };
+            return { kind: 'replay', deliverableId: existing[0].id, versionId: replay[0].id,
+              version: replay[0].version, currentVersion: existing[0].current_version, receipt: replay[0].structured_data.authoredUpload };
+          }
+          const types = await run('SELECT type_key FROM deliverable_types WHERE type_key = $1', [r.deliverableTypeKey]);
+          if (types.length > 1) throw new Error('authored_declared_type_unavailable');
+          if (types.length === 0) {
+            // The code registry declares these keys. Provision only that
+            // missing catalog identity; never alter an existing definition.
+            await run('INSERT INTO deliverable_types (type_key, title, description, applicable_phases, output_format, maturity) '
+              + "VALUES ($1, $2, 'Registered authored phase document', ARRAY[1], 'markdown', 'pilot') ON CONFLICT (type_key) DO NOTHING",
+              [r.deliverableTypeKey, input.title]);
+          }
+          const documents = await run<{ id: string }>('INSERT INTO deliverables_v2 '
+            + '(engagement_id, deliverable_type_key, title, status, current_version, created_by, requires_revalidation) '
+            + "VALUES ($1, $2, $3, 'draft', 1, $4, false) RETURNING id",
+            [input.programId, r.deliverableTypeKey, input.title, r.uploadedBy]);
+          const documentId = documents[0]?.id;
+          if (!documentId) throw new Error('authored_document_write_failed');
+          const versions = await run<{ id: string }>('INSERT INTO deliverable_versions '
+            + '(deliverable_id, version, content, origin, structured_data, generated_from_context_hash) '
+            + "VALUES ($1, 1, $2, 'abarva_uploaded', $3::jsonb, NULL) RETURNING id",
+            [documentId, input.content, JSON.stringify({ source: 'authored_docx_upload', authoredUpload: r })]);
+          const versionId = versions[0]?.id;
+          if (!versionId) throw new Error('authored_version_write_failed');
+          await run('INSERT INTO deliverable_lifecycle_events '
+            + '(deliverable_id, version, event_type, origin, source_file_checksum, approval_scope) '
+            + "VALUES ($1, 1, 'version_created', 'abarva_uploaded', $2, 'Unsigned authored file uploaded')",
+            [documentId, r.sha256]);
+          return { kind: 'created', deliverableId: documentId, versionId, version: 1, currentVersion: 1, receipt: r };
+        });
+        return { ok: true, data };
+      } catch { return { ok: false, error: 'authored_admission_transaction_failed' }; }
+    },
+
+    async runAuthoredApproval(input) {
+      try {
+        const data = await session(async (run) => {
+          const r = input.receipt;
+          if (r.moveId !== input.programId || r.origin !== 'abarva_uploaded' || r.phase !== 1 ||
+              !r.evidenceSnapshotHash || !r.phaseEvidenceSnapshotHash ||
+              canonicalTenantKey(r.storageTenantKey) !== r.tenantKey)
+            throw new Error('authored_approval_scope_invalid');
+          const rows = await run<{ id: string }>('SELECT d.id FROM deliverables_v2 d JOIN engagements e ON e.id = d.engagement_id '
+            + 'JOIN deliverable_versions v ON v.deliverable_id = d.id AND v.version = d.current_version '
+            + 'JOIN move_artifacts a ON a.artifact_id = $9 AND a.move_id = e.id AND a.tenant_key = $10 '
+            + 'WHERE d.id = $1 AND e.id = $2 AND e.client_id::text = $3 AND d.current_version = $4 '
+            + "AND d.status IN ('draft','in_review') AND d.signed_off_version IS NULL AND v.id = $5 "
+            + "AND v.content = $6 AND v.origin = 'abarva_uploaded' AND v.structured_data->'authoredUpload' = $7::jsonb "
+            + "AND d.deliverable_type_key = $8 AND a.phase = 1 AND a.version = $11 AND a.blob_sha256 = $12 "
+            + "AND a.metadata->>'storage' = 'azure_blob' AND a.metadata->>'authoredRequestId' = $13 AND a.metadata->>'canonicalDeliverableKey' = $8 "
+            + "AND a.metadata->>'authoredOrigin' = 'abarva_uploaded' FOR UPDATE OF d, v, a",
+            [input.deliverableId, input.programId, input.clientId, input.version, input.versionId,
+              input.content, JSON.stringify(r), r.deliverableTypeKey, r.artifactId, r.storageTenantKey,
+              r.artifactVersion, r.sha256, r.requestId]);
+          if (rows.length !== 1) return { applied: false };
+          await run('UPDATE deliverables_v2 SET status = $1, signed_off_by = $2, signed_off_at = now(), '
+            + 'signed_off_version = $3, approved_artifact_id = $4, authoritative_lifecycle_state = $5, '
+            + 'authoritative_flag_source = $6, requires_revalidation = false, updated_at = now(), '
+            + "structured_data = COALESCE(structured_data, '{}'::jsonb) || $7::jsonb WHERE id = $8",
+            ['signed_off', input.userId, input.version, r.artifactId, 'human_approved', 'normal_flow',
+              JSON.stringify({ source: 'authored_docx_upload', authoredUpload: r, evidenceSnapshotHash: r.evidenceSnapshotHash,
+                phaseEvidenceSnapshotHash: r.phaseEvidenceSnapshotHash, evidenceSnapshotScope: 'phase', generatedAt: r.observedAt,
+                approvalMode: 'approve_authored_upload_as_is', approvalAttribution: 'workspace_actor', approvalRationale: input.approvalRationale }),
+              input.deliverableId]);
+          await run("UPDATE move_artifacts SET status = 'approved', updated_at = now() WHERE artifact_id = $1", [r.artifactId]);
+          await run('INSERT INTO deliverable_lifecycle_events '
+            + '(deliverable_id, version, event_type, origin, reviewer_name, reviewer_role_code, reviewer_role_label, approval_scope, source_file_checksum, decision) '
+            + "VALUES ($1, $2, 'approval_granted', 'abarva_uploaded', $3, $4, CASE WHEN $4 = 'other' THEN 'Workspace actor' ELSE NULL END, $5, $6, 'approved')",
+            [input.deliverableId, input.version, input.userId, input.reviewerRole,
+              input.approvalRationale || 'Exact uploaded authored version approved by the workspace actor', r.sha256]);
+          return { applied: true };
+        });
+        return { ok: true, data };
+      } catch { return { ok: false, error: 'authored_approval_transaction_failed' }; }
+    },
 
     async seedParticipant(seed) {
       try {

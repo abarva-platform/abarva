@@ -48,9 +48,23 @@ it("omits the unverified budget projection from assistant measures", () => {
     ]),
   );
   expect(JSON.stringify(context.towerMeasures)).not.toContain("123456789");
-  expect(context.towerKnownGaps[0]).toMatch(
-    /no reconciled active-intake lineage status/,
-  );
+  expect(context.towerKnownGaps).not.toEqual(expect.arrayContaining([
+    expect.stringContaining("no reconciled active-intake lineage"),
+  ]));
+});
+
+it("gives aVa the selected synthetic demo budget with its Finance caveat", () => {
+  const built = buildTowerCommandCenterView(designFixtureMart(), { tenantName: "Example tenant" })!;
+  const view = { ...built, summary: { ...built.summary, budgetUsd: null,
+    syntheticDemoBudgetUsd: 650_000_000, syntheticDemoRunUsd: 487_500_000,
+    syntheticDemoChangeUsd: 162_500_000 } };
+  render(<TowerCommandCenterAvaShell view={view} tenantName="Example tenant" clientId="example" />);
+  const context = JSON.parse(screen.getByTestId("tower-ava-context").textContent ?? "{}");
+  expect(context.towerMeasures).toEqual(expect.arrayContaining([
+    expect.objectContaining({ measureKey: "synthetic_demo_fy26_it_budget_usd", value: 650_000_000 }),
+  ]));
+  expect(context.towerKnownGaps[0]).toContain("Independent Finance sign-off is not recorded");
+  expect(context.towerKnownGaps[0]).toContain("not a budget variance");
 });
 
 it("keeps annual tool cost out of the assistant's approved funding measure", () => {

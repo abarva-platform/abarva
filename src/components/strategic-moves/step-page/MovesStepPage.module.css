@@ -32,7 +32,8 @@
 
 /* ───────── Tokens ───────── canonical (moves-capture handoff). No new values. */
 .root,
-.notes-panel {
+.notes-panel,
+.authoredUpload {
   --mv-bg: #f5f1eb;
   --mv-surface: #ffffff;
   --mv-ink: #2c2c2a;
@@ -57,7 +58,8 @@
 }
 @media (prefers-color-scheme: dark) {
   .root:not([data-theme="light"]),
-  .notes-panel:not([data-theme="light"]) {
+  .notes-panel:not([data-theme="light"]),
+  .authoredUpload:not([data-theme="light"]) {
     --mv-bg: #141413;
     --mv-surface: #1d1d1b;
     --mv-ink: #f1efe8;
@@ -75,7 +77,8 @@
   }
 }
 .root[data-theme="dark"],
-.notes-panel[data-theme="dark"] {
+.notes-panel[data-theme="dark"],
+.authoredUpload[data-theme="dark"] {
   --mv-bg: #141413;
   --mv-surface: #1d1d1b;
   --mv-ink: #f1efe8;
@@ -2135,6 +2138,38 @@ td .ava-badge,
   text-decoration: none;
   display: inline-block;
 }
+.authoredUpload {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
+  width: min(100%, 440px);
+  box-sizing: border-box;
+  min-width: 0;
+  padding: var(--space-3, 12px);
+  background: var(--mv-surface);
+  border: 1px solid var(--mv-line);
+  border-radius: var(--mv-radius-sm);
+  font-family: var(--mv-font-sans);
+  font-size: var(--font-size-sm, 13px);
+  color: var(--mv-ink);
+}
+
+.authoredUpload p { margin: 0; line-height: 1.5; }
+.authoredUpload input { width: 100%; min-width: 0; box-sizing: border-box; color: inherit; }
+.authoredUpload details { min-width: 0; }
+.authoredUpload button {
+  align-self: flex-start;
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+  border: 1px solid var(--mv-line-strong);
+  border-radius: var(--radius-sm, 6px);
+  background: var(--mv-surface);
+  color: var(--mv-ink);
+  cursor: pointer;
+}
+.authoredUpload button:disabled { opacity: 0.55; cursor: default; }
+.authoredUpload a { color: var(--mv-accent); }
+.authoredUpload :focus-visible { outline: 2px solid var(--mv-accent); outline-offset: 3px; }
+.authoredHash { overflow-wrap: anywhere; font-family: var(--mv-font-mono); }
 /* Canonical IDs remain readable in the narrow contact review. */
 .participant-binding-review dd { overflow-wrap: anywhere; margin-inline-start: 0; }
 .participant-binding-form label { display: block; margin-top: 12px; }

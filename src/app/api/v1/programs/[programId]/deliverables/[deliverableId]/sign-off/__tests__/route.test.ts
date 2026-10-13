@@ -13,9 +13,15 @@ const mockLoadApprovedMoveEvidenceSnapshot = jest.fn();
 const mockLoadApprovedSolutionApproach = jest.fn();
 const mockLoadCurrentMoveContextExtractFreshness = jest.fn();
 const mockP5Flag = jest.fn();
+const mockAuthoredFlag = jest.fn();
+const mockVerifyAuthoredApproval = jest.fn();
+jest.mock("@/lib/programs/authored-deliverable-upload", () => ({
+  ...jest.requireActual("@/lib/programs/authored-deliverable-upload"),
+  verifyAuthoredApproval: (...args: unknown[]) => mockVerifyAuthoredApproval(...args),
+}));
 const mockP5Plan = jest.fn();
 jest.mock("@/lib/features/is-feature-enabled", () => ({
-  isFeatureEnabled: () => mockP5Flag(),
+  isFeatureEnabled: (_ctx: unknown, key: string) => key === "moves_authored_p1_draft_upload_v1" ? mockAuthoredFlag() : mockP5Flag(),
 }));
 jest.mock("@/lib/programs/p5-measurement-contract", () => ({
   ...jest.requireActual("@/lib/programs/p5-measurement-contract"),
@@ -472,6 +478,7 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
     jest.resetModules();
     jest.clearAllMocks();
     mockP5Flag.mockReturnValue(false);
+    mockAuthoredFlag.mockReturnValue(false);
     mockRequireTenancy.mockResolvedValue(ctx);
     mockTenancyErrorResponse.mockImplementation((err: unknown) => {
       throw err;
@@ -1266,6 +1273,37 @@ describe("POST /api/v1/programs/[programId]/deliverables/[deliverableId]/sign-of
       });
     });
   });
+  describe("bounded authored approve-as-is route", () => {
+    beforeEach(() => {
+      mockAuthoredFlag.mockReturnValue(true); mockVerifyAuthoredApproval.mockReset();
+      deliverableRow = { deliverable_type_key: "charter", title: "Program Charter", current_version: 1 };
+      versionRow = { id: "authored-version-1", content: "Program scope and proposed goals.", structured_data: {
+        source: "authored_docx_upload", authoredUpload: { source: "authored_docx_upload", origin: "abarva_uploaded", artifactId: "stored-original-1" } } };
+      mockVerifyAuthoredApproval.mockResolvedValue(versionRow.structured_data?.authoredUpload);
+    });
+    it("verifies the exact authored original and passes its receipt to the normal sign-off seam", async () => {
+      const { POST } = await import("../route");
+      const res = await POST(req(), { params: Promise.resolve({ programId: "prog-1", deliverableId: "deliv-1" }) });
+      expect(res.status).toBe(200);
+      expect(mockVerifyAuthoredApproval).toHaveBeenCalledWith(ctx, { moveId: "prog-1", key: "charter", content: "Program scope and proposed goals.", receipt: versionRow?.structured_data?.authoredUpload });
+      expect(mockSignOffDeliverable.mock.calls[0][3]).toMatchObject({ approvedArtifactId: "stored-original-1", authoredApprovalReceipt: { origin: "abarva_uploaded" }, reviewedVersion: { version: 1, versionId: "authored-version-1" } });
+      expect(mockSaveMoveArtifact).not.toHaveBeenCalled();
+    });
+    it("refuses the authored approval while its rollout flag is off", async () => {
+      mockAuthoredFlag.mockReturnValue(false);
+      const { POST } = await import("../route");
+      expect((await POST(req(), { params: Promise.resolve({ programId: "prog-1", deliverableId: "deliv-1" }) })).status).toBe(409);
+      expect(mockVerifyAuthoredApproval).not.toHaveBeenCalled(); expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+    });
+    it("surfaces an exact file/basis refusal and applies no sign-off", async () => {
+      const { POST } = await import("../route");
+      const { AuthoredUploadRefusal } = await import("@/lib/programs/authored-deliverable-upload");
+      mockVerifyAuthoredApproval.mockRejectedValue(new AuthoredUploadRefusal("authored_file_hash_changed", 409, "The downloaded original does not match the reviewed file hash."));
+      const res = await POST(req(), { params: Promise.resolve({ programId: "prog-1", deliverableId: "deliv-1" }) });
+      expect(res.status).toBe(409); expect(await res.json()).toMatchObject({ error: "authored_file_hash_changed" }); expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+    });
+  });
+
 });
 
 export {};

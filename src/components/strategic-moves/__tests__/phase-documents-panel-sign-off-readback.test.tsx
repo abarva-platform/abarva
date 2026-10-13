@@ -34,6 +34,10 @@ let mockDeliverablesRowsDespiteError: unknown[] | null = null;
 let mockActiveClient: { id: string } | null = null;
 let mockRunHistory: Array<[string, unknown]> = [];
 let mockCanApproveGates = true;
+jest.mock("next/navigation", () => ({ useRouter: () => ({ refresh: jest.fn() }) }));
+let mockAuthoredEnabled = false;
+let mockCanUploadAuthored = true;
+jest.mock("@/lib/features/is-feature-enabled", () => ({ isFeatureEnabled: () => mockAuthoredEnabled }));
 
 jest.mock("@/lib/supabase-server", () => ({
   getServerSupabase: () => ({
@@ -71,6 +75,8 @@ jest.mock("@/lib/programs/strategic-moves-context", () => ({
 jest.mock("@/lib/auth/program-access-policy", () => ({
   loadUserProgramAccessPolicy: async () => ({
     canApproveGates: mockCanApproveGates,
+    canUploadArtifacts: mockCanUploadAuthored,
+    canGenerateDeliverables: mockCanUploadAuthored,
   }),
 }));
 jest.mock("@/lib/programs/load-move-confirmed-route", () => ({
@@ -155,6 +161,8 @@ describe("the Documents tab states whether its sign-off column was read", () => 
     mockActiveClient = { id: "client-1" };
     mockRunHistory = SUCCEEDED_CHARTER_RUN;
     mockCanApproveGates = true;
+    mockAuthoredEnabled = false;
+    mockCanUploadAuthored = true;
   });
 
   it("warns once when the document register could not be read", async () => {
@@ -279,5 +287,40 @@ describe("the Documents tab states whether its sign-off column was read", () => 
     expect(
       screen.queryByTestId("document-no-approvable-record"),
     ).not.toBeInTheDocument();
+  });
+});
+
+
+describe("flagged authored P1 initial upload presentation", () => {
+  beforeEach(() => {
+    mockDeliverablesData = []; mockDeliverablesError = null; mockDeliverablesRowsDespiteError = null;
+    mockRunHistory = []; mockAuthoredEnabled = true; mockCanUploadAuthored = true; mockCanApproveGates = false;
+  });
+  it("offers only the two declared missing P1 DOCX drafts through the normal Documents cards", async () => {
+    render(await PhaseDocumentsPanel({ moveId: MOVE_ID, currentPhase: 1, compact: true }));
+    expect(screen.getAllByRole("button", { name: "Upload authored draft" })).toHaveLength(2);
+    expect(screen.queryByText("Authored upload · draft")).not.toBeInTheDocument();
+  });
+  it.each(["off", "permission", "read_failure"])("withholds initial upload for %s", async state => {
+    if (state === "off") mockAuthoredEnabled = false;
+    if (state === "permission") mockCanUploadAuthored = false;
+    if (state === "read_failure") mockDeliverablesError = { message: "unreadable" };
+    render(await PhaseDocumentsPanel({ moveId: MOVE_ID, currentPhase: 1 }));
+    expect(screen.queryByRole("button", { name: "Upload authored draft" })).not.toBeInTheDocument();
+  });
+  it("shows authored provenance and the original download, preserving a separate approval action", async () => {
+    mockCanApproveGates = true;
+    const receipt = { source: "authored_docx_upload", origin: "abarva_uploaded", tenantKey: "meridian-health", storageTenantKey: "meridian", moveId: MOVE_ID,
+      deliverableTypeKey: "charter", phase: 1, requestId: "50000000-0000-4000-8000-000000000001", sha256: "a".repeat(64),
+      artifactId: "20000000-0000-4000-8000-000000000001", artifactVersion: 1, uploadedBy: "operator-1",
+      authoringBasis: "abarva_authored_unsigned", delegatedReviewReference: null, originalFileName: "charter.docx", parseMethod: "docx-parser",
+      evidenceSnapshotHash: null, phaseEvidenceSnapshotHash: null, evidenceSnapshotScope: "phase", observedAt: "2026-10-12T18:00:00Z" };
+    mockDeliverablesData = [{ id: "authored-charter", deliverable_type_key: "charter", title: "Program Charter", status: "draft", current_version: 1,
+      signed_off_version: null, approved_artifact_id: null, updated_at: null, deliverable_versions: [{ id: "version-1", version: 1,
+        content: "Authored charter text", origin: "abarva_uploaded", structured_data: { source: "authored_docx_upload", authoredUpload: receipt } }] }];
+    render(await PhaseDocumentsPanel({ moveId: MOVE_ID, currentPhase: 1, compact: true }));
+    expect(screen.getByText("Authored upload · draft")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Download uploaded original" })).toHaveAttribute("href", `/api/v1/programs/${MOVE_ID}/artifacts/${receipt.artifactId}/download`);
+    expect(screen.getAllByRole("button", { name: "Upload authored draft" })).toHaveLength(1);
   });
 });

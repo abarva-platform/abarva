@@ -2,14 +2,14 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-const [logPath, expectedMode, expectedState] = process.argv.slice(2);
+const [logPath, expectedMode, requestedState] = process.argv.slice(2);
 assert(logPath && ["status", "apply", "verify"].includes(expectedMode) &&
-  ["ready", "applied", "any"].includes(expectedState), "Usage: verify-tower-schema-proof <log> <mode> <state>");
+  ["ready", "applied", "any"].includes(requestedState), "Usage: verify-tower-schema-proof <log> <mode> <state>");
 const lines = fs.readFileSync(logPath, "utf8").split("\n").filter((line) => line.includes("TOWER_ONLY_SCHEMA_PROOF\t"));
 assert.equal(lines.length, 1, "Expected one Tower schema proof marker");
 const proof = JSON.parse(lines[0].slice(lines[0].indexOf("TOWER_ONLY_SCHEMA_PROOF\t") + "TOWER_ONLY_SCHEMA_PROOF\t".length));
 assert.equal(proof.mode, expectedMode);
-if (expectedState === "any") expectedState = proof.state;
+const expectedState = requestedState === "any" ? proof.state : requestedState;
 assert(["ready", "applied"].includes(expectedState));
 assert.equal(proof.state, expectedState);
 assert.deepEqual(proof.targets, [

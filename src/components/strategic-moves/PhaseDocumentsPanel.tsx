@@ -9,6 +9,9 @@
 //   compact       — if true, reduces padding and hides the KPI strip
 //   currentPhase  — highlights the current phase section
 
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { AUTHORED_P1_UPLOAD_FLAG, readAuthoredUploadReceipt, type AuthoredUploadReceipt } from "@/lib/programs/authored-deliverable-receipt";
+import { AuthoredDeliverableUploadAction } from "./AuthoredDeliverableUploadAction";
 import { getServerSupabase } from "@/lib/supabase-server";
 import { getActiveClientRow } from "@/lib/active-client";
 import {
@@ -67,6 +70,8 @@ interface DbDeliverable {
   current_version: number;
   updated_at: string | null;
   latest_content: string | null;
+  authoredUpload?: AuthoredUploadReceipt | null;
+  authoredVersion?: boolean;
   signed_off_version: number | null;
   approved_artifact_id: string | null;
 }
@@ -96,7 +101,7 @@ async function fetchDeliverablesByKey(
       `
       id, deliverable_type_key, title, status, current_version, updated_at,
       signed_off_version, approved_artifact_id,
-      deliverable_versions(content, version)
+      deliverable_versions(content, version, id, origin, structured_data)
     `,
     )
     .eq("engagement_id", programId)
@@ -114,12 +119,12 @@ async function fetchDeliverablesByKey(
     updated_at: string | null;
     signed_off_version: number | null;
     approved_artifact_id: string | null;
-    deliverable_versions: Array<{ content: string | null; version: number }>;
+    deliverable_versions: Array<{ content: string | null; version: number; origin?: string; structured_data?: Record<string, unknown> }>;
   }>) {
     const versions = row.deliverable_versions ?? [];
     const latest = versions.reduce(
       (best, v) => (v.version > (best?.version ?? -1) ? v : best),
-      null as { content: string | null; version: number } | null,
+      null as { content: string | null; version: number; origin?: string; structured_data?: Record<string, unknown> } | null,
     );
     const existing = byKey.get(row.deliverable_type_key);
     if (
@@ -134,6 +139,11 @@ async function fetchDeliverablesByKey(
         current_version: row.current_version,
         updated_at: row.updated_at,
         latest_content: latest?.content ?? null,
+        ...{ authoredUpload: (() => {
+          const receipt = readAuthoredUploadReceipt(latest?.structured_data?.authoredUpload);
+          return receipt?.moveId === programId && receipt.deliverableTypeKey === row.deliverable_type_key && latest?.version === row.current_version ? receipt : null;
+        })(),
+          authoredVersion: latest?.structured_data?.source === "authored_docx_upload" },
         signed_off_version: row.signed_off_version,
         approved_artifact_id: row.approved_artifact_id,
       });
@@ -341,6 +351,8 @@ function DocumentRow({
   previousRunArtifact,
   presentationMode = false,
   canApproveGates = false,
+  canUploadAuthored = false,
+  authoredApprovalEnabled = false,
   signOffReadback,
 }: {
   spec: DeliverableSpec;
@@ -356,10 +368,14 @@ function DocumentRow({
   previousRunArtifact?: { artifactId: string; updatedAt: string };
   presentationMode?: boolean;
   canApproveGates?: boolean;
+  canUploadAuthored?: boolean;
+  authoredApprovalEnabled?: boolean;
   /** Whether this row's sign-off state is a fact, and what it may say if not. */
   signOffReadback: DeliverableProjectionReadback;
 }) {
   const calmBrowse = presentationMode;
+  const authored = dbRow?.authoredVersion === true;
+  const authoredReceipt = dbRow?.authoredUpload;
   const hasContent = Boolean(dbRow?.latest_content?.trim());
   // Keep the run artifact as a read-only fallback when its canonical
   // deliverable version is unavailable in this projection. A run artifact
@@ -491,7 +507,7 @@ function DocumentRow({
           minWidth: 80,
         }}
       >
-        {hasContent && dot ? (
+        {authored ? <span>Authored upload · {dbRow?.signed_off_version === dbRow?.current_version ? "workspace sign-off recorded" : "draft"}</span> : hasContent && dot ? (
           <>
             <span
               style={{
@@ -573,7 +589,10 @@ function DocumentRow({
       >
         {hasContent && dbRow ? (
           <>
-            {!isExcel && (
+            {authored ? (
+              authoredReceipt ? <a href={`/api/v1/programs/${moveId}/artifacts/${authoredReceipt.artifactId}/download`} style={linkStyle("primary")}>Download uploaded original</a>
+              : <span>Authored file binding unavailable</span>
+            ) : !isExcel && (
               <>
                 <a href={`${base}?format=html`} style={linkStyle("ghost")}>
                   HTML preview
@@ -591,7 +610,8 @@ function DocumentRow({
             <span style={{ fontSize: 10, color: "#b4b4b8" }}>
               {formatDate(dbRow.updated_at)}
             </span>
-            {!calmBrowse &&
+            {(!calmBrowse || authored) &&
+              (!authored || authoredApprovalEnabled) &&
               canApproveGates &&
               (blockedNextAction ? (
                 <span style={{ fontSize: 10, color: "#B4513C", maxWidth: 260 }}>
@@ -679,6 +699,9 @@ function DocumentRow({
           // document is produced when its phase is built via Approve & Build in
           // the phase workspace (which runs the governed, gated orchestrator).
           // This keeps the Documents tab a consistent browse/download surface.
+          canUploadAuthored && !dbRow && !runArtifact && spec.phase === 1 &&
+            (spec.deliverableTypeKey === "charter" || spec.deliverableTypeKey === "discovery_plan") ?
+            <AuthoredDeliverableUploadAction moveId={moveId} documentKey={spec.deliverableTypeKey} /> :
           <span
             style={{ fontSize: 10.5, color: "#9AA3B2", fontStyle: "italic" }}
           >
@@ -760,11 +783,11 @@ export async function PhaseDocumentsPanel({
 }: Props) {
   const calmBrowse = Boolean(compact) || presentationMode;
   const tenancy = await getStrategicMovesTenancy().catch(() => null);
-  const canApproveGates = tenancy
-    ? await loadUserProgramAccessPolicy(tenancy, { programId: moveId })
-        .then((policy) => policy.canApproveGates)
-        .catch(() => false)
-    : false;
+  const authoredEnabled = Boolean(tenancy && isFeatureEnabled(tenancy, AUTHORED_P1_UPLOAD_FLAG));
+  const access = tenancy ? await loadUserProgramAccessPolicy(tenancy, { programId: moveId }).catch(() => null) : null;
+  const canApproveGates = access?.canApproveGates === true;
+  const canUploadAuthored = authoredEnabled && access?.canUploadArtifacts === true && access?.canGenerateDeliverables === true &&
+    (!Array.isArray(access.programIdsAllowed) || access.programIdsAllowed.includes(moveId));
   // The Documents tab is read-only browse/download — generation happens via the
   // phase workspace's Approve & Build, so the archetype/moveName/clientDisplayName
   // props (still accepted for caller compatibility) are no longer used here.
@@ -1146,6 +1169,8 @@ export async function PhaseDocumentsPanel({
                   )}
                   presentationMode={calmBrowse}
                   canApproveGates={canApproveGates}
+                  canUploadAuthored={canUploadAuthored && deliverableProjection.available}
+                  authoredApprovalEnabled={authoredEnabled}
                   signOffReadback={signOffReadback}
                 />
               ))}
