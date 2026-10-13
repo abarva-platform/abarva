@@ -59,6 +59,37 @@ it("folds an oversized table as a whole and avoids orphan headings", () => {
   expect(large.rows).toHaveLength(8);
 });
 
+it("keeps a complete opportunity brief when it fits with the opening despite taking most of the budget", () => {
+  const brief: AvaArtifact = {
+    ...table,
+    rows: [
+      "Problem",
+      "Fit",
+      "Options",
+      "Scope",
+      "Measures",
+      "Evidence",
+      "Owners",
+      "Decision",
+    ].map((option) => ({
+      option,
+      gate: Array(11).fill("Validate evidence").join(" "),
+    })),
+  };
+  const prose =
+    "## Discovery decision\nCharter discovery; benefits and baselines remain unverified.\n\n" +
+    Array(20)
+      .fill(
+        "Supporting detail must not displace the requested opportunity brief.",
+      )
+      .join("\n\n");
+  const view = compactReadingView(prose, [brief], 300);
+  expect(view.artifacts).toEqual([brief]);
+  expect(view.prose).toContain("baselines remain unverified");
+  expect(view.visibleWords).toBeLessThanOrEqual(300);
+  expect(view.hasMore).toBe(true);
+});
+
 it("preserves a short answer verbatim and ends a long opening at a sentence boundary", () => {
   const short = "Baseline is unknown.  Validate eligibility first.\n";
   expect(compactReadingView(short, [], 100)).toMatchObject({

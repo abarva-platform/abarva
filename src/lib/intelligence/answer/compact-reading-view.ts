@@ -74,7 +74,7 @@ function prosePrefix(prose: string, budget: number): string {
   while (included.length && /^#{1,6}\s+[^\n]+$/.test(included.at(-1)!.trim())) {
     included.pop();
   }
-  if (included.some((block) => !/^#{1,6}\s/.test(block.trim())))
+  if (included.some((block) => !/^#{1,6}\s+[^\n]+$/.test(block.trim())))
     return included.join("\n\n");
 
   // A table-only or code-only opening has no prose excerpt. Keep that
@@ -117,10 +117,16 @@ export function compactReadingView(
   // A large exhibit stays whole in the full analysis rather than losing rows.
   const firstArtifact = artifacts[0];
   const exhibitCost = firstArtifact ? artifactWords(firstArtifact) : 0;
+  const openingBlocks = prose.trim().split(/\n\s*\n/);
+  const firstContent = openingBlocks.findIndex(
+    (block) => !/^#{1,6}\s+[^\n]+$/.test(block.trim()),
+  );
+  const openingWords =
+    firstContent < 0
+      ? 0
+      : wordCount(openingBlocks.slice(0, firstContent + 1).join("\n\n"));
   const showArtifact = Boolean(
-    firstArtifact &&
-    exhibitCost <= budget * 0.6 &&
-    wordCount(prosePrefix(prose, budget - exhibitCost)) > 0,
+    firstArtifact && exhibitCost + openingWords <= budget,
   );
   const previewArtifacts = showArtifact ? [firstArtifact] : [];
   const previewProse = prosePrefix(
