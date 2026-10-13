@@ -36,6 +36,18 @@ export const IMAGE_CONTRACT_PATHS = [
 export const RUNNER_GUARD_PATHS = [
   ".github/workflows/tower-only-schema-lab.yml",
   "scripts/tower/verify-deployed-schema-ancestor.mjs",
+  "scripts/tower/verify-deployed-run-evidence.mjs",
+];
+
+const MANIFEST_IDENTITIES = [
+  {
+    path: "docs/governance/dataset-manifests/tower-registered-intake-source-assertions-20261012.json",
+    datasetId: "tower-registered-intake-source-assertions-20261012",
+  },
+  {
+    path: "docs/governance/dataset-manifests/tower-registered-intake-source-fields-20261012.json",
+    datasetId: "tower-registered-intake-source-fields-20261012",
+  },
 ];
 
 function git(root, args) {
@@ -50,6 +62,20 @@ function gitPasses(root, args) {
 
 function assertSha(sha, label) {
   assert.match(sha, /^[a-f0-9]{40}$/, `${label} must be a complete commit SHA`);
+}
+
+function assertUniqueManifestIdentities(root, currentMainSha) {
+  const paths = git(root, ["ls-tree", "-r", "--name-only", currentMainSha, "--",
+    "docs/governance/dataset-manifests"]).split("\n").filter((name) => name.endsWith(".json"));
+  const byId = new Map(MANIFEST_IDENTITIES.map(({ datasetId }) => [datasetId, []]));
+  for (const manifestPath of paths) {
+    const manifest = JSON.parse(git(root, ["show", `${currentMainSha}:${manifestPath}`]));
+    if (byId.has(manifest.dataset_id)) byId.get(manifest.dataset_id).push(manifestPath);
+  }
+  for (const { path: expectedPath, datasetId } of MANIFEST_IDENTITIES) {
+    assert.deepEqual(byId.get(datasetId), [expectedPath],
+      `Dataset manifest identity is absent or duplicated: ${datasetId}`);
+  }
 }
 
 export function verifyDeployedSchemaAncestor({ root, dispatchSha, deployedShaInput = "", explicitAncestor = false }) {
@@ -75,6 +101,7 @@ export function verifyDeployedSchemaAncestor({ root, dispatchSha, deployedShaInp
     "Tower operator contract changed since workflow dispatch");
   assert(gitPasses(root, ["diff", "--quiet", deployedSha, currentMainSha, "--", ...IMAGE_CONTRACT_PATHS]),
     "Tower image contract, manifest, migration, or operator code changed since deployed SHA");
+  assertUniqueManifestIdentities(root, currentMainSha);
   return { workflow_head_sha: dispatchSha, deployed_sha: deployedSha,
     current_main_sha: currentMainSha, explicit_ancestor: explicitAncestor };
 }

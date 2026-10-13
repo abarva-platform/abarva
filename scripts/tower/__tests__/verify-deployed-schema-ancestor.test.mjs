@@ -35,6 +35,10 @@ test("a deployed main ancestor is allowed only while exact Tower contracts stay 
     write(root, ".github/workflows/tower-only-schema-lab.yml", "workflow-v1\n");
     write(root, "scripts/tower/verify-deployed-schema-ancestor.mjs", "guard-v1\n");
     write(root, "scripts/tower/tower-only-schema-lane.ts", "operator-v1\n");
+    write(root, "docs/governance/dataset-manifests/tower-registered-intake-source-assertions-20261012.json",
+      '{"dataset_id":"tower-registered-intake-source-assertions-20261012"}\n');
+    write(root, "docs/governance/dataset-manifests/tower-registered-intake-source-fields-20261012.json",
+      '{"dataset_id":"tower-registered-intake-source-fields-20261012"}\n');
     const deployed = commit(root, "deployed");
     assert.equal(verifyDeployedSchemaAncestor({ root, dispatchSha: deployed }).deployed_sha, deployed);
 
@@ -48,6 +52,14 @@ test("a deployed main ancestor is allowed only while exact Tower contracts stay 
     git(root, "checkout", "-q", "--detach", deployed);
     assert.throws(() => verifyDeployedSchemaAncestor({ root, dispatchSha: deployed }), /current main HEAD/);
     git(root, "checkout", "-q", "--detach", workflowHead);
+
+    write(root, "docs/governance/dataset-manifests/duplicate.json",
+      '{"dataset_id":"tower-registered-intake-source-assertions-20261012"}\n');
+    const duplicateManifest = commit(root, "duplicate dataset identity");
+    assert.throws(() => verifyDeployedSchemaAncestor({ root, dispatchSha: duplicateManifest,
+      deployedShaInput: deployed, explicitAncestor: true }), /Dataset manifest identity is absent or duplicated/);
+    rmSync(path.join(root, "docs/governance/dataset-manifests/duplicate.json"));
+    commit(root, "remove duplicate dataset identity");
 
     write(root, "scripts/tower/tower-only-schema-lane.ts", "operator-v2\n");
     const changedContract = commit(root, "Tower operator changed");

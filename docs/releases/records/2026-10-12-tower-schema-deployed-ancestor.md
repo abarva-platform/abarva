@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The Tower schema operator can inspect a digest-pinned image built from an earlier `main` commit while unrelated commits wait for deployment. An explicit full commit SHA is required for this path. The workflow checks that the deployed commit is in current `main` history and that the Tower approval, input registry, migrations, job code, and direct dependencies have not changed between that commit and current `main`. The default path still requires current `main` itself to be deployed.
+The Tower schema operator can inspect a digest-pinned image built from an earlier `main` commit while unrelated commits wait for deployment. An explicit full commit SHA and successful repo-owned deploy run ID are required for this path. The workflow checks that the deployed commit is in current `main` history, that the Tower approval, input registry, migrations, job code, and direct dependencies have not changed, and that the deploy artifact records the same image digest observed live. The default path still requires current `main` itself to be deployed.
 
 ## Layer Impact
 
@@ -28,20 +28,23 @@ The Tower schema operator can inspect a digest-pinned image built from an earlie
 
 ## Changes Included
 
-- Add an optional complete `deployed_sha` input to the Tower-only schema workflow. Omission keeps the current-main requirement.
+- Add optional complete `deployed_sha` and successful `deployed_run_id` inputs to the Tower-only schema workflow. Omission keeps the current-main requirement.
 - Compare the image-bound Tower contract, approval manifests, registry, exact migration files, operator script, direct import, and package scripts from both the workflow head and deployed commit against current `main`. Reject changed or non-ancestor commits.
+- Reject duplicate dataset IDs in the current-main manifest tree for the candidate and prior serving manifest, even when the duplicate is in a differently named file.
+- Require the named successful repo-owned ACA main deploy run and its retained runtime-invariant artifact to agree with the selected ACR digest and live web/worker image. Store a public-safe run/artifact/hash binding.
 - Bind the public run receipt to the workflow head, deployed image source SHA, current main SHA, and the live digest shared by the web template, sole 100% traffic revision, and both worker jobs.
 - Repeat the ancestry and contract check immediately before the read-only status job and before any apply. Repeat worker image parity immediately before apply.
+- Share the repo-owned ACA deploy concurrency group so web traffic cannot shift during a schema run. Keep a second job-level concurrency guard shared with the broad database migration workflow; the existing database advisory lock remains in the exact apply script.
 
 ## QA / Validation
 
-- Focused Git-history tests cover an unchanged deployed ancestor, default current-main enforcement, a changed Tower operator contract, and a changed runner workflow.
+- Focused Git-history tests cover an unchanged deployed ancestor, default current-main enforcement, a duplicate dataset manifest identity, a changed Tower operator contract, and a changed runner workflow. Deploy-evidence tests reject a wrong head, unrelated or failed workflow run, missing or expired artifact, digest mismatch, and incomplete traffic or worker proof.
 - Workflow YAML parsing, targeted ESLint, diff hygiene, and all release gates must pass before merge.
 - A live read-only status run and private proof are required after merge; local tests do not prove database state.
 
 ## Rollout Plan
 
-Merge through a protected squash PR. Operators may dispatch `status` on `main` with the full SHA of a still-deployed main ancestor only when the protected contract files are unchanged. The workflow verifies the live ACR digest, web revision, worker images, operator idle state, exact migration hashes and ledger, active Tower selection, page fingerprints, and private Blob proof. `apply` still requires explicit confirmation and a fresh read-only preflight; this release does not authorize or dispatch it.
+Merge through a protected squash PR. Operators may dispatch `status` on `main` with the full SHA and successful deploy run ID of a still-deployed main ancestor only when the protected contract files are unchanged. The workflow verifies the deploy artifact against the live ACR digest, web revision, worker images, operator idle state, exact migration hashes and ledger, active Tower selection, page fingerprints, and private Blob proof. `apply` still requires explicit confirmation and a fresh read-only preflight; this release does not authorize or dispatch it.
 
 ## Deployment Authority
 
@@ -55,7 +58,7 @@ Stop dispatches with `deployed_sha` or revert this workflow and runner guard thr
 
 ## Audit Evidence
 
-Retain the workflow's ancestor binding, runtime digest binding, redacted status receipt, private Blob proof SHA/URI and readback result, and operator idle receipt. Full tenant and schema evidence stays in private Blob.
+Retain the workflow's ancestor binding, successful deploy run/artifact and proof-file hash, runtime digest binding, redacted status receipt, private Blob proof SHA/URI and readback result, and operator idle receipt. Full tenant and schema evidence stays in private Blob.
 
 ## Known Gaps
 
