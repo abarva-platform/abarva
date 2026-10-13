@@ -97,6 +97,24 @@ export function canonicalizeTenantKey(key: string): string {
 /** Azure AI Search index this retriever queries. */
 export const TENANT_CONTEXT_INDEX_NAME = "tenant-context-v1";
 
+/** Exact document reads for the non-model citation proof and operator preflight. */
+export async function readExactSourceIndexDocuments(args: {
+  ids: readonly string[]; scope?: { clientKey:string;clientId:string;recordId:string };
+  fetchImpl?: typeof fetch;
+}): Promise<Array<Record<string,unknown>>> {
+  if (!args.ids.length || args.ids.length>1000 || new Set(args.ids).size!==args.ids.length || args.ids.some(id=>!/^[-_a-zA-Z0-9]+$/.test(id))) throw new Error("source_index_ids_invalid");
+  const literal=(value:string)=>value.replace(/'/g,"''");
+  const filter = [`search.in(id, '${args.ids.join(",")}', ',')`];
+  if (args.scope) filter.push(`tenant_key eq '${literal(args.scope.clientKey)}'`,`client_id eq '${literal(args.scope.clientId)}'`,`record_id eq '${literal(args.scope.recordId)}'`,`lifecycle_state eq 'active'`);
+  const fields = "id,tenant_key,client_id,client_key,source_segment,record_id,chunk_id,title,body,source_uri,source_basis,source_citation,confidence,confidence_level,sensitivity,classification,lifecycle_state,agent_readiness_status,source_file_id,source_row_number,last_seen_at";
+  const response=await (args.fetchImpl??fetch)(`${endpointBase()}/indexes/${TENANT_CONTEXT_INDEX_NAME}/docs/search?api-version=${encodeURIComponent(apiVersion())}`,{ method:"POST",headers:{"content-type":"application/json",...(await authHeaders())},body:JSON.stringify({search:"*",filter:filter.join(" and "),top:args.ids.length,select:fields}),signal:AbortSignal.timeout(15000) });
+  if (!response.ok) throw new Error(`source_index_read_failed:${response.status}`);
+  const body=await response.json() as {value?:unknown;"@odata.nextLink"?:unknown};
+  if (!Array.isArray(body.value) || body["@odata.nextLink"]) throw new Error("source_index_read_incomplete");
+  return body.value as Array<Record<string,unknown>>;
+}
+
+
 const DEFAULT_TOP_K = 8;
 const MAX_TOP_K = 50;
 const DEFAULT_STRUCTURED_SEGMENTS = [
@@ -225,6 +243,8 @@ function buildFilter(
   const parts: string[] = [
     `tenant_key eq '${escapeOdataLiteral(canonicalTenantKey)}'`,
     LIFECYCLE_ACTIVE_CLAUSE,
+    // Preparation documents are read only by the explicit non-model proof seam.
+    "source_segment ne 'move_reviewed_source'",
   ];
 
   if (
@@ -532,6 +552,7 @@ function mapHitToTenantContextChunk(
 ): TenantContextChunk | null {
   const chunkId = hit.chunk_id ?? hit.id;
   const body = hit.body;
+  if (hit.source_segment === "move_reviewed_source") return null;
   if (!chunkId || typeof body !== "string") return null;
 
   return {

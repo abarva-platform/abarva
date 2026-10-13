@@ -1,0 +1,20 @@
+{
+  "dataset_id": "moves_reviewed_source_preparation_v1",
+  "title": "Scoped reviewed synthetic source preparation",
+  "client_key": null,
+  "tenant_scope": "move_registry",
+  "source_layer": "uploaded_evidence",
+  "classification": "internal",
+  "owner": "AbarVa Moves product team",
+  "source_basis": "Reviewed synthetic uploads with declared original Blob bytes, current review and source version; business facts remain authored scenario context and are not independently client-attested.",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "azure_ai_search",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": null,
+  "approved_by": "Delegated preparation candidate",
+  "approved_at": "2026-10-12",
+  "load_approval": null,
+  "serving_approval": null,
+  "notes": "Declaration prepared under recorded delegated implementation scope. Exact private cohort identity, source hashes, source phases, operation count and actor belong to the separately reviewed execution input. Index loading requires its own exact load approval. Citation verification uses a signed-in non-model proof path and original-source drill-down. Source and phase records remain unchanged; readiness promotion requires a separately reviewed candidate backed by actual proof."
+}
