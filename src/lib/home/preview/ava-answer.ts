@@ -932,6 +932,50 @@ export async function answerHomeAvaQuestion(args: {
   );
   if (countAnswer) return countAnswer;
 
+  if (
+    args.bundle.declaredSyntheticDemo === true &&
+    isInterviewBasisQuestion(question)
+  ) {
+    const packet = buildFallbackPacket(
+      args.tenantKey,
+      question,
+      "no_data",
+      "This Home record is a synthetic reference, not client-attested. Treat its leadership excerpts as modelled reference material, not verified quotations from a real interview.",
+      [
+        {
+          id: "home-record-reference-basis",
+          label: "Record declaration",
+          sourceClass: "tenant-fact",
+          excerpt:
+            "The selected Home record declares a synthetic reference basis; it is not client-attested.",
+          recordId:
+            args.recordSource?.canonicalSnapshotHash ??
+            args.bundle.provenance?.canonical_snapshot_hash,
+          confidence: "high",
+        },
+      ],
+    );
+    return {
+      ...packet,
+      status: "partial",
+      gaps: [
+        {
+          id: "home-interview-attestation-gap",
+          label: "Quotation not verified",
+          detail:
+            "The reference declaration does not establish that a named person said these words in a real interview.",
+          severity: "medium",
+        },
+      ],
+      quality: {
+        confidence: "high",
+        evidenceStrength: "partial",
+        tenantGrounding: "complete",
+        answerCompleteness: "partial",
+      },
+    };
+  }
+
   const conversation = (args.conversation ?? []).map((turn) => ({
     question: turn.question,
     cited_claims: turn.citedClaimTags.flatMap((tag) => {
@@ -1945,7 +1989,19 @@ function wordCount(text: string): number {
   return text.split(/\s+/).filter(Boolean).length;
 }
 
+function isInterviewBasisQuestion(question: string): boolean {
+  return (
+    /\b(?:real|actual(?:ly)?|modelled|modeled|synthetic|transcripts?|transcribed|attested)\b/i.test(
+      question,
+    ) &&
+    /\b(?:interviews?|responses?|testimony|quotes?|quotations?|say|said|words)\b/i.test(
+      question,
+    )
+  );
+}
+
 function shouldRecoverFromRelevantClaims(question: string): boolean {
+  if (isInterviewBasisQuestion(question)) return false;
   return /\b(cfo|ceo|board|commercial|exposed|exposure|mislead|caveat|recommendation|what do we not know|don't know|not know|leadership|technology-value|value risk)\b/i.test(
     question,
   );
@@ -1979,6 +2035,26 @@ function buildClaimBackedRecoveryAnswer(input: {
   const bullets = selected
     .slice(0, 4)
     .map(({ claim }) => `- ${compactStatement(claim.statement)}`);
+  if (
+    input.context.declaredSyntheticDemo &&
+    needsCompactAnswerRepair(
+      {
+        status: "partial",
+        direct_answer: "Cited Home claims are available for review.",
+        key_points: bullets,
+      },
+      input.question,
+      input.context,
+    )
+  ) {
+    return buildFallbackPacket(
+      input.tenantKey,
+      input.question,
+      "no_data",
+      "I could not safely produce a concise, qualified summary. Open Evidence basis to review the supporting reference claims.",
+      citations,
+    );
+  }
   const confidence = recoveryConfidence(citations);
   const prose = [
     "Short answer: Home has enough evidence to answer directionally, but not enough to turn this into an approval recommendation.",
