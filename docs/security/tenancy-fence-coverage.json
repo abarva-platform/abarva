@@ -10,12 +10,12 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 419,
+    "routes": 420,
     "fenced": 233,
     "fencedDirect": 109,
     "fencedIndirect": 124,
-    "unfenced": 186,
-    "unfencedButReachesFenceModule": 103,
+    "unfenced": 187,
+    "unfencedButReachesFenceModule": 104,
     "behavioral": 88,
     "byteScannerOnly": 7,
     "none": 138
@@ -5224,6 +5224,18 @@
     },
     {
       "route": "src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/sign-off/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": true,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/v1/programs/[programId]/deliverables/authored-upload/route.ts",
       "fence": "none",
       "fenceSymbols": [],
       "fenceVia": [],
