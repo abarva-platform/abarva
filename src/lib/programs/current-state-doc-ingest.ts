@@ -17,7 +17,8 @@
 // =============================================================================
 
 import "server-only";
-import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { getAzureWriteFluentClient, withAzureWriteTransaction, getAzureTransactionReadExecutor } from "@/lib/data-plane/postgresCompat";
+import { resolveAzureUrlCandidates } from "@/lib/data-plane/read-adapters/azureSession";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import type {
   EvidenceFamilySpec,
@@ -452,7 +453,30 @@ function reviewStateForDecision(
  * This makes workspace upload follow the same append-only evidence + separate
  * review/acceptance ledger as the current-state document path.
  */
+async function withMoveEvidenceDecisionLock<T>(ctx: TenancyCtx, moveId: string, work: () => Promise<T>): Promise<T> {
+  const lock = async (query: NonNullable<ReturnType<typeof getAzureTransactionReadExecutor>>) => {
+    const result = await query("SELECT id FROM engagements WHERE id = $1 AND client_id::text = $2 FOR UPDATE", [moveId, ctx.clientId]);
+    if (result.rows.length !== 1) throw new Error("evidence_review_move_scope_unavailable");
+    return work();
+  };
+  const existing = getAzureTransactionReadExecutor();
+  if (existing) return lock(existing);
+  const connection = resolveAzureUrlCandidates()[0];
+  if (!connection) throw new Error("evidence_review_transaction_unavailable");
+  return withAzureWriteTransaction(connection, lock, { includeReads: true });
+}
+
 export async function ensureEvidenceReviewForUploadedEvidence(
+  ctx: TenancyCtx, args: EnsureEvidenceReviewArgs,
+): Promise<EnsureEvidenceReviewResult> {
+  const decision = args.initialDecision ?? (args.autoPromoted === true ? "approved" : "pending");
+  if (decision === "approved" && !args.autoPromoted && !normalizeReviewedEvidenceExtraction(args.reviewedExtraction))
+    throw new Error("reviewed_extraction_required");
+  return decision === "pending" ? ensureEvidenceReviewWithinDecision(ctx, args)
+    : withMoveEvidenceDecisionLock(ctx, args.moveId, () => ensureEvidenceReviewWithinDecision(ctx, args));
+}
+
+async function ensureEvidenceReviewWithinDecision(
   ctx: TenancyCtx,
   args: EnsureEvidenceReviewArgs,
 ): Promise<EnsureEvidenceReviewResult> {
@@ -806,6 +830,14 @@ export async function decideEvidenceReview(
    */
   reason?: EvidenceReviewRefusalReason;
 }> {
+  if (args.decision === "approved" && !normalizeReviewedEvidenceExtraction(args.reviewedExtraction))
+    return { ok: false, evidenceId: args.evidenceId, familyKey: null, decision: "pending", reason: "reviewed_extraction_missing" };
+  return withMoveEvidenceDecisionLock(ctx, args.moveId, () => decideEvidenceReviewWithinDecision(ctx, args));
+}
+
+async function decideEvidenceReviewWithinDecision(
+  ctx: TenancyCtx, args: Parameters<typeof decideEvidenceReview>[1],
+): ReturnType<typeof decideEvidenceReview> {
   const tenantKey = ctx.clientKey ?? "";
   // The rows this promotion may MATCH, which is a read-scope question and not
   // a question about which key a new row carries. `resolveDocFamilyReviews`
@@ -936,7 +968,7 @@ export async function decideEvidenceReview(
           ? structured.evidence_type
           : evidence.evidence_type,
       );
-      const ensured = await ensureEvidenceReviewForUploadedEvidence(ctx, {
+      const ensured = await ensureEvidenceReviewWithinDecision(ctx, {
         moveId: args.moveId,
         evidenceId: args.evidenceId,
         familyKey,

@@ -36,10 +36,11 @@ let mockRunHistory: Array<[string, unknown]> = [];
 let mockCanApproveGates = true;
 jest.mock("next/navigation", () => ({ useRouter: () => ({ refresh: jest.fn() }) }));
 let mockAuthoredEnabled = false;
+let mockAuthoredP2Enabled = false;
 let mockCanUploadAuthored = true;
 let mockCanGenerateAuthored = true;
 let mockAllowedPrograms: string[] | null = null;
-jest.mock("@/lib/features/is-feature-enabled", () => ({ isFeatureEnabled: () => mockAuthoredEnabled }));
+jest.mock("@/lib/features/is-feature-enabled", () => ({ isFeatureEnabled: (_ctx: unknown, key: string) => key === "moves_authored_p2_draft_upload_v1" ? mockAuthoredP2Enabled : mockAuthoredEnabled }));
 
 jest.mock("@/lib/supabase-server", () => ({
   getServerSupabase: () => ({
@@ -164,7 +165,7 @@ describe("the Documents tab states whether its sign-off column was read", () => 
     mockActiveClient = { id: "client-1" };
     mockRunHistory = SUCCEEDED_CHARTER_RUN;
     mockCanApproveGates = true;
-    mockAuthoredEnabled = false;
+    mockAuthoredEnabled = false; mockAuthoredP2Enabled = false;
     mockCanUploadAuthored = true;
     mockCanGenerateAuthored = true;
     mockAllowedPrograms = null;
@@ -191,6 +192,71 @@ describe("the Documents tab states whether its sign-off column was read", () => 
     expect(document.querySelector('#authored-file-discovery_plan')).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Upload authored draft" })).toHaveLength(2);
     expect(screen.queryByText("Discovery & Diagnosis Report")).not.toBeInTheDocument();
+  });
+
+  it("keeps the P1 display label distinct while preserving its canonical template", async () => {
+    mockAuthoredEnabled = true; mockRunHistory = [];
+    render(await PhaseDocumentsPanel({ moveId: MOVE_ID, currentPhase: 1, compact: true, presentationMode: true, authoredAdmissionView: true }));
+    expect(screen.getByText("Discovery Plan")).toBeInTheDocument();
+    expect(screen.queryByText("Discovery Workshop Guide")).not.toBeInTheDocument();
+    const { DELIVERABLE_REGISTRY } = await import("@/lib/programs/deliverable-registry");
+    expect(DELIVERABLE_REGISTRY.find(s => s.deliverableTypeKey === "discovery_plan")).toMatchObject({ phase: 1, documentTitle: "Discovery Workshop Guide" });
+  });
+
+  it("mounts exactly the four declared P2 originals on normal Files", async () => {
+    mockAuthoredP2Enabled = true; mockRunHistory = [];
+    render(await PhaseDocumentsPanel({ moveId: MOVE_ID, currentPhase: 2, compact: true, presentationMode: true, authoredAdmissionView: true }));
+    expect(document.querySelectorAll('input[type="file"]')).toHaveLength(4);
+    for (const id of ["authored-file-discovery_report", "authored-file-root_cause_worksheet", "authored-file-design_workshop_guide", "authored-companion-discovery_report"]) expect(document.getElementById(id)).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Upload authored draft" })).toHaveLength(3);
+    expect(document.getElementById("authored-file-charter")).not.toBeInTheDocument();
+    expect(screen.getByText("Design Workshop Guide")).toBeInTheDocument();
+  });
+
+  function authoredP2Row(failure?: "companion" | "source" | "version") {
+    const receipt = { source: "authored_pptx_upload", origin: "abarva_uploaded", tenantKey: "tenant-1", storageTenantKey: "tenant-1",
+      moveId: MOVE_ID, phase: 2, deliverableTypeKey: "discovery_report", requestId: "50000000-0000-4000-8000-000000000001",
+      artifactId: "20000000-0000-4000-8000-000000000001", artifactVersion: 1, uploadedBy: "workspace-user", authoringBasis: "abarva_authored_unsigned",
+      sha256: "a".repeat(64), textSha256: "b".repeat(64), fileRole: "primary", fileFormat: "pptx", originalFileName: "report.pptx", parseMethod: "pptx-parser",
+      delegatedReviewReference: null, evidenceSnapshotHash: "c".repeat(64), phaseEvidenceSnapshotHash: "d".repeat(64), evidenceSnapshotScope: "phase", observedAt: "2026-10-13T03:00:00Z",
+      companion: failure === "companion" ? undefined : { source: "authored_docx_upload", origin: "abarva_uploaded", tenantKey: "tenant-1", storageTenantKey: "tenant-1",
+        moveId: MOVE_ID, phase: 2, deliverableTypeKey: "discovery_report", requestId: "50000000-0000-4000-8000-000000000001",
+        artifactId: "20000000-0000-4000-8000-000000000002", artifactVersion: 1, uploadedBy: "workspace-user", authoringBasis: "abarva_authored_unsigned",
+        sha256: "e".repeat(64), textSha256: "f".repeat(64), fileRole: "diagnostic_word", fileFormat: "docx", originalFileName: "diagnostic.docx", parseMethod: "docx-parser" } };
+    return { id: "document-p2", deliverable_type_key: "discovery_report", title: "Discovery & Diagnosis Report", status: "draft", current_version: 1,
+      updated_at: "2026-10-13T03:00:00Z", signed_off_version: null, deliverable_versions: [{ version: failure === "version" ? 2 : 1,
+        content: "Synthetic authored package", origin: "abarva_uploaded", structured_data: { source: failure === "source" ? "unknown" : "authored_pptx_upload", authoredUpload: receipt } }] };
+  }
+  it("retains both P2 original download links and exact existing-version approval without offering initial admission", async () => {
+    mockAuthoredP2Enabled = true; mockRunHistory = []; mockDeliverablesData = [authoredP2Row()];
+    render(await PhaseDocumentsPanel({ moveId: MOVE_ID, currentPhase: 2, compact: true, presentationMode: true, authoredAdmissionView: true }));
+    const row = documentRow("Discovery & Diagnosis Report");
+    expect(within(row).getByRole("link",{name:"Download uploaded original"})).toHaveAttribute("href",`/api/v1/programs/${MOVE_ID}/artifacts/20000000-0000-4000-8000-000000000001/download`);
+    expect(within(row).getByRole("link",{name:"Download Word original"})).toHaveAttribute("href",`/api/v1/programs/${MOVE_ID}/artifacts/20000000-0000-4000-8000-000000000002/download`);
+    expect(within(row).getByRole("button",{name:"Approve as-is"})).toBeInTheDocument();
+    expect(document.getElementById("authored-file-discovery_report")).not.toBeInTheDocument();
+  });
+  it.each(["companion","source","version"] as const)("withholds original/sign-off claims for a changed P2 %s", async failure => {
+    mockAuthoredP2Enabled = true; mockRunHistory = []; mockDeliverablesData = [authoredP2Row(failure)];
+    render(await PhaseDocumentsPanel({ moveId: MOVE_ID, currentPhase: 2, compact: true, presentationMode: true, authoredAdmissionView: true }));
+    const row = documentRow("Discovery & Diagnosis Report");
+    expect(within(row).getByText("Authored file receipt unavailable")).toBeInTheDocument();
+    expect(within(row).queryByRole("button",{name:"Approve as-is"})).not.toBeInTheDocument();
+    expect(within(row).queryByRole("link",{name:"Download uploaded original"})).not.toBeInTheDocument();
+    expect(document.getElementById("authored-file-discovery_report")).not.toBeInTheDocument();
+  });
+
+  it.each(["flag", "permission", "generate", "scope", "register", "phase"])("withholds P2 admission for unavailable %s", async failure => {
+    mockAuthoredEnabled = true; mockAuthoredP2Enabled = true; mockRunHistory = [];
+    if (failure === "flag") mockAuthoredP2Enabled = false;
+    if (failure === "permission") mockCanUploadAuthored = false;
+    if (failure === "generate") mockCanGenerateAuthored = false;
+    if (failure === "scope") mockAllowedPrograms = ["another-move"];
+    if (failure === "register") mockDeliverablesError = { message: "unavailable" };
+    const result = await PhaseDocumentsPanel({ moveId: MOVE_ID, currentPhase: failure === "phase" ? 3 : 2, compact: true, presentationMode: true, authoredAdmissionView: true });
+    if (failure !== "register") expect(result).toBeNull();
+    render(result); expect(document.querySelector('input[type="file"]')).not.toBeInTheDocument();
+    if (failure === "register") expect(screen.getByTestId("document-register-unreadable-warning")).toBeInTheDocument();
   });
 
   it.each(["flag", "permission", "generate", "scope", "register"])("withholds Files admission on an unavailable %s", async failure => {

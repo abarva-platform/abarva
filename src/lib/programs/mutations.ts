@@ -776,9 +776,9 @@ export async function signOffDeliverable(
   }
   if (opts.authoredApprovalReceipt) {
     const { isFeatureEnabled } = await import("@/lib/features/is-feature-enabled");
-    const { AUTHORED_P1_UPLOAD_FLAG, readAuthoredUploadReceipt, AuthoredUploadRefusal } = await import("./authored-deliverable-upload");
+    const { authoredUploadFlag, readAuthoredUploadReceipt, AuthoredUploadRefusal } = await import("./authored-deliverable-upload");
     const receipt = readAuthoredUploadReceipt(opts.authoredApprovalReceipt);
-    if (!isFeatureEnabled(ctx, AUTHORED_P1_UPLOAD_FLAG) || !receipt || receipt.moveId !== programId ||
+    if (!receipt || !isFeatureEnabled(ctx, authoredUploadFlag(receipt.phase)) || receipt.moveId !== programId ||
       receipt.artifactId !== opts.approvedArtifactId || !opts.reviewedVersion?.versionId || reviewedContent === null)
       throw new DeliverableReviewChanged();
     const { createAzureProgramsWriteAdapter } = await import("@/lib/data-plane/write-adapters/programsWriteAdapter");

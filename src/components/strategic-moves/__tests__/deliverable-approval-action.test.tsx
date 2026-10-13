@@ -247,4 +247,41 @@ describe("authored DOCX draft upload action", () => {
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("already has a version")); expect(mockRefresh).not.toHaveBeenCalled();
     expect(recorded).not.toHaveBeenCalled(); window.removeEventListener("moves:authored-admission-recorded", recorded);
   });
+  function selectP2(label: string, name: string, mimeType: string) {
+    const file = new File(["Synthetic authored original"], name, { type: mimeType });
+    Object.defineProperty(file, "arrayBuffer", { value: async () => new Uint8Array([1,2,3]).buffer });
+    fireEvent.change(screen.getByLabelText(label), { target: { files: [file] } });
+  }
+  it("requires both report originals and submits their declared hashes in one unsigned package request", async () => {
+    const fetchMock = jest.fn().mockResolvedValue(jsonResponse({ ok: true, admittedVersion: 1, artifactVersion: 1,
+      originalDownloadUrl: "/primary", companionOriginal: { originalDownloadUrl: "/word" } },201)); global.fetch = fetchMock;
+    render(<AuthoredDeliverableUploadAction moveId="move-1" documentKey="discovery_report" phase={2} />);
+    selectP2("Authored PPTX","report.pptx","application/vnd.openxmlformats-officedocument.presentationml.presentation");
+    await waitFor(() => expect(screen.getByText("01".repeat(32))).toBeInTheDocument());
+    expect(screen.getByRole("button",{ name:"Upload authored draft" })).toBeDisabled();
+    selectP2("Current-state Word record","diagnostic.docx","application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+    await waitFor(() => expect(screen.getByRole("button",{ name:"Upload authored draft" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button",{ name:"Upload authored draft" }));
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalledTimes(1));
+    const form = fetchMock.mock.calls[0][1].body as FormData;
+    expect(form.get("phase")).toBe("2"); expect(form.get("deliverableTypeKey")).toBe("discovery_report");
+    expect(form.get("companionFile")).toBeInstanceOf(File); expect(form.get("expectedFileSha256")).toBe("01".repeat(32)); expect(form.get("companionFileSha256")).toBe("01".repeat(32));
+    expect(form.get("signOff")).toBeNull(); expect(screen.getByRole("link",{name:"Download uploaded original"})).toHaveAttribute("href","/primary");
+    expect(screen.getByRole("link",{name:"Download Word original"})).toHaveAttribute("href","/word");
+  });
+  it.each([["root_cause_worksheet","PPTX"],["design_workshop_guide","DOCX"]] as const)("offers only the declared primary format for %s", (key,format) => {
+    render(<AuthoredDeliverableUploadAction moveId="move-1" documentKey={key} phase={2} />);
+    expect(screen.getByLabelText(`Authored ${format}`)).toHaveAttribute("accept",expect.stringContaining(format.toLowerCase()));
+    expect(screen.queryByLabelText("Current-state Word record")).not.toBeInTheDocument();
+  });
+  it("keeps retained originals visible while package admission remains unconfirmed", async () => {
+    global.fetch = jest.fn().mockResolvedValue(jsonResponse({ detail:"Package admission unavailable", retainedOriginals:[{artifactId:"file-primary",fileRole:"primary",blobStored:true},{artifactId:"file-word",fileRole:"diagnostic_word",blobStored:true}] },503));
+    render(<AuthoredDeliverableUploadAction moveId="move-1" documentKey="discovery_report" phase={2} />);
+    selectP2("Authored PPTX","report.pptx","application/vnd.openxmlformats-officedocument.presentationml.presentation");
+    selectP2("Current-state Word record","diagnostic.docx","application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+    await waitFor(() => expect(screen.getByRole("button",{name:"Upload authored draft"})).toBeEnabled());fireEvent.click(screen.getByRole("button",{name:"Upload authored draft"}));
+    await waitFor(() => expect(screen.getAllByRole("link",{name:"Check retained original"})).toHaveLength(2));
+    expect(screen.getByRole("alert")).toHaveTextContent("Package admission unavailable"); expect(mockRefresh).not.toHaveBeenCalled();
+  });
+
 });

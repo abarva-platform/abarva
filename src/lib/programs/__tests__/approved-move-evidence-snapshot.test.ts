@@ -519,3 +519,22 @@ describe("approved Move evidence snapshot", () => {
     ).resolves.toBeNull();
   });
 });
+
+
+it("preserves revision serialization and checks native timestamp activity on the same transactional reader",async()=>{
+ const args={tenantKey:"tenant-a",moveId:"move-a"};const evidenceId="60000000-0000-4000-8000-000000000001";
+ const approvedAt="2026-10-12T18:00:00.000Z",createdAt="2026-10-12T17:00:00.000Z";
+ mockReviewRows.push({evidence_id:evidenceId,decision:"approved",source_ref:{},reviewed_at:approvedAt,updated_at:approvedAt,created_at:createdAt});
+ mockEvidenceRows.push({id:evidenceId,tenant_key:args.tenantKey,program_id:args.moveId,phase:2,evidence_type:"uploaded_artifact",title:"Synthetic evidence",summary:"Reviewed basis",extracted_structured:{},created_at:createdAt});
+ const iso=await loadApprovedMoveEvidenceSnapshot(args);expect(iso).not.toBeNull();
+ for(const rows of [mockReviewRows,mockEvidenceRows])for(const row of rows)for(const key of ["reviewed_at","updated_at","created_at"])if(typeof row[key]==="string")row[key]=new Date(row[key] as string);
+ const nativeFluent=await loadApprovedMoveEvidenceSnapshot(args);expect(nativeFluent).not.toBeNull();
+ const {approvedMoveEvidenceRevision}=await import("../approved-move-evidence-revision");
+ expect(nativeFluent!.revision).toBe(approvedMoveEvidenceRevision({tenantKey:args.tenantKey,moveId:args.moveId,rows:[{id:evidenceId,phase:2,evidenceType:"uploaded_artifact",attachmentId:null,createdAt:null,reviewUpdatedAt:null,title:"Synthetic evidence",confidence:null,summary:"Reviewed basis",extractedText:null,extractedStructured:{},reviewedExtraction:null}]}));
+ const queries:Array<[string,unknown[]]>=[];
+ const transactional=await loadApprovedMoveEvidenceSnapshot(args,async<R>(sql:string,params:unknown[])=>{queries.push([sql,params]);return(sql.includes("FROM program_evidence_reviews")?mockReviewRows:mockEvidenceRows) as R[];});
+ expect(transactional).toEqual(nativeFluent);expect(transactional!.latestEvidenceActivityAtByPhase).toEqual(iso!.latestEvidenceActivityAtByPhase);
+ expect(queries).toHaveLength(3);for(const [sql,params]of queries){expect(sql).toContain("tenant_key = ANY($1::text[])");expect(sql).toContain("program_id = $2");expect(params[1]).toBe(args.moveId);}
+ expect(isApprovedMoveEvidenceBasisCurrent({snapshot:transactional,phase:2,recordedRevision:nativeFluent!.revisionByPhase[2],scope:"phase",generatedAt:"2026-10-12T17:30:00Z"})).toBe(false);
+ expect(isApprovedMoveEvidenceBasisCurrent({snapshot:transactional,phase:2,recordedRevision:nativeFluent!.revisionByPhase[2],scope:"phase",generatedAt:"2026-10-12T18:30:00Z"})).toBe(true);
+});

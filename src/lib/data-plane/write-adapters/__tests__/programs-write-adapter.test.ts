@@ -9,8 +9,11 @@
 //     the routes keep their pre-seam best-effort posture;
 //   - the engagement phase update issues the same column set on both planes.
 
+jest.mock('@/lib/data-plane/postgresCompat',()=>({...jest.requireActual('@/lib/data-plane/postgresCompat'),getAzureReadFluentClient:()=>{throw new Error('separate_pooled_basis_read_forbidden');}}));
+
 import type { PostgresCompatClient as SupabaseClient } from '@/lib/supabase-server';
 import type { TxSessionRunner } from '../../read-adapters/azureSession';
+import { approvedMoveEvidenceRevision } from '@/lib/programs/approved-move-evidence-revision';
 import {
   createAzureProgramsWriteAdapter,
   createSupabaseProgramsWriteAdapter,
@@ -330,7 +333,8 @@ describe('initial authored P1 admission transaction', () => {
     authoringBasis: 'abarva_authored_unsigned' as const, delegatedReviewReference: null, originalFileName: 'charter.docx', parseMethod: 'docx-parser',
     evidenceSnapshotHash: null, phaseEvidenceSnapshotHash: null, evidenceSnapshotScope: 'phase' as const, observedAt: '2026-10-12T18:00:00Z',
   };
-  const approvedReceipt = { ...receipt, evidenceSnapshotHash: 'approved-basis', phaseEvidenceSnapshotHash: 'approved-phase-basis' };
+  const emptyBasis = approvedMoveEvidenceRevision({tenantKey:receipt.tenantKey,moveId:receipt.moveId,rows:[]});
+  const approvedReceipt = { ...receipt, evidenceSnapshotHash: emptyBasis, phaseEvidenceSnapshotHash: emptyBasis };
   const input = { programId: receipt.moveId, clientId: 'tenant-id', title: 'Program Charter', content: 'Unsigned authored words', receipt };
   it('creates the document, immutable uploaded version and lifecycle in one transaction with no authority pointer', async () => {
     const calls: Array<[string, readonly unknown[]]> = [];
@@ -397,7 +401,7 @@ describe('initial authored P1 admission transaction', () => {
     expect(result).toEqual({ ok: true, data: { applied: true } }); expect(state.transactions).toBe(1);
     const guard = calls[0]; expect(guard[0]).toContain('d.signed_off_version IS NULL'); expect(guard[0]).toContain('v.content = $6');
     expect(guard[0]).toContain("v.origin = 'abarva_uploaded'"); expect(guard[0]).toContain("v.structured_data->'authoredUpload' = $7::jsonb");
-    expect(guard[0]).toContain('a.tenant_key = $10'); expect(guard[0]).toContain('a.blob_sha256 = $12'); expect(guard[0]).toContain('FOR UPDATE OF d, v, a');
+    expect(guard[0]).toContain('a.tenant_key = $10'); expect(guard[0]).toContain('a.blob_sha256 = $12'); expect(guard[0]).toContain('FOR UPDATE OF e, d, v, a');
     expect(guard[1]).toEqual(['document-1', receipt.moveId, 'tenant-id', 1, 'version-1', input.content, JSON.stringify(approvedReceipt), 'charter', receipt.artifactId, 'meridian', 1, receipt.sha256, receipt.requestId]);
     expect(calls.some(([sql]) => sql.startsWith('INSERT INTO deliverable_versions'))).toBe(false);
     const event = calls.find(([sql]) => sql.startsWith('INSERT INTO deliverable_lifecycle_events'))!;
@@ -408,4 +412,122 @@ describe('initial authored P1 admission transaction', () => {
     expect(await createAzureProgramsWriteAdapter(session).runAuthoredApproval({ ...input, receipt: approvedReceipt, deliverableId: 'document-1', versionId: 'version-1', version: 1, userId: 'reviewer-1', reviewerRole: 'artifact_owner', approvalRationale: null })).toEqual({ ok: true, data: { applied: false } });
     expect(statements.some(sql => sql.startsWith('UPDATE') || sql.startsWith('INSERT'))).toBe(false);
   });
+  function p2Receipt(): import("@/lib/programs/authored-deliverable-receipt").AuthoredUploadReceipt {
+    return { ...receipt, source: "authored_pptx_upload", phase: 2, deliverableTypeKey: "discovery_report",
+      fileRole: "primary", fileFormat: "pptx", textSha256: "d".repeat(64), originalFileName: "report.pptx", parseMethod: "pptx-parser",
+      companion: { source: "authored_docx_upload", origin: receipt.origin, tenantKey: receipt.tenantKey, storageTenantKey: receipt.storageTenantKey,
+        moveId: receipt.moveId, phase: 2, deliverableTypeKey: "discovery_report", requestId: receipt.requestId,
+        fileRole: "diagnostic_word", fileFormat: "docx", sha256: "b".repeat(64), textSha256: "e".repeat(64),
+        artifactId: "20000000-0000-4000-8000-000000000002", artifactVersion: 1, uploadedBy: receipt.uploadedBy,
+        authoringBasis: receipt.authoringBasis, originalFileName: "diagnostic.docx", parseMethod: "docx-parser" } };
+  }
+  it("atomically locks current P2 and both original file receipts before inserting one uploaded version", async () => {
+    const r = p2Receipt(); const calls: Array<[string, readonly unknown[]]> = [];
+    const { session, state } = fakeTxSession((sql, args) => {
+      calls.push([sql,args]);
+      if (sql.startsWith("SELECT id FROM engagements")) return [{ id: r.moveId }];
+      if (sql.startsWith("SELECT artifact_id")) return [{ artifact_id: args[0] }];
+      if (sql.startsWith("SELECT type_key")) return [{ type_key: r.deliverableTypeKey }];
+      if (sql.startsWith("INSERT INTO deliverables_v2")) return [{ id: "document-p2" }];
+      if (sql.startsWith("INSERT INTO deliverable_versions")) return [{ id: "version-p2" }];
+      return [];
+    });
+    const result = await createAzureProgramsWriteAdapter(session).runInitialAuthoredDeliverable({ ...input, receipt: r });
+    expect(result).toMatchObject({ ok: true, data: { kind: "created", receipt: r } }); expect(state.transactions).toBe(1);
+    expect(calls.find(([sql]) => sql.startsWith("SELECT id FROM engagements"))?.[0]).toContain("current_phase = 2 FOR UPDATE");
+    const locks = calls.filter(([sql]) => sql.startsWith("SELECT artifact_id")); expect(locks).toHaveLength(2);
+    expect(locks.map(([,args]) => args[0])).toEqual([r.artifactId,r.companion!.artifactId]);
+    for (const [sql] of locks) { expect(sql).toContain("FOR UPDATE"); expect(sql).toContain("authoredTextSha256"); expect(sql).toContain("authoredUploadedBy"); }
+    expect(locks[1][1]).toEqual([r.companion!.artifactId,r.moveId,r.storageTenantKey,2,"docx",1,r.companion!.sha256,r.requestId,r.deliverableTypeKey,"diagnostic_word",r.uploadedBy,r.companion!.textSha256]);
+    expect(calls.filter(([sql]) => sql.startsWith("INSERT INTO deliverable_versions"))).toHaveLength(1);
+    expect(calls.some(([sql]) => sql.startsWith("UPDATE engagements") || sql.includes("'approval_granted'"))).toBe(false);
+  });
+  it.each(["phase", "primary", "companion"])("leaves every document/version unchanged when P2 %s lock is unavailable", async failure => {
+    const r = p2Receipt(); const { session, statements } = fakeTxSession((sql,args) => {
+      if (sql.startsWith("SELECT id FROM engagements")) return failure === "phase" ? [] : [{ id: r.moveId }];
+      if (sql.startsWith("SELECT artifact_id")) return (failure === "primary" && args[0] === r.artifactId || failure === "companion" && args[0] === r.companion!.artifactId) ? [] : [{ artifact_id: args[0] }];
+      return [];
+    });
+    expect((await createAzureProgramsWriteAdapter(session).runInitialAuthoredDeliverable({ ...input, receipt: r })).ok).toBe(false);
+    expect(statements.some(sql => sql.startsWith("INSERT") || sql.startsWith("UPDATE"))).toBe(false);
+  });
+  it("rejects a missing companion before taking an admission lock", async () => {
+    const r = { ...p2Receipt(), companion: undefined }; const { session, statements } = fakeTxSession();
+    expect((await createAzureProgramsWriteAdapter(session).runInitialAuthoredDeliverable({ ...input, receipt: r })).ok).toBe(false); expect(statements).toHaveLength(0);
+  });
+  it("binds P2 approval to current phase and all originals without creating a version", async () => {
+    const r = { ...p2Receipt(), evidenceSnapshotHash: emptyBasis, phaseEvidenceSnapshotHash: emptyBasis }; const calls: Array<[string, readonly unknown[]]> = [];
+    const { session } = fakeTxSession((sql,args) => { calls.push([sql,args]); return sql.startsWith("SELECT d.id") ? [{ id: "document-p2" }] : sql.startsWith("SELECT artifact_id") ? [{ artifact_id: args[0] }] : []; });
+    expect(await createAzureProgramsWriteAdapter(session).runAuthoredApproval({ ...input, receipt: r, deliverableId: "document-p2", versionId: "version-p2", version: 1, userId: "reviewer-1", reviewerRole: "other", approvalRationale: "Workspace package review" })).toEqual({ ok: true, data: { applied: true } });
+    expect(calls[0][0]).toContain("e.current_phase = 2 FOR UPDATE OF e, d, v, a");
+    expect(calls[0][0]).toContain("v.structured_data->>'source' = $14"); expect(calls[0][1][13]).toBe("authored_pptx_upload");
+    expect(calls.filter(([sql]) => sql.startsWith("SELECT artifact_id"))).toHaveLength(2);
+    const files = calls.filter(([sql]) => sql.startsWith("UPDATE move_artifacts")); expect(files.map(([,args]) => args[0])).toEqual([r.artifactId,r.companion!.artifactId]);
+    expect(calls.some(([sql]) => sql.startsWith("INSERT INTO deliverable_versions"))).toBe(false);
+  });
+  it("does not update either approval pointer when the companion changed", async () => {
+    const r = { ...p2Receipt(), evidenceSnapshotHash: emptyBasis, phaseEvidenceSnapshotHash: emptyBasis }; const { session, statements } = fakeTxSession((sql,args) => sql.startsWith("SELECT d.id") ? [{ id: "document-p2" }] : sql.startsWith("SELECT artifact_id") && args[0] === r.artifactId ? [{ artifact_id: args[0] }] : []);
+    expect((await createAzureProgramsWriteAdapter(session).runAuthoredApproval({ ...input, receipt: r, deliverableId: "document-p2", versionId: "version-p2", version: 1, userId: "reviewer-1", reviewerRole: "other", approvalRationale: null })).ok).toBe(false);
+    expect(statements.some(sql => sql.startsWith("UPDATE") || sql.includes("'approval_granted'"))).toBe(false);
+  });
+
+  it.each([1,2] as const)("rejects P%s evidence drift after preflight inside the locked approval transaction", async phase => {
+    const r=phase===1?approvedReceipt:{...p2Receipt(),evidenceSnapshotHash:emptyBasis,phaseEvidenceSnapshotHash:emptyBasis};
+    const changedReview={evidence_id:"60000000-0000-4000-8000-000000000001",decision:"approved",source_ref:{},reviewed_at:"2026-10-12T18:01:00Z",updated_at:"2026-10-12T18:01:00Z",created_at:"2026-10-12T17:00:00Z"};
+    const changedEvidence={id:changedReview.evidence_id,phase,title:"New governed review",evidence_type:"uploaded_artifact",summary:"New approved basis",extracted_structured:{},created_at:"2026-10-12T17:00:00Z"};
+    const calls:Array<[string,readonly unknown[]]>=[];
+    const {session}=fakeTxSession((sql,args)=>{calls.push([sql,args]);return sql.startsWith("SELECT d.id")?[{id:"document-1"}]:sql.includes("FROM program_evidence_reviews")?[changedReview]:sql.includes("FROM program_evidence_items")?[changedEvidence]:[];});
+    const res=await createAzureProgramsWriteAdapter(session).runAuthoredApproval({...input,receipt:r,deliverableId:"document-1",versionId:"version-1",version:1,userId:"reviewer",reviewerRole:"other",approvalRationale:null});
+    expect(res).toEqual({ok:true,data:{applied:false}});
+    expect(calls[0][0]).toContain("FOR UPDATE OF e, d, v, a");
+    expect(calls.some(([sql])=>sql.startsWith("UPDATE")||sql.startsWith("INSERT"))).toBe(false);
+    const reads=calls.filter(([sql])=>sql.includes("FROM program_evidence_reviews")||sql.includes("FROM program_evidence_items"));
+    expect(reads).toHaveLength(3);for(const [sql,args]of reads){expect(sql).toContain("tenant_key = ANY($1::text[])");expect(sql).toContain("program_id = $2");expect(args[1]).toBe(r.moveId);}
+  });
+
+  it("refuses an unavailable transactional evidence read before any approval writes",async()=>{
+    const {session,statements}=fakeTxSession(sql=>{if(sql.startsWith("SELECT d.id"))return[{id:"document-1"}];throw new Error("basis unavailable");});
+    expect((await createAzureProgramsWriteAdapter(session).runAuthoredApproval({...input,receipt:approvedReceipt,deliverableId:"document-1",versionId:"version-1",version:1,userId:"reviewer",reviewerRole:"other",approvalRationale:null})).ok).toBe(false);
+    expect(statements.some(sql=>sql.startsWith("UPDATE")||sql.startsWith("INSERT"))).toBe(false);
+  });
+
+  it.each([[1,"authored"],[1,"generated"],[2,"authored"],[2,"generated"]] as const)("serializes P%s actual parent creators when %s observes absence first",async(phase,first)=>{
+    const r=phase===1?receipt:p2Receipt();const ownInput={...input,receipt:r};
+    type Parent={id:string;current_version:number;origin:string};const parents:Parent[]=[];
+    let releaseRead!:()=>void;let signalRead!:()=>void;const firstRead=new Promise<void>(r=>signalRead=r);const allowInsert=new Promise<void>(r=>releaseRead=r);
+    let lockOwner=false;const waiters:Array<()=>void>=[];let heldKey:string|undefined;const keys:string[]=[];
+    const acquire=async(key:string)=>{keys.push(key);if(lockOwner)await new Promise<void>(r=>waiters.push(r));else lockOwner=true;heldKey=key;};
+    const release=()=>{const next=waiters.shift();if(next)next();else{lockOwner=false;heldKey=undefined;}};
+    let reads=0;let transactions=0;let firstCommitted!:()=>void;const firstCommit=new Promise<void>(resolve=>firstCommitted=resolve);const statements:string[]=[];
+    const session:TxSessionRunner=async fn=>{const tx=++transactions;let owns=false;try{return await fn(async<R>(sql:string,args:unknown[])=>{
+      statements.push(sql);
+      if(sql.includes("pg_advisory_xact_lock")){await acquire(String(args[0]));owns=true;return[]as R[];}
+      if(sql.startsWith("SELECT id FROM engagements"))return[{id:receipt.moveId}]as R[];
+      if(sql.startsWith("SELECT id, current_version")){const observed=parents.map(x=>({...x}));if(++reads===1){signalRead();await allowInsert;}return observed as R[];}
+      if(sql.startsWith("SELECT artifact_id"))return[{artifact_id:args[0]}]as R[];
+      if(sql.startsWith("SELECT type_key"))return[{type_key:r.deliverableTypeKey}]as R[];
+      if(sql.startsWith("SELECT id FROM deliverable_versions"))return parents.filter(x=>x.origin==="abarva_uploaded").map(x=>({id:x.id}))as R[];
+      if(sql.startsWith("SELECT id, version, structured_data"))return[]as R[];
+      if(sql.startsWith("INSERT INTO deliverables_v2")){if(tx===2&&!owns)await firstCommit;const id="document-"+(parents.length+1);parents.push({id,current_version:1,origin:sql.includes("'nexus'")?"nexus_generated":"abarva_uploaded"});return[{id}]as R[];}
+      if(sql.startsWith("INSERT INTO deliverable_versions"))return[{id:"version-1"}]as R[];
+      return[]as R[];
+    });}finally{if(owns)release();if(tx===1)firstCommitted();}};
+    const adapter=createAzureProgramsWriteAdapter(session);
+    const generated=()=>adapter.runDraftModuleDeliverable({programId:receipt.moveId,deliverableTypeKey:r.deliverableTypeKey,title:"Synthetic phase document",draftContent:"Synthetic generated draft",structuredData:{},contextHash:"hash",provenanceMap:null});
+    const authored=()=>adapter.runInitialAuthoredDeliverable(ownInput);
+    const winner=first==="authored"?authored():generated();await firstRead;
+    const loser=first==="authored"?generated():authored();
+    await Promise.resolve();expect(heldKey).toBe(`${receipt.moveId}:${r.deliverableTypeKey}`);releaseRead();
+    const [a,b]=await Promise.all([winner,loser]);expect(a.ok).toBe(true);expect(parents).toHaveLength(1);expect(keys).toEqual([`${receipt.moveId}:${r.deliverableTypeKey}`,`${receipt.moveId}:${r.deliverableTypeKey}`]);
+    if(first==="authored"){expect(b).toMatchObject({ok:false,error:"authored_deliverable_not_regenerable"});expect(parents[0].origin).toBe("abarva_uploaded");}
+    else expect(b).toMatchObject({ok:true,data:{kind:"conflict"}});
+    expect(statements.filter(sql=>sql.startsWith("INSERT INTO deliverable_versions"))).toHaveLength(1);
+  });
+
+  it.each([{id:"signed",current_version:2,status:"signed_off",signed_off_version:2},{id:"authored",current_version:1,status:"draft"}])("preserves a protected generated-writer slot %s",async row=>{
+    const {session,statements}=fakeTxSession(sql=>sql.startsWith("SELECT id, current_version")?[row]:sql.startsWith("SELECT id FROM deliverable_versions")?[{id:"authored-version"}]:[]);
+    const result=await createAzureProgramsWriteAdapter(session).runDraftModuleDeliverable({programId:receipt.moveId,deliverableTypeKey:receipt.deliverableTypeKey,title:"Synthetic phase document",draftContent:"Synthetic draft",structuredData:{},provenanceMap:null,contextHash:null});
+    expect(result.ok).toBe(false);expect(statements.some(sql=>sql.startsWith("UPDATE deliverables_v2")||sql.startsWith("INSERT INTO deliverable_versions"))).toBe(false);
+  });
+
 });

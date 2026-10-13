@@ -15,7 +15,7 @@ describe("Moves detail route sunset", () => {
     let slot: ts.JsxAttribute | undefined;
     function visit(node: ts.Node) {
       if ((ts.isJsxSelfClosingElement(node) || ts.isJsxOpeningElement(node)) && node.tagName.getText(ast) === "MovesPhaseStandaloneClient") {
-        slot = node.attributes.properties.find((p): p is ts.JsxAttribute => ts.isJsxAttribute(p) && p.name.getText(ast) === "initialAuthoredP1Documents");
+        slot = node.attributes.properties.find((p): p is ts.JsxAttribute => ts.isJsxAttribute(p) && p.name.getText(ast) === "initialAuthoredPhaseDocuments");
       }
       ts.forEachChild(node, visit);
     }
@@ -29,7 +29,15 @@ describe("Moves detail route sunset", () => {
     expect(element.tagName.getText(ast)).toBe("PhaseDocumentsPanel");
     expect(element.attributes.properties.some(p => ts.isJsxAttribute(p) && p.name.getText(ast) === "authoredAdmissionView")).toBe(true);
     expect(element.attributes.properties.find(p => ts.isJsxAttribute(p) && p.name.getText(ast) === "moveId")?.getText(ast)).toBe("moveId={move.id}");
-    expect(source).not.toContain('initialAuthoredP1Documents={resolvedSearchParams.workspace');
+    expect(element.attributes.properties.find(p => ts.isJsxAttribute(p) && p.name.getText(ast) === "currentPhase")?.getText(ast)).toBe("currentPhase={parsedPhase}");
+    const condition = (expression as ts.ConditionalExpression).condition;
+    let currentP2Guard = false;
+    function guard(node: ts.Node) {
+      if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.EqualsEqualsEqualsToken && node.left.getText(ast) === "move.currentPhase" && node.right.getText(ast) === "2") currentP2Guard = true;
+      ts.forEachChild(node,guard);
+    }
+    guard(condition); expect(currentP2Guard).toBe(true);
+    expect(source).not.toContain('initialAuthoredPhaseDocuments={resolvedSearchParams.workspace');
   });
   it("keeps the legacy detail route as a current-phase redirect only", () => {
     const source = read("src/app/(maestro)/strategic-moves/[moveId]/page.tsx");

@@ -44,7 +44,8 @@ import {
   refuseSignOffNotApplied,
 } from "@/lib/programs/deliverable-sign-off-outcome";
 import { getProgramById } from "@/lib/programs/queries";
-import { AUTHORED_P1_UPLOAD_FLAG, AuthoredUploadRefusal, verifyAuthoredApproval, type AuthoredUploadReceipt } from "@/lib/programs/authored-deliverable-upload";
+import { authoredUploadFlag, readAuthoredUploadReceipt, AuthoredUploadRefusal, verifyAuthoredApproval, type AuthoredUploadReceipt } from "@/lib/programs/authored-deliverable-upload";
+import { sanitizeRestrictedFinancialText } from "@/lib/agent/restricted-output-policy";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { P5_TOWER_HANDOFF_FLAG } from "@/lib/programs/p5-measurement-plan";
 import {
@@ -491,12 +492,17 @@ export async function POST(
         );
       }
 
-      if (source === "authored_docx_upload") {
-        if (!isFeatureEnabled(ctx, AUTHORED_P1_UPLOAD_FLAG)) return Response.json({ error: "authored_approval_unavailable" }, { status: 409 });
+      if (source === "authored_docx_upload" || source === "authored_pptx_upload" || versionStructuredData.authoredUpload !== undefined) {
+        const receipt = readAuthoredUploadReceipt(versionStructuredData.authoredUpload);
+        if (!receipt || receipt.source !== source || !isFeatureEnabled(ctx, authoredUploadFlag(receipt.phase)))
+          return Response.json({ error: "authored_approval_unavailable" }, { status: 409 });
+        if (receipt.phase === 2 && program.currentPhase !== 2) return Response.json({ error: "authored_phase_not_current",
+          detail: "Authored P2 approval requires the current P2 phase." }, { status: 409 });
         authoredApprovalReceipt = await verifyAuthoredApproval(ctx, {
           moveId: programId, key: deliverableTypeKey,
           content: (versionRow as { content?: string }).content ?? "",
           receipt: versionStructuredData.authoredUpload,
+          canStoreText: text => sanitizeRestrictedFinancialText(text, accessPolicy) === text,
         });
         generatedApprovalArtifactId = authoredApprovalReceipt.artifactId;
       }

@@ -5235,7 +5235,7 @@ describe("MovesPhaseStandaloneClient", () => {
       const move = makeMove({ currentPhase: 1, phaseLabel: "P1 Charter" });
       render(<MovesPhaseStandaloneClient captureV2Enabled stepPagesV3Enabled phaseStepPagesEnabled
         initialWorkspaceView="files" initialPhaseCaptureValues={saved} carriesForwardContent={[]} evidenceNeedPackets={[]}
-        move={move} phaseNum={1} phaseTallies={[...phaseTallies]} initialAuthoredP1Documents={<section>
+        move={move} phaseNum={1} phaseTallies={[...phaseTallies]} initialAuthoredPhaseDocuments={<section>
           <AuthoredDeliverableUploadAction moveId={move.id} documentKey="charter" />
           <AuthoredDeliverableUploadAction moveId={move.id} documentKey="discovery_plan" />
         </section>} />);
@@ -5247,6 +5247,32 @@ describe("MovesPhaseStandaloneClient", () => {
       fireEvent.click(workspaceTab("Steps"));
       expect(document.querySelector('#authored-file-charter')).not.toBeInTheDocument();
       expect(document.querySelector('#authored-file-discovery_plan')).not.toBeInTheDocument();
+    });
+
+    it("mounts the declared four-original P2 package on normal Files and keeps its Vault", () => {
+      const move = makeMove({ currentPhase: 2, phaseLabel: "P2 Discover & Diagnose" });
+      render(<MovesPhaseStandaloneClient captureV2Enabled stepPagesV3Enabled phaseStepPagesEnabled
+        initialWorkspaceView="files" initialPhaseCaptureValues={saved} carriesForwardContent={[]} evidenceNeedPackets={[]}
+        move={move} phaseNum={2} phaseTallies={[...phaseTallies]} initialAuthoredPhaseDocuments={<section>
+          <AuthoredDeliverableUploadAction moveId={move.id} documentKey="discovery_report" phase={2} />
+          <AuthoredDeliverableUploadAction moveId={move.id} documentKey="root_cause_worksheet" phase={2} />
+          <AuthoredDeliverableUploadAction moveId={move.id} documentKey="design_workshop_guide" phase={2} />
+        </section>} />);
+      expect(screen.getByRole("heading", { name: "Files & Evidence" })).toBeInTheDocument();
+      for (const id of ["authored-file-discovery_report", "authored-file-root_cause_worksheet", "authored-file-design_workshop_guide", "authored-companion-discovery_report"]) expect(document.getElementById(id)).toBeInTheDocument();
+      expect(screen.getAllByRole("button",{name:"Upload authored draft"})).toHaveLength(3);
+      expect(screen.getByLabelText("Upload Move file")).toBeInTheDocument();
+      expect(document.getElementById("authored-file-charter")).not.toBeInTheDocument();
+      fireEvent.click(workspaceTab("Steps")); expect(document.getElementById("authored-companion-discovery_report")).not.toBeInTheDocument();
+    });
+
+    it("does not expose an authored P2 slot on another phase's Files view", () => {
+      const move = makeMove({ currentPhase: 3, phaseLabel: "P3 Design" });
+      render(<MovesPhaseStandaloneClient captureV2Enabled initialWorkspaceView="files" initialPhaseCaptureValues={saved}
+        carriesForwardContent={[]} evidenceNeedPackets={[]} move={move} phaseNum={3} phaseTallies={[...phaseTallies]}
+        initialAuthoredPhaseDocuments={<AuthoredDeliverableUploadAction moveId={move.id} documentKey="discovery_report" phase={2} />} />);
+      expect(screen.getByLabelText("Upload Move file")).toBeInTheDocument();
+      expect(document.getElementById("authored-file-discovery_report")).not.toBeInTheDocument();
     });
 
     it("selects Steps during its normal route navigation without retaining the Files view on the reused client", () => {

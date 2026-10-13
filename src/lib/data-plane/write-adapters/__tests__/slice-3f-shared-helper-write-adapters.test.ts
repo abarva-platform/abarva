@@ -270,7 +270,8 @@ describe("programs runDraftModuleDeliverable", () => {
     const res = await adapter.runDraftModuleDeliverable(DRAFT_INPUT);
     expect(res.ok).toBe(true);
     expect(tx.state.transactions).toBe(1);
-    expect(tx.statements[0]).toContain("INSERT INTO deliverable_types");
+    expect(tx.statements[0]).toContain("pg_advisory_xact_lock");
+    expect(tx.statements.some(s=>s.includes("INSERT INTO deliverable_types"))).toBe(true);
     expect(
       tx.statements.some((s) => s.includes("INSERT INTO deliverables_v2")),
     ).toBe(true);
@@ -289,6 +290,7 @@ describe("programs runDraftModuleDeliverable", () => {
       if (sql.includes("SELECT id, current_version")) {
         return [{ id: "deliv-existing", current_version: 2 }];
       }
+      if (sql.startsWith("SELECT id FROM deliverable_versions")) return [];
       return [{ id: "row-1" }];
     });
     const adapter = createAzureProgramsWriteAdapter(tx.session);
