@@ -36,7 +36,7 @@ Intelligence shows a concise initial reading view and lets the executive open th
 
 ## QA / Validation
 
-- Compact reading, metadata, native exhibits, dock and page tests: 37 tests across seven suites passed locally.
+- Compact reading, metadata, native exhibits, dock and page tests: 38 tests across seven suites passed locally, including oversized table-only and code-only openings.
 - TypeScript, scoped lint, export reachability and whitespace checks: passed. Release checks: all 11 gates passed.
 - Five signed-in pressure questions plus expansion and follow-up click: not-run on this candidate; required after deployment.
 

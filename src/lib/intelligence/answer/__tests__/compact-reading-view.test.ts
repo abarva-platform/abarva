@@ -74,6 +74,23 @@ it("preserves a short answer verbatim and ends a long opening at a sentence boun
   expect(wordCount(view.prose)).toBeLessThanOrEqual(100);
 });
 
+it("keeps an oversized Markdown-only comparison and ordinary code intact in full analysis", () => {
+  const tableOnly =
+    "| Option | Evidence |\n|---|---|\n" +
+    Array(8)
+      .fill(
+        "| Candidate | " + Array(20).fill("Unverified input").join(" ") + " |",
+      )
+      .join("\n");
+  const codeOnly =
+    "```json\n" + JSON.stringify(Array(150).fill("ordinary data")) + "\n```";
+  for (const prose of [tableOnly, codeOnly]) {
+    const view = compactReadingView(prose, [], 100);
+    expect(view.prose).toBe("");
+    expect(view.hasMore).toBe(true);
+  }
+});
+
 it("uses a short reading view for simple questions and honors an explicit longer word count", () => {
   expect(
     executiveReadingBudget("What is successful self-service resolution?"),

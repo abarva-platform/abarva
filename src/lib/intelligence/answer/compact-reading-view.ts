@@ -77,6 +77,14 @@ function prosePrefix(prose: string, budget: number): string {
   if (included.some((block) => !/^#{1,6}\s/.test(block.trim())))
     return included.join("\n\n");
 
+  // A table-only or code-only opening has no prose excerpt. Keep that
+  // complete unit in the full analysis instead of clipping cells or payloads.
+  if (
+    /^\s*```/m.test(prose) ||
+    /^\s*\|?.+\|.+\n\s*\|?[\s:|\-]+\|?\s*$/m.test(prose)
+  )
+    return "";
+
   // Long opening paragraphs are excerpts, ended at a sentence when possible.
   const sentences = prose.match(/[^.!?]+[.!?](?:\s+|$)|[^.!?]+$/g) ?? [prose];
   let prefix = "";
