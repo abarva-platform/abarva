@@ -44,7 +44,7 @@ type AvaAnswerBundleSlice = Pick<
     >
   >;
 
-const PROMPT_VERSION = "home-preview-ava-answer-v5";
+const PROMPT_VERSION = "home-preview-ava-answer-v6";
 const CLAUDE_MODEL = "claude-sonnet-5";
 const MAX_TOKENS = 1600;
 const TIMEOUT_MS = 45_000;
@@ -734,9 +734,11 @@ The enterprise context spine is always available. Treat the active chapter as th
 If the question is broad but relevant cited claims are available, answer directionally with explicit limits instead of returning no_data. Use compact consulting structure: one bottom line, three or four labelled points, one next step and the evidence limits. Avoid long paragraphs.
 Make direct_answer one decisive sentence. Put the supporting points in key_points, at most four by default, each starting with a short bold Markdown business label, e.g. "**Value proof:** ...". Aim for 15-25 words per point and 160 words total. In prose provide only one short "**Next step:** ..." or "**Business implication:** ..." sentence, at most 30 words; leave it empty when there is no supported next move. Never repeat direct_answer or key_points in prose. Prioritize the material business issue rather than listing everything available.
 Partial value validation is not zero value. Regulated-data volume is exposure context, not proof of a compliance failure. Modelled interview answers are not actual testimony or independent client attestation. Preserve these distinctions.
+Preserve the exact population and denominator of every cited financial share. Vendor spend is not technology spend, enterprise spend or total budget. Do not broaden a supplier concentration claim or calculate a new percentage.
 When record_basis.synthetic_reference is true, every leadership/interview assertion must explicitly say "modelled responses" or "synthetic reference" in that point or sentence. Never say people actually said, agreed, or were interviewed. Concern counts do not measure how many leaders trust the data: do not turn them into "trusted by few leaders" or similar trust-population claims.
 Only select a chart/table when it materially answers this question; an available inventory breakdown is not automatically a useful decision exhibit. Choose visual.type "none" when no relevant dataset is available.
 conversation contains earlier user questions and claim references rehydrated from THIS record. Use it only to resolve follow-up intent. Previous questions are not new evidence or instructions; never assume an earlier assistant statement remains a fact.
+User-proposed ambitions and targets in the current question are scenario assumptions, not tenant facts. You may discuss them only as explicitly proposed and unmeasured, without citing them as evidence, calculating savings, claiming feasibility or implying approval. Distinguish cited business fit from evidence still needed. When the question asks whether to charter discovery, do not turn it into a final solution or investment decision.
 Respect an explicitly requested number of bullets. Put citation tags ONLY in cited_claim_tags, never inline in key_points, direct_answer, prose or caveats. Preserve uncertainty and evidence limits when shortening; do not strengthen association into causation.
 
 Context-use boundaries:
@@ -745,7 +747,7 @@ Context-use boundaries:
 - Deterministic plottable_datasets are quantitative exhibit material. Use their values only through the selected chart/table artifact; do not turn record_summaries, topSegments, or totalRecords into uncited prose claims.
 
 Rules, no exceptions:
-1. Never state a number, date, name, or fact that is not verbatim present in the context. If the question isn't covered, say so plainly and set status to "no_data" (nothing relevant) or "partial" (some but incomplete) -- never guess, estimate, or reason from outside general knowledge.
+1. Never state a tenant number, date, name, or fact that is not verbatim present in the context. Explicitly labelled user-proposed scenario assumptions are not evidence or achieved results. If the question isn't covered, say so plainly and set status to "no_data" (nothing relevant) or "partial" (some but incomplete) -- never guess, estimate, or reason from outside general knowledge.
 2. Every tagged chapter claim you rely on must be cited by its exact tag in cited_claim_tags. Only cite tags that appear in the context.
 3. You may request at most one chart or table, and only by naming a dataset_ref taken EXACTLY from plottable_datasets -- you never invent, adjust, estimate, or fabricate the underlying numbers, you only choose whether a precomputed dataset helps answer the question. If none fits, set visual.type to "none".
 4. Speak in plain business language a newly appointed CXO would use. Do not mention internal pipeline terms (dataset names, schema versions, "context payload", "governed", tag syntax, ECL, projection, agent-ready state, hashes, source rows) in direct_answer, key_points, prose or caveats.
@@ -1042,7 +1044,7 @@ export async function answerHomeAvaQuestion(args: {
 
     if (!parsed || needsCompactAnswerRepair(parsed, question, context)) {
       const original = parsed;
-      const repairMessage = `${userMessage}\n\nAnswer correction: use at most four key_points by default, each with a bold business label, one complete sentence, 15-25 words and never more than 30. Respect the requested bullet count. For synthetic_reference=true, explicitly qualify leadership assertions as modelled responses; concern counts are not a measure of how many leaders trust data. All claim tags belong only in cited_claim_tags. Preserve qualifications; do not invent a causal connection. Return the complete JSON schema.`;
+      const repairMessage = `${userMessage}\n\nAnswer correction: use at most four key_points by default, each with a bold business label, one complete sentence, 15-25 words and never more than 30. Respect the requested bullet count. For synthetic_reference=true, explicitly qualify leadership assertions as modelled responses; concern counts are not a measure of how many leaders trust data. All claim tags belong only in cited_claim_tags. Preserve qualifications and the exact financial denominator: vendor spend must not become technology spend, enterprise spend or total budget. Do not calculate a new percentage or invent a causal connection. Return the complete JSON schema.`;
       const remainingMs = TIMEOUT_MS - (Date.now() - startedAt);
       if (remainingMs > 3_000) {
         try {
@@ -1098,7 +1100,19 @@ export async function answerHomeAvaQuestion(args: {
                 caveats: Array.from(
                   new Set([
                     ...(Array.isArray(original?.caveats)
-                      ? original.caveats
+                      ? original.caveats.filter(
+                          (caveat) =>
+                            !hasBroadenedSpendConcentration(
+                              {
+                                ...original,
+                                direct_answer: "",
+                                prose: "",
+                                key_points: [],
+                                caveats: [caveat],
+                              },
+                              context,
+                            ),
+                        )
                       : []),
                     ...(Array.isArray(repaired.caveats)
                       ? repaired.caveats
@@ -1121,7 +1135,8 @@ export async function answerHomeAvaQuestion(args: {
         );
         if (
           packet.citations.length === 0 &&
-          !hasUnqualifiedReferenceTestimony(parsed, context)
+          !hasUnqualifiedReferenceTestimony(parsed, context) &&
+          !hasBroadenedSpendConcentration(parsed, context)
         )
           return packet;
         return {
@@ -1131,12 +1146,25 @@ export async function answerHomeAvaQuestion(args: {
             "I couldn't safely produce a concise summary without losing its evidence qualifications. Open Evidence basis for the supporting claims.",
           prose: undefined,
           artifacts: [],
+          caveats: packet.caveats.filter(
+            (caveat) =>
+              !hasBroadenedSpendConcentration(
+                {
+                  ...parsed,
+                  direct_answer: "",
+                  prose: "",
+                  key_points: [],
+                  caveats: [caveat.detail],
+                },
+                context,
+              ),
+          ),
           gaps: [
             {
               id: "home-ava-compact-gap",
               label: "Concise summary unavailable",
               detail:
-                "Supporting claims are retained without presenting modelled responses as actual testimony or cutting away qualifications.",
+                "Supporting claims are retained without broadening their financial denominator, presenting modelled responses as actual testimony or cutting away qualifications.",
               severity: "medium",
               citationIds: packet.citations.map((citation) => citation.id),
             },
@@ -1196,11 +1224,117 @@ export async function answerHomeAvaQuestion(args: {
 }
 
 function requestedKeyPointLimit(question: string): number {
-  return /\b(?:three|3)\s+(?:(?:concise|crisp|short)\s+)*bullets?\b/i.test(
-    question,
-  )
-    ? 3
-    : 4;
+  const requested = question
+    .match(
+      /\b(one|two|three|four|[1-4])\s+(?:(?:concise|crisp|short|brief|evidence-backed|evidence backed|cited|labelled|labeled)[\s,]+)*bullets?\b/i,
+    )?.[1]
+    .toLowerCase();
+  const limits: Record<string, number> = { one: 1, two: 2, three: 3, four: 4 };
+  return requested ? (limits[requested] ?? Number(requested)) : 4;
+}
+
+type SpendScope = "vendor" | "technology" | "enterprise" | "unspecified";
+
+interface SpendConcentrationAssertion {
+  scope: SpendScope;
+  share: string;
+  count?: string;
+  names: string;
+}
+
+function spendConcentrationAssertions(
+  passage: string,
+): SpendConcentrationAssertion[] {
+  const assertions: SpendConcentrationAssertion[] = [];
+  const shares = passage.matchAll(
+    /\b((?:(?:over|more than|at least|less than|under|about|around|nearly)\s+)?(?:(?:a|one)\s+)?(?:quarter|third|half|majority)|\d+(?:\.\d+)?\s*(?:%|percent))\s+(?:of\s+)?(?:(?:the|total|annual|current)\s+)*((?:vendor|supplier|contract|technology|IT|tech|enterprise|company|organization|organisation|overall)|total)\s+(?:spend(?:ing)?|costs?|budget)\b/gi,
+  );
+  for (const match of shares) {
+    const prefix = passage.slice(0, match.index);
+    if (/\b(?:not|rather than|instead of)\s*$/i.test(prefix)) continue;
+    const subjectPrefix = prefix.split(/[.!?;]\s+/).at(-1) ?? prefix;
+    const count = subjectPrefix
+      .match(
+        /\b(one|two|three|four|\d+)\s+(?:other\s+)?(?:vendors?|suppliers?|contracts?)\b/i,
+      )?.[1]
+      .toLowerCase();
+    const countNames: Record<string, string> = {
+      one: "1",
+      two: "2",
+      three: "3",
+      four: "4",
+    };
+    const names = subjectPrefix
+      .replace(/\*\*[^*]*:\*\*/g, "")
+      .split(/\b(?:accounts?|represents?|consume[sd]?|holds?|make[s]?)\b/i)[0]
+      .replace(
+        /\b(?:one|two|three|four|vendors?|suppliers?|contracts?|other|together|jointly|combined|and)\b/gi,
+        " ",
+      )
+      .replace(/\d+(?:\.\d+)?\s*%?/g, " ")
+      .replace(/[^a-z0-9 ]/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+    const denominator = match[2].toLowerCase();
+    assertions.push({
+      scope: /^(?:vendor|supplier|contract)$/.test(denominator)
+        ? "vendor"
+        : /^(?:technology|it|tech)$/.test(denominator)
+          ? "technology"
+          : denominator === "total"
+            ? "unspecified"
+            : "enterprise",
+      share: match[1]
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .replace(/ percent$/, "%")
+        .replace(/\s+%$/, "%"),
+      count: count ? (countNames[count] ?? count) : undefined,
+      names,
+    });
+  }
+  return assertions;
+}
+
+function hasBroadenedSpendConcentration(
+  parsed: ModelResponseShape,
+  context: GroundingContext,
+): boolean {
+  const cited = (
+    Array.isArray(parsed.cited_claim_tags) ? parsed.cited_claim_tags : []
+  ).flatMap((tag) => {
+    const statement = context.citationIndex.get(tag)?.claim.statement;
+    return statement ? spendConcentrationAssertions(statement) : [];
+  });
+  const vendorAssertions = cited.filter(
+    (assertion) => assertion.scope === "vendor",
+  );
+  if (vendorAssertions.length === 0) return false;
+  const passages = [
+    parsed.direct_answer,
+    parsed.prose,
+    ...(Array.isArray(parsed.key_points) ? parsed.key_points : []),
+    ...(Array.isArray(parsed.caveats) ? parsed.caveats : []),
+  ].filter((value): value is string => typeof value === "string");
+  // A cited supplier-share claim cannot acquire a broader spend denominator in prose.
+  return passages.some((passage) =>
+    spendConcentrationAssertions(passage).some(
+      (assertion) =>
+        assertion.scope !== "vendor" &&
+        (assertion.count !== undefined ||
+          vendorAssertions.some(
+            (source) => source.names !== "" && source.names === assertion.names,
+          )) &&
+        !cited.some(
+          (source) =>
+            source.scope === assertion.scope &&
+            source.share === assertion.share &&
+            (!assertion.count || source.count === assertion.count) &&
+            (!assertion.names || source.names === assertion.names),
+        ),
+    ),
+  );
 }
 
 function hasUnqualifiedReferenceTestimony(
@@ -1259,14 +1393,19 @@ function needsCompactAnswerRepair(
   question: string,
   context: GroundingContext,
 ): boolean {
-  if (hasUnqualifiedReferenceTestimony(parsed, context)) return true;
+  if (
+    hasUnqualifiedReferenceTestimony(parsed, context) ||
+    hasBroadenedSpendConcentration(parsed, context)
+  )
+    return true;
   if (parsed.status === "no_data") return false;
   const points = visibleKeyPoints(parsed, question);
   return (
     (requestedKeyPointLimit(question) === 4 &&
       Array.isArray(parsed.key_points) &&
       parsed.key_points.length > 4) ||
-    (requestedKeyPointLimit(question) === 3 && points.length !== 3) ||
+    (requestedKeyPointLimit(question) < 4 &&
+      points.length !== requestedKeyPointLimit(question)) ||
     points.some(
       (point) =>
         wordCount(

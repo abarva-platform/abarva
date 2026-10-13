@@ -22,6 +22,7 @@ import {
 } from "./enterprise-context";
 import type { HomeEnterpriseContext } from "@/lib/home/preview/ecl-enterprise-context";
 import { homeRecordSourceToken } from "@/lib/home/preview/record-source-token";
+import { interpretationCaveats } from "@/lib/home/preview/interpretation-caveats";
 import {
   homeNarrativeStatusLabel,
   homePriorInterpretationLabel,
@@ -230,6 +231,7 @@ function chapterHtml(
   narrativeDate: string,
   enterpriseContext: HomeEnterpriseContext | null | undefined,
   evidenceById: Record<string, string[]>,
+  bundle: HomeReviewBundle,
 ): string {
   const depth = chapterDepth(chapter.chapterId, estate);
   const mixed = mixedNarrative(recordSource);
@@ -272,7 +274,9 @@ function chapterHtml(
             .join("")}</ul>`
         : ""
     }`;
+  const caveats = chapterInterpretationCaveats(chapter, bundle);
   const prior = `
+    ${caveats.length ? `<div class="interpretation-limits"><strong>Published interpretation limits</strong>${caveatsHtml(caveats)}</div>` : ""}
     <h2>${escapeHtml(chapter.headline)}</h2>
     <p class="question">${escapeHtml(chapter.guidingQuestion)}</p>
     <p>${escapeHtml(chapter.executive_synthesis)}</p>
@@ -282,7 +286,7 @@ function chapterHtml(
           ? `<h3>${escapeHtml(label)}</h3><ul>${claims
               .map(
                 (claim) =>
-                  `<li><p>${escapeHtml(claim.statement)}</p><p class="note">${escapeHtml(claim.claim_type === "ADVISORY_INFERENCE" ? "Interpretation" : "Published claim")} · Confidence: ${escapeHtml(claim.confidence)}</p><p class="note">Evidence: ${escapeHtml(claim.evidence_ids.flatMap((id) => evidenceById[id] ?? [id]).join("; "))}</p></li>`,
+                  `<li>${caveatsHtml(interpretationCaveats(claim.statement, claim.evidence_ids, bundle))}<p>${escapeHtml(claim.statement)}</p><p class="note">${escapeHtml(claim.claim_type === "ADVISORY_INFERENCE" ? "Interpretation" : "Published claim")} · Confidence: ${escapeHtml(claim.confidence)}</p><p class="note">Evidence: ${escapeHtml(claim.evidence_ids.flatMap((id) => evidenceById[id] ?? [id]).join("; "))}</p></li>`,
               )
               .join("")}</ul>`
           : "",
@@ -315,6 +319,29 @@ function claimSections(chapter: ChapterView): Array<[string, GroundedClaim[]]> {
     ["Tensions", chapter.tensions],
     ["What to watch", chapter.what_to_watch],
   ];
+}
+
+function chapterInterpretationCaveats(
+  chapter: ChapterView,
+  bundle: HomeReviewBundle,
+): string[] {
+  const claims = claimSections(chapter).flatMap(([, claims]) => claims);
+  return interpretationCaveats(
+    [
+      chapter.headline,
+      chapter.executive_synthesis,
+      ...claims.map((claim) => claim.statement),
+    ].join(" "),
+    claims.flatMap((claim) => claim.evidence_ids),
+    bundle,
+    chapter.chapterId === "leadership_perspective",
+  );
+}
+
+function caveatsHtml(caveats: string[]): string {
+  return caveats
+    .map((caveat) => `<p class="note">${escapeHtml(caveat)}</p>`)
+    .join("");
 }
 
 function exportEvidenceReferences(
@@ -402,7 +429,7 @@ export function renderHomeWalkthroughHtml({
   </section>
   ${familySummaryHtml(bundle)}
   ${architectureSummaryHtml(bundle)}
-  ${bundle.chapters.map((chapter, index) => chapterHtml(chapter, index, estate, recordSource, compiled, bundle.thesis.signalPacket.homeEnterpriseContext, exportEvidenceReferences(bundle))).join("")}
+  ${bundle.chapters.map((chapter, index) => chapterHtml(chapter, index, estate, recordSource, compiled, bundle.thesis.signalPacket.homeEnterpriseContext, exportEvidenceReferences(bundle), bundle)).join("")}
 </main>
 </body>
 </html>`;
@@ -601,6 +628,7 @@ function PdfChapter({
   enterpriseContext,
   evidenceById,
   declaredSyntheticDemo,
+  bundle,
 }: {
   chapter: ChapterView;
   index: number;
@@ -610,6 +638,7 @@ function PdfChapter({
   enterpriseContext: HomeEnterpriseContext | null | undefined;
   evidenceById: Record<string, string[]>;
   declaredSyntheticDemo: boolean | undefined;
+  bundle: HomeReviewBundle;
 }) {
   const depth = chapterDepth(chapter.chapterId, estate);
   const mixed = mixedNarrative(recordSource);
@@ -630,6 +659,7 @@ function PdfChapter({
     </View>
   ) : null;
   const priorLabel = homePriorInterpretationLabel(recordSource, narrativeDate);
+  const caveats = chapterInterpretationCaveats(chapter, bundle);
   const leadership = chapter.chapterId === "leadership_perspective";
   const leadershipBasis = declaredSyntheticDemo === true
     ? "Illustrative leadership excerpts - Synthetic reference - Not client-attested. Stored quotations and testimony language do not establish what leaders actually said. Theme mentions do not establish agreement."
@@ -679,6 +709,14 @@ function PdfChapter({
     <View>
       <View wrap={false}>
         {mixed ? <Text style={pdfStyles.h3}>{priorLabel}</Text> : null}
+        {caveats.length ? (
+          <Text style={pdfStyles.h3}>Published interpretation limits</Text>
+        ) : null}
+        {caveats.map((caveat) => (
+          <Text key={caveat} style={pdfStyles.meta}>
+            {caveat}
+          </Text>
+        ))}
         <Text style={pdfStyles.title} hyphenationCallback={(word) => [word]}>
           {chapter.headline}
         </Text>
@@ -702,6 +740,15 @@ function PdfChapter({
                 {leadership ? (
                   <Text style={pdfStyles.meta}>{leadershipBasis}</Text>
                 ) : null}
+                {interpretationCaveats(
+                  claim.statement,
+                  claim.evidence_ids,
+                  bundle,
+                ).map((caveat) => (
+                  <Text key={caveat} style={pdfStyles.meta}>
+                    {caveat}
+                  </Text>
+                ))}
                 <Text style={pdfStyles.text}>{claim.statement}</Text>
                 <Text style={pdfStyles.meta}>
                   {claim.claim_type === "ADVISORY_INFERENCE"
@@ -925,6 +972,7 @@ export function buildHomeWalkthroughPdf({
           enterpriseContext={bundle.thesis.signalPacket.homeEnterpriseContext}
           evidenceById={exportEvidenceReferences(bundle)}
           declaredSyntheticDemo={bundle.declaredSyntheticDemo}
+          bundle={bundle}
         />
       ))}
     </Document>
