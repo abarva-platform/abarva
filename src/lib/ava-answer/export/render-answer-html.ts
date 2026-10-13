@@ -14,7 +14,10 @@ import type {
   AvaChatSessionExport,
   AvaChatSessionExportStats,
 } from "@/lib/ava-answer/export/session-types";
-import { cleanAvaExportText } from "@/lib/ava-answer/export/render-text";
+import {
+  avaExportNarrativeBlocks,
+  cleanAvaExportText,
+} from "@/lib/ava-answer/export/render-text";
 
 type SvgBuilderName = Extract<keyof typeof SvgCharts, string>;
 
@@ -344,7 +347,19 @@ function answerBodyHtml(answer: AvaAnswerPacket): string {
   const graphs = artifacts.filter((artifact) => artifact.artifact === "graph");
   const tables = artifacts.filter((artifact) => artifact.artifact === "table");
 
-  return `<section class="prose">${proseHtml(display.directAnswer)}</section>
+  const narrative = avaExportNarrativeBlocks(display)
+    .map((block) => {
+      if (block.kind === "heading")
+        return `<p><strong>${esc(block.text)}</strong></p>`;
+      const content = block.label
+        ? `<strong>${esc(block.label)}</strong>${esc(block.text.slice(block.label.length))}`
+        : esc(block.text);
+      return block.kind === "bullet"
+        ? `<ul><li>${content}</li></ul>`
+        : `<p>${content}</p>`;
+    })
+    .join("");
+  return `<section class="prose">${narrative}</section>
 ${charts.map(chartHtml).join("")}
 ${graphs.map(graphHtml).join("")}
 ${tables.map(tableHtml).join("")}

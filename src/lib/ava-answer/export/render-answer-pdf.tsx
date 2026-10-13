@@ -20,7 +20,10 @@ import type {
   AvaAnswerPacket,
 } from "@/lib/ava-answer/contract";
 import type { AvaChatSessionExport } from "@/lib/ava-answer/export/session-types";
-import { cleanAvaExportText } from "@/lib/ava-answer/export/render-text";
+import {
+  avaExportNarrativeBlocks,
+  cleanAvaExportText,
+} from "@/lib/ava-answer/export/render-text";
 
 const styles = StyleSheet.create({
   page: {
@@ -534,9 +537,19 @@ function answerBlocks(answer: AvaAnswerPacket): ReactElement[] {
   const graphs = artifacts.filter((artifact) => artifact.artifact === "graph");
 
   return [
-    ...paragraphs(display.directAnswer).map((paragraph, index) => (
+    ...avaExportNarrativeBlocks(display).map((block, index) => (
       <Text key={`p-${index}`} style={styles.prose}>
-        {paragraph}
+        {block.kind === "bullet" ? "- " : ""}
+        {block.kind === "heading" ? (
+          <Text style={{ fontFamily: "Helvetica-Bold" }}>{block.text}</Text>
+        ) : block.label ? (
+          <>
+            <Text style={{ fontFamily: "Helvetica-Bold" }}>{block.label}</Text>
+            {block.text.slice(block.label.length)}
+          </>
+        ) : (
+          block.text
+        )}
       </Text>
     )),
     ...charts.map((chart) => <View key={chart.id}>{chartBlock(chart)}</View>),
@@ -562,6 +575,21 @@ function answerBlocks(answer: AvaAnswerPacket): ReactElement[] {
               <Text key={step.id} style={styles.bullet}>
                 {[step.label, step.rationale].filter(Boolean).join(" - ")}
               </Text>
+            ))}
+          </View>,
+        ]
+      : []),
+    ...(display.citations.length > 0
+      ? [
+          <View key="citations" style={styles.card}>
+            <Text style={styles.cardTitle}>Evidence Used</Text>
+            {display.citations.map((citation) => (
+              <View key={citation.id} style={{ marginBottom: 6 }}>
+                <Text style={styles.bullet}>{citation.label}</Text>
+                {citation.excerpt ? (
+                  <Text style={styles.bullet}>{citation.excerpt}</Text>
+                ) : null}
+              </View>
             ))}
           </View>,
         ]

@@ -2,7 +2,10 @@ jest.mock("server-only", () => ({}));
 
 import { renderToBuffer } from "@react-pdf/renderer";
 
-import { buildAvaAnswerPdf } from "@/lib/ava-answer/export/render-answer-pdf";
+import {
+  buildAvaAnswerPdf,
+  buildAvaChatSessionPdf,
+} from "@/lib/ava-answer/export/render-answer-pdf";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 
 function answerFixture(): AvaAnswerPacket {
@@ -58,7 +61,11 @@ function answerFixture(): AvaAnswerPacket {
         title: "Ranked Agent Assist Opportunities",
         columns: [
           { key: "opportunity", label: "Opportunity" },
-          { key: "annual_value_usd", label: "Annual value", format: "currency" },
+          {
+            key: "annual_value_usd",
+            label: "Annual value",
+            format: "currency",
+          },
           { key: "complexity_pct", label: "Complexity", format: "percent" },
         ],
         rows: [
@@ -97,6 +104,57 @@ function pdfText(buffer: Buffer): string {
 }
 
 describe("buildAvaAnswerPdf", () => {
+  it("preserves complete admitted narrative, record basis and evidence in a session export", async () => {
+    const answer: AvaAnswerPacket = {
+      ...answerFixture(),
+      surface: "home",
+      directAnswer: "The value claim needs verification.",
+      prose:
+        "**Bottom line**\n\nThe value claim needs verification.\n\n**Key points**\n\n- **Value proof:** Validate the declared benefit baseline.\n\n- **Leadership:** These are modelled responses, not actual testimony.\n\n**Next step:** Agree the baseline before approving further investment.\n\n*Record basis: Reviewed stored record. Synthetic reference, not client-attested. Data currency is not independently attested.*",
+      artifacts: [],
+      citations: [
+        {
+          id: "reference-basis",
+          label: "Record declaration",
+          sourceClass: "tenant-fact",
+          excerpt: "A modelled reference, not client-attested.",
+        },
+      ],
+    };
+    const output = await renderToBuffer(
+      buildAvaChatSessionPdf({
+        surface: "home-preview",
+        turns: [{ id: "answer", role: "agent", body: answer.prose!, answer }],
+      }),
+    );
+    const text = pdfText(output);
+    for (const expected of [
+      "Value proof:",
+      "Validate the declared benefit baseline.",
+      "modelled responses",
+      "Next step:",
+      "Reviewed stored record",
+      "Synthetic reference, not client-attested",
+      "Evidence Used",
+      "Record declaration",
+      "A modelled reference, not client-attested.",
+    ])
+      expect(text).toContain(expected);
+    expect(text.match(/The value claim needs verification\./g)).toHaveLength(1);
+  });
+
+  it("keeps a distinct headline alongside supplementary prose", async () => {
+    const answer = {
+      ...answerFixture(),
+      directAnswer: "Headline judgment.",
+      prose: "Supporting detail must not disappear.",
+      artifacts: [],
+    };
+    const text = pdfText(await renderToBuffer(buildAvaAnswerPdf(answer)));
+    expect(text).toContain("Headline judgment.");
+    expect(text).toContain("Supporting detail must not disappear.");
+  });
+
   it("preserves structured tables, chart exhibits, and graph relationships", async () => {
     const buffer = await renderToBuffer(buildAvaAnswerPdf(answerFixture()));
     const text = pdfText(buffer);

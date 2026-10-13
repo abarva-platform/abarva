@@ -1,3 +1,40 @@
+import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
+
+export interface AvaExportNarrativeBlock {
+  kind: "heading" | "bullet" | "paragraph";
+  text: string;
+  label?: string;
+}
+
+export function avaExportNarrativeBlocks(
+  answer: Pick<AvaAnswerPacket, "directAnswer" | "prose">,
+): AvaExportNarrativeBlock[] {
+  const direct = cleanAvaExportText(answer.directAnswer);
+  const detail = cleanAvaExportText(answer.prose ?? "");
+  const parts = detail
+    .split(/\n{2,}/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const paragraphs = parts.includes(direct)
+    ? parts
+    : [direct, ...parts].filter(Boolean);
+  return paragraphs.map((paragraph) => {
+    const bullet = /^[-*]\s+/.test(paragraph);
+    const text = paragraph
+      .replace(/^[-*]\s+/, "")
+      .replace(/\*\*/g, "")
+      .replace(/^\*([^*]*)\*$/, "$1");
+    if (/^(?:Bottom line|Key points)$/.test(text))
+      return { kind: "heading", text };
+    const colon = text.indexOf(":");
+    return {
+      kind: bullet ? "bullet" : "paragraph",
+      text,
+      ...(colon > 0 && colon < 60 ? { label: text.slice(0, colon + 1) } : {}),
+    };
+  });
+}
+
 const HTML_ENTITY_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
   [/&amp;/g, "&"],
   [/&lt;/g, "<"],
