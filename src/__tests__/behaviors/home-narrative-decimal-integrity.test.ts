@@ -223,14 +223,14 @@ describe("the guard still decides at sentence granularity", () => {
       bundleWith(
         chapterWith({
           executive_synthesis:
-            "Spend is concentrated at 17.4%.4 of 12 contracts are unavailable for review.",
+            "Spend is concentrated at 17.4%.100% of vendor contract evidence is unavailable.",
         }),
       ),
     );
 
     const synthesis = sanitized.chapters[0].executive_synthesis;
     expect(synthesis).toBe("Spend is concentrated at 17.4%.");
-    expect(synthesis).not.toContain("unavailable for review");
+    expect(synthesis).not.toContain("contract evidence is unavailable");
   });
 
   it("drops a stale sentence that itself carries a decimal", () => {
@@ -238,7 +238,7 @@ describe("the guard still decides at sentence granularity", () => {
       bundleWith(
         chapterWith({
           executive_synthesis:
-            "Coverage sits at 4.5+ today. No vendor contracts with 17.4% uplift terms are available.",
+            "Coverage sits at 4.5+ today. No vendor contract evidence is available, so a 17.4% uplift cannot be verified.",
         }),
       ),
     );

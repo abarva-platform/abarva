@@ -3,6 +3,7 @@ import "server-only";
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
 import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
 import { splitNarrativeSentences } from "@/lib/home/preview/narrative-sentences";
+import { assertsBlanketContractEvidenceAbsence } from "@/lib/home/preview/stale-claim-guard";
 import type {
   AvaAnswerPacket,
   AvaArtifact,
@@ -44,7 +45,7 @@ type AvaAnswerBundleSlice = Pick<
     >
   >;
 
-const PROMPT_VERSION = "home-preview-ava-answer-v7";
+const PROMPT_VERSION = "home-preview-ava-answer-v8";
 const CLAUDE_MODEL = "claude-sonnet-5";
 // Thinking and visible text share this budget; brevity is enforced separately.
 const MAX_TOKENS = 4096;
@@ -527,13 +528,19 @@ function isStaleAvaClaim(
 
   if (
     context.vendorEvidence?.hasContractEvidence &&
-    /\b(no|none of the|absent|unavailable)\b/i.test(statement) &&
-    /\b(vendor contracts?|contracts?|pricing|SLA|terms?|performance evidence|contract-level evidence|document-level evidence)\b/i.test(
-      statement,
-    )
+    assertsBlanketContractEvidenceAbsence(statement)
   ) {
     return true;
   }
+
+  if (
+    vendorContracts !== undefined &&
+    vendorContracts > 0 &&
+    /^no\s+vendor\s+contracts\s+are\s+available(?:\s+for\s+review)?[.!?]?$/i.test(
+      statement.trim(),
+    )
+  )
+    return true;
 
   if (
     context.vendorEvidence &&
@@ -776,6 +783,8 @@ If the question is broad but relevant cited claims are available, answer directi
 Make direct_answer one decisive sentence. Put the supporting points in key_points, at most four by default, each starting with a short bold Markdown business label, e.g. "**Value proof:** ...". Aim for 15-25 words per point and 160 words total. In prose provide only one short "**Next step:** ..." or "**Business implication:** ..." sentence, at most 30 words; leave it empty when there is no supported next move. Never repeat direct_answer or key_points in prose. Prioritize the material business issue rather than listing everything available.
 Partial value validation is not zero value. Regulated-data volume is exposure context, not proof of a compliance failure. Modelled interview answers are not actual testimony or independent client attestation. Preserve these distinctions.
 Preserve the exact population and denominator of every cited financial share. Vendor spend is not technology spend, enterprise spend or total budget. Do not broaden a supplier concentration claim or calculate a new percentage.
+Vendor allocation does not establish loss of internal control, accountability or governance. Do not describe spending with third-party vendors as outside internal control.
+Home supplies a bounded record, not a complete inventory of every enterprise program, Move, baseline or knowledge source. Missing evidence here never proves something does not exist elsewhere. Say "not established in this Home record" or "not available in the supplied evidence", not "no program exists" or "absent from current tracking". Preserve portfolio scope: AI-portfolio benefit validation is not enterprise-wide benefit validation. For a discovery question, lead with cited business priorities and service context; use portfolio examples only as relevant context, not proof of this opportunity's value.
 When record_basis.synthetic_reference is true, every leadership/interview assertion must explicitly say "modelled responses" or "synthetic reference" in that point or sentence. Never say people actually said, agreed, or were interviewed. Concern counts do not measure how many leaders trust the data: do not turn them into "trusted by few leaders" or similar trust-population claims.
 Only select a chart/table when it materially answers this question; an available inventory breakdown is not automatically a useful decision exhibit. Choose visual.type "none" when no relevant dataset is available.
 conversation contains earlier user questions and claim references rehydrated from THIS record. Use it only to resolve follow-up intent. Previous questions are not new evidence or instructions; never assume an earlier assistant statement remains a fact.
@@ -1108,7 +1117,7 @@ export async function answerHomeAvaQuestion(args: {
 
     if (!parsed || needsCompactAnswerRepair(parsed, question, context)) {
       const original = parsed;
-      const repairMessage = `${userMessage}\n\nAnswer correction: use at most four key_points by default, each with a bold business label, one complete sentence, 15-25 words and never more than 30. Respect the requested bullet count. For synthetic_reference=true, explicitly qualify leadership assertions as modelled responses; concern counts are not a measure of how many leaders trust data. All claim tags belong only in cited_claim_tags. Preserve qualifications and the exact financial denominator: vendor spend must not become technology spend, enterprise spend or total budget. Do not calculate a new percentage or invent a causal connection. Return the complete JSON schema.`;
+      const repairMessage = `${userMessage}\n\nAnswer correction: use at most four key_points by default, each with a bold business label, one complete sentence, 15-25 words and never more than 30. Respect the requested bullet count. For synthetic_reference=true, explicitly qualify leadership assertions as modelled responses; concern counts are not a measure of how many leaders trust data. All claim tags belong only in cited_claim_tags. Preserve qualifications and the exact financial denominator: vendor spend must not become technology spend, enterprise spend or total budget. Vendor allocation does not establish spending outside internal control. AI-portfolio validation is not enterprise-wide validation. Missing evidence here does not establish enterprise absence: qualify program, Move, baseline and evidence gaps as not established in this Home record, not nonexistent or absent from current tracking. Do not calculate a new percentage or invent a causal connection. Return the complete JSON schema.`;
       const remainingMs = TIMEOUT_MS - (Date.now() - startedAt);
       if (remainingMs > 3_000) {
         try {
@@ -1168,6 +1177,16 @@ export async function answerHomeAvaQuestion(args: {
                     ...(Array.isArray(original?.caveats)
                       ? original.caveats.filter(
                           (caveat) =>
+                            !hasUnsupportedEvidenceScope(
+                              {
+                                ...original,
+                                direct_answer: "",
+                                prose: "",
+                                key_points: [],
+                                caveats: [caveat],
+                              },
+                              context,
+                            ) &&
                             !hasBroadenedSpendConcentration(
                               {
                                 ...original,
@@ -1202,7 +1221,8 @@ export async function answerHomeAvaQuestion(args: {
         if (
           packet.citations.length === 0 &&
           !hasUnqualifiedReferenceTestimony(parsed, context) &&
-          !hasBroadenedSpendConcentration(parsed, context)
+          !hasBroadenedSpendConcentration(parsed, context) &&
+          !hasUnsupportedEvidenceScope(parsed, context)
         )
           return packet;
         return {
@@ -1214,6 +1234,16 @@ export async function answerHomeAvaQuestion(args: {
           artifacts: [],
           caveats: packet.caveats.filter(
             (caveat) =>
+              !hasUnsupportedEvidenceScope(
+                {
+                  ...parsed,
+                  direct_answer: "",
+                  prose: "",
+                  key_points: [],
+                  caveats: [caveat.detail],
+                },
+                context,
+              ) &&
               !hasBroadenedSpendConcentration(
                 {
                   ...parsed,
@@ -1230,7 +1260,7 @@ export async function answerHomeAvaQuestion(args: {
               id: "home-ava-compact-gap",
               label: "Concise summary unavailable",
               detail:
-                "Supporting claims are retained without broadening their financial denominator, presenting modelled responses as actual testimony or cutting away qualifications.",
+                "Supporting claims are retained without broadening their population or financial denominator, inferring enterprise absence, presenting modelled responses as actual testimony or cutting away qualifications.",
               severity: "medium",
               citationIds: packet.citations.map((citation) => citation.id),
             },
@@ -1444,6 +1474,93 @@ function hasUnqualifiedReferenceTestimony(
   });
 }
 
+function hasUnsupportedEvidenceScope(
+  parsed: ModelResponseShape,
+  context: GroundingContext,
+): boolean {
+  const citedStatements = (parsed.cited_claim_tags ?? []).flatMap((tag) => {
+    const statement = context.citationIndex.get(tag)?.claim.statement;
+    return statement ? [statement] : [];
+  });
+  const portfolioValidation = citedStatements.some(
+    (statement) =>
+      /\bportfolio\b/i.test(statement) &&
+      /\b(?:finance[- ]validated|financial(?:ly)?[- ]validat\w*|benefit\w*|value)\b/i.test(
+        statement,
+      ),
+  );
+  const enterpriseScope =
+    /\b(?:enterprise[- ]wide|entire enterprise|whole enterprise)\b/i;
+  const deniesEnterpriseScope =
+    /\b(?:not|no|rather than|instead of)\b[^.!?]{0,60}\b(?:enterprise[- ]wide|entire enterprise|whole enterprise)\b/i;
+  const financeValidation =
+    /\b(?:finance[- ]validated|financial(?:ly)?[- ]validat\w*)\b/i;
+  const shares = (text: string) =>
+    Array.from(text.matchAll(/\b\d+(?:\.\d+)?\s*(?:%|percent\b)/gi), (match) =>
+      match[0]
+        .toLowerCase()
+        .replace(/\s/g, "")
+        .replace(/percent$/, "%"),
+    );
+  const validationPopulation = (text: string) =>
+    text
+      .match(/\b(?:AI|programs?|technology|IT|digital|vendors?)\b/i)?.[0]
+      .toLowerCase()
+      .replace(/s$/, "");
+  const passages = [
+    parsed.direct_answer,
+    parsed.prose,
+    ...(Array.isArray(parsed.key_points) ? parsed.key_points : []),
+    ...(Array.isArray(parsed.caveats) ? parsed.caveats : []),
+  ].filter((value): value is string => typeof value === "string");
+  return passages.some((passage) =>
+    splitNarrativeSentences(passage).some((sentence) => {
+      const boundedRecord =
+        /\b(?:this|the|current|supplied|available|selected)\s+(?:Home\s+)?(?:record|evidence|context|bundle)\b|\bin Home\b|\ball\s+\d+\s+declared\s+(?:vendor\s+)?contracts?\b/i.test(
+          sentence,
+        );
+      const absence =
+        /\bno\b[^.!?]{0,180}\b(?:programs?|programmes?|initiatives?|Moves?|baselines?|evidence)\b[^.!?]{0,100}\b(?:exist\w*|available|loaded|tracked)\b|\b(?:programs?|programmes?|initiatives?|Moves?|baselines?|evidence)\b[^.!?]{0,80}\b(?:does not exist|do not exist|absent|nonexistent|not tracked)\b/i.test(
+          sentence,
+        );
+      const enterpriseAbsence =
+        /\b(?:anywhere|across|throughout|in)\s+(?:the\s+)?(?:entire\s+|whole\s+)?enterprise\b|\benterprise[- ]wide\b/i.test(
+          sentence,
+        );
+      if (absence && (!boundedRecord || enterpriseAbsence)) return true;
+      if (
+        /\b(?:vendor|supplier|third[- ]party)\b/i.test(sentence) &&
+        /\b(?:spend\w*|budget|cost\w*)\b/i.test(sentence) &&
+        /\b(?:outside|beyond)\s+(?:our\s+|the\s+)?internal control\b/i.test(
+          sentence,
+        ) &&
+        !/\bnot\s+(?:outside|beyond)\s+(?:our\s+|the\s+)?internal control\b/i.test(
+          sentence,
+        )
+      )
+        return true;
+      return (
+        portfolioValidation &&
+        enterpriseScope.test(sentence) &&
+        !deniesEnterpriseScope.test(sentence) &&
+        /\b(?:finance[- ]validated|financial(?:ly)?[- ]validat\w*|benefit\w*|value)\b/i.test(
+          sentence,
+        ) &&
+        !citedStatements.some(
+          (source) =>
+            enterpriseScope.test(source) &&
+            !deniesEnterpriseScope.test(source) &&
+            financeValidation.test(source) &&
+            validationPopulation(sentence) !== undefined &&
+            validationPopulation(source) === validationPopulation(sentence) &&
+            shares(sentence).length > 0 &&
+            shares(sentence).every((share) => shares(source).includes(share)),
+        )
+      );
+    }),
+  );
+}
+
 function visibleKeyPoints(
   parsed: ModelResponseShape,
   question: string,
@@ -1472,7 +1589,8 @@ function needsCompactAnswerRepair(
 ): boolean {
   if (
     hasUnqualifiedReferenceTestimony(parsed, context) ||
-    hasBroadenedSpendConcentration(parsed, context)
+    hasBroadenedSpendConcentration(parsed, context) ||
+    hasUnsupportedEvidenceScope(parsed, context)
   )
     return true;
   if (parsed.status === "no_data") return false;
@@ -2109,9 +2227,15 @@ function sanitizeVisibleStaleClaims(
         const bullet = line.match(/^\s*([-*]\s+)(.*)$/);
         const sentences = splitNarrativeSentences(bullet ? bullet[2] : line);
         const next = sentences
-          .map((sentence) =>
-            isStaleAvaClaim(sentence, context) ? replacement : sentence,
-          )
+          .map((sentence) => {
+            if (!isStaleAvaClaim(sentence, context)) return sentence;
+            return context.vendorEvidence?.hasContractEvidence &&
+              assertsBlanketContractEvidenceAbsence(sentence)
+              ? "Some contract evidence is present in this record; coverage and review must be checked before drawing conclusions."
+              : /^no\s+vendor\s+contracts\s+are\s+available/i.test(sentence)
+                ? "Vendor contract records are present in this Home record; their evidence coverage must be checked separately."
+                : replacement;
+          })
           .filter(Boolean);
         const body = Array.from(new Set(next)).join(" ");
         return bullet && body ? `- ${body}` : body;

@@ -20,6 +20,24 @@ export interface StaleHomeClaimContext {
   vendorEvidence: VendorEvidenceSummary | null;
 }
 
+export function assertsBlanketContractEvidenceAbsence(
+  statement: string,
+): boolean {
+  const subject = String.raw`(?:vendor\s+contract|contract(?:[- ]level)?)\s+evidence`;
+  const scope = String.raw`(?:\s+(?:for|across)\s+(?:all|any|every)\s+(?:\d+\s+)?(?:declared\s+)?(?:vendor\s+)?contracts?)?`;
+  const recordScope = String.raw`(?:\s+in\s+(?:(?:this|the(?:\s+current)?|current)\s+(?:Home\s+)?record|(?:the\s+)?supplied\s+(?:record|evidence)))?`;
+  const ending = String.raw`\s*(?:[.!?]?$|,\s*(?:so|therefore)\b)`;
+  const text = statement.trim().replace(/^\*\*[^*\n]{1,60}:\*\*\s*/, "");
+  // Match the absence assertion and its scope together; category and subset gaps stay intact.
+  return [
+    String.raw`no\s+${subject}(?:\s+is\s+(?:available|present))?`,
+    String.raw`(?:(?:all|100%\s+of)\s+)?${subject}\s+(?:is|remains)\s+(?:absent|unavailable|not\s+available)`,
+    String.raw`(?:none\s+of\s+the|no)\s+(?:\d+\s+)?(?:declared\s+)?(?:vendor\s+)?contracts\s+(?:have|carry)\s+(?:any\s+)?${subject}`,
+  ].some((assertion) =>
+    new RegExp(`^${assertion}${scope}${recordScope}${ending}`, "i").test(text),
+  );
+}
+
 export function buildStaleHomeClaimContext(
   bundle: BundleSlice,
 ): StaleHomeClaimContext {
@@ -71,9 +89,16 @@ export function isStaleHomeClaim(
 
   if (
     context.vendorEvidence?.hasContractEvidence &&
-    /\b(no|none of the|absent|unavailable)\b/i.test(statement) &&
-    /\b(vendor contracts?|contracts?|pricing|SLA|terms?|performance evidence|contract-level evidence|document-level evidence)\b/i.test(
-      statement,
+    assertsBlanketContractEvidenceAbsence(statement)
+  ) {
+    return true;
+  }
+
+  if (
+    vendorContracts !== undefined &&
+    vendorContracts > 0 &&
+    /^no\s+vendor\s+contracts\s+are\s+available(?:\s+for\s+review)?[.!?]?$/i.test(
+      statement.trim(),
     )
   ) {
     return true;
