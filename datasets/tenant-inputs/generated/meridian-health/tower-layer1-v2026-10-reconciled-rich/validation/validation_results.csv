@@ -1,0 +1,45 @@
+id,status,detail
+package_files_complete,PASS,all required files present
+manifest_no_runtime_load,PASS,package is marked no_runtime_load for signoff only
+package_identity_matches_physical_source_and_outputs,PASS,7 source extracts and 41 generated files match package hashes; 0 changed files
+tenant_key_consistent,PASS,all rows use canonical tenant key
+it_budget_total,PASS,$1050M total IT budget
+fy26_project_budget_domain_reconciliation,PASS,0 of 8 domain budget rows disagree with FY26 project budgets; 0 projects lack FY26 period
+project_spend_ytd_common_as_of_date,PASS,all source and canonical project YTD spend amounts use one explicit FY26 as-of date
+budget_category_splits_reconcile,PASS,0 domain split rows fail exact arithmetic
+project_portfolio_total,PASS,$703.1M reviewed project portfolio
+project_row_count,PASS,140 project rows
+classification_variety,PASS,11 project classifications
+bi_not_ai,PASS,6 analytics_bi rows are not AI-related
+portfolio_not_all_ai,PASS,$211.8M explicit AI/AI-enabled subset inside $703.1M reviewed IT portfolio
+top_investments_include_non_ai_context,PASS,"4 of top 10 investments are non-AI, including the largest"
+ai_subset_reasonable,PASS,$211.8M explicit AI/AI-enabled subset
+ai_flags_explicit,PASS,0 inconsistent AI flags
+ai_business_case_count,PASS,42 AI business cases for 42 explicit AI-related projects
+all_ai_projects_have_business_cases,PASS,0 AI projects without cases; 0 duplicate project links
+ai_cases_link_to_projects,PASS,every AI business case links to a project
+ai_cases_use_ai_projects,PASS,AI business cases only attach to explicitly AI-related projects
+business_case_tool_registered,PASS,0 business cases use unregistered tools
+business_case_tool_domain_fit,PASS,0 tool/domain mismatches
+roi_distribution,PASS,value multiples range 3.6x-5.2x
+roi_uses_conservative_high_build_cost,PASS,28 direct-value case ROI ranges use high build cost as their denominator
+direct_value_exceeds_build_cost,PASS,28 direct-value cases have at least 3x low-case value against build-cost high estimate
+ai_portfolio_roi_3_to_4x,PASS,3.2x low case and 4.0x high case on explicit AI/AI-enabled investment
+direct_value_story_is_simple,PASS,"0 direct-value cases missing simple value type, story, proof, or ROI"
+direct_value_type_coherent,PASS,0 direct-value cases have incoherent simple value types
+approved_and_promised_value_are_separate,PASS,$703.1M approved vs $677.8M project low-case promised annual value vs $13.1M board-claimable YTD
+layer_2_adapter_lineage_complete,PASS,987 emitted objects with preserved lineage
+layer_3_canonical_counts_match_source,PASS,"140 projects, 42 AI use cases, 504 value observations"
+layer_3_relationships_present,PASS,280 canonical relationships
+cube_reconciles_to_canonical,PASS,"42 case cube rows, 13 tool rollout cube rows; $211.8M cube AI investment"
+read_models_reconcile_to_cube,PASS,"42 initiative rows, 13 tool rows, 34 proof queue rows"
+source_plan_basis_survives_layers,PASS,synthetic sponsor plan is labeled separately from Finance actuals in every layer
+foundation_no_direct_roi,PASS,14 foundation/readiness cases carry no direct ROI
+tool_rollout_goals,PASS,13 tool rollout rows
+tool_users_fit_enabled_population,PASS,0 tool rows have active users above enabled users
+ai_business_case_field_survival_contract,PASS,"42 AI business-case rows preserve approved fields through L3, L4 and cube"
+tool_rollout_field_survival_contract,PASS,"13 tool rows preserve approved fields through L3, L4 and cube"
+monthly_tracking_complete,PASS,504 monthly value observations
+monthly_value_promotion_order,PASS,0 rows violate sponsor -> finance -> claimable order
+finance_state_variety,PASS,"states: cfo_approved_target, finance_challenged, finance_validated_actual, not_submitted, sponsor_claimed"
+evidence_coverage,PASS,196 evidence rows

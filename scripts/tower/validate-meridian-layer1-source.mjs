@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
 import fs from "node:fs/promises";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateAiBusinessCaseFieldSurvival } from "./validate-ai-business-case-field-survival.mjs";
 import { validateToolRolloutFieldSurvival } from "./validate-tool-rollout-field-survival.mjs";
+import { deriveRichSyntheticSourceIdentity } from "./assert-rich-synthetic-load-approval.mjs";
 
 const ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -12,7 +14,7 @@ const ROOT = path.resolve(
 );
 const PACKAGE_DIR = path.join(
   ROOT,
-  "datasets/tenant-inputs/generated/meridian-health/tower-layer1-v2026-08-business-case",
+  "datasets/tenant-inputs/generated/meridian-health/tower-layer1-v2026-10-reconciled-rich",
 );
 
 const EXPECTED = {
@@ -22,6 +24,7 @@ const EXPECTED = {
   projectRows: 140,
   monthlyPeriods: 12,
 };
+const SOURCE_PLAN_BASIS = "synthetic_sponsor_scenario_not_finance_actual";
 
 const REQUIRED_FILES = [
   "README.md",
@@ -306,6 +309,14 @@ async function main() {
   const manifest = JSON.parse(
     await fs.readFile(path.join(PACKAGE_DIR, "package_manifest.json"), "utf8"),
   );
+  const sourceIdentity = deriveRichSyntheticSourceIdentity(PACKAGE_DIR);
+  const alteredManifestFiles = [];
+  for (const item of manifest.files ?? []) {
+    const content = await fs.readFile(path.join(PACKAGE_DIR, item.file));
+    if (createHash("sha256").update(content).digest("hex") !== item.sha256) {
+      alteredManifestFiles.push(item.file);
+    }
+  }
   const toolRolloutSurvival = await validateToolRolloutFieldSurvival({
     packageDir: PACKAGE_DIR,
   });
@@ -323,6 +334,21 @@ async function main() {
   const aiProjectBudget = sum(aiProjects, "approved_budget_usd");
   const reviewedProjectBudget = sum(projects, "approved_budget_usd");
   const totalItBudget = sum(budget, "approved_budget_usd");
+  const projectBudgetByDomain = new Map();
+  for (const row of projects) {
+    projectBudgetByDomain.set(
+      row.domain_key,
+      (projectBudgetByDomain.get(row.domain_key) ?? 0) +
+        num(row.approved_budget_usd),
+    );
+  }
+  const domainReconciliationFailures = budget.filter(
+    (row) =>
+      num(row.tower_reviewed_project_budget_usd) !==
+        (projectBudgetByDomain.get(row.domain_key) ?? 0) ||
+      num(row.approved_budget_usd) <
+        num(row.tower_reviewed_project_budget_usd),
+  );
   const projectPromisedAnnualValue = sum(projects, "promised_annual_value_usd");
   const aiCasePromisedValueLow = sum(aiCases, "projected_annual_value_low_usd");
   const aiCasePromisedValueHigh = sum(
@@ -427,6 +453,16 @@ async function main() {
   );
   assertGate(
     gates,
+    "package_identity_matches_physical_source_and_outputs",
+    manifest.source_set_hash === sourceIdentity.source_set_hash &&
+      manifest.assessment_id ===
+        `tower-rich-synthetic-candidate-${sourceIdentity.source_set_hash.slice(0, 16)}` &&
+      sourceIdentity.object_count === 987 &&
+      alteredManifestFiles.length === 0,
+    `${sourceIdentity.files.length} source extracts and ${manifest.files?.length ?? 0} generated files match package hashes; ${alteredManifestFiles.length} changed files`,
+  );
+  assertGate(
+    gates,
     "tenant_key_consistent",
     [budget, projects, aiCases, rollouts, monthly, finance, evidence]
       .flat()
@@ -438,6 +474,44 @@ async function main() {
     "it_budget_total",
     totalItBudget === EXPECTED.totalItBudgetUsd,
     `${money(totalItBudget)} total IT budget`,
+  );
+  assertGate(
+    gates,
+    "fy26_project_budget_domain_reconciliation",
+    projects.every(
+      (row) =>
+        row.fiscal_year === "FY26" &&
+        row.project_budget_fiscal_year === "FY26",
+    ) &&
+      canonicalProjects.every(
+        (row) =>
+          row.fiscal_year === "FY26" &&
+          row.project_budget_fiscal_year === "FY26",
+      ) &&
+      budget.length === projectBudgetByDomain.size &&
+      domainReconciliationFailures.length === 0,
+    `${domainReconciliationFailures.length} of ${budget.length} domain budget rows disagree with FY26 project budgets; ${projects.filter((row) => row.fiscal_year !== "FY26").length} projects lack FY26 period`,
+  );
+  assertGate(
+    gates,
+    "project_spend_ytd_common_as_of_date",
+    projects.every((row) => row.as_of_date === "2026-08-24" && Number(row.actual_spend_ytd_usd) >= 0) &&
+      canonicalProjects.every((row) => row.as_of_date === "2026-08-24" && Number(row.actual_spend_ytd_usd) >= 0),
+    "all source and canonical project YTD spend amounts use one explicit FY26 as-of date",
+  );
+  assertGate(
+    gates,
+    "budget_category_splits_reconcile",
+    budget.every(
+      (row) =>
+        num(row.run_budget_usd) +
+          num(row.change_budget_usd) +
+          num(row.transform_budget_usd) ===
+          num(row.approved_budget_usd) &&
+        num(row.capex_usd) + num(row.opex_usd) ===
+          num(row.approved_budget_usd),
+    ),
+    `${budget.filter((row) => num(row.run_budget_usd) + num(row.change_budget_usd) + num(row.transform_budget_usd) !== num(row.approved_budget_usd) || num(row.capex_usd) + num(row.opex_usd) !== num(row.approved_budget_usd)).length} domain split rows fail exact arithmetic`,
   );
   assertGate(
     gates,
@@ -535,6 +609,28 @@ async function main() {
   );
   assertGate(
     gates,
+    "roi_uses_conservative_high_build_cost",
+    directValueCases.every(
+      (row) =>
+        num(row.roi_low_multiple) ===
+          Math.round(
+            (num(row.projected_annual_value_low_usd) /
+              num(row.cost_to_build_high_usd)) *
+              10,
+          ) /
+            10 &&
+        num(row.roi_high_multiple) ===
+          Math.round(
+            (num(row.projected_annual_value_high_usd) /
+              num(row.cost_to_build_high_usd)) *
+              10,
+          ) /
+            10,
+    ),
+    `${directValueCases.length} direct-value case ROI ranges use high build cost as their denominator`,
+  );
+  assertGate(
+    gates,
     "direct_value_exceeds_build_cost",
     directValueMultiples.every((v) => v >= 3),
     `${directValueCases.length} direct-value cases have at least 3x low-case value against build-cost high estimate`,
@@ -618,6 +714,16 @@ async function main() {
   );
   assertGate(
     gates,
+    "source_plan_basis_survives_layers",
+    aiCases.every((row) => row.source_plan_basis === SOURCE_PLAN_BASIS) &&
+      canonicalCases.every((row) => row.source_plan_basis === SOURCE_PLAN_BASIS) &&
+      caseCube.every((row) => row.source_plan_basis === SOURCE_PLAN_BASIS) &&
+      initiativeTable.every((row) => row.source_plan_basis === SOURCE_PLAN_BASIS) &&
+      executive.source_plan_basis === SOURCE_PLAN_BASIS,
+    "synthetic sponsor plan is labeled separately from Finance actuals in every layer",
+  );
+  assertGate(
+    gates,
     "foundation_no_direct_roi",
     noDirectRoiCases.length >= 4,
     `${noDirectRoiCases.length} foundation/readiness cases carry no direct ROI`,
@@ -630,6 +736,16 @@ async function main() {
         (row) => num(row.rollout_target_users) > 0 || row.rollout_stage,
       ),
     `${rollouts.length} tool rollout rows`,
+  );
+  assertGate(
+    gates,
+    "tool_users_fit_enabled_population",
+    rollouts.every(
+      (row) =>
+        num(row.monthly_active_users) <= num(row.enabled_users) &&
+        num(row.enabled_users) <= num(row.rollout_target_users),
+    ),
+    `${rollouts.filter((row) => num(row.monthly_active_users) > num(row.enabled_users)).length} tool rows have active users above enabled users`,
   );
   assertGate(
     gates,
