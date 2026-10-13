@@ -14,7 +14,13 @@
   "expected_object_count": 1480,
   "approved_by": "Anand Sundaram",
   "approved_at": "2026-10-11",
-  "load_approval": null,
+  "load_approval": {
+    "approved_by": "Anand Sundaram",
+    "approved_at": "2026-10-12",
+    "assessment_id": "tower-registry-candidate-2cbd979c8437468d",
+    "source_set_hash": "ecbc7bbb1e812ba492e6a96efec32d26c844388e964abf20eee9ddf5916e5914",
+    "release_record": "docs/releases/records/2026-10-12-tower-synthetic-demo-budget-source.md"
+  },
   "serving_approval": null,
-  "notes": "The named declaration covers the earlier selected synthetic intake. The newly selected Finance tab is approved only as a synthetic demo source by exact file hash; it is not independently Finance attested. This changed source set has no exact-version load or serving approval. Source-stated benefit and claim labels remain unverified assertions. Segment, maturity, and relationship rows remain raw where mapping or evidence is insufficient."
+  "notes": "The named declaration covers the earlier selected synthetic intake. The newly selected Finance tab is approved only as a synthetic demo source by exact file hash; it is not independently Finance attested. The exact assessment and source set have a separate human-authored private load approval; serving approval remains absent. Source-stated benefit and claim labels remain unverified assertions. Segment, maturity, and relationship rows remain raw where mapping or evidence is insufficient."
 }

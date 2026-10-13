@@ -36,19 +36,19 @@ Release lane: `client-data-lane`.
 - Preserves budget, Q2-YTD actual, forecast, commitment, invoice, and signed variance at their source-record grain. The reported variance is forecast less budget, not actual overspend.
 - Preserves the source-declared split of the budget into existing operations and new work; the two components reconcile exactly to the selected total and are not an operating/capital classification.
 - Keeps independent Finance-attested and claimable product amounts null. Existing evidence and cross-feed limitations remain.
-- Clears the previous exact-version private load approval because the source set and assessment change. Serving approval remains null.
+- Replaces the previous exact-version private load approval with a separately human-authored approval bound to this assessment and source hash. Serving approval remains null.
 
 ## QA / Validation
 
 - Node 24 focused source/physical tests: 13/13 passed. Focused reader/presentation tests: 91/91 passed. Focused ESLint and TypeScript `--noEmit` passed.
 - Exact source hash, 70 declared IDs, six amount fields, signed variance equation, 31/39 run/change rows, component sum, nonadditivity, and canonical measure links are covered by fail-closed tests and physical-plan parity.
 - Manifest validator and all 11 release-control gates passed. Full quote-mode Tower lineage reports the selected FY26 budget as `ONE_SOURCE`; the separate modeled annual spend remains `ONE_SOURCE` on a different basis.
-- Dry physical validation and quality gate passed with 23 physically selected files, 3,934 raw source records, 1,480 canonical objects, 1,991 measures, and 1,595 projection rows across ten views. The 25-entry source manifest additionally includes two hash/count-only extracts. The private load preflight correctly refused the missing exact-version approval; no data write occurred.
-- Review artifact: `/tmp/tower-v6-demo-budget-final-review`. Assessment `tower-registry-candidate-2cbd979c8437468d`; source-set SHA-256 `ecbc7bbb1e812ba492e6a96efec32d26c844388e964abf20eee9ddf5916e5914`; exact candidate SHA-256 `1687ecedd033f6c95bdbb1bb6182eaa69b3743e14f1022ce43cba8ef2d1d2e6f`. The local dry path is review evidence, not durable private proof.
+- Dry physical validation and quality gate passed with 23 physically selected files, 3,934 raw source records, 1,480 canonical objects, 1,991 measures, and 1,595 projection rows across ten views. The 25-entry source manifest additionally includes two hash/count-only extracts. The private load preflight accepted the exact human-authored approval but the write guard still refused absent ACA job identity; no data write occurred.
+- Review artifact: `/tmp/tower-v6-demo-budget-approved-review`. Assessment `tower-registry-candidate-2cbd979c8437468d`; source-set SHA-256 `ecbc7bbb1e812ba492e6a96efec32d26c844388e964abf20eee9ddf5916e5914`; exact candidate SHA-256 `1687ecedd033f6c95bdbb1bb6182eaa69b3743e14f1022ce43cba8ef2d1d2e6f`. The local dry path is review evidence, not durable private proof.
 
 ## Rollout Plan
 
-Review and merge through a PR. Deploy only via the repo-owned ACA main workflow, then verify digest-pinned web, traffic revision, and worker parity. Retarget the separate Tower-only schema lane to the new candidate when needed. Obtain a new human-authored exact-version load approval before any private stage. Require private schema, database, and Blob proof before considering a separate serving approval and signed-in review.
+Review and merge through a PR. Deploy only via the repo-owned ACA main workflow, then verify digest-pinned web, traffic revision, and worker parity. Complete the separate Tower-only schema lane with exact ledger and private readback proof. The new exact-version private load approval is recorded in the manifest; the private job still requires its ACA identity, isolated operator slot, and proof contract. Require private schema, database, and Blob proof before considering a separate serving approval and signed-in review.
 
 ## Deployment Authority
 
