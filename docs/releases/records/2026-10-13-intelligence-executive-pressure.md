@@ -37,7 +37,7 @@ Intelligence uses lower adaptive reasoning effort to start its executive answer 
 
 ## QA / Validation
 
-- Five focused suites: 49 tests passed, including incremental delivery, private reasoning suppression, final packet preservation, tenant and retired-fact guards, and page reconciliation.
+- Six focused suites: 52 tests passed, including incremental delivery, private reasoning suppression, final packet preservation, blocked context exclusion, tenant and retired-fact guards, and page reconciliation.
 - TypeScript and scoped ESLint: passed. Release checks: all 11 gates passed. Whitespace validation: passed.
 - Five aligned signed-in questions: required after deployment to verify actual latency, final answer discipline, exhibits and follow-ups. Private evidence remains outside this public repository.
 
