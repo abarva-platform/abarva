@@ -44,6 +44,7 @@ export type AvaChatShellProps = {
   placeholder?: string;
   agent?: Partial<AgentProfile>;
   layout?: "dock" | "chat-only";
+  chatOnlyFullWidth?: boolean;
   /** Defaults to "side-rail" (always-open, current Intelligence behavior). Pass "collapsed" for a
    * surface where aVa should start as an opt-in floating chip rather than claiming layout space
    * by default. */
@@ -112,6 +113,7 @@ export function AvaChatShell({
   placeholder = "Ask aVa about this enterprise context...",
   agent,
   layout = "dock",
+  chatOnlyFullWidth = false,
   defaultMode = "side-rail",
   collapsedRestoreMode,
   preserveVisibleText = false,
@@ -141,6 +143,7 @@ export function AvaChatShell({
         agent={profile}
         surface={surface}
         layout={layout}
+        chatOnlyFullWidth={chatOnlyFullWidth}
         variant="focused"
         defaultMode={defaultMode}
         collapsedRestoreMode={collapsedRestoreMode}

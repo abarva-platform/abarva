@@ -8,7 +8,7 @@ export function ModelAuthoredMatrix({ chart }: { chart: AnswerChart }) {
       data-chart-renderer="svg-matrix"
       role="group"
       aria-label={chart.title}
-      className="mx-auto max-w-4xl"
+      className="w-full"
     >
       {chart.subtitle && (
         <p className="mb-3 text-sm text-slate-600">{chart.subtitle}</p>

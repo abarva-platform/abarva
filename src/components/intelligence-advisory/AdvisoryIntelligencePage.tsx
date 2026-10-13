@@ -183,6 +183,25 @@ export function AdvisoryIntelligencePage({
     setMessages((c) => [...c, userMsg, assistantMsg]);
     setQuestion("");
     setIsAsking(true);
+    let progressTicks = 0;
+    const progressTimer = window.setInterval(() => {
+      progressTicks += 1;
+      const elapsedSeconds = progressTicks * 10;
+      setMessages((current) =>
+        current.map((message) =>
+          message.id === assistantId &&
+          message.role === "assistant" &&
+          message.status !== "done" &&
+          message.status !== "error" &&
+          !message.answer.trim()
+            ? {
+                ...message,
+                streamStatus: `Still working on this request · about ${elapsedSeconds}s elapsed`,
+              }
+            : message,
+        ),
+      );
+    }, 10_000);
 
     try {
       const response = await fetch("/api/intelligence/ask", {
@@ -253,6 +272,7 @@ export function AdvisoryIntelligencePage({
         ),
       );
     } finally {
+      window.clearInterval(progressTimer);
       setIsAsking(false);
     }
   }
@@ -445,6 +465,7 @@ export function AdvisoryIntelligencePage({
         agent={AVA_INTELLIGENCE_AGENT}
         placeholder="Ask aVa"
         layout="chat-only"
+        chatOnlyFullWidth
         defaultLeftPercent={40}
         minLeftPx={380}
         thread={thread}

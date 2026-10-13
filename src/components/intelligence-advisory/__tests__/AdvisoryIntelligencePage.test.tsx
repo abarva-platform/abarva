@@ -28,6 +28,8 @@ describe("AdvisoryIntelligencePage", () => {
     render(<AdvisoryIntelligencePage viewModel={viewModel} />);
 
     expect(screen.getByTestId("agent-dock-chat-only-shell")).toBeTruthy();
+    expect(screen.getByTestId("agent-dock-panel").style.maxWidth).toBe("none");
+    expect(screen.getByTestId("agent-dock-thread").style.maxWidth).toBe("none");
     expect(screen.queryByTestId("agent-dock-side-rail-shell")).toBeNull();
     expect(screen.getAllByText("Intelligence advisor").length).toBeGreaterThan(
       0,
@@ -212,6 +214,22 @@ describe("AdvisoryIntelligencePage stream chunk boundaries", () => {
       .join("\n");
 
   const LEAK = /change this view|What would|followups|```|"\]/;
+
+  it("shows progress after ten seconds while the answer has no text", async () => {
+    const intervalSpy = jest.spyOn(window, "setInterval");
+    try {
+      const stream = await askFirstStarter();
+      const callback = intervalSpy.mock.calls.find(([, delay]) => delay === 10_000)?.[0];
+      expect(typeof callback).toBe("function");
+      if (typeof callback === "function") {
+        act(() => callback());
+      }
+      expect(agentTurnText()).toContain("about 10s elapsed");
+      await stream.close();
+    } finally {
+      intervalSpy.mockRestore();
+    }
+  });
 
   it("never shows a follow-up payload whose JSON is split across chunks", async () => {
     const stream = await askFirstStarter();
