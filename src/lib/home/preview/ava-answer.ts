@@ -44,10 +44,49 @@ type AvaAnswerBundleSlice = Pick<
     >
   >;
 
-const PROMPT_VERSION = "home-preview-ava-answer-v6";
+const PROMPT_VERSION = "home-preview-ava-answer-v7";
 const CLAUDE_MODEL = "claude-sonnet-5";
-const MAX_TOKENS = 1600;
+// Thinking and visible text share this budget; brevity is enforced separately.
+const MAX_TOKENS = 4096;
 const TIMEOUT_MS = 45_000;
+
+const ANSWER_OUTPUT_FORMAT = {
+  type: "json_schema" as const,
+  schema: {
+    type: "object",
+    properties: {
+      status: { type: "string", enum: ["answered", "partial", "no_data"] },
+      direct_answer: { type: "string" },
+      prose: { type: "string" },
+      key_points: { type: "array", items: { type: "string" } },
+      cited_claim_tags: { type: "array", items: { type: "string" } },
+      visual: {
+        type: "object",
+        properties: {
+          type: { type: "string", enum: ["chart", "table", "none"] },
+          dataset_ref: { type: ["string", "null"] },
+          chart_kind: {
+            type: ["string", "null"],
+            enum: ["bar", "horizontal-bar", null],
+          },
+        },
+        required: ["type", "dataset_ref", "chart_kind"],
+        additionalProperties: false,
+      },
+      caveats: { type: "array", items: { type: "string" } },
+    },
+    required: [
+      "status",
+      "direct_answer",
+      "prose",
+      "key_points",
+      "cited_claim_tags",
+      "visual",
+      "caveats",
+    ],
+    additionalProperties: false,
+  },
+};
 
 const CHAPTER_ABBREV: Record<ChapterId, string> = {
   executive_brief: "EB",
@@ -824,18 +863,38 @@ const DEFAULT_RECOVERY_CAVEAT =
 /** Same fence-stripping tolerance as build-enterprise-thesis.ts's parseJsonLoose -- inlined
  * rather than imported so this route doesn't drag the data-build script's pg/papaparse/fs
  * dependencies into the Next.js server bundle for one small utility function. */
-function parseJsonLoose<T>(text: string, label: string): T | null {
+function parseJsonLoose<T>(
+  text: string,
+  label: string,
+  message?: unknown,
+): T | null {
   const cleaned = text
     .trim()
     .replace(/^```(?:json)?\s*/, "")
     .replace(/\s*```$/, "");
   try {
     return JSON.parse(cleaned) as T;
-  } catch (error) {
-    console.log(
-      `home-preview-ava-answer: ${label}: model response was not valid JSON even after code-fence stripping -- ` +
-        `${error instanceof Error ? error.message : String(error)}; raw text (first 200 chars): ` +
-        JSON.stringify(cleaned.slice(0, 200)),
+  } catch {
+    const metadata = message as
+      | {
+          stop_reason?: unknown;
+          usage?: { output_tokens?: unknown };
+        }
+      | undefined;
+    console.warn(
+      JSON.stringify({
+        event: "home_ava.answer_incomplete",
+        phase: label,
+        textLength: cleaned.length,
+        stopReason:
+          typeof metadata?.stop_reason === "string"
+            ? metadata.stop_reason
+            : null,
+        outputTokens:
+          typeof metadata?.usage?.output_tokens === "number"
+            ? metadata.usage.output_tokens
+            : null,
+      }),
     );
     return null;
   }
@@ -1011,6 +1070,8 @@ export async function answerHomeAvaQuestion(args: {
   const requestPayload = {
     model: CLAUDE_MODEL,
     max_tokens: MAX_TOKENS,
+    thinking: { type: "adaptive" as const, display: "omitted" as const },
+    output_config: { effort: "medium" as const, format: ANSWER_OUTPUT_FORMAT },
     system: SYSTEM_PROMPT,
     messages: [{ role: "user" as const, content: userMessage }],
   };
@@ -1040,6 +1101,7 @@ export async function answerHomeAvaQuestion(args: {
     let parsed = parseJsonLoose<ModelResponseShape>(
       rawText,
       "home-preview-ava-answer",
+      message,
     );
 
     if (!parsed || needsCompactAnswerRepair(parsed, question, context)) {
@@ -1068,6 +1130,7 @@ export async function answerHomeAvaQuestion(args: {
             const repairedMessage = await withTimeout(
               repairClient.messages.create({
                 ...requestPayload,
+                output_config: { effort: "low", format: ANSWER_OUTPUT_FORMAT },
                 messages: [{ role: "user", content: repairMessage }],
               }),
               repairTimeout,
@@ -1075,6 +1138,7 @@ export async function answerHomeAvaQuestion(args: {
             const repaired = parseJsonLoose<ModelResponseShape>(
               extractMessageText(repairedMessage),
               "home-preview-ava-compact-repair",
+              repairedMessage,
             );
             if (
               repaired &&
@@ -1194,13 +1258,15 @@ export async function answerHomeAvaQuestion(args: {
         args.tenantKey,
         question,
         "no_data",
-        "I couldn't produce a grounded answer to that just now -- try rephrasing the question.",
+        "I couldn't complete an answer just now. Please retry; this failure does not determine what your record contains.",
         [],
+        undefined,
+        "answer_unavailable",
       );
     }
 
     return packageModelResponse(parsed, context, args.tenantKey, question);
-  } catch (error) {
+  } catch {
     const recovered = shouldRecoverFromRelevantClaims(question)
       ? buildClaimBackedRecoveryAnswer({
           context,
@@ -1216,9 +1282,10 @@ export async function answerHomeAvaQuestion(args: {
       args.tenantKey,
       question,
       "no_data",
-      "I couldn't reach the advisor engine just now -- please try again in a moment.",
+      "I couldn't complete an answer just now. Please retry; this failure does not determine what your record contains.",
       [],
-      error instanceof Error ? error.message : String(error),
+      undefined,
+      "answer_unavailable",
     );
   }
 }
@@ -2465,6 +2532,15 @@ export function homeAvaAnswerFollowUpQuestions(
         ? "What do the cited summaries establish, and which requested connections remain unverified?"
         : "Which records would provide source evidence for the requested connections?",
     ];
+  } else if (/\b(?:charter(?:ing)?|discovery)\b/i.test(answer.question)) {
+    candidates = [
+      "Which cited business priorities support this opportunity, and what could change its priority?",
+      "What baseline and evidence are needed before chartering discovery?",
+      /\b(?:self-service|deflection)\b/i.test(answer.question) &&
+      /\bagent assist\b/i.test(answer.question)
+        ? "How should we assess successful self-service resolution and Agent Assist separately?"
+        : "Which accountable owners and dependencies should discovery verify first?",
+    ];
   } else {
     const topics: Record<string, string> = {
       enterprise_profile: "enterprise context",
@@ -2516,6 +2592,7 @@ function buildFallbackPacket(
   directAnswer: string,
   citations: AvaCitation[],
   errorDetail?: string,
+  failureKind: "evidence_limit" | "answer_unavailable" = "evidence_limit",
 ): AvaAnswerPacket {
   return {
     surface: "home",
@@ -2533,8 +2610,14 @@ function buildFallbackPacket(
     gaps: [
       {
         id: "home-ava-gap-1",
-        label: "Evidence limit",
-        detail: "No cited Home evidence supports the requested answer.",
+        label:
+          failureKind === "answer_unavailable"
+            ? "Answer unavailable"
+            : "Evidence limit",
+        detail:
+          failureKind === "answer_unavailable"
+            ? "The response could not be completed. Supporting evidence has not been assessed by this failed response."
+            : "No cited Home evidence supports the requested answer.",
         severity: "high",
       },
     ],

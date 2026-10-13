@@ -1811,8 +1811,8 @@ describe("answerHomeAvaQuestion", () => {
     });
 
     expect(answer.status).toBe("no_data");
-    expect(
-      answer.caveats.some((c) => c.detail.includes("no ANTHROPIC_API_KEY")),
-    ).toBe(true);
+    expect(answer.gaps[0].label).toBe("Answer unavailable");
+    expect(answer.gaps[0].detail).not.toContain("No cited Home evidence");
+    expect(JSON.stringify(answer)).not.toContain("ANTHROPIC_API_KEY");
   });
 });
