@@ -887,7 +887,7 @@ describe("Source workspace ECL browser-surface proof", () => {
     const drawer = screen.getByRole("complementary", {
       name: "Action details",
     });
-    expect(drawer.textContent).toContain("Calculation basis needed");
+    expect(drawer.textContent).toContain("Value not quantified");
     expect(
       within(drawer).getByRole("button", { name: "Review missing inputs" }),
     ).toBeTruthy();

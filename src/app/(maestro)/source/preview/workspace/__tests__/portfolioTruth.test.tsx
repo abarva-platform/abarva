@@ -106,7 +106,7 @@ describe("Command evidence review", () => {
       .getByText("Next contract action")
       .closest(".sw-v2-metric") as HTMLElement;
     expect(tile.textContent).toContain(
-      "Agreement passages and calculation basis needed",
+      "Agreement passages needed. Value not quantified",
     );
     expect(tile.textContent).not.toMatch(
       /consum|Commitment at risk|Not established/i,
@@ -153,7 +153,7 @@ describe("Command evidence review", () => {
     expect(
       screen.getByText(/Contract evidence coverage needs review/),
     ).toBeTruthy();
-    expect(screen.queryByText(/Agreement passages and/)).toBeNull();
+    expect(screen.queryByText(/Agreement passages needed/)).toBeNull();
   });
 
   it("does not call a negated readiness state ready or let approval substitute for readiness", () => {
@@ -181,6 +181,40 @@ describe("Command evidence review", () => {
     );
     expect(screen.queryByText(/^[1-9]\d* ready$/)).toBeNull();
     expect(screen.getByText("Review required")).toBeTruthy();
+  });
+
+  it("recognizes the projection's ready-to-act state", () => {
+    render(
+      <SourceCommandKpiStrip
+        portfolio={basePortfolio([], [
+          { ...reviewCandidate, readiness_state: "ready_to_act" },
+          { ...reviewCandidate, action_candidate_id: "OPT-2" },
+        ])}
+        totalAnnualValue={null}
+        creditFinding={0}
+      />,
+    );
+    expect(screen.getByText("1 ready")).toBeTruthy();
+  });
+
+  it("does not treat an unsized diagnostic as proof that its calculation basis is missing", () => {
+    render(
+      <SourceCommandKpiStrip
+        portfolio={basePortfolio(
+          [{ contract_id: "C1", document_page_text_rows: 4 }],
+          [
+            {
+              ...reviewCandidate,
+              deterministic_basis: "Cited change-order diagnostic ratio.",
+            },
+          ],
+        )}
+        totalAnnualValue={null}
+        creditFinding={0}
+      />,
+    );
+    expect(screen.queryByText(/Calculation basis needed/)).toBeNull();
+    expect(screen.getByText(/Value not quantified/)).toBeTruthy();
   });
 
   it("keeps a sized candidate distinct from realized value and opens its action", () => {

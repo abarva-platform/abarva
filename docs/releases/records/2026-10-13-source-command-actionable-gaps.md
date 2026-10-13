@@ -37,11 +37,13 @@ The Source Command view no longer presents a generic contract-review candidate a
 - Unsized queue rows are labelled as evidence review rather than an unexplained absent amount.
 - Readiness counts match explicit readiness states only; authority alone cannot substitute for readiness.
 - Unknown evidence coverage remains unknown, rather than becoming a missing-document count.
+- An unsized diagnostic is labelled as unquantified, not as proof that its calculation basis is missing.
 
 ## QA / Validation
 
 - Red-first: the two focused suites failed seven new assertions before implementation.
-- Green: all 40 workspace suites and 409 tests pass, including the focused KPI and actual parent-shell rendering cases.
+- Green: all 40 workspace suites and 411 tests pass, including the focused KPI and actual parent-shell rendering cases.
+- Review follow-up: two additional red-first cases pin the projection's `ready_to_act` state and prevent an unsized diagnostic from being described as a missing calculation basis.
 - Mutation proof: removing the parent's navigation callback fails the browser-surface suite; restoring substring readiness matching and approval-as-readiness fails the readiness regression case. Both mutations were restored.
 - Targeted ESLint: zero errors, one pre-existing unused-variable warning outside the changed behavior.
 - TypeScript with Node 24: zero errors. All eleven release checks pass.

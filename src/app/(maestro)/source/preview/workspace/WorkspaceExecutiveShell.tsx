@@ -404,15 +404,14 @@ function commandActionInputGap(
 ) {
   if (!coverage)
     return numberFromDb(candidate.candidate_amount_usd) == null
-      ? "Contract evidence coverage needs review. Calculation basis needed"
+      ? "Contract evidence coverage needs review. Value not quantified"
       : "Contract evidence coverage needs review";
   const agreementMissing = numberFromDb(coverage.document_page_text_rows) === 0;
-  const calculationMissing =
-    numberFromDb(candidate.candidate_amount_usd) == null;
-  if (agreementMissing && calculationMissing)
-    return "Agreement passages and calculation basis needed";
+  const unsized = numberFromDb(candidate.candidate_amount_usd) == null;
+  if (agreementMissing && unsized)
+    return "Agreement passages needed. Value not quantified";
   if (agreementMissing) return "Agreement passages needed";
-  if (calculationMissing) return "Calculation basis needed";
+  if (unsized) return "Value not quantified";
   return "Review cited inputs and decision authority";
 }
 
@@ -1409,7 +1408,7 @@ export function SourceCommandKpiStrip({
   const actionAmount = numberFromDb(commitmentRow?.candidate_amount_usd);
   const decisionRows = focusedActionSet(portfolio);
   const readyRows = portfolio.impact.actionCandidates.filter((row) =>
-    /^(ready|decision_ready|approved|complete)$/i.test(
+    /^(ready|ready_to_act|decision_ready|approved|complete)$/i.test(
       row.readiness_state ?? "",
     ),
   ).length;
