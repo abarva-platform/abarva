@@ -14,6 +14,37 @@ const mockGetAuditedAnthropicClient =
     typeof getAuditedAnthropicClient
   >;
 
+it("rehydrates prior claim references from this record without accepting unknown references", async () => {
+  mockClaudeJson({
+    status: "answered",
+    direct_answer: "Value proof is incomplete.",
+    prose: "Only 23 of 50 tracked metrics are claimable or ready.",
+    cited_claim_tags: ["PV-K1"],
+    visual: { type: "none", dataset_ref: null },
+    caveats: [],
+  });
+  await answerHomeAvaQuestion({
+    bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+    tenantKey: CANONICAL_TENANT_KEYS[0],
+    question: "Why does that matter to the CFO?",
+    conversation: [
+      {
+        question: "Tell me about the technology estate",
+        citedClaimTags: ["TD-K1", "FAKE-OLD-CLAIM"],
+      },
+    ],
+  });
+  const prompt = mockGetAuditedAnthropicClient.mock.calls[0][0].prompt;
+  const intent = JSON.parse(
+    prompt.match(/Conversation intent \(JSON\):\n([\s\S]*?)\n\nContext/)![1],
+  );
+  expect(intent[0].question).toBe("Tell me about the technology estate");
+  expect(intent[0].cited_claims).toEqual([
+    { tag: "TD-K1", statement: CHAPTERS[0].key_insights[0].statement },
+  ]);
+  expect(prompt).not.toContain("FAKE-OLD-CLAIM");
+});
+
 function mockClaudeJson(payload: unknown) {
   mockGetAuditedAnthropicClient.mockResolvedValue({
     client: {
@@ -27,6 +58,27 @@ function mockClaudeJson(payload: unknown) {
     dataClass: "confidential",
   } as never);
 }
+
+it("does not append an inventory table to a qualitative executive readout", async () => {
+  mockClaudeJson({
+    status: "answered",
+    direct_answer: "Value proof is incomplete.",
+    prose: "Only 23 of 50 tracked metrics are claimable or ready.",
+    cited_claim_tags: ["PV-K1"],
+    visual: {
+      type: "table",
+      dataset_ref: "tech.application_system.by_businessFunction",
+    },
+    caveats: [],
+  });
+  const answer = await answerHomeAvaQuestion({
+    bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+    tenantKey: CANONICAL_TENANT_KEYS[0],
+    question: "Talk to me about the current state of data analytics",
+  });
+  expect(answer.artifacts).toEqual([]);
+  expect(answer.citations).not.toHaveLength(0);
+});
 
 const CHAPTERS: ChapterView[] = [
   {
@@ -201,27 +253,41 @@ describe("answerHomeAvaQuestion", () => {
     ["reviewed_snapshot", "Reviewed stored record"],
     ["reviewed_snapshot_fallback", "Reviewed stored record fallback"],
     ["ecl_serving_projection", "Live governed rows"],
-  ] as const)("answers conversational counts using the actual %s source", async (kind, label) => {
-    const answer = await answerHomeAvaQuestion({
-      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
-      tenantKey: CANONICAL_TENANT_KEYS[0],
-      recordSource: { kind, canonicalSnapshotHash: "record-count-version-test" },
-      question: "For the record currently on screen, how many vendor contracts and data assets/integrations are available? State the record source. Use two short bullets; do not substitute another assessment or version.",
-    });
-    expect(mockGetAuditedAnthropicClient).not.toHaveBeenCalled();
-    expect(answer.status).toBe("answered");
-    expect(answer.directAnswer).toBe(`Record on screen: ${label}.`);
-    expect(answer.prose).toBe("- Vendor Contracts: 230 rows.\n- Data Assets & Integrations: 1710 rows.");
-    expect(answer.citations).toHaveLength(2);
-    expect(answer.citations.every((citation) => citation.recordId === "record-count-version-test")).toBe(true);
-    expect(validateAvaAnswerPacket(answer).passed).toBe(true);
-  });
+  ] as const)(
+    "answers conversational counts using the actual %s source",
+    async (kind, label) => {
+      const answer = await answerHomeAvaQuestion({
+        bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        recordSource: {
+          kind,
+          canonicalSnapshotHash: "record-count-version-test",
+        },
+        question:
+          "For the record currently on screen, how many vendor contracts and data assets/integrations are available? State the record source. Use two short bullets; do not substitute another assessment or version.",
+      });
+      expect(mockGetAuditedAnthropicClient).not.toHaveBeenCalled();
+      expect(answer.status).toBe("answered");
+      expect(answer.directAnswer).toBe(`Record on screen: ${label}.`);
+      expect(answer.prose).toBe(
+        "- Vendor Contracts: 230 rows.\n- Data Assets & Integrations: 1710 rows.",
+      );
+      expect(answer.citations).toHaveLength(2);
+      expect(
+        answer.citations.every(
+          (citation) => citation.recordId === "record-count-version-test",
+        ),
+      ).toBe(true);
+      expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+    },
+  );
 
   it("does not invent a record source when only counts are available", async () => {
     const answer = await answerHomeAvaQuestion({
       bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
       tenantKey: CANONICAL_TENANT_KEYS[0],
-      question: "How many vendor contracts are currently available? State the record source.",
+      question:
+        "How many vendor contracts are currently available? State the record source.",
     });
     expect(mockGetAuditedAnthropicClient).not.toHaveBeenCalled();
     expect(answer.status).toBe("partial");
@@ -234,15 +300,24 @@ describe("answerHomeAvaQuestion", () => {
     "How many critical vendor contracts are currently available? Use two short bullets.",
     "How many vendor contracts are available and why are they our biggest exposure? State the record source.",
     "How many vendor contracts were added since last quarter? Use two short bullets.",
-  ])("does not replace a filtered, interpretive or historical question with a total: %s", async (question) => {
-    mockClaudeJson({ status: "no_data", direct_answer: "Unknown", cited_claim_tags: [],
-      visual: { type: "none" }, caveats: ["Requested basis is not established."] });
-    await answerHomeAvaQuestion({
-      bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
-      tenantKey: CANONICAL_TENANT_KEYS[0], question,
-    });
-    expect(mockGetAuditedAnthropicClient).toHaveBeenCalled();
-  });
+  ])(
+    "does not replace a filtered, interpretive or historical question with a total: %s",
+    async (question) => {
+      mockClaudeJson({
+        status: "no_data",
+        direct_answer: "Unknown",
+        cited_claim_tags: [],
+        visual: { type: "none" },
+        caveats: ["Requested basis is not established."],
+      });
+      await answerHomeAvaQuestion({
+        bundle: { chapters: CHAPTERS, technologyEstate: TECHNOLOGY_ESTATE },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question,
+      });
+      expect(mockGetAuditedAnthropicClient).toHaveBeenCalled();
+    },
+  );
 
   it("does not treat unique vendors or spend as family row counts", async () => {
     mockClaudeJson({

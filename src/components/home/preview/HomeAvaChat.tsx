@@ -1,12 +1,19 @@
 "use client";
 
-import { type ReactNode, useCallback, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { AvaChatShell } from "@/components/ava-chat/AvaChatShell";
 import type { ChatMessage } from "@/components/agent/AgentDock";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import type { AskSource } from "@/lib/intelligence/ask/types";
 import type { HomeRecordRenderSource } from "@/lib/home/preview/types";
+import type { HomeConversationTurn } from "@/lib/home/preview/conversation";
 
 let messageCounter = 0;
 function nextMessageId(prefix: string): string {
@@ -40,12 +47,49 @@ export function HomeAvaChat({
 }) {
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const [isBusy, setIsBusy] = useState(false);
+  const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([]);
+  const requestRef = useRef<AbortController | null>(null);
+  const recordIdentity = JSON.stringify([
+    tenantKey,
+    requestedProvider,
+    recordSource,
+  ]);
+
+  useEffect(() => {
+    requestRef.current?.abort();
+    requestRef.current = null;
+    setThread([]);
+    setFollowUpQuestions([]);
+    setIsBusy(false);
+    return () => requestRef.current?.abort();
+  }, [recordIdentity]);
 
   const handleMessage = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
-      if (!trimmed) return;
+      if (!trimmed || requestRef.current) return;
+      const controller = new AbortController();
+      requestRef.current = controller;
       onQuestion?.(trimmed);
+      const conversation: HomeConversationTurn[] = [];
+      for (let index = 0; index < thread.length - 1; index += 1) {
+        const turn = thread[index];
+        const reply = thread[index + 1];
+        if (
+          turn.role === "user" &&
+          reply.role === "agent" &&
+          reply.agentAnswer
+        ) {
+          conversation.push({
+            question: turn.body.slice(0, 1200),
+            citedClaimTags: (reply.agentAnswer.citations ?? [])
+              .map((citation) => citation.id)
+              .filter((id) => typeof id === "string" && id.length <= 80)
+              .slice(0, 12),
+          });
+        }
+      }
+      setFollowUpQuestions([]);
 
       setThread((prev) => [
         ...prev,
@@ -62,14 +106,18 @@ export function HomeAvaChat({
         const res = await fetch("/api/home/preview/ask", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
           body: JSON.stringify({
             tenantKey,
             question: trimmed,
             activeChapterId,
             requestedProvider,
             expectedRecordSource: recordSource,
+            conversation: conversation.slice(-4),
           }),
         });
+        if (requestRef.current !== controller || controller.signal.aborted)
+          return;
         if (res.status === 409) {
           setThread((prev) => [
             ...prev,
@@ -94,8 +142,18 @@ export function HomeAvaChat({
           ]);
           return;
         }
-        const data = (await res.json()) as { answer: AvaAnswerPacket };
+        const data = (await res.json()) as {
+          answer: AvaAnswerPacket;
+          followUpQuestions?: string[];
+        };
+        if (requestRef.current !== controller || controller.signal.aborted)
+          return;
         const answer = data.answer;
+        setFollowUpQuestions(
+          (data.followUpQuestions ?? [])
+            .filter((item) => typeof item === "string" && item.trim())
+            .slice(0, 3),
+        );
         const sourceDate =
           recordSource.contextVersion?.sourceDateCoverage?.latest;
         const citations: AskSource[] = (answer.citations ?? []).map(
@@ -122,6 +180,8 @@ export function HomeAvaChat({
           },
         ]);
       } catch {
+        if (controller.signal.aborted || requestRef.current !== controller)
+          return;
         setThread((prev) => [
           ...prev,
           {
@@ -132,10 +192,20 @@ export function HomeAvaChat({
           },
         ]);
       } finally {
-        setIsBusy(false);
+        if (requestRef.current === controller) {
+          requestRef.current = null;
+          setIsBusy(false);
+        }
       }
     },
-    [tenantKey, activeChapterId, recordSource, requestedProvider, onQuestion],
+    [
+      tenantKey,
+      activeChapterId,
+      recordSource,
+      requestedProvider,
+      onQuestion,
+      thread,
+    ],
   );
 
   return (
@@ -161,6 +231,13 @@ export function HomeAvaChat({
       onMessage={handleMessage}
       canvas={children}
       isBusy={isBusy}
+      suggestedActions={followUpQuestions.map((question, index) => ({
+        id: `home-follow-up-${index + 1}`,
+        label: question,
+        body: question,
+      }))}
+      keepSuggestedActionsVisible
+      transcriptScroll="answer-start"
     />
   );
 }

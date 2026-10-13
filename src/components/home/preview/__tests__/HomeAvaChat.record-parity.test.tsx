@@ -13,18 +13,37 @@ jest.mock("@/components/ava-chat/AvaChatShell", () => ({
   AvaChatShell: ({
     thread,
     onMessage,
+    suggestedActions = [],
+    keepSuggestedActionsVisible,
+    transcriptScroll,
   }: {
     thread: ChatMessage[];
     onMessage: (text: string) => Promise<void>;
+    suggestedActions?: Array<{ label: string; body: string }>;
+    keepSuggestedActionsVisible?: boolean;
+    transcriptScroll?: string;
   }) => (
     <div>
       <button onClick={() => void onMessage("What is on screen?")}>Ask</button>
+      <button onClick={() => void onMessage("What should the CFO prioritize?")}>
+        Ask follow-up
+      </button>
+      <span data-testid="home-scroll-policy">
+        {transcriptScroll} | {String(keepSuggestedActionsVisible)}
+      </span>
+      {suggestedActions.map((action) => (
+        <button key={action.label} onClick={() => void onMessage(action.body)}>
+          {action.label}
+        </button>
+      ))}
       {thread.map((message) => (
         <p key={message.id}>
           {message.body}
           {message.role === "agent" ? (
             <span data-testid="home-answer-metadata">
-              {message.agentAnswer?.directAnswer ?? ""} | {message.citations?.[0]?.name ?? ""} | {message.citations?.[0]?.detail ?? ""}
+              {message.agentAnswer?.directAnswer ?? ""} |{" "}
+              {message.citations?.[0]?.name ?? ""} |{" "}
+              {message.citations?.[0]?.detail ?? ""}
             </span>
           ) : null}
         </p>
@@ -60,6 +79,81 @@ const originalFetch = global.fetch;
 
 beforeEach(() => {
   global.fetch = jest.fn();
+});
+
+it("keeps three clickable follow-ups and sends only prior question intent and citation refs", async () => {
+  const fetchMock = jest.mocked(global.fetch).mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      answer: {
+        directAnswer: "Recorded analytics maturity is below target.",
+        citations: [{ id: "TD-K1", label: "Maturity evidence" }],
+      },
+      followUpQuestions: [
+        "What matters first?",
+        "What should we verify?",
+        "How does this affect value?",
+      ],
+    }),
+  } as Response);
+  render(
+    <HomeAvaChat tenantKey="meridian-health" recordSource={recordSource}>
+      <div>Home</div>
+    </HomeAvaChat>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+  expect(
+    await screen.findByRole("button", { name: "What matters first?" }),
+  ).toBeInTheDocument();
+  expect(screen.getByTestId("home-scroll-policy")).toHaveTextContent(
+    "answer-start | true",
+  );
+  fireEvent.click(screen.getByRole("button", { name: "What matters first?" }));
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  const body = JSON.parse(String(fetchMock.mock.calls[1][1]?.body));
+  expect(body.conversation).toEqual([
+    { question: "What is on screen?", citedClaimTags: ["TD-K1"] },
+  ]);
+  expect(body).not.toHaveProperty("history");
+  expect(JSON.stringify(body.conversation)).not.toContain(
+    "Recorded analytics maturity",
+  );
+});
+
+it("clears conversation and suggestions when the selected record changes", async () => {
+  const fetchMock = jest.mocked(global.fetch).mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      answer: { directAnswer: "Old record answer." },
+      followUpQuestions: ["Old follow-up?"],
+    }),
+  } as Response);
+  const { rerender } = render(
+    <HomeAvaChat tenantKey="meridian-health" recordSource={recordSource}>
+      <div>Home</div>
+    </HomeAvaChat>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+  await screen.findByRole("button", { name: "Old follow-up?" });
+  rerender(
+    <HomeAvaChat
+      tenantKey="meridian-health"
+      recordSource={{ ...recordSource, canonicalSnapshotHash: "new-record" }}
+    >
+      <div>Home</div>
+    </HomeAvaChat>,
+  );
+  expect(
+    screen.queryByRole("button", { name: "Old follow-up?" }),
+  ).not.toBeInTheDocument();
+  expect(screen.queryByText("Old record answer.")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  expect(
+    JSON.parse(String(fetchMock.mock.calls[1][1]?.body)).conversation,
+  ).toEqual([]);
 });
 
 afterEach(() => {
