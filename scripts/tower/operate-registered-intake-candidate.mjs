@@ -482,7 +482,7 @@ export async function physicalMeasures(client, candidate, receipt) {
   return { cost_rows: cost.length, adoption_rows: adoption.length, outcome_rows: outcomes.length, gaps: [...new Set(gaps)] };
 }
 
-async function generationFingerprints(client, tenant, assessment, version) {
+async function generationFingerprints(client, tenant, assessment, version, sortForReceipt = false) {
   const result = {};
   for (const [page, [table, column]] of Object.entries(version >= 6 ? PAGES : LEGACY_PAGES)) {
     const predicate = column === "page_key"
@@ -492,9 +492,19 @@ async function generationFingerprints(client, tenant, assessment, version) {
       `select row_key, source_hash from ecl_projection.${table} where tenant_key=$1 and assessment_id=$2 and projection_version=$3 and ${predicate} order by row_key, source_hash`,
       [tenant, assessment, version, page],
     )).rows;
-    result[page] = { rows: rows.length, fingerprint_sha256: digest(JSON.stringify(rows)) };
+    const ordered = sortForReceipt ? rows.toSorted((left, right) =>
+      left.row_key.localeCompare(right.row_key) || left.source_hash.localeCompare(right.source_hash)) : rows;
+    result[page] = { rows: rows.length, fingerprint_sha256: digest(JSON.stringify(ordered)) };
   }
   return result;
+}
+
+export function validateRollbackCandidateGeneration(fingerprints, receipt) {
+  if (Object.keys(fingerprints).length !== Object.keys(receipt.view_counts).length ||
+      Object.entries(fingerprints).some(([page, value]) => value.rows !== receipt.view_counts[page] ||
+        value.fingerprint_sha256 !== receipt.view_fingerprints[page])) {
+    throw new Error("rollback_candidate_generation_changed");
+  }
 }
 
 async function inspect(client, candidate, receipt, options = {}) {
@@ -628,7 +638,7 @@ async function promote(client, candidate, receipt, reviewed, approvalRef) {
   }
 }
 
-async function rollback(client, proof, approvalRef) {
+async function rollback(client, proof, approvalRef, receipt) {
   await client.query("begin isolation level serializable");
   try {
     await setTenant(client, proof.tenant_key);
@@ -640,6 +650,9 @@ async function rollback(client, proof, approvalRef) {
         state.resolved.length !== 1 || state.resolved[0].assessment_id !== proof.promoted.assessment_id || Number(state.resolved[0].projection_version) !== proof.promoted.projection_version) throw new Error("rollback_pointer_state_changed");
     const oldFingerprints = await generationFingerprints(client, proof.tenant_key, proof.prior_active.assessment_id, proof.prior_active.projection_version);
     if (JSON.stringify(oldFingerprints) !== JSON.stringify(proof.prior_view_fingerprints)) throw new Error("rollback_prior_generation_changed");
+    const candidateFingerprints = await generationFingerprints(client, proof.tenant_key,
+      proof.promoted.assessment_id, proof.promoted.projection_version, true);
+    validateRollbackCandidateGeneration(candidateFingerprints, receipt);
     const retired = await client.query(
       "update ecl_projection.tower_assessment_lifecycle set state='retired', retired_at=now() where tenant_key=$1 and assessment_id=$2 and projection_version=$3 and state='active'",
       [proof.tenant_key, proof.promoted.assessment_id, proof.promoted.projection_version],
@@ -679,14 +692,25 @@ async function main() {
   await client.connect();
   try {
     if (options.mode === "rollback") {
-      if (!options.promotionPath || !options.expectedProofSha || !options.approvalRef) throw new Error("Rollback requires promotion proof, exact proof SHA-256, and approval reference");
+      if (!options.receiptPath || !options.promotionPath || !options.expectedProofSha || !options.approvalRef) {
+        throw new Error("Rollback requires stage receipt, promotion proof, exact proof SHA-256, and approval reference");
+      }
       const bytes = fs.readFileSync(options.promotionPath);
       if (digest(bytes) !== options.expectedProofSha) throw new Error("promotion_proof_hash_mismatch");
       const proof = JSON.parse(bytes);
-      if (proof.contract_version !== "tower-candidate-promotion/v1" || proof.status !== "promoted" || proof.tenant_key !== candidate.tenant_key || proof.candidate_file_sha256 !== digest(candidateBytes)) throw new Error("promotion_proof_identity_mismatch");
+      if (proof.contract_version !== "tower-candidate-promotion/v1" || proof.status !== "promoted" ||
+          proof.tenant_key !== candidate.tenant_key || proof.candidate_file_sha256 !== digest(candidateBytes) ||
+          proof.stage_receipt_sha256 !== digest(receiptBytes) ||
+          proof.input_fingerprint_sha256 !== candidate.input_fingerprint_sha256 ||
+          proof.promoted?.assessment_id !== candidate.assessment_id ||
+          proof.promoted?.projection_version !== receipt.projection_version ||
+          !proof.prior_active?.assessment_id || !Number.isInteger(proof.prior_active?.projection_version) ||
+          !proof.prior_view_fingerprints || typeof proof.prior_view_fingerprints !== "object") {
+        throw new Error("promotion_proof_identity_mismatch");
+      }
       if (options.approvalRef !== proof.approval_ref) throw new Error("rollback_approval_reference_mismatch");
       writeProof(options.outPath, { contract_version: "tower-candidate-rollback/v1", status: "rollback_pending", tenant_key: proof.tenant_key, prior_active: proof.prior_active, approval_ref: options.approvalRef });
-      await rollback(client, proof, options.approvalRef);
+      await rollback(client, proof, options.approvalRef, receipt);
       writeProof(options.outPath, { contract_version: "tower-candidate-rollback/v1", status: "rolled_back", tenant_key: proof.tenant_key, prior_active: proof.prior_active, approval_ref: options.approvalRef });
       return;
     }

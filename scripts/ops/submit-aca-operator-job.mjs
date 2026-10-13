@@ -154,7 +154,7 @@ function assertScript(script) {
 
 function assertTowerStageJobBinding(options) {
   if (["tower:registered-intake:preflight-job", "tower:registered-intake:promote-job",
-    "tower:registered-intake:verify-job"].includes(options.script)) {
+    "tower:registered-intake:verify-job", "tower:registered-intake:rollback-job"].includes(options.script)) {
     const entries = options.env.map((value) => splitKeyValue(value, "--env"));
     const overrides = new Map(entries);
     for (const key of ["TOWER_PROMOTION_IMAGE_DIGEST", "TOWER_PROMOTION_JOB_NAME",
