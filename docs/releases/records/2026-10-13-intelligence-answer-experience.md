@@ -39,6 +39,7 @@ Intelligence now gives a visible progress update while a response is being prepa
 - Scoped Jest: passed, 44 tests across six suites; the page suite was rerun after removing the quality-review panel.
 - TypeScript `tsc --noEmit`: passed.
 - `git diff --check`: passed.
+- Route reachability check: passed after removing the unused quality-review component.
 - Live signed-in answer generation remains to be validated after deployment.
 
 ## Rollout Plan
