@@ -1952,6 +1952,7 @@ jobs:
           npx jest --runTestsByPath
           src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx
           src/components/agent-answer/__tests__/AvaAskMark.assets.test.ts
+          src/components/agent-answer/__tests__/ExecutiveReadingView.test.tsx
           src/components/agent-answer/__tests__/ModelAuthoredExhibits.test.tsx
           src/components/context-broker/__tests__/ContextAssembledPanel.test.tsx
           src/components/context-broker/__tests__/ModeToggle.test.tsx

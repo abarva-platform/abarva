@@ -16,6 +16,7 @@ Intelligence shows a concise initial reading view and lets the executive open th
 
 - Release lane: `global-control-lane`.
 - Products: Intelligence opts into a presentation budget in the shared chat dock. Model-authored metadata decoding and source display also change.
+- Release validation: The new behavioral test is registered and wired by named file, including the required coverage job. Existing held test rows remain held.
 - No intake, adapter, canonical model, retrieval dataset or client data changes.
 
 ## Client Applicability
@@ -33,11 +34,13 @@ Intelligence shows a concise initial reading view and lets the executive open th
 - The complete analysis opens locally without another model call. The disclosure is withheld while generation is in progress.
 - Source titles, supplied context records and excerpts remain accessible outside the folded analysis.
 - Only exact source-alias arrays and three question strings qualify for generic JSON metadata decoding. Ordinary JSON and unsupported exhibits stay reviewable.
+- The test inventory and generated coverage census include the new live renderer test; no validation threshold is reduced.
 
 ## QA / Validation
 
 - Compact reading, metadata, native exhibits, dock and page tests: 39 tests across seven suites passed locally, including complete opportunity-brief fit and oversized table-only/code-only openings.
 - TypeScript, scoped lint, export reachability and whitespace checks: passed. Release checks: all 11 gates passed.
+- Named test inventory and coverage-census checks: 71 tests across two suites passed. Required-job audit: passed. The new renderer's two behavioral cases run in the required coverage job.
 - Five signed-in pressure questions plus expansion and follow-up click: not-run on this candidate; required after deployment.
 
 ## Rollout Plan
