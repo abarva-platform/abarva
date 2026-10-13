@@ -377,7 +377,7 @@ function actionText(candidate: SourceContractActionCandidateRow) {
     .join(" ");
 }
 
-function primaryCommitmentAction(portfolio: SourceWorkspacePortfolioData) {
+function primaryCommandAction(portfolio: SourceWorkspacePortfolioData) {
   const rows = [...portfolio.impact.actionCandidates].sort((left, right) => {
     const leftCommit = /commit|notice|renew|ramp|consumption|usage/i.test(
       actionText(left),
@@ -396,6 +396,24 @@ function primaryCommitmentAction(portfolio: SourceWorkspacePortfolioData) {
     );
   });
   return rows[0] ?? null;
+}
+
+function commandActionInputGap(
+  candidate: SourceContractActionCandidateRow,
+  coverage: SourceContractEvidenceCoverageRow | null,
+) {
+  if (!coverage)
+    return numberFromDb(candidate.candidate_amount_usd) == null
+      ? "Contract evidence coverage needs review. Calculation basis needed"
+      : "Contract evidence coverage needs review";
+  const agreementMissing = numberFromDb(coverage.document_page_text_rows) === 0;
+  const calculationMissing =
+    numberFromDb(candidate.candidate_amount_usd) == null;
+  if (agreementMissing && calculationMissing)
+    return "Agreement passages and calculation basis needed";
+  if (agreementMissing) return "Agreement passages needed";
+  if (calculationMissing) return "Calculation basis needed";
+  return "Review cited inputs and decision authority";
 }
 
 function actionSequenceRank(candidate: SourceContractActionCandidateRow) {
@@ -1228,6 +1246,7 @@ export function WorkspaceExecutiveShell({
             portfolio={portfolio}
             totalAnnualValue={totalAnnualValue}
             creditFinding={creditFinding}
+            onOpenContract={openContract}
           />
         )}
 
@@ -1375,38 +1394,23 @@ export function SourceCommandKpiStrip({
   portfolio,
   totalAnnualValue,
   creditFinding,
+  onOpenContract,
 }: {
   portfolio: SourceWorkspacePortfolioData;
   totalAnnualValue: number | null;
   creditFinding: number;
+  onOpenContract?: (contractId: string, tab?: string) => void;
 }) {
   const topVendorShare = topVendorShareLabel(portfolio, totalAnnualValue);
-  const commitmentRow = primaryCommitmentAction(portfolio);
+  const commitmentRow = primaryCommandAction(portfolio);
   const commitmentCoverage = commitmentRow
     ? coverageForContract(portfolio, commitmentRow.contract_id)
     : null;
-  const commitmentContract = commitmentRow
-    ? contractById(portfolio, commitmentRow.contract_id)
-    : null;
-  const committedAmount =
-    numberFromDb(commitmentCoverage?.committed_spend_usd) ??
-    numberFromDb(commitmentContract?.total_committed_value) ??
-    numberFromDb(commitmentContract?.committed_annual_spend);
-  const actualAmount =
-    numberFromDb(commitmentCoverage?.actual_spend_usd) ??
-    numberFromDb(commitmentContract?.actual_annual_spend);
-  // A percentage or nothing — never a refusal phrase, because the caller sets
-  // it into a sentence that ends in "consumed". Carrying the refusal as a
-  // string produced "Databricks, Inc. · Usage not established consumed" on the
-  // command tile.
-  const utilizationPercent =
-    committedAmount && committedAmount > 0 && actualAmount != null
-      ? `${Math.round((actualAmount / committedAmount) * 1000) / 10}%`
-      : null;
+  const actionAmount = numberFromDb(commitmentRow?.candidate_amount_usd);
   const decisionRows = focusedActionSet(portfolio);
   const readyRows = portfolio.impact.actionCandidates.filter((row) =>
-    /ready|approved|complete/i.test(
-      `${row.readiness_state ?? ""} ${row.authority_state ?? ""}`,
+    /^(ready|decision_ready|approved|complete)$/i.test(
+      row.readiness_state ?? "",
     ),
   ).length;
   const financeBlockedRows = portfolio.impact.actionCandidates.filter(
@@ -1426,14 +1430,35 @@ export function SourceCommandKpiStrip({
         note={`${portfolio.contracts.length} contracts · ${portfolio.vendors.length} vendors · top 3 vendors ${topVendorShare}`}
       />
       <Metric
-        label="Commitment at risk"
-        value={impactCreditMoney(commitmentRow?.candidate_amount_usd)}
+        label="Next contract action"
+        value={
+          commitmentRow
+            ? actionAmount == null
+              ? "Review evidence"
+              : impactCreditMoney(actionAmount)
+            : "Not loaded"
+        }
         note={
           commitmentRow
-            ? `${safeVendorDisplayName(commitmentRow.vendor_name, commitmentRow.vendor_ref)}${utilizationPercent ? ` · ${utilizationPercent} consumed` : " · consumption against commitment not established"}`
-            : "No commitment-timing action is loaded."
+            ? `${safeVendorDisplayName(commitmentRow.vendor_name, commitmentRow.vendor_ref)} · ${actionAmount == null ? commandActionInputGap(commitmentRow, commitmentCoverage) : "Candidate value, not realized savings"}`
+            : "No contract action is loaded."
         }
         tone={commitmentRow ? "warn" : undefined}
+        action={
+          commitmentRow && onOpenContract
+            ? {
+                label:
+                  actionAmount == null
+                    ? "Review missing inputs"
+                    : "Review candidate action",
+                onClick: () =>
+                  onOpenContract(
+                    commitmentRow.contract_id,
+                    actionAmount == null ? "Evidence" : "Optimize",
+                  ),
+              }
+            : undefined
+        }
       />
       {/*
         No credit row loaded is not a credit of zero.
@@ -1455,7 +1480,13 @@ export function SourceCommandKpiStrip({
       />
       <Metric
         label="Decision posture"
-        value={`${readyRows} ready`}
+        value={
+          portfolio.impact.actionCandidates.length === 0
+            ? "Not loaded"
+            : readyRows > 0
+              ? `${readyRows} ready`
+              : "Review required"
+        }
         note={`${decisionRows.totalRows} open actions${unsizedActionRows > 0 ? ` · ${unsizedActionRows} unsized` : ""}${financeBlockedRows > 0 ? ` · ${financeBlockedRows} sized awaiting finance` : ""}`}
       />
     </section>
@@ -1538,6 +1569,19 @@ function SourceActionDrawer({
           <span>What backs it</span>
           <p>{basis}</p>
         </section>
+        {numberFromDb(candidate.candidate_amount_usd) == null ? (
+          <section>
+            <span>Inputs to complete</span>
+            <p>{commandActionInputGap(candidate, coverage)}.</p>
+            <p>
+              {candidate.accountable_role
+                ? `Accountable: ${candidate.accountable_role}.`
+                : "Accountable owner not recorded."}{" "}
+              Obtain the contract-linked inputs before proposing a quantified
+              commercial action.
+            </p>
+          </section>
+        ) : null}
         {riskIfIgnored ? (
           <section>
             <span>If ignored</span>
@@ -1552,11 +1596,18 @@ function SourceActionDrawer({
               type="button"
               className="sw-v2-primary"
               onClick={() => {
-                onOpenContract(candidate.contract_id, "Optimize");
+                onOpenContract(
+                  candidate.contract_id,
+                  numberFromDb(candidate.candidate_amount_usd) == null
+                    ? "Evidence"
+                    : "Optimize",
+                );
                 onClose();
               }}
             >
-              Open Contract 360
+              {numberFromDb(candidate.candidate_amount_usd) == null
+                ? "Review missing inputs"
+                : "Open Contract 360"}
             </button>
           )}
         </div>
@@ -1670,7 +1721,11 @@ function PortfolioPage({
                     {row.contract_id}
                   </small>
                 </span>
-                <strong>{impactCreditMoney(row.candidate_amount_usd)}</strong>
+                <strong>
+                  {numberFromDb(row.candidate_amount_usd) == null
+                    ? "Evidence review"
+                    : impactCreditMoney(row.candidate_amount_usd)}
+                </strong>
                 {decisionDueLabel(row, portfolio.asOfDateIso) ? (
                   <em>{decisionDueLabel(row, portfolio.asOfDateIso)}</em>
                 ) : null}
@@ -6066,17 +6121,28 @@ function Metric({
   value,
   note,
   tone,
+  action,
 }: {
   label: string;
   value: string;
   note: string;
   tone?: "warn";
+  action?: { label: string; onClick: () => void };
 }) {
   return (
     <div className={`sw-v2-metric ${tone === "warn" ? "is-warn" : ""}`}>
       <span>{label}</span>
       <b>{value}</b>
       <small>{note}</small>
+      {action ? (
+        <button
+          type="button"
+          className="sw-v2-text-action"
+          onClick={action.onClick}
+        >
+          {action.label}
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -7572,9 +7638,12 @@ function commandHeadline(
   portfolio: SourceWorkspacePortfolioData,
   tenantName: string,
 ) {
-  const commitment = primaryCommitmentAction(portfolio);
-  if (commitment) {
-    return "Committed ahead of consumption. Notice is the constraint.";
+  if (
+    portfolio.impact.actionCandidates.some(
+      (row) => numberFromDb(row.candidate_amount_usd) == null,
+    )
+  ) {
+    return "Close evidence gaps. Make the next contract decision.";
   }
   const credit = source360RecoverableCreditFinding(portfolio);
   if (credit > 0) {

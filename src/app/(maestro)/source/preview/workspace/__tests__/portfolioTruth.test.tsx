@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 
 import { SourceCommandKpiStrip } from "../WorkspaceExecutiveShell";
 import type { SourceWorkspacePortfolioData } from "../live/portfolioAdapter";
@@ -77,6 +77,146 @@ describe("Commitment at risk", () => {
     );
 
     expect(screen.queryByText(/not established consumed/i)).toBeNull();
+  });
+});
+
+describe("Command evidence review", () => {
+  const reviewCandidate = {
+    ...commitmentCandidate,
+    title: "Review renewal and evidence posture",
+    candidate_amount_usd: null,
+    readiness_state: "review_required",
+    accountable_role: "Contract management lead",
+  };
+
+  it("names the missing inputs and opens the contract evidence checklist", () => {
+    const onOpenContract = jest.fn();
+    render(
+      <SourceCommandKpiStrip
+        portfolio={basePortfolio(
+          [{ contract_id: "C1", document_page_text_rows: 0, spend_rows: 1 }],
+          [reviewCandidate],
+        )}
+        totalAnnualValue={null}
+        creditFinding={0}
+        onOpenContract={onOpenContract}
+      />,
+    );
+    const tile = screen
+      .getByText("Next contract action")
+      .closest(".sw-v2-metric") as HTMLElement;
+    expect(tile.textContent).toContain(
+      "Agreement passages and calculation basis needed",
+    );
+    expect(tile.textContent).not.toMatch(
+      /consum|Commitment at risk|Not established/i,
+    );
+    fireEvent.click(
+      within(tile).getByRole("button", { name: "Review missing inputs" }),
+    );
+    expect(onOpenContract).toHaveBeenCalledWith("C1", "Evidence");
+    expect(screen.getByText("Review required")).toBeTruthy();
+  });
+
+  it("does not treat matching monetary spend as measured consumption", () => {
+    render(
+      <SourceCommandKpiStrip
+        portfolio={basePortfolio(
+          [
+            {
+              contract_id: "C1",
+              spend_rows: 1,
+              committed_spend_usd: 6600000,
+              actual_spend_usd: 6600000,
+              document_page_text_rows: 0,
+            },
+          ],
+          [reviewCandidate],
+        )}
+        totalAnnualValue={null}
+        creditFinding={0}
+      />,
+    );
+    expect(
+      screen.queryByText(/consumed|consumption against commitment/i),
+    ).toBeNull();
+  });
+
+  it("keeps unknown coverage unknown rather than asserting missing agreement passages", () => {
+    render(
+      <SourceCommandKpiStrip
+        portfolio={basePortfolio([], [reviewCandidate])}
+        totalAnnualValue={null}
+        creditFinding={0}
+      />,
+    );
+    expect(
+      screen.getByText(/Contract evidence coverage needs review/),
+    ).toBeTruthy();
+    expect(screen.queryByText(/Agreement passages and/)).toBeNull();
+  });
+
+  it("does not call a negated readiness state ready or let approval substitute for readiness", () => {
+    render(
+      <SourceCommandKpiStrip
+        portfolio={basePortfolio(
+          [],
+          [
+            { ...reviewCandidate, readiness_state: "not_ready" },
+            {
+              ...reviewCandidate,
+              action_candidate_id: "OPT-2",
+              authority_state: "approved",
+            },
+            {
+              ...reviewCandidate,
+              action_candidate_id: "OPT-3",
+              readiness_state: "incomplete",
+            },
+          ],
+        )}
+        totalAnnualValue={null}
+        creditFinding={0}
+      />,
+    );
+    expect(screen.queryByText(/^[1-9]\d* ready$/)).toBeNull();
+    expect(screen.getByText("Review required")).toBeTruthy();
+  });
+
+  it("keeps a sized candidate distinct from realized value and opens its action", () => {
+    const onOpenContract = jest.fn();
+    render(
+      <SourceCommandKpiStrip
+        portfolio={basePortfolio([], [commitmentCandidate])}
+        totalAnnualValue={null}
+        creditFinding={0}
+        onOpenContract={onOpenContract}
+      />,
+    );
+    const tile = screen
+      .getByText("Next contract action")
+      .closest(".sw-v2-metric") as HTMLElement;
+    expect(tile.textContent).toContain("$350.0K");
+    expect(tile.textContent).toContain("Candidate value, not realized savings");
+    fireEvent.click(
+      within(tile).getByRole("button", { name: "Review candidate action" }),
+    );
+    expect(onOpenContract).toHaveBeenCalledWith("C1", "Optimize");
+  });
+
+  it("does not turn no action rows into zero ready decisions", () => {
+    render(
+      <SourceCommandKpiStrip
+        portfolio={basePortfolio()}
+        totalAnnualValue={null}
+        creditFinding={0}
+      />,
+    );
+    const tile = screen
+      .getByText("Decision posture")
+      .closest(".sw-v2-metric") as HTMLElement;
+    expect(tile.textContent).toContain("Not loaded");
+    expect(tile.textContent).not.toContain("0 ready");
   });
 });
 
