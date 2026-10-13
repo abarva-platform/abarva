@@ -96,6 +96,33 @@ it("preserves structured bullets and caveats rather than cutting them to fit", (
   );
 });
 
+it.each(["answered", "partial", "no_data"] as const)(
+  "keeps the original-reference limit visible for %s answers",
+  (status) => {
+    const referenceLimit =
+      "Original source title/page/passage/date references are not verified here; Evidence basis identifies Home claims or record references.";
+    const candidate = {
+      ...answer,
+      status,
+      caveats: [
+        {
+          id: "home-original-reference-limit",
+          label: "Source reference limit",
+          detail: referenceLimit,
+        },
+      ],
+    };
+    const formatted = formatHomeAdvisorAnswer(candidate, source);
+    expect(formatted.prose).toContain(referenceLimit);
+    expect(formatted.caveats).toEqual(candidate.caveats);
+    const repeated = formatHomeAdvisorAnswer(
+      { ...candidate, prose: referenceLimit },
+      source,
+    );
+    expect(repeated.prose?.split(referenceLimit)).toHaveLength(2);
+  },
+);
+
 it.each([true, false, undefined])(
   "renders the declared synthetic basis only when supplied (%s)",
   (declared) => {

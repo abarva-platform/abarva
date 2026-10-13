@@ -1,8 +1,11 @@
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { validateAvaAnswerClaims } from "@/lib/ava-answer/claim-source-validation";
 import { validateAvaAnswerPacket } from "@/lib/ava-answer/validateAvaAnswerPacket";
+import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
 
-function answerFixture(overrides: Partial<AvaAnswerPacket> = {}): AvaAnswerPacket {
+function answerFixture(
+  overrides: Partial<AvaAnswerPacket> = {},
+): AvaAnswerPacket {
   return {
     surface: "intelligence",
     mode: "ANALYZE",
@@ -60,6 +63,48 @@ function answerFixture(overrides: Partial<AvaAnswerPacket> = {}): AvaAnswerPacke
 }
 
 describe("validateAvaAnswerClaims", () => {
+  it("keeps a user-proposed Home target an assumption beside cited evidence", () => {
+    const report = validateAvaAnswerClaims(
+      answerFixture({
+        surface: "home",
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question: "Assess a proposed 20% resolution target for discovery.",
+        directAnswer:
+          "The evidence supports checking business fit, not approving a solution.",
+        prose:
+          "The 20% resolution target remains proposed, not measured or committed savings. Establish baseline evidence first.",
+      }),
+    );
+    expect(report.passed).toBe(true);
+    expect(report.findings).toContainEqual(
+      expect.objectContaining({
+        claim: "20%",
+        support: "assumption",
+        severity: "watch",
+        sourceIds: [],
+      }),
+    );
+    expect(report.findings).not.toContainEqual(
+      expect.objectContaining({ claim: "20%", support: "exact_source_fact" }),
+    );
+  });
+
+  it("does not change another surface's proposal admission", () => {
+    const report = validateAvaAnswerClaims(
+      answerFixture({
+        question: "Assess a proposed 20% resolution target for discovery.",
+        directAnswer: "Evidence informs the proposed 20% target.",
+      }),
+    );
+    expect(report.findings).toContainEqual(
+      expect.objectContaining({
+        claim: "20%",
+        support: "unsupported",
+        severity: "fail",
+      }),
+    );
+  });
+
   it("maps material numeric claims to packet support", () => {
     const report = validateAvaAnswerClaims(answerFixture());
 

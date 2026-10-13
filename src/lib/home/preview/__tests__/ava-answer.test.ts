@@ -277,6 +277,40 @@ describe("answerHomeAvaQuestion", () => {
           "**Baseline:** Current resolution is 20% against the unmeasured proposed 20% target.",
         ],
       },
+      { key_points: ["**Target:** The 20% target is not proposed."] },
+      {
+        key_points: [
+          "**Target:** The proposed 20% target is the recorded current resolution baseline.",
+        ],
+      },
+      {
+        key_points: [
+          "**Target:** Evidence confirms this is not a proposed 20% resolution target.",
+        ],
+      },
+      {
+        key_points: ["**Target:** Evidence informs the proposed 20%% target."],
+      },
+      {
+        key_points: [
+          "**Target:** Evidence informs the proposed 20%USD target.",
+        ],
+      },
+      {
+        key_points: [
+          "**Baseline:** Current resolution is 20% against a 20% target that remains proposed.",
+        ],
+      },
+      {
+        key_points: [
+          "**Target:** The 20% target remains proposed, but 20% resolution was achieved.",
+        ],
+      },
+      {
+        key_points: [
+          "**Target:** A proposed 20% target is not a measured result or a savings commitment, but delivered 20% savings.",
+        ],
+      },
     ])(
       "corrects uncited quantitative material rather than licensing it from summaries: %j",
       async (unsafe) => {
@@ -337,6 +371,10 @@ describe("answerHomeAvaQuestion", () => {
     it.each([
       "**Target:** 20% is a proposed target, not a measured result.",
       "**Target:** The proposed 20 percent target remains an unmeasured assumption.",
+      "**Target:** The 20% successful self-service resolution target is proposed, not measured or committed savings.",
+      "**Target:** The proposed 20% resolution target is not a measured result or a savings commitment.",
+      "**Target:** A 20% target remains a proposed assumption, not an achieved result.",
+      "**Target:** The proposed 20% target is not a measured baseline or a savings commitment.",
     ])(
       "retains a user-supplied proposal with its local qualification: %s",
       async (point) => {
@@ -363,6 +401,49 @@ describe("answerHomeAvaQuestion", () => {
       });
       expect(answer.prose).toBeUndefined();
       expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(2);
+    });
+
+    it("preserves a signed proposed percentage through packet admission", async () => {
+      mockClaudeJson({
+        ...safe,
+        key_points: [
+          "**Target:** Evidence informs the proposed -20% change target, not a measured result.",
+        ],
+      });
+      const answer = await answerHomeAvaQuestion({
+        bundle: { chapters: CHAPTERS },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question: "Assess a proposed -20% change target.",
+      });
+      expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(1);
+      expect(answer.prose).toContain("proposed -20% change target");
+      expect(validateAvaAnswerPacket(answer).passed).toBe(true);
+    });
+
+    it("retains three concise discovery points with a locally qualified proposed target", async () => {
+      mockClaudeJson({
+        ...safe,
+        key_points: [
+          "**Fit:** The named system is relevant context, not a feasibility baseline.",
+          "**Target:** The 20% successful self-service resolution target remains proposed, not measured or committed savings.",
+          "**Discovery:** Establish baseline evidence before chartering discovery; assess Agent Assist separately and do not assume outsourcing.",
+        ],
+      });
+      const answer = await answerHomeAvaQuestion({
+        bundle: { chapters: CHAPTERS },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question:
+          "Give three short cited bullets for discovery. Treat 20% successful self-service resolution as a proposed target, not measured or committed savings.",
+      });
+      expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(1);
+      expect(answer).toMatchObject({ prose: expect.any(String) });
+      expect(answer.prose?.match(/^- /gm)).toHaveLength(3);
+      expect(answer.prose).toContain(
+        "remains proposed, not measured or committed savings",
+      );
+      expect(answer.citations.map((citation) => citation.id)).toContain(
+        "TD-K1",
+      );
     });
 
     it.each([
@@ -596,6 +677,132 @@ describe("answerHomeAvaQuestion", () => {
     );
   });
 
+  describe("conditional source effect admission", () => {
+    const source = {
+      ...CHAPTERS[1],
+      chapterId: "our_business" as const,
+      key_insights: [
+        {
+          ...CHAPTERS[1].key_insights[0],
+          statement:
+            "Alpha and Beta jointly represent 70% of Division revenue, a mix that could make Alpha performance an outsized factor in Division economics.",
+        },
+      ],
+    };
+    const safe = {
+      status: "partial",
+      direct_answer:
+        "The record establishes joint revenue composition, not enterprise causality.",
+      key_points: [
+        "**Economics:** Alpha performance could be an outsized factor in Division economics.",
+      ],
+      cited_claim_tags: ["OB-K1"],
+      visual: { type: "none" },
+      caveats: [],
+    };
+    it.each([
+      {
+        direct_answer:
+          "The business has two segments where Expanded Alpha performance carries outsized weight in overall economics.",
+      },
+      {
+        key_points: [
+          "**Economics:** Alpha performance carries outsized weight in overall economics.",
+        ],
+      },
+      {
+        prose:
+          "Alpha performance carries outsized weight in overall economics.",
+      },
+      {
+        caveats: [
+          "Alpha performance carries outsized weight in overall economics.",
+        ],
+      },
+    ])(
+      "corrects certainty upgrades in each narrative field: %j",
+      async (unsafe) => {
+        const create = jest
+          .fn()
+          .mockResolvedValueOnce({
+            content: [
+              { type: "text", text: JSON.stringify({ ...safe, ...unsafe }) },
+            ],
+          })
+          .mockResolvedValueOnce({
+            content: [{ type: "text", text: JSON.stringify(safe) }],
+          });
+        mockGetAuditedAnthropicClient.mockResolvedValue({
+          client: { messages: { create } },
+        } as never);
+        const answer = await answerHomeAvaQuestion({
+          bundle: { chapters: [source] },
+          tenantKey: CANONICAL_TENANT_KEYS[0],
+          question: "What do we know about the business?",
+        });
+        expect(create).toHaveBeenCalledTimes(2);
+        expect(
+          mockGetAuditedAnthropicClient.mock.calls[1][0].metadata,
+        ).toMatchObject({
+          presentationRepairReasons: expect.arrayContaining([
+            expect.stringContaining("conditional effect language"),
+          ]),
+        });
+        expect(answer.prose).toContain("could be an outsized factor");
+        expect(JSON.stringify(answer.caveats)).not.toContain(
+          "carries outsized weight",
+        );
+      },
+    );
+
+    it("withholds an unsafe opener even when its supporting bullet stays conditional", async () => {
+      mockClaudeJson({
+        ...safe,
+        direct_answer:
+          "Alpha performance carries outsized weight in overall economics.",
+      });
+      const answer = await answerHomeAvaQuestion({
+        bundle: { chapters: [source] },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question: "What do we know about the business?",
+      });
+      expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(2);
+      expect(answer.status).toBe("partial");
+      expect(answer.prose).toBeUndefined();
+      expect(answer.directAnswer).not.toContain("carries outsized weight");
+      expect(answer.citations.map((citation) => citation.id)).toContain(
+        "OB-K1",
+      );
+    });
+
+    it("admits separately cited categorical support", async () => {
+      const categorical =
+        "Alpha performance carries outsized weight in overall economics.";
+      mockClaudeJson({
+        ...safe,
+        direct_answer: categorical,
+        cited_claim_tags: ["OB-K1", "OB-K2"],
+      });
+      const answer = await answerHomeAvaQuestion({
+        bundle: {
+          chapters: [
+            {
+              ...source,
+              key_insights: [
+                ...source.key_insights,
+                { ...source.key_insights[0], statement: categorical },
+              ],
+            },
+          ],
+        },
+        tenantKey: CANONICAL_TENANT_KEYS[0],
+        question: "What do we know about the business?",
+      });
+      expect(mockGetAuditedAnthropicClient).toHaveBeenCalledTimes(1);
+      expect(answer.directAnswer).toContain(categorical);
+    });
+  });
+
   it("states the original-reference limit when the request needs source titles or document references", async () => {
     mockClaudeJson({ ...referenceAnswer });
     const answer = await answerHomeAvaQuestion({
@@ -619,7 +826,8 @@ describe("answerHomeAvaQuestion", () => {
     const answer = await answerHomeAvaQuestion({
       bundle: { chapters: CHAPTERS },
       tenantKey: CANONICAL_TENANT_KEYS[0],
-      question: "What technology context should the CFO know? Provide source dates.",
+      question:
+        "What technology context should the CFO know? Provide source dates.",
     });
     expect(answer.status).toBe("partial");
     expect(answer.citations.map((citation) => citation.id)).toContain("TD-K1");
@@ -1872,6 +2080,9 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.artifacts).toHaveLength(0);
     expect(answer.gaps[0].label).toBe("Graph view unavailable");
     expect(answer.prose).toContain("Confidence:");
+    expect(answer.prose?.match(/^- /gm)).toHaveLength(3);
+    expect(answer.prose?.split(/\s+/).length).toBeLessThan(100);
+    expect(answer.prose).not.toContain("Endpoint IDs");
     expect(validateAvaAnswerPacket(answer).passed).toBe(true);
   });
 
