@@ -86,8 +86,9 @@ describe("agent route · Moves aVa scoped-context gate", () => {
       'mode === "phase_input_draft" && promptPhase > 1',
     );
     expect(evidenceLoadBlock).toContain(
-      "loadedEvidenceItems = await listProgramEvidenceForPrompt(",
+      "evidenceContext = await loadProgramEvidenceForAgent(",
     );
+    expect(evidenceLoadBlock).toContain("approvedEvidenceUnavailable = evidenceContext.unavailable");
     expect(evidenceLoadBlock).toContain(
       "programId,\n                  promptPhase,",
     );
@@ -99,6 +100,13 @@ describe("agent route · Moves aVa scoped-context gate", () => {
     expect(source).toContain(
       "buildDeterministicMovesAvaStatusAnswer(packet, mode)",
     );
+  });
+
+  it("does not bypass admission or viewed-phase scoping in the general evidence ledger", () => {
+    expect(source).not.toContain("listProgramEvidenceForPrompt");
+    expect(source).toContain("programEvidencePhase = promptPhase;");
+    expect(source).toContain("loadProgramEvidenceForAgent(tenancy, programId, programEvidencePhase)");
+    expect(source).toContain("Missing evidence here does not mean no files were uploaded or approved");
   });
 
   it("returns deterministic evidence summaries before Anthropic preflight", () => {

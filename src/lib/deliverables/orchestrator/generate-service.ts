@@ -433,6 +433,13 @@ export async function runDeliverableForTenant(
     }
   }
 
+  // Saved source narratives enter only through admitted evidence, including
+  // predecessor artifacts appended by the queue worker.
+  const decisionContext = input.module === "moves"
+    ? "Support the requested phase decision using admitted evidence and the governed registers."
+    : input.decisionContext;
+  const approvedSolutionApproach = input.module === "moves" ? undefined : input.approvedSolutionApproach;
+
   const audienceIsVendorFacing =
     input.audience?.includes("vendor_facing") ?? false;
 
@@ -442,7 +449,7 @@ export async function runDeliverableForTenant(
       useCaseArchetype: input.useCaseArchetype,
       deliverableType: input.deliverableType,
       audience: input.audience,
-      decisionContext: input.decisionContext,
+      decisionContext,
       clientDisplayName: input.clientDisplayName,
       initiativeDisplayName: input.initiativeDisplayName,
       outputFormats: input.outputFormats,
@@ -504,16 +511,13 @@ export async function runDeliverableForTenant(
     }
   }
 
-  // 0 · public-source research (flagged). Stored pending review; not cited.
-  const publicResearch = await runPublicResearchStep(input, deps);
-  const research = publicResearch ? { publicResearch } : {};
-
   // 1 · governed evidence (clean, citation-numbered, vendor-facing exclusion applied)
-  const { evidence, sourceRegister, retrievedCount, coverage } = await assemble(
+  const { evidence, sourceRegister, retrievedCount, coverage, admission } = await assemble(
     {
       tenantClientKey: input.tenantClientKey,
       clientId: input.clientId,
       sourceArtifactRef: input.sourceArtifactRef,
+      requireMoveAdmission: input.module === "moves",
       ...(input.phase !== undefined ? { phase: input.phase } : {}),
       query: evidenceQueries[0],
       queries: evidenceQueries,
@@ -521,6 +525,14 @@ export async function runDeliverableForTenant(
       contextBudget,
     },
   );
+  if (input.module === "moves" && evidence.length === 0 && (admission !== undefined || coverage.unreadable > 0)) {
+    const detail = "Source admission could not be verified for this build. Validate the current source version, policy, index and citation readiness before generation.";
+    return { ok: false, qualityPass: false, blockers: [detail], blockedReason: `evidence_admission_unavailable: ${detail}` };
+  }
+  // Research and all document/planning/architecture model calls follow admission.
+  // Newly researched sources retain the existing pending-review lifecycle.
+  const publicResearch = await runPublicResearchStep(input, deps);
+  const research = publicResearch ? { publicResearch } : {};
   const coverageWarnings = [
     ...(publicResearch ? [`public_research: ${publicResearch.note}`] : []),
     ...(coverage.requiresAttention
@@ -566,7 +578,7 @@ export async function runDeliverableForTenant(
       useCaseArchetype: input.useCaseArchetype,
       deliverableType: input.deliverableType,
       audience: input.audience,
-      decisionContext: input.decisionContext,
+      decisionContext,
       clientDisplayName: input.clientDisplayName,
       initiativeDisplayName: input.initiativeDisplayName,
       outputFormats: input.outputFormats,
@@ -607,8 +619,8 @@ export async function runDeliverableForTenant(
   if (structuredExhibitsEnabled && deliverableKey) {
     try {
       const contextText = [
-        input.approvedSolutionApproach,
-        `Decision context: ${input.decisionContext}`,
+        approvedSolutionApproach,
+        `Decision context: ${decisionContext}`,
         ...evidence.map(
           (e) =>
             `[${e.citationNumber}] ${e.label} (${e.evidenceFamily}, ${e.confidence}): ${e.statement}`,
@@ -665,7 +677,7 @@ export async function runDeliverableForTenant(
       ? `Structured Architecture Brief:\n${JSON.stringify(deliverablePlan)}\n\n`
       : "";
     const contextText = [
-      input.approvedSolutionApproach,
+      approvedSolutionApproach,
       planContext,
       ...evidence.map(
         (e) =>
@@ -787,7 +799,7 @@ export async function runDeliverableForTenant(
         engagement: result.document.initiativeDisplayName,
         client: result.document.clientDisplayName,
         contextText:
-          `${input.approvedSolutionApproach ?? ""}\n\n${planContext}${contextText}`.slice(
+          `${approvedSolutionApproach ?? ""}\n\n${planContext}${contextText}`.slice(
             0,
             32000,
           ),
@@ -804,7 +816,7 @@ export async function runDeliverableForTenant(
           engagement: result.document.initiativeDisplayName,
           client: result.document.clientDisplayName,
           contextText:
-            `${input.approvedSolutionApproach ?? ""}\n\n${planContext}${contextText}`.slice(
+            `${approvedSolutionApproach ?? ""}\n\n${planContext}${contextText}`.slice(
               0,
               32000,
             ),
