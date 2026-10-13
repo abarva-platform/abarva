@@ -422,6 +422,18 @@ describe("readTowerCommandCenter", () => {
           projected_annual_value_high_usd: 24_000_000,
           roi_low_multiple: 2.2,
           roi_high_multiple: 2.7,
+          finance_validated_value_usd: 250_000,
+          value_observation_months: [{
+            month: "2026-08", sponsor_claimed_usd: 500_000,
+            finance_reviewed_usd: 300_000, finance_validated_usd: 250_000,
+            board_claimable_usd: 0, validation_state: "finance_validated_actual",
+            actual_value: 4, reviewer_role: "Finance partner",
+          }],
+          finance_approval_events: [{
+            event_date: "2026-08-31", event_type: "finance_validated_actual",
+            approval_state: "approved", approver_role: "Finance partner",
+            amount_usd: 250_000, amount_basis: "monthly", note: "Source-stated review",
+          }],
         },
       }),
       row_type: "ai_business_case",
@@ -447,6 +459,32 @@ describe("readTowerCommandCenter", () => {
     expect(mart?.aiPortfolio[0]?.projectSpendSourceLinked).toBe(true);
     expect(mart?.aiPortfolio[0]?.aiAmountBasis).toBe("unknown");
     expect(mart?.aiPortfolio[0]?.promisedValueUsd).toBeNull();
+    expect(mart?.aiPortfolio[0]?.valueObservationMonths).toEqual([
+      expect.objectContaining({ month: "2026-08", financeValidatedUsd: 250_000 }),
+    ]);
+    expect(mart?.aiPortfolio[0]?.financeApprovalEvents).toEqual([
+      expect.objectContaining({ eventDate: "2026-08-31", amountUsd: 250_000 }),
+    ]);
+    expect(mart?.aiPortfolio[0]?.financeValidatedAmountLoaded).toBe(false);
+    expect(mart?.aiPortfolio[0]?.financeValidatedValueUsd).toBe(0);
+
+    const approvedCaseRow = {
+      ...caseRow,
+      payload_json: {
+        ...caseRow.payload_json,
+        display_payload_json: {
+          ...caseRow.payload_json.display_payload_json,
+          evidence_approval_status: "approved",
+          finance_validation_status: "finance_validated",
+        },
+      },
+    };
+    mockServingRows({ tower_command_center: [summary], tower_ai_portfolio: [approvedCaseRow] });
+    const approvedMart = await readTowerCommandCenter({ tenantKeyCandidates: ["fixture-tenant"] });
+    expect(approvedMart?.aiPortfolio[0]?.valueObservationMonths).toHaveLength(1);
+    expect(approvedMart?.aiPortfolio[0]?.financeApprovalEvents).toHaveLength(1);
+    expect(approvedMart?.aiPortfolio[0]?.financeValidatedAmountLoaded).toBe(true);
+    expect(approvedMart?.aiPortfolio[0]?.financeValidatedValueUsd).toBe(250_000);
   });
 
   it("maps ECL serving views into the existing Tower Command Center contract", async () => {
@@ -568,6 +606,41 @@ describe("readTowerCommandCenter", () => {
     expect(view?.summary.economicReviewQueueCount).toBeGreaterThan(
       view?.summary.valueClaimCount ?? 0,
     );
+  });
+
+  it("shows an adoption row with a declared tool ID as a tool even when it links to a case", async () => {
+    mockServingRows({
+      tower_command_center: [servingRow({ row_key: "executive_summary", page_key: "command_center" })],
+      tower_adoption_lens: [
+        servingRow({
+          row_key: "linked-tool",
+          page_key: "adoption_lens",
+          tool_object_id: "tool-1",
+          use_case_object_id: "case-1",
+          tool_name: "Assistant rollout",
+          display_payload_json: { page_key: "adoption_lens", title: "Assistant rollout" },
+        }),
+        servingRow({
+          row_key: "case-only-usage",
+          page_key: "adoption_lens",
+          use_case_object_id: "case-1",
+          tool_object_id: null,
+          display_payload_json: { page_key: "adoption_lens", title: "Separate case usage" },
+        }),
+      ],
+    });
+
+    const mart = await readTowerCommandCenter({ tenantKeyCandidates: ["meridian-health"] });
+    const view = buildTowerCommandCenterView(mart, { tenantName: "Example" });
+
+    expect(mart?.aiPortfolio.map((item) => item.populationKind)).toEqual([
+      "tool_rollout",
+      "usage_observation",
+    ]);
+    expect(view?.allInitiatives.map((item) => item.populationKind)).toEqual(["tool_rollout"]);
+    expect(view?.allInitiatives[0]?.system).toBe("Assistant rollout");
+    expect(view?.usageObservations.map((item) => item.populationKind)).toEqual(["usage_observation"]);
+    expect(view?.summary.aiInitiativeCount).toBe(1);
   });
 
   it("leaves freshness absent when serving rows do not record it", async () => {
