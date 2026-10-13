@@ -8,6 +8,7 @@ import {
   EXECUTIVE_BRIEF_CONTRACT,
   EXECUTIVE_BRIEF_REMINDER,
   EXECUTIVE_FOLLOWUP_CONTRACT,
+  EXECUTIVE_FIRST_RESPONSE_BUDGET,
 } from "./executive-brief-contract";
 import { prepareExecutiveContext } from "./executive-context";
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
@@ -726,7 +727,7 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
       ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`
       : `${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`;
   const rawPrompt = modelAuthored
-    ? `SOURCES PROVIDED (aliases belong only in fenced sources and citationIds metadata; never in visible text):\n${modelSources.map((s, i) => `[S${i + 1}] ${s.type} | ${s.name}\n${s.detail}`).join("\n\n")}\n\nUSER QUESTION:\n${args.query}\n\n${multiPartDiscovery ? MULTI_PART_EXECUTIVE_REMINDER : EXECUTIVE_BRIEF_REMINDER}\n\n${executiveContext?.decisionGuard ?? ""}`
+    ? `SOURCES PROVIDED (aliases belong only in fenced sources and citationIds metadata; never in visible text):\n${modelSources.map((s, i) => `[S${i + 1}] ${s.type} | ${s.name}\n${s.detail}`).join("\n\n")}\n\nUSER QUESTION:\n${args.query}\n\n${multiPartDiscovery ? MULTI_PART_EXECUTIVE_REMINDER : EXECUTIVE_BRIEF_REMINDER}\n\n${executiveContext?.decisionGuard ?? ""}\n\n${EXECUTIVE_FIRST_RESPONSE_BUDGET}`
     : answerOnly
       ? `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}${rankedDecisionPromptDirective}\n\n${universalAnswerVisualContract}`
       : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}${rankedDecisionPromptDirective}\n\nRespond with your synthesis. For rich-text Intelligence, the right canvas is mandatory: include Decision, Industry Insights, Chart, Table, and Evidence tabs.`;

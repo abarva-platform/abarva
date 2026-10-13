@@ -104,6 +104,9 @@ it("never sends blocked sources or ungated supplemental data to Claude", async (
     expect(input!.user.indexOf("EVIDENCE RULE FOR THIS ANSWER")).toBeGreaterThan(
       input!.user.indexOf("FOLLOW-UP DECISION TEST"),
     );
+    expect(input!.user.indexOf("FIRST RESPONSE WORD BUDGET")).toBeGreaterThan(
+      input!.user.indexOf("EVIDENCE RULE FOR THIS ANSWER"),
+    );
     expect(output).toBe("Validate first.\n\nKeep the original prose.");
   } finally {
     if (previous === undefined) delete process.env.ANTHROPIC_API_KEY;
