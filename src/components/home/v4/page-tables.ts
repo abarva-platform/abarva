@@ -99,11 +99,12 @@ export interface Finding {
    */
   rated?: "high" | "moderate";
   claim: string;
+  /** Display label distinguishes suggested review roles from owners or sponsors recorded on rows. */
   owner: string;
   because: string;
   /** Legacy file hint plus deterministic rule and grain. The file is not verified source lineage. */
   trace?: { file: string; grain: string; rule: string };
-  /** The rows behind the finding, openable in the record browser with a filter already applied. */
+  /** Record family for inspection; an empty filter opens the whole family. */
   openRows?: { objectType: string; filter: string };
 }
 
@@ -257,6 +258,13 @@ function isHigh(value: string): boolean {
 
 function isTruthish(value: string): boolean {
   return /^(true|yes|y|1)$/i.test(value.trim());
+}
+
+function benchmarkClauseState(row: EstateRow): "declared" | "absent" | "unknown" {
+  const value = str(row, "benchmarkClause");
+  if (/^yes/i.test(value) || isTruthish(value)) return "declared";
+  if (/^(no|false|n|0)$/i.test(value)) return "absent";
+  return "unknown";
 }
 
 type RelationshipEndpoint = {
@@ -433,7 +441,7 @@ function relationshipGraphFinding(estate: CrossFamilyEstate): Finding | null {
   return {
     kind: "exposure",
     claim: `${material.length} relationship-backed ${plural(material.length, "path crosses", "paths cross")} a rated exposure, critical system, regulated data asset, or program; ${declaredOnly} still carry at least one declared-only endpoint.`,
-    owner: "Enterprise Architecture",
+    owner: "Suggested review owner: Enterprise Architecture",
     because:
       "This is a graph-backed synthesis over served relationship rows. It keeps unresolved endpoints visible and does not create near-match relationships.",
     trace: {
@@ -502,10 +510,11 @@ function riskProgramFinding(
       joined.length === 1
         ? `${riskName} is a high-severity risk tied to ${programName}${progress}.`
         : `${joined.length} high-severity risks are tied to named remediation programs that are not complete.`,
-    owner:
-      str(first.risk, "controlOwner") ||
-      str(first.program, "businessSponsor") ||
-      "Chief Risk Officer",
+    owner: str(first.risk, "controlOwner")
+      ? `Recorded control owner${joined.length > 1 ? " (first matched risk)" : ""}: ${str(first.risk, "controlOwner")}`
+      : str(first.program, "businessSponsor")
+        ? `Recorded program sponsor${joined.length > 1 ? " (first matched program)" : ""}: ${str(first.program, "businessSponsor")}`
+        : "Suggested review owner: Chief Risk Officer",
     because:
       "This finding crosses the risk register, program register and declared relationship edges. It only fires where the relationship endpoint names match served rows exactly.",
     trace: {
@@ -549,7 +558,7 @@ function regulatedDataResilienceFinding(
   return {
     kind: "exposure",
     claim: `${affected.length} regulated data ${plural(affected.length, "asset sits", "assets sit")} on ${platformPhrase} whose recovery is declared as backup or manual restore.`,
-    owner: "Chief Data Officer",
+    owner: "Suggested review owner: Chief Data Officer",
     because:
       "This joins regulated-data flags from the data estate to named infrastructure recovery posture. It does not infer platform identity beyond exact served names.",
     trace: {
@@ -596,7 +605,7 @@ function vendorCriticalSystemsFinding(
     kind: "exposure",
     rated: isHigh(str(firstVendor, "riskRating")) ? "high" : undefined,
     claim: `${exposedApps.size} critical ${plural(exposedApps.size, "system is", "systems are")} tied to vendor contracts that are high-risk or auto-renewing.`,
-    owner: "Chief Procurement Officer",
+    owner: "Suggested review owner: Chief Procurement Officer",
     because:
       "This joins critical systems to contract rows through exact vendor names or declared supported-system lists. It is a sourcing exposure, not a legal conclusion.",
     trace: {
@@ -831,7 +840,7 @@ export function applicationFindings(apps: EstateRow[]): Finding[] {
     findings.push({
       kind: "exposure",
       claim: `${localPhi} applications holding PHI authenticate on local accounts.`,
-      owner: "Chief Information Security Officer",
+      owner: "Suggested review owner: Chief Information Security Officer",
       because:
         "Not federated and not centrally revocable. Both facts come from the same row, so the population is exactly enumerable — and neither column alone shows it.",
       trace: {
@@ -848,9 +857,9 @@ export function applicationFindings(apps: EstateRow[]): Finding[] {
     findings.push({
       kind: "absence",
       claim: `${eol} applications carry a declared end-of-support date.`,
-      owner: "Transformation Office",
+      owner: "Suggested review owner: Transformation Office",
       because:
-        "The record states the dates and the record states the portfolio. Nothing in either connects them, which is a gap in the plan rather than in the evidence.",
+        "The dates identify lifecycle milestones for review. Without an as-of basis and recorded action status, they do not establish whether support has ended or remediation is overdue.",
       trace: {
         file: "04_applications_systems.csv",
         grain: "one application record",
@@ -864,7 +873,7 @@ export function applicationFindings(apps: EstateRow[]): Finding[] {
     findings.push({
       kind: "absence",
       claim: "Every cost figure on this estate is modelled, not booked.",
-      owner: "Chief Financial Officer",
+      owner: "Suggested review owner: Chief Financial Officer",
       because:
         "The cost basis column declares the same modelled source on every row, so no figure here has been reconciled to the ledger. They are usable for relative scale and not for a spend statement.",
       trace: {
@@ -883,7 +892,7 @@ export function applicationFindings(apps: EstateRow[]): Finding[] {
     findings.push({
       kind: "established",
       claim: `${share}% of the estate is self-hosted.`,
-      owner: "Chief Information Officer",
+      owner: "Suggested review owner: Chief Information Officer",
       because:
         "Hosting is the current state rather than a transition in progress. Cloud readiness is scored per application, but the estate underneath has not moved.",
       trace: {
@@ -930,19 +939,19 @@ export function vendorTables(contracts: EstateRow[]): TableSpec[] {
         ).length;
         return [
           [
-            "Renews automatically",
+            "Eligible for automatic renewal",
             auto,
             `${Math.round((100 * auto) / contracts.length)}%`,
           ],
           [
-            "Requires a decision",
+            "Not flagged for automatic renewal",
             contracts.length - auto,
             `${Math.round((100 * (contracts.length - auto)) / contracts.length)}%`,
           ],
         ];
       })(),
       total: ["Total", contracts.length, "100%"],
-      note: `Declared exit cost across the base: ${usd(contracts.reduce((n, c) => n + num(c, "exitCostUsd"), 0))}.`,
+      note: `Declared exit cost across the base: ${usd(contracts.reduce((n, c) => n + num(c, "exitCostUsd"), 0))}. Rows not flagged include undeclared flags; the flag does not establish a renewal decision or completed renewal.`,
     },
     // Renewal is a calendar, and a calendar is the only form that shows the wall. A table of
     // contracts sorted by risk tells a reader nothing about when they lose the right to renegotiate.
@@ -982,7 +991,7 @@ export function vendorTables(contracts: EstateRow[]): TableSpec[] {
             /^(yes|true|y)$/i.test(str(c, "autoRenewFlag")),
           ),
         ],
-        note: "An auto-renewing contract passes its term end without a decision unless notice is served inside its declared window.",
+        note: "Automatic-renewal flags describe eligibility. Review notice periods where declared; these flags and term-end dates do not establish whether a decision, notice or renewal occurred.",
       };
     })(),
     (() => {
@@ -1013,9 +1022,14 @@ export function vendorTables(contracts: EstateRow[]): TableSpec[] {
     })(),
     (() => {
       const withClause = contracts.filter((c) =>
-        /^yes/i.test(str(c, "benchmarkClause")),
+        benchmarkClauseState(c) === "declared",
       );
-      const without = contracts.length - withClause.length;
+      const withoutClause = contracts.filter((c) =>
+        benchmarkClauseState(c) === "absent",
+      );
+      const unknownClause = contracts.filter((c) =>
+        benchmarkClauseState(c) === "unknown",
+      );
       return {
         caption: "Right to test the price",
         section: "Commercial terms",
@@ -1030,20 +1044,15 @@ export function vendorTables(contracts: EstateRow[]): TableSpec[] {
               ),
             ),
           ]),
-          [
-            "No benchmark clause",
-            without,
-            usd(
-              spend(
-                contracts.filter(
-                  (c) => !/^yes/i.test(str(c, "benchmarkClause")),
-                ),
-              ),
-            ),
-          ],
+          ...(withoutClause.length > 0
+            ? [["Recorded no benchmark clause", withoutClause.length, usd(spend(withoutClause))]]
+            : []),
+          ...(unknownClause.length > 0
+            ? [["Unknown benchmark-clause coverage", unknownClause.length, usd(spend(unknownClause))]]
+            : []),
         ],
         total: ["Total", contracts.length, usd(spend(contracts))],
-        note: "A benchmark clause is the contractual right to test a price against the market mid-term. Without one, the only leverage point is the renewal date.",
+        note: "Recorded clause status, not a legal review. Unknown includes blank, absent and unrecognized values; the clause field does not establish all contractual rights or commercial leverage.",
       };
     })(),
   ];
@@ -1055,10 +1064,19 @@ function yearOf(value: string): string | null {
   return match ? match[1] : null;
 }
 
+function calendarDate(value: string): string | null {
+  const date = value.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  return Number.isFinite(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === date
+    ? date
+    : null;
+}
+
 export function vendorFindings(
   contracts: EstateRow[],
-  /** The record's own as-of date, so "already expired" is measured against the record and not the
-   * clock. Omitted, the expiry finding does not fire rather than guessing a reference point. */
+  /** Only a valid record as-of date supports time-relative findings; the clock is not a basis. */
   asOf?: string,
 ): Finding[] {
   if (contracts.length === 0) return [];
@@ -1069,16 +1087,16 @@ export function vendorFindings(
   if (auto > contracts.length / 2) {
     findings.push({
       kind: "exposure",
-      claim: `${auto} of ${contracts.length} contracts renew without a decision being taken.`,
-      owner: "Chief Procurement Officer",
+      claim: `${auto} of ${contracts.length} contracts are eligible for automatic renewal.`,
+      owner: "Suggested review owner: Chief Procurement Officer",
       because:
-        "Each carries a declared notice period, and those windows are the only points at which the commercial terms are open.",
+        "The count uses declared yes, true or y automatic-renewal flags. Eligibility does not establish whether a renewal decision, notice or renewal occurred; review the terms and notice period where declared. Inspection opens the full contract register.",
       trace: {
         file: "07_vendors_contracts.csv",
         grain: "one contract",
-        rule: "autoRenewFlag is yes",
+        rule: "autoRenewFlag is yes, true or y (case-insensitive)",
       },
-      openRows: { objectType: "vendor_contract", filter: "yes" },
+      openRows: { objectType: "vendor_contract", filter: "" },
     });
   }
   const noSystems = contracts.filter((c) => !str(c, "supportedSystems")).length;
@@ -1086,7 +1104,7 @@ export function vendorFindings(
     findings.push({
       kind: "absence",
       claim: `${noSystems} contracts name no system they support.`,
-      owner: "Chief Procurement Officer",
+      owner: "Suggested review owner: Chief Procurement Officer",
       because:
         "Without that link the contract cannot be traced to what it pays for, so its renewal cannot be assessed against use.",
       trace: {
@@ -1098,59 +1116,71 @@ export function vendorFindings(
   }
 
   const noBenchmark = contracts.filter(
-    (c) => !/^yes/i.test(str(c, "benchmarkClause")),
+    (c) => benchmarkClauseState(c) === "absent",
   );
   if (noBenchmark.length > 0) {
-    const spendAtRisk = noBenchmark.reduce(
-      (n, c) => n + num(c, "annualSpendUsd"),
-      0,
-    );
     findings.push({
       kind: "absence",
-      claim: `${noBenchmark.length} contracts carry no right to test their price against the market, covering ${usd(spendAtRisk)} a year.`,
-      owner: "Chief Procurement Officer",
+      claim: `${noBenchmark.length} ${plural(noBenchmark.length, "contract records", "contracts record")} no benchmark clause.`,
+      owner: "Suggested review owner: Chief Procurement Officer",
       because:
-        "A benchmark clause is the only mid-term leverage there is. Without one the price stands until the renewal date, whatever the market does in between.",
+        "This count covers only explicit negative clause values. It describes the recorded clause field, not a review of all contractual rights or commercial leverage.",
       trace: {
         file: "07_vendors_contracts.csv",
         grain: "one contract",
-        rule: "benchmarkClause does not start with yes",
+        rule: "benchmarkClause is no, false, n or 0 (case-insensitive)",
+      },
+    });
+  }
+  const unknownBenchmark = contracts.filter(
+    (c) => benchmarkClauseState(c) === "unknown",
+  );
+  if (unknownBenchmark.length > 0) {
+    findings.push({
+      kind: "absence",
+      claim: `${unknownBenchmark.length} ${plural(unknownBenchmark.length, "contract has", "contracts have")} unknown benchmark-clause coverage.`,
+      owner: "Suggested review owner: Chief Procurement Officer",
+      because:
+        "The clause field is blank, absent or unrecognized on these rows. Unknown is not declared absence; review of the contract terms is needed to establish clause coverage.",
+      trace: {
+        file: "07_vendors_contracts.csv",
+        grain: "one contract",
+        rule: "benchmarkClause is blank, absent or unrecognized",
       },
     });
   }
 
-  // Contracts whose declared term has already passed against the record's own as-of date. Either
-  // they renewed without a decision or the record is stale, and both are worth knowing -- but the
-  // record cannot tell you which, so the finding says so rather than picking one.
-  const expired = asOf
+  // Compare valid calendar dates; neither date nor flag establishes a completed or overdue action.
+  const basisDate = calendarDate(asOf ?? "");
+  const pastTerm = basisDate
     ? contracts.filter((c) => {
-        const end = str(c, "termEnd");
-        return end && end < asOf;
+        const end = calendarDate(str(c, "termEnd"));
+        return end && end < basisDate;
       })
     : [];
-  if (expired.length > 0) {
-    const auto = expired.filter((c) =>
+  if (pastTerm.length > 0) {
+    const auto = pastTerm.filter((c) =>
       /^(yes|true|y)$/i.test(str(c, "autoRenewFlag")),
     ).length;
     findings.push({
       kind: "exposure",
-      claim: `${expired.length} contracts show a term end that has already passed, ${auto} of them auto-renewing.`,
-      owner: "Chief Procurement Officer",
+      claim: `${pastTerm.length} contracts show a term end that has already passed as of ${basisDate}, ${auto} of them auto-renewing.`,
+      owner: "Suggested review owner: Chief Procurement Officer",
       because:
-        "An auto-renewing contract past its term renewed without anyone deciding. One that is not auto-renewing and still past its term means the record has not been maintained. The dates are declared; which of the two happened is not.",
+        "The declared term-end dates precede the record's as-of date. These dates and flags do not establish whether a decision was taken, notice was served, renewal occurred, or the record needs updating. They do not establish an overdue action.",
       trace: {
         file: "07_vendors_contracts.csv",
         grain: "one contract",
-        rule: `termEnd is earlier than ${asOf}`,
+        rule: `valid termEnd calendar date is earlier than record as-of ${basisDate}`,
       },
     });
   }
 
-  // The nearest cluster of decisions still ahead. A count of contracts says nothing about when.
+  // A calendar group does not establish whether renewal decisions are outstanding.
   const byTermYear = new Map<string, number>();
   for (const contract of contracts) {
     const year = yearOf(str(contract, "termEnd"));
-    if (year && (!asOf || year >= asOf.slice(0, 4)))
+    if (year && (!basisDate || year >= basisDate.slice(0, 4)))
       byTermYear.set(year, (byTermYear.get(year) ?? 0) + 1);
   }
   const soonest = [...byTermYear.entries()].sort((a, b) =>
@@ -1159,10 +1189,10 @@ export function vendorFindings(
   if (soonest && soonest[1] >= 5) {
     findings.push({
       kind: "absence",
-      claim: `${soonest[1]} contracts reach their term end in ${soonest[0]} — the nearest cluster of renewal decisions.`,
-      owner: "Chief Procurement Officer",
+      claim: `${soonest[1]} contracts declare term ends in ${soonest[0]}.`,
+      owner: "Suggested review owner: Chief Procurement Officer",
       because:
-        "Notice periods are declared per contract and are short. A cluster of term ends in one year is a quarter of work that has to start before the earliest notice window closes.",
+        `${basisDate ? `The year group is filtered against the record's as-of year (${basisDate.slice(0, 4)}).` : "The record has no valid as-of date, so this is a calendar grouping rather than an upcoming deadline."} Review individual dates and notice periods where declared; this group does not establish outstanding or overdue renewal decisions.`,
       trace: {
         file: "07_vendors_contracts.csv",
         grain: "one contract",
@@ -1304,7 +1334,7 @@ export function infrastructureFindings(platforms: EstateRow[]): Finding[] {
     findings.push({
       kind: "exposure",
       claim: `${hot} platforms can fail over hot. ${backupOnly} recover from backup alone.`,
-      owner: "VP Infrastructure",
+      owner: "Suggested review owner: VP Infrastructure",
       because:
         "The recovery posture is declared per platform. Nothing in the record sets it against the criticality of what runs on top of it.",
       trace: {
@@ -1319,9 +1349,9 @@ export function infrastructureFindings(platforms: EstateRow[]): Finding[] {
     findings.push({
       kind: "absence",
       claim: `${eol} platforms carry a declared end-of-life date.`,
-      owner: "VP Infrastructure",
+      owner: "Suggested review owner: VP Infrastructure",
       because:
-        "Declared in the record and absent from the portfolio. That is a gap in the plan, not in the evidence.",
+        "The dates identify lifecycle milestones for review. Without an as-of basis and recorded action status, they do not establish whether a platform has reached end of life or remediation is overdue.",
       trace: {
         file: "06_infrastructure_platforms.csv",
         grain: "one platform",
@@ -1338,7 +1368,7 @@ export function infrastructureFindings(platforms: EstateRow[]): Finding[] {
     findings.push({
       kind: "exposure",
       claim: `${criticalOnBackup} tier-1 platforms recover from backup alone.`,
-      owner: "VP Infrastructure",
+      owner: "Suggested review owner: VP Infrastructure",
       because:
         "Tier 1 is the enterprise's own word for what cannot be down; tier 3 is its own word for hours-to-days recovery. The record states both about the same platform, and neither column alone shows it.",
       trace: {
@@ -1474,7 +1504,7 @@ export function dataFindings(assets: EstateRow[]): Finding[] {
     findings.push({
       kind: "exposure",
       claim: `${regulatedUngoverned} regulated data assets are not yet production-governed.`,
-      owner: "Chief Data Officer",
+      owner: "Suggested review owner: Chief Data Officer",
       because:
         "Both the regulation flag and the governance state come from the same row, so the population is exactly enumerable rather than estimated.",
       trace: {
@@ -1489,7 +1519,7 @@ export function dataFindings(assets: EstateRow[]): Finding[] {
     findings.push({
       kind: "established",
       claim: `${top.value} is the largest single integration pattern, at ${top.count} of ${assets.length} assets.`,
-      owner: "VP Data & AI Platforms",
+      owner: "Suggested review owner: VP Data & AI Platforms",
       because:
         "A modernization sequence that starts anywhere else leaves the largest population untouched.",
       trace: {
@@ -1513,7 +1543,7 @@ export function dataFindings(assets: EstateRow[]): Finding[] {
     findings.push({
       kind: "exposure",
       claim: `${topPlatform.count} data assets sit on ${topPlatform.value}, ${regulatedThere} of them regulated.`,
-      owner: "Chief Data Officer",
+      owner: "Suggested review owner: Chief Data Officer",
       because:
         "Concentration on one platform is a single point of both dependency and remediation: it is where a migration costs most and where a control change reaches furthest.",
       trace: {
@@ -1649,13 +1679,7 @@ export function interviewTables(interviews: EstateRow[]): TableSpec[] {
   );
   const tables: TableSpec[] = [];
 
-  // The chapter's own question, answered by counting AREAS rather than rows. A theme every area
-  // raises is consensus; a theme one area raises is either a local problem or something only that
-  // area can see -- and those are opposite readings, so the count has to be visible.
-  // Ordered by how FEW areas raise a theme, not how many. Sorted the other way, a record where
-  // most themes are universal shows ten identical rows and the reader never reaches the ones that
-  // differ -- and the divergence is the entire question the chapter asks. The consensus is stated
-  // in a finding, which is one line; the divergence needs the table.
+  // Count distinct areas mentioning a theme, not agreement. Least-shared themes come first.
   const byTheme = [...areasRaising(interviews, "priorityTheme")].sort(
     (a, b) => a[1].size - b[1].size || a[0].localeCompare(b[0]),
   );
@@ -1744,7 +1768,7 @@ export function interviewFindings(interviews: EstateRow[]): Finding[] {
     findings.push({
       kind: "absence",
       claim: `All ${interviews.length} interview responses are modelled, not transcribed.`,
-      owner: "Chief Executive Officer",
+      owner: "Suggested review owner: Chief Executive Officer",
       because:
         "The pattern of what is raised, and by how many parts of the business, is still the record's own. What a named role is quoted as saying is not, and nothing on this page should be read as testimony.",
       trace: {
@@ -1757,7 +1781,7 @@ export function interviewFindings(interviews: EstateRow[]): Finding[] {
     findings.push({
       kind: "absence",
       claim: `${modelled} of ${interviews.length} interview responses are modelled rather than transcribed.`,
-      owner: "Chief Executive Officer",
+      owner: "Suggested review owner: Chief Executive Officer",
       because:
         "The two kinds of statement sit side by side in this record, so any quotation has to carry which one it is.",
       trace: {
@@ -1779,9 +1803,9 @@ export function interviewFindings(interviews: EstateRow[]): Finding[] {
         .slice(0, 3)
         .map(([theme]) => cellText(theme))
         .join("; ")}${universal.length > 3 ? "…" : "."}`,
-      owner: "Chief Executive Officer",
+      owner: "Suggested review owner: Chief Executive Officer",
       because:
-        "Raised everywhere is enterprise consensus rather than one function's complaint, which is the difference between a priority and a grievance.",
+        "The count measures breadth of recorded mentions. It does not establish agreement on a problem or solution, consensus, or attestation. Modelled responses remain modelled rather than testimony.",
       trace: {
         file: "executive_interviews.csv",
         grain: "one question to one role",
@@ -1800,7 +1824,7 @@ export function interviewFindings(interviews: EstateRow[]): Finding[] {
         .slice(0, 3)
         .map(([theme]) => cellText(theme))
         .join("; ")}${isolated.length > 3 ? "…" : "."}`,
-      owner: "Chief Executive Officer",
+      owner: "Suggested review owner: Chief Executive Officer",
       because:
         "One area alone raising something is either a local problem or the only part of the business that can see it, and those readings point opposite ways. The record does not distinguish them.",
       trace: {
@@ -1819,7 +1843,7 @@ export function interviewFindings(interviews: EstateRow[]): Finding[] {
     findings.push({
       kind: "exposure",
       claim: `${mostNamed[0]} is named by ${mostNamed[1].size} of the ${areas.size} executive areas.`,
-      owner: "Chief Information Officer",
+      owner: "Suggested review owner: Chief Information Officer",
       because:
         "A system raised across most of the leadership is carrying more of the business's attention than any single function's roadmap accounts for.",
       trace: {
@@ -1837,7 +1861,7 @@ export function interviewFindings(interviews: EstateRow[]): Finding[] {
     findings.push({
       kind: "established",
       claim: `Leadership names ${namedRisks.size} distinct risks or controls unprompted.`,
-      owner: "Chief Risk Officer",
+      owner: "Suggested review owner: Chief Risk Officer",
       because:
         "Each is a risk somebody running the business raised on their own, which is a different signal from one that only appears in the register.",
       trace: {
@@ -1969,7 +1993,7 @@ export function metricFindings(metrics: EstateRow[]): Finding[] {
     findings.push({
       kind: "absence",
       claim: `No measure declares a current value, across all ${metrics.length}.`,
-      owner: "Chief Financial Officer",
+      owner: "Suggested review owner: Chief Financial Officer",
       because:
         "Baseline and target say where a measure started and where it is meant to reach. Whether it has moved needs a third number the record does not carry, so the distance shown on this page is the size of the ambition rather than progress against it.",
       trace: {
@@ -1982,7 +2006,7 @@ export function metricFindings(metrics: EstateRow[]): Finding[] {
     findings.push({
       kind: "absence",
       claim: `${metrics.length - withActual} of ${metrics.length} measures declare no current value.`,
-      owner: "Chief Financial Officer",
+      owner: "Suggested review owner: Chief Financial Officer",
       because:
         "Progress can be stated for the rest and not for these, so any figure covering the whole set is covering two different things.",
       trace: {
@@ -2005,7 +2029,7 @@ export function metricFindings(metrics: EstateRow[]): Finding[] {
     findings.push({
       kind: "absence",
       claim: `No measure declares whether its value has been attested, across all ${metrics.length}.`,
-      owner: "Chief Financial Officer",
+      owner: "Suggested review owner: Chief Financial Officer",
       because:
         "Nothing here states a claim readiness, a claim status or a finance-attested amount. Whether these outcomes can be claimed is not answered by this record either way, which is different from the answer being no.",
       trace: {
@@ -2025,9 +2049,9 @@ export function metricFindings(metrics: EstateRow[]): Finding[] {
     findings.push({
       kind: "absence",
       claim: `${blocked.length} of ${metrics.length} value claims are blocked, and ${withAction} already state what would unblock them.`,
-      owner: "Chief Financial Officer",
+      owner: "Suggested review owner: Chief Financial Officer",
       because:
-        "A finished agenda sitting in the record. Each blocked claim names its own action and target period, so the work is enumerated rather than needing to be scoped.",
+        "The blocked rows record reasons, and the counted actions describe proposed work. Target periods must be checked where declared; neither an action nor a target period proves assignment, completion or overdue status.",
       trace: {
         file: "14_metrics_outcomes.csv",
         grain: "one tracked metric",
@@ -2042,9 +2066,9 @@ export function metricFindings(metrics: EstateRow[]): Finding[] {
     findings.push({
       kind: "absence",
       claim: `${noPeriod} unblock actions carry no target period.`,
-      owner: "Chief Financial Officer",
+      owner: "Suggested review owner: Chief Financial Officer",
       because:
-        "An action with no date is a intention. The record distinguishes the two and nothing downstream reads that column.",
+        "These actions have no declared target period. Their schedule is unknown; the missing period does not establish that work is overdue or that the suggested review owner has been assigned.",
       trace: {
         file: "14_metrics_outcomes.csv",
         grain: "one tracked metric",
@@ -2144,7 +2168,7 @@ export function riskFindings(risks: EstateRow[]): Finding[] {
               .slice(0, 2)
               .map((r) => str(r, "riskOrControlName"))
               .join("; ")}${highOpen.length > 2 ? "…" : "."}`,
-      owner: "Chief Risk Officer",
+      owner: "Suggested review owner: Chief Risk Officer",
       because:
         "Severity and control state are declared on the same row, so this is the register's own reading of itself rather than an interpretation of it.",
       trace: {
@@ -2160,7 +2184,7 @@ export function riskFindings(risks: EstateRow[]): Finding[] {
     findings.push({
       kind: "established",
       claim: `${usd(cost)} would remediate the whole register.`,
-      owner: "Chief Risk Officer",
+      owner: "Suggested review owner: Chief Risk Officer",
       because:
         "Declared per risk and summed. The ratio to what the estate costs to run each year is the argument, not the absolute figure.",
       trace: {
@@ -2248,9 +2272,7 @@ export function programTables(programs: EstateRow[]): TableSpec[] {
 export function programFindings(programs: EstateRow[]): Finding[] {
   if (programs.length === 0) return [];
   const findings: Finding[] = [];
-  // Reported status against declared progress. A programme calling itself on track at single-digit
-  // completion is not a delivery fact, it is a governance one -- and it is only visible by crossing
-  // two columns the record keeps apart.
+  // These fields describe early reported progress; this rule does not assess schedule variance.
   const onTrackButEarly = programs.filter(
     (p) =>
       /on_track|on track/i.test(str(p, "status")) &&
@@ -2259,11 +2281,11 @@ export function programFindings(programs: EstateRow[]): Finding[] {
   );
   if (onTrackButEarly.length > 0) {
     findings.push({
-      kind: "exposure",
+      kind: "established",
       claim: `${onTrackButEarly.length} programmes report on track at under 10% complete, including ${str(onTrackButEarly[0], "programName")}.`,
-      owner: "Transformation Office",
+      owner: "Suggested review owner: Transformation Office",
       because:
-        "Status and completion are declared on the same row and disagree. Nothing in the record explains how the assessment was reached, so the judgement behind it is not written down anywhere.",
+        "The recorded on-track status and completion percentage can both be true early in delivery. Completion alone is not schedule variance; a planned milestone or schedule baseline is needed to assess whether the status is supported. This rule does not establish a schedule comparison.",
       trace: {
         file: "09_programs_initiatives.csv",
         grain: "one programme",
@@ -2279,7 +2301,7 @@ export function programFindings(programs: EstateRow[]): Finding[] {
     findings.push({
       kind: ratio < 1.25 ? "exposure" : "established",
       claim: `${usd(budget)} of programme budget carries ${usd(value)} of expected value — a ratio of ${ratio.toFixed(2)}.`,
-      owner: "Chief Strategy Officer",
+      owner: "Suggested review owner: Chief Strategy Officer",
       because:
         "Expected value is a forecast and budget is a commitment, so this ratio is not a return. Set against how much value has actually been attested, it is the portfolio's whole case.",
       trace: {
@@ -2294,7 +2316,7 @@ export function programFindings(programs: EstateRow[]): Finding[] {
     findings.push({
       kind: "absence",
       claim: `${blocked} programmes state a blocking reason in the portfolio.`,
-      owner: "Transformation Office",
+      owner: "Suggested review owner: Transformation Office",
       because:
         "Each names its own blocker. Whether any of them also appears on the risk register is not something this file records.",
       trace: {
@@ -2384,7 +2406,7 @@ export function aiFindings(useCases: EstateRow[]): Finding[] {
     findings.push({
       kind: "absence",
       claim: `${blockedFromBooking.length} of ${useCases.length} AI use cases may not book realized value.`,
-      owner: "Chief Financial Officer",
+      owner: "Suggested review owner: Chief Financial Officer",
       because:
         "The record carries an explicit gate on whether value may be claimed, and it is closed on these. That is a stated position rather than an omission, and nothing downstream reads it.",
       trace: {
@@ -2401,7 +2423,7 @@ export function aiFindings(useCases: EstateRow[]): Finding[] {
     findings.push({
       kind: "exposure",
       claim: `${disputed.length} use cases carry a disputed value claim.`,
-      owner: "Chief Financial Officer",
+      owner: "Suggested review owner: Chief Financial Officer",
       because:
         "Disputed is a stronger state than pending: someone looked and disagreed. The record names the dispute and does not name who settles it.",
       trace: {
@@ -2607,7 +2629,7 @@ export function organizationFindings(units: EstateRow[]): Finding[] {
       findings.push({
         kind: "absence",
         claim: `${fieldLabel} reads "${cellText([...values][0])}" for all ${units.length} org units — that is unassessed, not clean.`,
-        owner: "Chief HR Officer",
+        owner: "Suggested review owner: Chief HR Officer",
         because:
           "A value that never varies carries no information. Rendering it as a result would let a reader take a form nobody completed for an assessment that came back well.",
         trace: {
@@ -2628,7 +2650,7 @@ export function organizationFindings(units: EstateRow[]): Finding[] {
     findings.push({
       kind: "absence",
       claim: `No org unit names a system it owns, across all ${units.length} units.`,
-      owner: "Chief HR Officer",
+      owner: "Suggested review owner: Chief HR Officer",
       because:
         "Every unit declares what it decides and none declares which systems that covers, so no finding about a system reaches a named owner from this record alone. Ownership on this page stops at the function.",
       trace: {
@@ -2641,7 +2663,7 @@ export function organizationFindings(units: EstateRow[]): Finding[] {
     findings.push({
       kind: "absence",
       claim: `${withSystems} of ${units.length} org units name a system they own.`,
-      owner: "Chief HR Officer",
+      owner: "Suggested review owner: Chief HR Officer",
       because:
         "Every unit declares what it decides, but only these say which systems that covers. A finding about a system can only reach a named owner where both halves are present.",
       trace: {
@@ -2665,7 +2687,7 @@ export function organizationFindings(units: EstateRow[]): Finding[] {
     findings.push({
       kind: "absence",
       claim: `No org unit declares ${unsized.join(" or ")} — authority is named here but never sized.`,
-      owner: "Chief HR Officer",
+      owner: "Suggested review owner: Chief HR Officer",
       because:
         "Levels can be counted and compared; what sits under them cannot. Any question about where the organisation is heavy or thin has to be answered somewhere other than this record.",
       trace: {
@@ -2684,7 +2706,7 @@ export function organizationFindings(units: EstateRow[]): Finding[] {
     findings.push({
       kind: "exposure",
       claim: `${lines.dangling} org ${plural(lines.dangling, "unit reports", "units report")} to a parent this record does not carry.`,
-      owner: "Chief HR Officer",
+      owner: "Suggested review owner: Chief HR Officer",
       because:
         "The chain from that unit upward cannot be walked, so a finding there escalates to nobody the record can name.",
       trace: {
@@ -2701,7 +2723,7 @@ export function organizationFindings(units: EstateRow[]): Finding[] {
     findings.push({
       kind: "established",
       claim: `All ${lines.parented} reporting lines resolve, ${deepest} levels deep.`,
-      owner: "Chief HR Officer",
+      owner: "Suggested review owner: Chief HR Officer",
       because:
         "Every unit that names a parent names one the record also carries, so any unit on this page can be walked upward to whoever it answers to.",
       trace: {
@@ -2717,7 +2739,7 @@ export function organizationFindings(units: EstateRow[]): Finding[] {
     findings.push({
       kind: "established",
       claim: `All ${units.length} org units declare what they decide.`,
-      owner: "Chief HR Officer",
+      owner: "Suggested review owner: Chief HR Officer",
       because:
         "Named authority and owned functions on every unit. Whether that reaches a specific system depends on the ownership column above, which is a separate and much thinner record.",
       trace: {
@@ -2730,7 +2752,7 @@ export function organizationFindings(units: EstateRow[]): Finding[] {
     findings.push({
       kind: "absence",
       claim: `${units.length - withRights} org units declare no decision rights.`,
-      owner: "Chief HR Officer",
+      owner: "Suggested review owner: Chief HR Officer",
       because:
         "Without them a finding in that part of the business cannot be assigned to anyone from the record alone.",
       trace: {

@@ -3,7 +3,9 @@ import type {
   HomeRecordRenderSource,
   HomeReviewBundle,
   Signal,
+  TechObjectType,
 } from "@/lib/home/preview/types";
+import { homeRecordSourceLabel } from "@/lib/home/preview/record-source";
 import { canvasBusiness, narrativeIsCurrent } from "./canvas-model";
 
 const SUBJECTS: Record<ChapterId, string[]> = {
@@ -66,6 +68,224 @@ export function chapterContext(
       (chapterId === "strategy_value_creation" &&
         item.statement.startsWith("Declared strategic priority:")),
   );
+}
+
+export type ContextCoverageSubject = TechObjectType | "tenant_profile";
+
+const COVERAGE_SUBJECTS: Record<
+  ContextCoverageSubject,
+  { label: string; domains: string[]; datasets?: string[] }
+> = {
+  tenant_profile: { label: "Enterprise profile", domains: ["tenant_profile"] },
+  business_segment: { label: "Business segments", domains: ["business_segment"] },
+  business_function: { label: "Business functions", domains: ["business_function"] },
+  workforce_role: { label: "Workforce & roles", domains: ["workforce_role"] },
+  operational_process: {
+    label: "Operating processes",
+    domains: ["operational_process", "operational_process_evidence"],
+  },
+  application_system: {
+    label: "Applications & systems",
+    domains: ["application_system"],
+    datasets: ["application_landscape_by_function"],
+  },
+  vendor_contract: {
+    label: "Vendor contracts",
+    domains: ["vendor_contract"],
+    datasets: ["vendor_spend_concentration"],
+  },
+  infrastructure_platform: {
+    label: "Infrastructure & platforms",
+    domains: ["infrastructure_platform", "platform_maturity_assessment"],
+  },
+  data_asset_or_integration: {
+    label: "Data assets & integrations",
+    domains: ["data_asset_or_integration"],
+  },
+  metric_outcome: {
+    label: "Metrics & outcomes",
+    domains: ["metric_outcome", "ai_kpi_outcome_observation"],
+    datasets: ["metric_target_attainment"],
+  },
+  risk_control: {
+    label: "Risks & controls",
+    domains: ["risk_control", "risk_or_control"],
+    datasets: ["risk_system_concentration"],
+  },
+  program_initiative: {
+    label: "Programs & initiatives",
+    domains: ["program_initiative"],
+    datasets: ["program_investment_distribution", "stalled_programs"],
+  },
+  organization_ownership: {
+    label: "Organization & ownership",
+    domains: ["organization_ownership", "org_owner"],
+  },
+  ai_use_case: {
+    label: "AI & automation use cases",
+    domains: ["ai_use_case", "ai_automation_use_case"],
+  },
+  executive_interview: {
+    label: "Leadership interviews",
+    domains: ["executive_interview", "ai_value_interview_evidence"],
+    datasets: ["leadership_theme_frequency", "leadership_evidence_alignment"],
+  },
+  relationship_edge: {
+    label: "Declared relationships",
+    domains: ["relationship_edge", "relationship_source_row"],
+  },
+};
+
+export interface ContextCoverage {
+  subject: ContextCoverageSubject;
+  label: string;
+  state: "detail" | "summary" | "profile" | "missing";
+  value: string;
+  basis: string;
+  detailState: "available" | "empty" | "not_supplied";
+  rowCount: number | null;
+  rowSourceRefs: string[][] | null;
+  summaryState: "available" | "not_supplied" | "not_aligned";
+  summaryEvidenceIds: string[];
+  summaryDatasetKeys: string[];
+  profileState: "available" | "not_supplied";
+  profileEvidenceIds: string[];
+  profileSourceRefs: string[];
+  recordSource: HomeRecordRenderSource;
+}
+
+// Summary IDs and chart rows describe coverage; they are never a count of detail records.
+export function recordCoverage(
+  bundle: HomeReviewBundle,
+  source: HomeRecordRenderSource,
+  subject: ContextCoverageSubject,
+): ContextCoverage {
+  const definition = COVERAGE_SUBJECTS[subject];
+  const packet = bundle.thesis.signalPacket;
+  const aligned = narrativeIsCurrent(source);
+  const family = bundle.technologyEstate?.recordTypes.find(
+    (item) => item.objectType === subject,
+  );
+  const rowCount = family?.rows.length ?? null;
+  const detailState =
+    rowCount === null
+      ? "not_supplied"
+      : rowCount > 0
+        ? "available"
+        : "empty";
+  const profileItems = packet.contextItems.filter((item) =>
+    subject === "tenant_profile"
+      ? item.domains.includes("tenant_profile")
+      : subject === "business_segment" &&
+        item.statement.startsWith("Operating segments:"),
+  );
+  const business = canvasBusiness(bundle, source);
+  const hasProfile =
+    subject === "tenant_profile"
+      ? Boolean(
+          business.businessModel ||
+          business.industry ||
+          business.revenue !== null ||
+          business.employees !== null ||
+          business.priorities.length ||
+          business.customers.length ||
+          business.segments.length ||
+          (aligned && profileItems.length),
+        )
+      : subject === "business_segment" && business.segments.length > 0;
+  const summaryItems =
+    subject === "tenant_profile"
+      ? []
+      : [...packet.contextItems, ...packet.signals].filter(
+          (item) =>
+            item.statement.trim() &&
+            !item.statement.startsWith("Operating segments:") &&
+            item.domains.some((domain) => definition.domains.includes(domain)),
+        );
+  const datasetKeys = (definition.datasets ?? []).filter(
+    (key) => packet.visualDatasets[key]?.length > 0,
+  );
+  const hasSummary = summaryItems.length > 0 || datasetKeys.length > 0;
+  const summaryState = hasSummary
+    ? aligned
+      ? "available"
+      : "not_aligned"
+    : "not_supplied";
+  const state =
+    detailState === "available"
+      ? "detail"
+      : summaryState === "available"
+        ? "summary"
+        : hasProfile
+          ? "profile"
+          : "missing";
+  const value =
+    state === "detail"
+      ? rowCount!.toLocaleString("en-US")
+      : state === "summary"
+        ? "Summary available"
+        : state === "profile"
+          ? "Profile declared"
+          : rowCount === 0
+            ? "0"
+            : "Detail not supplied";
+  const detailBasis =
+    detailState === "available"
+      ? "Inspectable detail rows in this record; not a whole-enterprise count."
+      : detailState === "empty"
+        ? "This family contains no detail rows in this record; enterprise coverage is unknown."
+        : "Detail rows are not supplied in this record; enterprise coverage is unknown.";
+  const summaryBasis =
+    summaryState === "available"
+      ? "Compiled summary available; summary coverage does not establish detail coverage."
+      : summaryState === "not_aligned"
+        ? "Earlier compiled summary is not aligned with the served record."
+        : "Compiled summary is not supplied for this subject.";
+  return {
+    subject,
+    label: definition.label,
+    state,
+    value,
+    basis: [
+      homeRecordSourceLabel(source) + ".",
+      detailBasis,
+      summaryBasis,
+      hasProfile ? "Declared profile context; not independently attested." : "",
+      bundle.declaredSyntheticDemo
+        ? "Synthetic reference, not client-attested."
+        : "",
+    ].filter(Boolean).join(" "),
+    detailState,
+    rowCount,
+    rowSourceRefs: family?.rowSourceRefs ?? null,
+    summaryState,
+    summaryEvidenceIds: aligned ? summaryItems.map((item) => item.id) : [],
+    summaryDatasetKeys: aligned ? datasetKeys : [],
+    profileState: hasProfile ? "available" : "not_supplied",
+    profileEvidenceIds:
+      aligned && hasProfile ? profileItems.map((item) => item.id) : [],
+    profileSourceRefs: hasProfile
+      ? subject === "business_segment"
+        ? Object.values(business.context?.segmentFacts ?? {}).flatMap(
+            (fact) => fact.sourceRefs,
+          )
+        : business.context?.profile.sourceRefs ?? []
+      : [],
+    recordSource: source,
+  };
+}
+
+export function chapterCoverage(
+  bundle: HomeReviewBundle,
+  source: HomeRecordRenderSource,
+  chapterId: ChapterId,
+): ContextCoverage[] {
+  const domains = new Set(SUBJECTS[chapterId]);
+  return (Object.keys(COVERAGE_SUBJECTS) as ContextCoverageSubject[])
+    .filter((subject) =>
+      COVERAGE_SUBJECTS[subject].domains.some((domain) => domains.has(domain)),
+    )
+    .map((subject) => recordCoverage(bundle, source, subject));
 }
 
 const text = (value: unknown) =>

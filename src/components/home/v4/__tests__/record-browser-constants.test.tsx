@@ -19,7 +19,7 @@ const applications: TechRecordType = snapshot.technologyEstate.recordTypes.find(
   (r: { objectType: string }) => r.objectType === "application_system",
 );
 
-describe("a column that never varies is reported as a default, not a result", () => {
+describe("a column that never varies is reported without assuming its assessment basis", () => {
   it("says nothing when every column varies", () => {
     const varied: TechRecordType = {
       ...applications,
@@ -54,7 +54,8 @@ describe("a column that never varies is reported as a default, not a result", ()
     expect(band?.textContent).toMatch(
       /Succession Risk reads "low" on all 3 rows/,
     );
-    expect(band?.textContent).toMatch(/default rather than an assessment/);
+    expect(band?.textContent).toMatch(/Repetition alone does not establish whether each row was assessed/);
+    expect(band?.textContent).not.toMatch(/default rather than an assessment/);
     // The label is humanised, not the field name. A camelCase identifier in front of an executive
     // is a leak of how the thing is built rather than an explanation of what it says.
     expect(band?.textContent).not.toMatch(/successionRisk/);
@@ -77,6 +78,21 @@ describe("a column that never varies is reported as a default, not a result", ()
     expect(
       document.querySelector("[data-record-constant-columns]"),
     ).not.toBeInTheDocument();
+  });
+
+  it("retains an intentional shared modelling basis without calling it uncompleted", () => {
+    render(<RecordBrowser recordType={{
+      ...applications,
+      columns: ["systemName", "annualCostBasis"],
+      rows: [
+        { systemName: "System A", annualCostBasis: "modelled planning basis" },
+        { systemName: "System B", annualCostBasis: "modelled planning basis" },
+      ],
+    }} />);
+    const band = document.querySelector("[data-record-constant-columns]");
+    expect(band).toHaveTextContent('Annual Cost Basis reads "modelled planning basis" on all 2 rows');
+    expect(band).toHaveTextContent("may be intentional");
+    expect(band).not.toHaveTextContent("carries no information");
   });
 });
 

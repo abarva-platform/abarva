@@ -107,7 +107,7 @@ it("keeps three clickable follow-ups and sends only prior question intent and ci
     await screen.findByRole("button", { name: "What matters first?" }),
   ).toBeInTheDocument();
   expect(screen.getByTestId("home-scroll-policy")).toHaveTextContent(
-    "answer-start | true",
+    "follow-end | true",
   );
   fireEvent.click(screen.getByRole("button", { name: "What matters first?" }));
   await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));

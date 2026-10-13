@@ -107,6 +107,7 @@ function app(record = bundle(), recordSource = source) {
 }
 
 beforeEach(() => {
+  jest.spyOn(window, "scrollTo").mockImplementation(() => {});
   mockParams = new URLSearchParams();
   mockPush.mockClear();
   mockReplace.mockClear();
@@ -189,12 +190,26 @@ describe("native Home canvas", () => {
     );
     expect(link).toHaveAttribute(
       "title",
-      "Download the existing full Home walkthrough PDF",
+      "Download the Home text and table briefing PDF; interactive charts and maps are not included",
     );
     expect(
       screen.queryByRole("link", { name: "Current Home" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("Design preview")).not.toBeInTheDocument();
+  });
+  it("resets both document and content scrolling when the destination changes", () => {
+    const { rerender } = render(app());
+    const viewport = document.querySelector("[data-canvas-viewport]")! as HTMLDivElement;
+    viewport.scrollTo = jest.fn();
+    const scroll = window.scrollTo as jest.Mock;
+    scroll.mockClear();
+    mockParams = new URLSearchParams("view=our_business&panel=overview");
+    rerender(app());
+    expect(viewport.scrollTo).toHaveBeenCalledWith({ top: 0 });
+    expect(scroll).toHaveBeenCalledWith({ top: 0, behavior: "instant" });
+    scroll.mockClear();
+    rerender(app());
+    expect(scroll).not.toHaveBeenCalled();
   });
   it("replaces a legacy bookmark with a tenant-bound canonical URL", () => {
     window.history.replaceState(null, "", "/home#our_business");

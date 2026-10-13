@@ -9,6 +9,7 @@ import type {
   TechRecordType,
 } from "@/lib/home/preview/types";
 import { cellText } from "./cxo-language";
+import { formatRecordField as formatByField } from "./record-field-format";
 import { MONO, PAGE_X, SANS, SERIF, V4, eyebrow } from "./tokens";
 
 type RecordRow = Record<string, string | number | boolean | null | undefined>;
@@ -518,10 +519,8 @@ const PILL_TONE: Record<string, { bg: string; fg: string }> = {
 /**
  * Columns whose value never varies across the whole record type.
  *
- * A column reading the same value on every row carries no information: it is a default that was
- * never filled in, not an assessment that came back clean. Rendering 225 green rows for a succession
- * risk nobody assessed is two true facts -- the column exists, the value is low -- combining into a
- * false statement, and it is the same defect as a cost column that is constant per tier.
+ * Invariance alone cannot distinguish an unassessed default from a legitimate shared basis.
+ * Present the repeated value once without certifying how it was assessed.
  *
  * This is the same detector the source-intelligence digests use to collapse a repeated column before
  * a file reaches a model. One detector, two uses: it compresses the prompt and it reports the
@@ -652,7 +651,6 @@ export function RecordBrowser({
     indexedRows,
     match,
     query,
-    recordType.columns,
     sliceValue,
   ]);
 
@@ -885,8 +883,8 @@ export function RecordBrowser({
           >
             <span style={eyebrow(V4.amber)}>
               {constants.length === 1
-                ? "One column carries no information"
-                : `${constants.length} columns carry no information`}
+                ? "One shared value across the record"
+                : `${constants.length} shared values across the record`}
             </span>
             <p
               style={{
@@ -904,9 +902,9 @@ export function RecordBrowser({
                     `${c.label} reads "${cellText(c.value)}" on all ${c.rowCount.toLocaleString()} rows`,
                 )
                 .join("; ")}
-              . A value that never varies is a default rather than an
-              assessment, so nothing here should be read as a clean result, and
-              none of these is used as a filter or a decision predicate.
+              . Repetition alone does not establish whether each row was assessed.
+              Shared source or modelling basis may be intentional; a repeated control rating still needs its assessment basis.
+              These values do not distinguish records, so none of these is used as a filter or a decision predicate.
             </p>
           </div>
         );
@@ -1533,6 +1531,9 @@ export function RelationshipLens({
           <span style={eyebrow(V4.blue)}>Relationship lens</span>
           <h2 style={relationshipTitleStyle}>{activePair.title}</h2>
           <p style={relationshipTextStyle}>{activePair.caption}</p>
+          <p style={relationshipTextStyle}>
+            Counts are source rows. Attribute pairs can exceed the row count when a declared list contains several values.
+          </p>
         </div>
         <label style={{ ...selectLabelStyle, minWidth: 240 }}>
           <span>Relationship</span>
@@ -1564,6 +1565,7 @@ function RelationshipCard({
   entry: {
     leftValue: string;
     count: number;
+    pairCount: number;
     rightCounts: Array<[string, number]>;
   };
 }) {
@@ -1582,9 +1584,12 @@ function RelationshipCard({
           {humanise(entry.leftValue)}
         </strong>
         <span style={relationshipCardCountStyle}>
-          {entry.count.toLocaleString()}
+          {entry.count.toLocaleString()} source {entry.count === 1 ? "row" : "rows"}
         </span>
       </div>
+      <p style={{ ...relationshipTextStyle, marginTop: 8 }}>
+        {entry.pairCount.toLocaleString()} attribute {entry.pairCount === 1 ? "pair" : "pairs"}
+      </p>
       <div style={{ display: "grid", gap: 7, marginTop: 12 }}>
         {entry.rightCounts.slice(0, 4).map(([label, count]) => (
           <div key={label}>
@@ -2012,22 +2017,25 @@ function buildRelationshipMatrix(
   leftField: string,
   rightField: string,
 ) {
-  const byLeft = new Map<string, Map<string, number>>();
+  const byLeft = new Map<string, { rowCount: number; rightCounts: Map<string, number> }>();
   for (const row of rows) {
-    const leftValues = splitMultiValue(row[leftField]);
-    const rightValues = splitMultiValue(row[rightField]);
+    const leftValues = relationshipValues(leftField, row[leftField]);
+    const rightValues = relationshipValues(rightField, row[rightField]);
+    if (rightValues.length === 0) continue;
     for (const left of leftValues) {
-      if (!byLeft.has(left)) byLeft.set(left, new Map());
+      if (!byLeft.has(left)) byLeft.set(left, { rowCount: 0, rightCounts: new Map() });
       const target = byLeft.get(left)!;
+      target.rowCount += 1;
       for (const right of rightValues)
-        target.set(right, (target.get(right) ?? 0) + 1);
+        target.rightCounts.set(right, (target.rightCounts.get(right) ?? 0) + 1);
     }
   }
   return [...byLeft.entries()]
-    .map(([leftValue, rightMap]) => ({
+    .map(([leftValue, { rowCount, rightCounts }]) => ({
       leftValue,
-      count: [...rightMap.values()].reduce((sum, count) => sum + count, 0),
-      rightCounts: [...rightMap.entries()].sort(
+      count: rowCount,
+      pairCount: [...rightCounts.values()].reduce((sum, count) => sum + count, 0),
+      rightCounts: [...rightCounts.entries()].sort(
         (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
       ),
     }))
@@ -2036,13 +2044,22 @@ function buildRelationshipMatrix(
     );
 }
 
-function splitMultiValue(value: unknown): string[] {
+// Only declared list fields have delimiters. Commas remain part of names and descriptions.
+const RELATIONSHIP_LIST_FIELDS = new Set([
+  "supportedFunctions",
+  "ownedFunctions",
+  "technologyStack",
+  "dataDomains",
+]);
+
+function relationshipValues(field: string, value: unknown): string[] {
   const text = bucket(value);
   if (text === "(not specified)") return [];
-  return text
-    .split(/[;,|]/)
+  if (!RELATIONSHIP_LIST_FIELDS.has(field)) return [text];
+  return [...new Set(text
+    .split(/[;|]/)
     .map((item) => item.trim())
-    .filter(Boolean);
+    .filter(Boolean))];
 }
 
 function SelectedRecord({
@@ -2319,16 +2336,6 @@ function moneyShort(value: number): string {
     return `$${(value / 1_000_000).toFixed(1)}M`;
   if (Math.abs(value) >= 1_000) return `$${(value / 1_000).toFixed(0)}K`;
   return `$${value.toLocaleString()}`;
-}
-
-function formatByField(field: string, value: unknown): string {
-  if (value === null || value === undefined || value === "") return "—";
-  if (typeof value === "boolean") return value ? "Yes" : "No";
-  if (/annual.*(cost|spend)|exitCost/i.test(field))
-    return moneyShort(numeric(value));
-  if (/pct|percent/i.test(field)) return `${numeric(value).toLocaleString()}%`;
-  if (typeof value === "number") return value.toLocaleString();
-  return humanise(value);
 }
 
 const titleStyle: CSSProperties = {

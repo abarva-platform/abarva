@@ -194,6 +194,25 @@ describe("the field count counts the same thing twice", () => {
 });
 
 describe("selected-record headings", () => {
+  it("keeps cost provenance text and dates readable beside the actual money field", () => {
+    const record: TechRecordType = {
+      ...applications,
+      columns: ["systemName", "annualCostUsd", "annualCostBasis", "annualCostGenerator", "annualCostModelDate"],
+      rows: [{
+        systemName: "Reference system",
+        annualCostUsd: 12345,
+        annualCostBasis: "modelled planning basis",
+        annualCostGenerator: "scenario-generator-v1",
+        annualCostModelDate: "2026-08-21",
+      }],
+      primaryDimension: null,
+      dimensionCounts: [],
+    };
+    const { container } = render(<RecordBrowser recordType={record} />);
+    const values = [...container.querySelectorAll("[data-detail-pane] dl dd")].map((node) => node.textContent);
+    expect(values).toEqual(expect.arrayContaining(["$12K", "modelled planning basis", "scenario-generator-v1", "2026-08-21"]));
+  });
+
   it.each([
     ["business_segment", "segmentName"],
     ["business_function", "functionName"],
