@@ -33,6 +33,7 @@ import {
   type PostgresCompatClient as SupabaseClient,
 } from '@/lib/data-plane/postgresCompat';
 import { canonicalTenantKey } from '@/lib/tenant-keys';
+import { loadApprovedMoveEvidenceSnapshot, isApprovedMoveEvidenceBasisCurrent } from '@/lib/programs/approved-move-evidence-snapshot';
 import { createTxSession, type SqlRunner, type TxSessionRunner } from '../read-adapters/azureSession';
 import { resolveDataPlaneForTenant } from '../read-adapters/resolveDataPlane';
 import type { DataPlane } from './types';
@@ -488,7 +489,7 @@ export function createAzureProgramsWriteAdapter(
           // Serialize this admission operation. Original storage is completed
           // before entering this transaction, avoiding a nested pool write.
           await run('SELECT pg_advisory_xact_lock(64833, hashtext($1))',
-            [`${canonicalTenantKey(r.tenantKey)}:${input.programId}:${r.deliverableTypeKey}`]);
+            [`${input.programId}:${r.deliverableTypeKey}`]);
           const programs = await run('SELECT id FROM engagements WHERE id = $1 AND client_id::text = $2'
             + (r.phase === 2 ? ' AND current_phase = 2 FOR UPDATE' : ''),
             [input.programId, input.clientId]);
@@ -562,11 +563,17 @@ export function createAzureProgramsWriteAdapter(
             + "AND a.metadata->>'storage' = 'azure_blob' AND a.metadata->>'authoredRequestId' = $13 AND a.metadata->>'canonicalDeliverableKey' = $8 "
             + "AND a.metadata->>'authoredOrigin' = 'abarva_uploaded'"
             + (r.phase === 2 ? " AND v.structured_data->>'source' = $14" : '')
-            + (r.phase === 2 ? ' AND e.current_phase = 2 FOR UPDATE OF e, d, v, a' : ' FOR UPDATE OF d, v, a'),
+            + (r.phase === 2 ? ' AND e.current_phase = 2' : '') + ' FOR UPDATE OF e, d, v, a',
             [input.deliverableId, input.programId, input.clientId, input.version, input.versionId,
               input.content, JSON.stringify(r), r.deliverableTypeKey, r.artifactId, r.storageTenantKey,
               r.artifactVersion, r.sha256, r.requestId, ...(r.phase === 2 ? [r.source] : [])]);
           if (rows.length !== 1) return { applied: false };
+          // The engagement lock is shared with evidence decisions. Read the
+          // authoritative basis on this same connection after that lock.
+          const currentEvidence = await loadApprovedMoveEvidenceSnapshot({ tenantKey: r.tenantKey, moveId: r.moveId }, run);
+          if (!isApprovedMoveEvidenceBasisCurrent({ snapshot: currentEvidence, phase: r.phase,
+            recordedRevision: r.phaseEvidenceSnapshotHash, scope: r.evidenceSnapshotScope, generatedAt: r.observedAt }))
+            return { applied: false };
           await lockP2AuthoredOriginals(run, r);
           await run('UPDATE deliverables_v2 SET status = $1, signed_off_by = $2, signed_off_at = now(), '
             + 'signed_off_version = $3, approved_artifact_id = $4, authoritative_lifecycle_state = $5, '
@@ -743,6 +750,8 @@ export function createAzureProgramsWriteAdapter(
       try {
         // One transaction: deliverables_v2 upsert + deliverable_versions insert.
         const result = await session(async (run) => {
+          await run('SELECT pg_advisory_xact_lock(64833, hashtext($1))',
+            [`${input.programId}:${input.deliverableTypeKey}`]);
           await run(
             'INSERT INTO deliverable_types '
               + '(type_key, title, description, applicable_phases, applicable_topics, '
@@ -765,14 +774,21 @@ export function createAzureProgramsWriteAdapter(
               'pilot',
             ],
           );
-          const existingRows = await run<{ id: string; current_version: number }>(
-            'SELECT id, current_version FROM deliverables_v2 '
-              + 'WHERE engagement_id = $1 AND deliverable_type_key = $2 LIMIT 1',
+          const existingRows = await run<{ id: string; current_version: number; status?: string; signed_off_version?: number | null }>(
+            'SELECT id, current_version, status, signed_off_version FROM deliverables_v2 '
+              + 'WHERE engagement_id = $1 AND deliverable_type_key = $2 FOR UPDATE',
             [input.programId, input.deliverableTypeKey],
           );
+          if (existingRows.length > 1) throw new Error('deliverable_inventory_ambiguous');
           let deliverableId: string;
           let nextVersion = 1;
           if (existingRows[0]) {
+            if (existingRows[0].status === 'signed_off' || existingRows[0].signed_off_version != null)
+              throw new Error('signed_deliverable_not_regenerable');
+            const authored = await run('SELECT id FROM deliverable_versions WHERE deliverable_id = $1 '
+              + "AND version = $2 AND (origin = 'abarva_uploaded' OR structured_data ? 'authoredUpload')",
+              [existingRows[0].id, existingRows[0].current_version]);
+            if (authored.length) throw new Error('authored_deliverable_not_regenerable');
             deliverableId = existingRows[0].id;
             nextVersion = (existingRows[0].current_version ?? 0) + 1;
             await run(

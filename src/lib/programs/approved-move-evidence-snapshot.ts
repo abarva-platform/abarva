@@ -1,4 +1,5 @@
 import "server-only";
+import type { SqlRunner } from "@/lib/data-plane/read-adapters/azureSession";
 
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import { reviewedExtractionFromStoredSourceRef } from "@/lib/programs/evidence-review-contract";
@@ -32,6 +33,10 @@ function stringOrNull(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+function timestampOrNull(value: unknown): string | null {
+  return value instanceof Date ? (Number.isFinite(value.getTime()) ? value.toISOString() : null) : stringOrNull(value);
+}
+
 function numberOrNull(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (
@@ -51,7 +56,7 @@ function latestReviewTimestamp(
   let latestTime = Number.NEGATIVE_INFINITY;
   for (const row of rows) {
     for (const field of ["reviewed_at", "updated_at", "created_at"]) {
-      const timestamp = stringOrNull(row[field]);
+      const timestamp = timestampOrNull(row[field]);
       const time = timestamp ? Date.parse(timestamp) : Number.NaN;
       if (Number.isFinite(time) && time > latestTime) {
         latest = timestamp;
@@ -92,7 +97,7 @@ function toRevisionRow(
 export async function loadApprovedMoveEvidenceSnapshot(args: {
   tenantKey: string;
   moveId: string;
-}): Promise<ApprovedMoveEvidenceSnapshot | null> {
+}, transaction?: SqlRunner): Promise<ApprovedMoveEvidenceSnapshot | null> {
   if (!args.tenantKey || !args.moveId) return null;
   // Approved evidence for one Move can carry either of that tenant's own keys:
   // the product writes the app client key, a data-plane load job writes the
@@ -102,9 +107,9 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
   // the gate evaluator, the effective-phase resolver and every generation path
   // read. Per-tenant by construction; see `moveEvidenceReadTenantKeys`.
   const tenantKeys = moveEvidenceReadTenantKeys(args.tenantKey);
-  const db = getAzureReadFluentClient();
+  const db = transaction ? null : getAzureReadFluentClient();
   const [reviewResult, reviewActivityResult] = await Promise.all([
-    db
+    transaction ? transaction("SELECT evidence_id, decision, source_ref, reviewed_at, updated_at, created_at FROM program_evidence_reviews WHERE tenant_key = ANY($1::text[]) AND program_id = $2 AND decision = 'approved' ORDER BY updated_at DESC LIMIT $3", [tenantKeys, args.moveId, MAX_APPROVED_EVIDENCE_ROWS + 1]).then(data => ({ data, error: null })) : db!
       .from("program_evidence_reviews")
       .select(
         "evidence_id, decision, source_ref, reviewed_at, updated_at, created_at",
@@ -114,7 +119,7 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
       .eq("decision", "approved")
       .order("updated_at", { ascending: false })
       .limit(MAX_APPROVED_EVIDENCE_ROWS + 1),
-    db
+    transaction ? transaction("SELECT evidence_id, decision, updated_at, reviewed_at, created_at FROM program_evidence_reviews WHERE tenant_key = ANY($1::text[]) AND program_id = $2 LIMIT $3", [tenantKeys, args.moveId, MAX_REVIEW_ACTIVITY_ROWS + 1]).then(data => ({ data, error: null })) : db!
       .from("program_evidence_reviews")
       .select("evidence_id, decision, updated_at, reviewed_at, created_at")
       .in("tenant_key", tenantKeys)
@@ -167,14 +172,14 @@ export async function loadApprovedMoveEvidenceSnapshot(args: {
     };
   }
 
-  const { data: evidence, error: evidenceError } = await db
+  const { data: evidence, error: evidenceError } = await (transaction ? transaction("SELECT id, tenant_key, program_id, attachment_id, phase, evidence_type, title, summary, extracted_text, extracted_structured, confidence, created_at FROM program_evidence_items WHERE tenant_key = ANY($1::text[]) AND program_id = $2 AND id = ANY($3::uuid[])", [tenantKeys, args.moveId, uniqueEvidenceIds]).then(data => ({ data, error: null })) : db!
     .from("program_evidence_items")
     .select(
       "id, tenant_key, program_id, attachment_id, phase, evidence_type, title, summary, extracted_text, extracted_structured, confidence, created_at",
     )
     .in("tenant_key", tenantKeys)
     .eq("program_id", args.moveId)
-    .in("id", uniqueEvidenceIds);
+    .in("id", uniqueEvidenceIds));
   if (evidenceError || !Array.isArray(evidence)) return null;
 
   const evidenceById = new Map(

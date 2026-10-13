@@ -14,14 +14,14 @@ The existing authored admission path accepts the declared P2 report, root-cause 
 
 ## Layer Impact
 
-Release lane: `experimental`.
+Release lane: `global-control-lane`. The P2 authored surface remains an experimental tenant-gated extension; the existing shared evidence and document lifecycle boundaries gain serialization.
 
 - Layer 3: extend the existing absent-only authored admission and exact-version approval transaction for three existing canonical P2 keys and four original files. Preserve tenant identity, original bytes, file versions, current evidence basis and signed history. No schema, template, canonical key, indexing or model-generation path is added.
 - Layer 4: connect the existing P2 server document panel to normal Files beside the existing Vault. The P1 correction affects its display label only.
 
 ## Client Applicability
 
-- All clients: no default expansion.
+- All clients: existing governed evidence decisions and generated-document creators use shared transaction serialization. No new document identity or model operation is enabled.
 - Specific clients: the registry-declared synthetic demo tenant under its phase-specific flag.
 - Internal only: no operator or data-build entry.
 - Public/demo only: generic mechanisms and synthetic fixtures.
@@ -34,13 +34,16 @@ Release lane: `experimental`.
 - Lock current P2, the absent canonical slot and all original file receipts in the existing transaction. Append one unsigned version only after the complete package verifies. Complete retries replay the same package; mismatches refuse. Partial storage reports the retained original records without claiming admission.
 - Approval binds current document/version/source, complete primary/companion receipts and the current approved phase evidence basis. Both originals are approved in one transaction without another version. Damaged authored lineage remains unavailable and cannot enter the generic native approval path.
 - The real server producer, normal Files host and existing document panel expose current-phase controls, preserve signed/native history and retain the same-Move Vault refresh after a confirmed admission. Unavailable register reads or closed permissions withhold initial upload.
-- Eight existing covered suites are extended. No new test file, workflow sweep or coverage-count adjustment is introduced.
+- Authored sign-off reads the authoritative phase evidence snapshot on its existing SQL connection after locking the same Move as evidence decisions. Pending decisions and approved/rejected/auto-approved late review insertion share that Move lock. Evidence drift before sign-off refuses writes; a later decision waits for sign-off to commit. Native timestamp and ISO representations use the same current-activity comparator.
+- Authored initial admission and the existing generated-draft writer share the same Move/key advisory lock before their inventory read. A generated loser preserves an authored or signed current version; ambiguous parent inventories refuse. No uniqueness assumption or schema change substitutes for that serialization.
+- Eleven existing covered suites are extended. No new test file, workflow sweep or coverage-count adjustment is introduced.
 
 ## QA / Validation
 
-- PASS: 588 focused tests in nine existing suites, including full upload/sign-off/transaction boundaries, real server/host wiring and the existing Office parser.
-- PASS: 120 affected existing tests in six further suites covering access, upload protection, approved evidence, artifact storage, program reads and the current-main gate reader. All data-plane dependencies remain mocked or blocked by the test boundary.
-- PASS: 22 planted defects caught and source restored after each check. The truncation case was isolated with otherwise valid extraction so an unrelated refusal cannot conceal the defect.
+- PASS: 648 focused tests in 12 existing suites, including full upload/sign-off/transaction boundaries, real server/host wiring, the Office parser, evidence decision serialization and authoritative snapshot parity.
+- PASS: 215 affected existing tests in nine further suites covering access, upload retention/protection, tenant-scoped evidence, artifact storage, program reads, the current-main gate reader and the merged Home read dependency. All data-plane dependencies remain mocked or blocked by the test boundary.
+- PASS: 30 planted defects caught and source restored after each check. The truncation case was isolated with otherwise valid extraction so an unrelated refusal cannot conceal the defect.
+- PASS: meaningful injected interleavings run both actual parent creators in both winner orders for P1/P2, with generated insertion delayed until the first commit. Actual evidence decisions wait behind actual authored approval. Stale preflight evidence, unavailable transactional reads and native timestamp activity are separately checked. These are blocked-data-plane controls, not live concurrency observations.
 - PASS: Node.js 24 typecheck and changed-file lint, no new library orphans, route and export reachability.
 - PASS: current main was merged, its generated artifacts retained and the manual, coverage and tenancy artifacts genuinely regenerated. The temporary visual suite was removed before final census generation. All three generated checks passed.
 - Coverage: natural `coveredTestFiles` is 2868 on this candidate and independently measured immutable current main, with zero new covered suites. Generated coverage and tenancy artifacts are unchanged; the manual records the new flag.
@@ -65,7 +68,7 @@ Review the exact source and QA under the existing delegated authority, publish a
 
 ## Rollback Plan
 
-Revert the P2 admission/approval and Files expansion through the protected repository release lane. Preserve every stored original, canonical version, signed pointer and prior P1 behavior. Do not delete, rebuild or replace a signed document as rollback.
+Revert the P2 admission/approval and Files expansion through the protected repository release lane; assess the shared lifecycle serialization separately before reverting it. Preserve every stored original, canonical version, signed pointer and prior P1 behavior. Do not delete, rebuild or replace a signed document as rollback.
 
 ## Audit Evidence
 

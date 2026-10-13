@@ -38,6 +38,8 @@
  * Tenant keys are derived from the alias table in code, never hand-typed, so a
  * profile change cannot leave these cases comparing a key against itself.
  */
+let mockDecisionTransactionOverride:((work:(query:unknown)=>Promise<unknown>)=>Promise<unknown>)|undefined;
+const mockReviewTransactionQueries:Array<{sql:string;params:unknown[]}>=[];
 const mockReviewRows: Array<Record<string, unknown>> = [];
 const mockEvidenceRows: Array<Record<string, unknown>> = [];
 const mockFilters: Array<{ table: string; column: string; value: unknown }> =
@@ -52,7 +54,14 @@ jest.mock("@/lib/programs/audit-log", () => ({
   writeProgramAuditLogBestEffort: jest.fn(async () => {}),
   writeProgramAuditLog: jest.fn(async () => {}),
 }));
+jest.mock("@/lib/data-plane/read-adapters/azureSession",()=>({...jest.requireActual("@/lib/data-plane/read-adapters/azureSession"),resolveAzureUrlCandidates:()=>["unit-test-only"]}));
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
+  getAzureTransactionReadExecutor:()=>undefined,
+  withAzureWriteTransaction:async(_connection:unknown,work:(query:unknown)=>Promise<unknown>,options:unknown)=>{
+    expect(options).toEqual({includeReads:true});
+    if(mockDecisionTransactionOverride)return mockDecisionTransactionOverride(work);
+    return work(async(sql:string,params:unknown[])=>{mockReviewTransactionQueries.push({sql,params});return{rows:[{id:params[0]}],rowCount:1,command:"SELECT",fields:[]};});
+  },
   getAzureWriteFluentClient: () => ({
     from: (table: string) => {
       const filters: Array<{ column: string; value: unknown }> = [];
@@ -144,7 +153,7 @@ const OTHER_TENANT_KEY = CANONICAL_TENANT_KEYS.find(
 )!;
 
 const ctxFor = (clientKey: string) =>
-  ({ clientKey, userId: "reviewer@example.com" }) as unknown as TenancyCtx;
+  ({ clientId:"client-1",clientKey, userId: "reviewer@example.com" }) as unknown as TenancyCtx;
 
 const EVIDENCE_ID = "11111111-1111-4111-8111-111111111111";
 const MOVE_ID = "move-a";
@@ -195,6 +204,8 @@ const approve = (clientKey: string) =>
   });
 
 beforeEach(() => {
+  mockDecisionTransactionOverride=undefined;
+  mockReviewTransactionQueries.length=0;
   mockReviewRows.length = 0;
   mockEvidenceRows.length = 0;
   mockFilters.length = 0;
@@ -395,4 +406,50 @@ describe("the promotion says WHICH refusal this is", () => {
     expect(result.ok).toBe(true);
     expect(result.reason).toBeUndefined();
   });
+});
+
+
+it("serializes the actual evidence decision before its scoped update",async()=>{
+ mockReviewRows.push(review(APP_KEY,"pending"));
+ await decideEvidenceReview(ctxFor(APP_KEY),{moveId:MOVE_ID,evidenceId:EVIDENCE_ID,decision:"approved",reviewedExtraction:EXTRACTION});
+ expect(mockReviewTransactionQueries[0]).toEqual({sql:"SELECT id FROM engagements WHERE id = $1 AND client_id::text = $2 FOR UPDATE",params:[MOVE_ID,"client-1"]});
+ expect(mockReviewRows[0].decision).toBe("approved");
+});
+
+
+it.each([1,2] as const)("blocks a real P%s evidence decision until authored sign-off commits",async phase=>{
+ const {createAzureProgramsWriteAdapter}=await import("@/lib/data-plane/write-adapters/programsWriteAdapter");
+ const {approvedMoveEvidenceRevision}=await import("@/lib/programs/approved-move-evidence-revision");
+ const moveId="10000000-0000-4000-8000-000000000001";const basis=approvedMoveEvidenceRevision({tenantKey:CANONICAL_KEY,moveId,rows:[]});
+ mockReviewRows.push({...review(APP_KEY,"pending"),program_id:moveId});mockEvidenceRows.push({...evidence(APP_KEY),program_id:moveId,phase});
+ const r={source:phase===1?"authored_docx_upload"as const:"authored_pptx_upload"as const,origin:"abarva_uploaded"as const,tenantKey:CANONICAL_KEY,storageTenantKey:APP_KEY,moveId,deliverableTypeKey:phase===1?"charter"as const:"root_cause_worksheet"as const,phase,requestId:"50000000-0000-4000-8000-000000000001",sha256:"a".repeat(64),artifactId:"20000000-0000-4000-8000-000000000001",artifactVersion:1,uploadedBy:"author",authoringBasis:"abarva_authored_unsigned"as const,delegatedReviewReference:null,originalFileName:phase===1?"synthetic.docx":"synthetic.pptx",parseMethod:"office-parser",evidenceSnapshotHash:basis,phaseEvidenceSnapshotHash:basis,evidenceSnapshotScope:"phase"as const,observedAt:"2026-10-12T18:00:00Z",...(phase===2?{fileRole:"primary"as const,fileFormat:"pptx"as const,textSha256:"b".repeat(64)}:{})};
+ let releaseAuth!:()=>void,signalAuth!:()=>void,signalReviewer!:()=>void;
+ const atSignWrite=new Promise<void>(r=>signalAuth=r);const mayCommit=new Promise<void>(r=>releaseAuth=r);const reviewerBlocked=new Promise<void>(r=>signalReviewer=r);
+ let unlock!:()=>void;const authLock=new Promise<void>(r=>unlock=r);let locked=false;const trace:string[]=[];
+ const authSession:import("@/lib/data-plane/read-adapters/azureSession").TxSessionRunner=async fn=>{try{const v=await fn(async<R>(sql:string,args:unknown[])=>{
+  if(sql.startsWith("SELECT d.id")){expect(sql).toContain("FOR UPDATE OF e, d, v, a");locked=true;return[{id:"document"}]as R[];}
+  if(sql.includes("FROM program_evidence_reviews")){expect(locked).toBe(true);return mockReviewRows.filter(x=>sql.includes("decision = 'approved'")?x.decision==="approved":true)as R[];}
+  if(sql.includes("FROM program_evidence_items"))return mockEvidenceRows as R[];
+  if(sql.startsWith("SELECT artifact_id"))return[{artifact_id:args[0]}]as R[];
+  if(sql.startsWith("UPDATE deliverables_v2")){signalAuth();await mayCommit;trace.push("signed exact current basis");}
+  return[]as R[];
+ });trace.push("authored transaction committed");return v;}finally{locked=false;unlock();}};
+ mockDecisionTransactionOverride=async work=>work(async(sql:string,params:unknown[])=>{
+  expect(sql).toBe("SELECT id FROM engagements WHERE id = $1 AND client_id::text = $2 FOR UPDATE");expect(params).toEqual([moveId,"client-1"]);
+  signalReviewer();if(locked)await authLock;trace.push("review acquired same Move lock");return{rows:[{id:moveId}],rowCount:1,command:"SELECT",fields:[]};
+ });
+ const sign=createAzureProgramsWriteAdapter(authSession).runAuthoredApproval({programId:moveId,clientId:"client-1",deliverableId:"document",versionId:"version",version:1,content:"Synthetic authored words",receipt:r,userId:"reviewer",reviewerRole:"other",approvalRationale:null});
+ await atSignWrite;
+ const reviewPromise=decideEvidenceReview(ctxFor(APP_KEY),{moveId,evidenceId:EVIDENCE_ID,decision:"approved",reviewedExtraction:EXTRACTION});
+ await reviewerBlocked;expect(mockReviewRows[0].decision).toBe("pending");expect(mockUpdates).toHaveLength(0);
+ releaseAuth();expect(await sign).toEqual({ok:true,data:{applied:true}});expect((await reviewPromise).ok).toBe(true);
+ expect(trace).toEqual(["signed exact current basis","authored transaction committed","review acquired same Move lock"]);expect(mockReviewRows[0].decision).toBe("approved");
+});
+
+
+it.each(["approved","rejected","auto-approved"])("locks the Move before a new %s review enters the basis",async decision=>{
+ const {ensureEvidenceReviewForUploadedEvidence}=await import("../current-state-doc-ingest");
+ const result=await ensureEvidenceReviewForUploadedEvidence(ctxFor(APP_KEY),{moveId:MOVE_ID,evidenceId:EVIDENCE_ID,familyKey:"synthetic-source",phase:2,initialDecision:decision==="rejected"?"rejected":"approved",autoPromoted:decision==="auto-approved",reviewedExtraction:EXTRACTION});
+ expect(result.ok).toBe(true);expect(mockReviewTransactionQueries[0]).toEqual({sql:"SELECT id FROM engagements WHERE id = $1 AND client_id::text = $2 FOR UPDATE",params:[MOVE_ID,"client-1"]});
+ expect(mockInserts[0].values.decision).toBe(decision==="rejected"?"rejected":"approved");
 });
