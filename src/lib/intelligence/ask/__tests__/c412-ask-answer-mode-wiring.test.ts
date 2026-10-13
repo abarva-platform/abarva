@@ -333,7 +333,7 @@ describe("C-412 · answer-mode wiring inside the Ask module", () => {
     expect(result.modelInputs).toHaveLength(1);
     expect(result.modelInputs[0].system).toContain("around 100 words");
     expect(result.modelInputs[0].system).toContain(
-      "roughly 300 words of prose",
+      "roughly 300 words total",
     );
     expect(result.modelInputs[0].system).toContain("Never invent facts");
     expect(result.modelInputs[0].system).toContain("FOLLOW-UP DECISION TEST");
