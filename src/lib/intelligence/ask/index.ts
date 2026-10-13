@@ -737,7 +737,7 @@ export async function* askIntelligence(
     // cap are already applied at the synthesizer entry. Pass chunks
     // through unchanged.
     const companionCanvasEnabled = opts.companionCanvasEnabled === true;
-    const pendingDeltas: string[] = [];
+    let modelAuthoredStreamedChars = 0;
     for await (const delta of synthesizeStream({
       richText: opts.richText,
       modelAuthoredOutput: opts.modelAuthoredOutput,
@@ -778,7 +778,33 @@ export async function* askIntelligence(
       latencyStartedAt: trace.startedAt,
     })) {
       answer += delta;
-      pendingDeltas.push(delta);
+      if (opts.modelAuthoredOutput) {
+        // A completed paragraph is checked as a unit before any of its text
+        // is released. Keep the cumulative scan for matches across deltas.
+        const paragraphEnd = answer.lastIndexOf("\n\n") + 2;
+        if (paragraphEnd <= modelAuthoredStreamedChars || paragraphEnd < 2)
+          continue;
+        const readyText = answer.slice(0, paragraphEnd);
+        const findings = scanRetiredFacts({
+          tenantKey: tenantKeyForRetiredFactGate,
+          tenantName:
+            opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
+          textBlocks: [{ location: "modelOutput", text: readyText }],
+        });
+        if (findings.length > 0) {
+          yield {
+            type: "error",
+            error: clientSafeRetiredFactMessage(),
+            retiredFactFindings: findings,
+          };
+          return;
+        }
+        yield {
+          type: "delta",
+          text: readyText.slice(modelAuthoredStreamedChars),
+        };
+        modelAuthoredStreamedChars = paragraphEnd;
+      }
     }
     const modelOutputRetiredFacts = scanRetiredFacts({
       tenantKey: tenantKeyForRetiredFactGate,
@@ -794,7 +820,8 @@ export async function* askIntelligence(
       return;
     }
     if (opts.modelAuthoredOutput) {
-      for (const delta of pendingDeltas) yield { type: "delta", text: delta };
+      const remainder = answer.slice(modelAuthoredStreamedChars);
+      if (remainder) yield { type: "delta", text: remainder };
       yield { type: "done" };
       return;
     }

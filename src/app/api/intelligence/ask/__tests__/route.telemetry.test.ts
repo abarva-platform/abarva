@@ -761,6 +761,9 @@ describe("model-authored executive response", () => {
       .split("\n")
       .map((line) => JSON.parse(line));
     expect(events.filter((e) => e.type === "delta")).toHaveLength(0);
+    expect(events.filter((e) => e.type === "answer-progress").at(-1).text).toBe(
+      "**Validate first.**  [S1]\n\nKeep the next paragraph.\n\n",
+    );
     const packet = events.find((e) => e.type === "agent-answer")?.answer;
     expect(packet.modelAuthored.rawText).toBe(raw);
     expect(packet.prose).toBe(
@@ -772,6 +775,60 @@ describe("model-authored executive response", () => {
     expect(
       (askIntelligence as jest.Mock).mock.calls.at(-1)[1].modelAuthoredOutput,
     ).toBe(true);
+  });
+
+  it("delivers executive prose while generation is open and emits the intact packet at completion", async () => {
+    let finishModel!: () => void;
+    const waitForFinish = new Promise<void>((resolve) => {
+      finishModel = resolve;
+    });
+    const opening = "**Validate discovery.**\n\n";
+    const protocol =
+      '```sources\n["S1"]\n```\n\n```followups\n["Which scope?","Which baseline?","Which decision?"]\n```';
+    (askIntelligence as jest.Mock).mockImplementationOnce(async function* () {
+      yield { type: "delta", text: opening };
+      await waitForFinish;
+      for (const text of protocol) yield { type: "delta", text };
+      yield { type: "done" };
+    });
+    const response = await POST(
+      makeRequest({
+        query: "Which discovery should we charter?",
+        richText: true,
+        answerOnlyStreaming: true,
+        modelAuthoredOutput: true,
+        surfaceContext: { activeTab: "intelligence" },
+      }) as never,
+    );
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let received = "";
+    try {
+      while (!received.includes('"type":"answer-progress"')) {
+        const part = await reader.read();
+        expect(part.done).toBe(false);
+        received += decoder.decode(part.value);
+      }
+      expect(
+        parseNdjson(received).find((e) => e.type === "answer-progress")?.text,
+      ).toBe(opening);
+      expect(received).not.toContain('"type":"agent-answer"');
+    } finally {
+      finishModel();
+    }
+    for (;;) {
+      const part = await reader.read();
+      if (part.done) break;
+      received += decoder.decode(part.value);
+    }
+    const events = parseNdjson(received);
+    for (const event of events.filter((e) => e.type === "answer-progress"))
+      expect(event.text).toBe(opening);
+    const packet = events.find((e) => e.type === "agent-answer")?.answer as {
+      modelAuthored: { rawText: string };
+    };
+    expect(packet.modelAuthored.rawText).toBe(opening + protocol);
+    expect(events.some((e) => e.type === "done")).toBe(true);
   });
 });
 
