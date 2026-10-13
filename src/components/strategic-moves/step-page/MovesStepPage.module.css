@@ -2135,3 +2135,6 @@ td .ava-badge,
   text-decoration: none;
   display: inline-block;
 }
+/* Canonical IDs remain readable in the narrow contact review. */
+.participant-binding-review dd { overflow-wrap: anywhere; margin-inline-start: 0; }
+.participant-binding-form label { display: block; margin-top: 12px; }

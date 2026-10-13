@@ -14214,3 +14214,15 @@ describe("normal step gate transition evidence producer", () => {
     },
   );
 });
+
+
+it("uses the exact server contact readback for P1.1 chrome and keeps participant roles unchanged", () => {
+  const move=makeMove({currentPhase:1});
+  const initial={moveId:move.id,status:"available" as const,current:{sponsorPersonId:"person",leadPersonId:"person"},choices:[{personId:"person",name:"Declared operator",role:"Automated operator",attribution:"delegated_automated" as const}],revision:"a".repeat(64),preservationRevision:"b".repeat(64),canConfirm:true,confirmed:false,auditId:null};
+  const props={move,phaseNum:1,phaseTallies:[...phaseTallies],carriesForwardContent:[],evidenceNeedPackets:[],captureV2Enabled:true,stepPagesV3Enabled:true,phaseStepPagesEnabled:true,p1ParticipantBindingEnabled:true,initialStepView:"p1-sponsor-scope" as const,initialPhaseCaptureValues:{sponsor_commitment:"Named progress contact",scope_boundary:"Bounded scope"}};
+  const ui=render(<MovesPhaseStandaloneClient {...props} initialP1ParticipantBinding={initial}/>);
+  expect(screen.getByText("Confirm sponsor contact and lead")).toBeInTheDocument();
+  ui.rerender(<MovesPhaseStandaloneClient {...props} initialP1ParticipantBinding={{...initial,confirmed:true,auditId:"audit"}} key="confirmed-read"/>);
+  expect(screen.getByText("Sponsor contact and lead confirmed")).toBeInTheDocument();
+  expect(screen.queryByText(/has the sponsor role on this Move/)).not.toBeInTheDocument();
+});

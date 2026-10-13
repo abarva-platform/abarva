@@ -43,6 +43,14 @@ const mockWriteProgramAuditLogBestEffort = jest.fn();
 const mockIsFeatureEnabled = jest.fn();
 const mockSbFrom = jest.fn();
 const mockRestoreReviewedP0 = jest.fn();
+const mockP1BindingEnabled = jest.fn();
+const mockReadP1Binding = jest.fn();
+const mockConfirmP1Binding = jest.fn();
+jest.mock("@/lib/data-plane/write-adapters/p1ParticipantBindingAdapter", () => ({
+  p1ParticipantBindingEnabled: (...args: unknown[]) => mockP1BindingEnabled(...args),
+  readP1ParticipantBinding: (...args: unknown[]) => mockReadP1Binding(...args),
+  confirmP1ParticipantBinding: (...args: unknown[]) => mockConfirmP1Binding(...args),
+}));
 jest.mock(
   "@/lib/data-plane/write-adapters/p0ReviewedCaptureCorrectionAdapter",
   () => ({
@@ -167,6 +175,7 @@ let consoleError: jest.SpyInstance;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockP1BindingEnabled.mockReturnValue(false);
   // The route logs the swallowed-no-more read failure for the operator. That
   // is deliberate and these cases drive it on purpose, so the log is captured
   // rather than printed over the run.
@@ -193,6 +202,47 @@ beforeEach(() => {
 
 afterEach(() => {
   consoleError.mockRestore();
+});
+
+describe("normal P1 existing-participant contact confirmation", () => {
+  const command = { action: "confirm_p1_participant_bindings", phase: 1, sponsorPersonId: "selected-sponsor",
+    leadPersonId: "selected-lead", requestId: "reviewed-request", expectedRevision: "locked-revision", rationale: "Explicit synthetic progress responsibilities" };
+  it("routes the separate command to the canonical adapter without autosave, completion or best-effort audit", async () => {
+    mockConfirmP1Binding.mockResolvedValue({ ok: true, persisted: true, auditId: "required-audit", preservedBindings: true });
+    const response = await POST(req(command) as NextRequest, { params });
+    expect(response.status).toBe(200); expect(mockConfirmP1Binding).toHaveBeenCalledWith(expect.objectContaining({ userId: "user-1" }), "prog-1", command);
+    expect(mockGetModuleState).not.toHaveBeenCalled(); expect(mockSbFrom).not.toHaveBeenCalled(); expect(mockWriteProgramAuditLogBestEffort).not.toHaveBeenCalled();
+  });
+  it.each([{ sections: { sponsor_commitment: "new" } }, { complete: true }, { restoreReviewedP0: {} }, { phase: 2 }, { action: "unknown" }])("refuses mixed command %j", async (extra) => {
+    const response = await POST(req({ ...command, ...extra }) as NextRequest, { params });
+    expect(response.status).toBe(400); expect(mockConfirmP1Binding).not.toHaveBeenCalled(); expect(mockSbFrom).not.toHaveBeenCalled();
+  });
+  it.each(["unknown", "rolled_back", "not_started"])("reports only the adapter wrapper's proven %s outcome", async (transactionOutcome) => {
+    mockConfirmP1Binding.mockRejectedValue(Object.assign(new Error("transport"), { transactionOutcome }));
+    const response = await POST(req(command) as NextRequest, { params }); const body = await response.json();
+    expect(body.transactionOutcome).toBe(transactionOutcome);
+    expect(body.detail).toContain(transactionOutcome === "unknown" ? "outcome is unknown" : transactionOutcome === "rolled_back" ? "No contacts were changed" : "did not start");
+  });
+  it("does not infer rollback from an error with no wrapper proof", async () => {
+    mockConfirmP1Binding.mockRejectedValue(new Error("unproved"));
+    const response = await POST(req(command) as NextRequest, { params }); const body = await response.json();
+    expect(body.error).toBe("participant_binding_unconfirmed"); expect(body.detail).not.toContain("No contacts were changed");
+  });
+  it("adds the flagged phase-one read preview without appointing contacts", async () => {
+    mockP1BindingEnabled.mockReturnValue(true);
+    mockReadP1Binding.mockResolvedValue({ status: "available", confirmed: false, choices: [] });
+    const response = await GET(new NextRequest("http://test/api/v1/programs/prog-1/phase-capture?phase=1"), { params });
+    expect((await response.json()).p1ParticipantBinding.confirmed).toBe(false); expect(mockConfirmP1Binding).not.toHaveBeenCalled();
+  });
+  it("keeps saved capture separate from a failed participant preview", async () => {
+    mockP1BindingEnabled.mockReturnValue(true); mockReadP1Binding.mockRejectedValue(new Error("read unavailable"));
+    const response = await GET(new NextRequest("http://test/api/v1/programs/prog-1/phase-capture?phase=1"), { params }); const body = await response.json();
+    expect(response.status).toBe(200); expect(body.p1ParticipantBinding.status).toBe("unavailable"); expect(body.p1ParticipantBinding.canConfirm).toBe(false); expect(body.values).toBeDefined();
+  });
+  it("leaves the flag-off response unchanged", async () => {
+    const response = await GET(new NextRequest("http://test/api/v1/programs/prog-1/phase-capture?phase=1"), { params });
+    expect((await response.json()).p1ParticipantBinding).toBeUndefined(); expect(mockReadP1Binding).not.toHaveBeenCalled();
+  });
 });
 
 describe("POST .../phase-capture · the saved answers cannot be read", () => {

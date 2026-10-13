@@ -49,6 +49,7 @@ import { listApprovedPhaseEvidence } from "@/lib/programs/approved-phase-evidenc
 import { getStrategicMovesTenancy } from "@/lib/programs/strategic-moves-context";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { MovesPhaseStandaloneClient } from "@/components/strategic-moves/MovesPhaseStandaloneClient";
+import { p1ParticipantBindingEnabled, readP1ParticipantBinding } from "@/lib/data-plane/write-adapters/p1ParticipantBindingAdapter";
 import {
   isStrategicMoveRouteId,
   parseStrategicMovePhaseNum,
@@ -483,6 +484,8 @@ export default async function StrategicMovePhaseWorkspacePage({
     resolvedSearchParams.legacy !== "1" &&
     parseStepPageView(resolvedSearchParams.step) !== null;
   const selectedStepView = parseStepPageView(resolvedSearchParams.step);
+  const p1BindingActive = parsedPhase === 1 && phaseStepPagesEnabled && p1ParticipantBindingEnabled(ctx);
+  const p1BindingPreview = p1BindingActive ? timed("p1ParticipantBinding", () => readP1ParticipantBinding(ctx, moveId)).catch(() => null) : undefined;
   const readSet = flaggedStepView
     ? createPhasePageReadSet(ctx, moveId)
     : undefined;
@@ -1571,6 +1574,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         )
       : undefined;
 
+  const initialP1ParticipantBinding = p1BindingPreview ? await p1BindingPreview : undefined;
   finish();
 
   return (
@@ -1640,6 +1644,8 @@ export default async function StrategicMovePhaseWorkspacePage({
         captureV2Enabled={captureV2Enabled}
         stepPagesV3Enabled={stepPagesV3Enabled}
         phaseStepPagesEnabled={phaseStepPagesEnabled}
+        p1ParticipantBindingEnabled={p1BindingActive}
+        initialP1ParticipantBinding={initialP1ParticipantBinding}
         p5TowerHandoffEnabled={isFeatureEnabled(
           ctx,
           "moves_p5_tower_handoff_v1",
