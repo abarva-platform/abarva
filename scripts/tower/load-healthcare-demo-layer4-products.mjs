@@ -93,6 +93,8 @@ function envFlag(name) {
 }
 
 function gitSha() {
+  const operatorCommit = process.env.ABARVA_OPERATOR_BRANCH_COMMIT?.trim();
+  if (/^[0-9a-f]{40}$/.test(operatorCommit ?? "")) return operatorCommit;
   const result = spawnSync("git", ["rev-parse", "HEAD"], {
     cwd: ROOT,
     encoding: "utf8",
@@ -2328,4 +2330,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   await main();
 }
 
-export { buildRows, privateStageProof, readbackSql, validateReadback };
+export { buildRows, gitSha, privateStageProof, readbackSql, validateReadback };

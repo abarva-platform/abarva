@@ -28,6 +28,7 @@ Tower's private projection loader now gives every physical page row an ID that i
 ## Changes Included
 
 - Scope physical row IDs in the four Tower projection tables to the tenant and assessment.
+- Carry the wrapper's exact Git commit into the private-stage proof when the runtime image omits `.git`.
 - Add a regression check for uniqueness across retained and candidate assessments and repeatability within one assessment.
 
 ## QA / Validation

@@ -3,7 +3,16 @@
 import assert from "node:assert/strict";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildRows } from "../load-healthcare-demo-layer4-products.mjs";
+import { buildRows, gitSha } from "../load-healthcare-demo-layer4-products.mjs";
+
+const priorOperatorCommit = process.env.ABARVA_OPERATOR_BRANCH_COMMIT;
+try {
+  process.env.ABARVA_OPERATOR_BRANCH_COMMIT = "a".repeat(40);
+  assert.equal(gitSha(), "a".repeat(40), "ACA job commit survives a Docker image without .git");
+} finally {
+  if (priorOperatorCommit === undefined) delete process.env.ABARVA_OPERATOR_BRANCH_COMMIT;
+  else process.env.ABARVA_OPERATOR_BRANCH_COMMIT = priorOperatorCommit;
+}
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const base = {
