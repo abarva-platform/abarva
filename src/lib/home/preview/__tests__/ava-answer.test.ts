@@ -12,6 +12,12 @@ jest.mock("@/lib/agent/stream", () => ({
   getAuditedAnthropicClient: jest.fn(),
 }));
 
+jest.mock("../source-support", () => ({
+  verifyHomeAnswerSupport: jest.fn().mockResolvedValue({
+    supported: true, reason: "supported", unsupportedFields: [],
+  }),
+}));
+
 const mockGetAuditedAnthropicClient =
   getAuditedAnthropicClient as jest.MockedFunction<
     typeof getAuditedAnthropicClient
@@ -1961,7 +1967,7 @@ describe("answerHomeAvaQuestion", () => {
     expect(answer.citations[0].excerpt).toBe(
       CHAPTERS[1].key_insights[0].statement,
     );
-    expect(answer.caveats[0].detail).toContain("attestation");
+    expect(answer.gaps.map(gap => gap.detail).join(" ")).toContain("attestation");
     expect(validateAvaAnswerPacket(answer).passed).toBe(true);
   });
 

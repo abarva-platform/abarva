@@ -10,6 +10,12 @@ jest.mock("@/lib/agent/stream", () => ({
   getAuditedAnthropicClient: jest.fn(),
 }));
 
+jest.mock("../source-support", () => ({
+  verifyHomeAnswerSupport: jest.fn().mockResolvedValue({
+    supported: true, reason: "supported", unsupportedFields: [],
+  }),
+}));
+
 const auditedClient = jest.mocked(getAuditedAnthropicClient);
 const tenantKey = CANONICAL_TENANT_KEYS[0];
 const vendorClaim =
@@ -423,7 +429,8 @@ describe("concentration evidence supports the asserted share and supplier count"
       expect(create).toHaveBeenCalledTimes(2);
       expect(auditedClient).toHaveBeenCalledTimes(2);
       expect(caveats).not.toContain(unsafeCaveat);
-      expect(caveats).toContain(safeUnknown);
+      expect(caveats).not.toContain(safeUnknown);
+      expect(answer.gaps.map(gap => gap.detail).join(" ")).toContain("unknown, not zero");
       expectWithheld(answer, numericVendorClaim);
     },
   );
