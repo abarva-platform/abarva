@@ -42,7 +42,7 @@ const safe = {
   prose: "",
   cited_claim_tags: ["OB-K1"],
   visual: { type: "none", dataset_ref: null, chart_kind: null },
-  caveats: [],
+  caveats: [] as string[],
 };
 const support = jest.mocked(verifyHomeAnswerSupport);
 const audited = jest.mocked(getAuditedAnthropicClient);
@@ -232,7 +232,7 @@ it("does not retain generated caveats on the failed formatting path that skips s
     ],
     caveats: ["The acquisition was approved by the board."],
   };
-  generate(unsafe as typeof safe, unsafe as typeof safe);
+  generate(unsafe, unsafe);
   const packet = await answer();
   expect(support).not.toHaveBeenCalled();
   expect(JSON.stringify(packet)).not.toContain(
@@ -247,7 +247,7 @@ it("does not pass generated no-data caveats into cited claim recovery", async ()
     status: "no_data",
     cited_claim_tags: [],
     caveats: ["The acquisition was approved by the board."],
-  } as typeof safe);
+  });
   const packet = await answerHomeAvaQuestion({
     bundle: { chapters: [chapter] },
     tenantKey: CANONICAL_TENANT_KEYS[0],
