@@ -15,12 +15,18 @@ import type { AnswerChart } from "@/lib/ava-answer/contract";
 import { ModelAuthoredMatrix } from "./ModelAuthoredMatrix";
 
 /** Chart libraries lay out Claude's data; they do not score or rewrite it. */
-export function ModelAuthoredChart({ chart }: { chart: AnswerChart }) {
+export function ModelAuthoredChart({
+  chart,
+  compact = false,
+}: {
+  chart: AnswerChart;
+  compact?: boolean;
+}) {
   const rows = chart.data as Record<string, string | number | null>[];
   const xKey = chart.xKey!,
     yKey = chart.yKey!;
   if (chart.kind === "quadrant-matrix") {
-    return <ModelAuthoredMatrix chart={chart} />;
+    return <ModelAuthoredMatrix chart={chart} compact={compact} />;
   }
   const horizontal = chart.kind === "horizontal-bar";
   const axes = (
@@ -48,8 +54,13 @@ export function ModelAuthoredChart({ chart }: { chart: AnswerChart }) {
       {chart.subtitle && <p className="text-sm">{chart.subtitle}</p>}
       <div
         className="min-w-0"
+        data-chart-frame="numeric"
         style={{
-          height: horizontal ? Math.max(280, rows.length * 42 + 70) : 320,
+          height: compact
+            ? "clamp(220px, 30dvh, 300px)"
+            : horizontal
+              ? Math.max(280, rows.length * 42 + 70)
+              : 320,
         }}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={1}>
@@ -84,16 +95,19 @@ export function ModelAuthoredChart({ chart }: { chart: AnswerChart }) {
         </ResponsiveContainer>
       </div>
       {chart.unit && <p className="text-sm">{chart.unit}</p>}
-      <ol
-        className="list-inside list-decimal text-sm"
-        aria-label="Chart values"
-      >
-        {rows.map((row, i) => (
-          <li key={i}>
-            {String(row[xKey])}: {String(row[yKey])}
-          </li>
-        ))}
-      </ol>
+      <details open={compact ? undefined : true} className="mt-2 text-sm">
+        <summary className="cursor-pointer text-slate-600">Chart data</summary>
+        <ol
+          className="list-inside list-decimal text-sm"
+          aria-label="Chart values"
+        >
+          {rows.map((row, i) => (
+            <li key={i}>
+              {String(row[xKey])}: {String(row[yKey])}
+            </li>
+          ))}
+        </ol>
+      </details>
       {chart.sourceNote && <p className="mt-2 text-sm">{chart.sourceNote}</p>}
     </div>
   );

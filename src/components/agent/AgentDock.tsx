@@ -17,7 +17,7 @@
 //
 // Design:
 //   - Inline style objects (matches EventChatLane / portfolio idiom)
-//   - No external icon library — chevrons are inline SVG
+//   - Lucide composer controls; existing dock chevrons remain inline SVG
 //   - Tokens borrowed from canvas-tokens (CHAT_BG, INK, RULE, etc.)
 //
 // Spec source: this PR · feat(agent): shared AgentDock with 6 modes.
@@ -37,6 +37,7 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
+import { ArrowUp, ArrowUpRight, Plus } from "lucide-react";
 import { CANVAS } from "@/components/source/canvas/canvas-tokens";
 import { ResizableSplitter } from "@/components/source/canvas/ResizableSplitter";
 import { SynthesisFeedbackWidget } from "@/components/reasoning/SynthesisFeedbackWidget";
@@ -492,6 +493,8 @@ export interface AgentDockProps {
   layout?: "dock" | "chat-only";
   /** Let a chat-only surface use the full available page width. */
   chatOnlyFullWidth?: boolean;
+  /** Center the entry composer and constrain the conversation to a reading column. */
+  chatOnlyCentered?: boolean;
   /**
    * `standard` keeps the full operational dock used by Source/Moves/Tower.
    * `focused` keeps the chat rail quiet for GPT-like advisor surfaces and
@@ -736,6 +739,7 @@ export function AgentDock(props: AgentDockProps) {
     quietReviewChrome = false,
     defaultMode = "side-rail",
     chatOnlyFullWidth = false,
+    chatOnlyCentered = false,
     disableStoredMode = false,
     collapsedRestoreMode,
     surfaceContext: rawSurfaceContext,
@@ -793,6 +797,7 @@ export function AgentDock(props: AgentDockProps) {
   }, [rawThread, preserveVisibleText, isMovesSurface]);
   const focused = variant === "focused";
   const chatOnly = layout === "chat-only";
+  const centered = chatOnly && chatOnlyCentered;
   const showReviewChrome =
     (!focused || surface === "home-preview") && !quietReviewChrome;
 
@@ -1215,12 +1220,18 @@ export function AgentDock(props: AgentDockProps) {
     const expanded = mode === "expand";
     const openingSuggestions = (
       <div
-        style={expanded ? EXPANDED_SUGGESTIONS_STYLE : SUGGESTIONS_STYLE}
+        style={
+          centered
+            ? CENTERED_SUGGESTIONS_STYLE
+            : expanded
+              ? EXPANDED_SUGGESTIONS_STYLE
+              : SUGGESTIONS_STYLE
+        }
         role="region"
         aria-label="Suggested actions"
         tabIndex={0}
       >
-        {expanded ? null : (
+        {expanded || centered ? null : (
           <div style={SUGGESTIONS_LABEL_STYLE}>Suggested questions</div>
         )}
         {visibleSuggestedActions.map((action) => (
@@ -1238,11 +1249,20 @@ export function AgentDock(props: AgentDockProps) {
             disabled={submitting || composerDisabled}
             data-testid={`agent-dock-suggestion-${action.id}`}
             style={
-              expanded
-                ? EXPANDED_SUGGESTION_BUTTON_STYLE
-                : SUGGESTION_BUTTON_STYLE
+              centered
+                ? CENTERED_SUGGESTION_BUTTON_STYLE
+                : expanded
+                  ? EXPANDED_SUGGESTION_BUTTON_STYLE
+                  : SUGGESTION_BUTTON_STYLE
             }
           >
+            {centered && (
+              <ArrowUpRight
+                size={16}
+                aria-hidden="true"
+                style={{ flexShrink: 0 }}
+              />
+            )}
             {action.label}
           </button>
         ))}
@@ -1253,6 +1273,7 @@ export function AgentDock(props: AgentDockProps) {
         ref={dropZoneRef}
         data-testid="agent-dock-panel"
         data-mode={mode}
+        data-presentation={centered ? "centered-conversation" : undefined}
         data-dragging={draggingOver ? "true" : "false"}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
@@ -1265,13 +1286,20 @@ export function AgentDock(props: AgentDockProps) {
             ? { width: "100%", maxWidth: "none" }
             : null),
           ...(expanded ? EXPANDED_PANEL_INNER_STYLE : null),
+          ...(centered && thread.length === 0
+            ? {
+                justifyContent: "center",
+                paddingTop: "4dvh",
+                overflowY: "auto",
+              }
+            : null),
           outline: draggingOver
             ? `2px dashed ${CANVAS.SPLITTER_ACTIVE}`
             : "none",
           outlineOffset: -2,
           background: draggingOver
             ? "rgba(12,26,58,0.04)"
-            : expanded
+            : expanded || centered
               ? "#FFFFFF"
               : CANVAS.CHAT_BG,
         }}
@@ -1288,7 +1316,19 @@ export function AgentDock(props: AgentDockProps) {
         `}</style>
         {/* Header */}
         {chatOnly && thread.length === 0 ? null : (
-          <div style={chatOnly ? CHAT_ONLY_HEADER_STYLE : HEADER_STYLE}>
+          <div
+            style={
+              centered
+                ? {
+                    ...CHAT_ONLY_HEADER_STYLE,
+                    width: "min(100%, 840px)",
+                    margin: "0 auto",
+                  }
+                : chatOnly
+                  ? CHAT_ONLY_HEADER_STYLE
+                  : HEADER_STYLE
+            }
+          >
             <div style={AGENT_ROW_STYLE}>
               <AvaAskMark
                 variant="wordmark-dark"
@@ -1344,21 +1384,48 @@ export function AgentDock(props: AgentDockProps) {
             ...(expanded && thread.length === 0
               ? EXPANDED_EMPTY_THREAD_STYLE
               : null),
+            ...(centered
+              ? { padding: "24px max(20px, calc((100% - 780px) / 2)) 32px" }
+              : null),
+            ...(centered && thread.length === 0
+              ? {
+                  flex: "0 0 auto",
+                  overflowY: "visible",
+                  padding: "0 20px 28px",
+                }
+              : null),
           }}
           data-testid="agent-dock-thread"
         >
           {thread.length === 0 ? (
             <div
               style={
-                expanded || chatOnly
-                  ? CHAT_ONLY_EMPTY_STATE_STYLE
-                  : EMPTY_STATE_STYLE
+                centered
+                  ? {
+                      ...CHAT_ONLY_EMPTY_STATE_STYLE,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexWrap: "wrap",
+                      gap: 16,
+                    }
+                  : expanded || chatOnly
+                    ? CHAT_ONLY_EMPTY_STATE_STYLE
+                    : EMPTY_STATE_STYLE
               }
             >
               {chatOnly || expanded ? (
                 <AvaAskMark
                   variant="wordmark-dark"
-                  style={CHAT_ONLY_EMPTY_MARK_STYLE}
+                  style={
+                    centered
+                      ? {
+                          ...CHAT_ONLY_EMPTY_MARK_STYLE,
+                          width: 64,
+                          minWidth: 64,
+                        }
+                      : CHAT_ONLY_EMPTY_MARK_STYLE
+                  }
                 />
               ) : null}
               <p
@@ -1368,17 +1435,21 @@ export function AgentDock(props: AgentDockProps) {
                     : EMPTY_TITLE_STYLE
                 }
               >
-                Ask {displayAgentName} anything.
+                {centered
+                  ? "How can I help?"
+                  : `Ask ${displayAgentName} anything.`}
               </p>
-              <p
-                style={
-                  chatOnly || expanded
-                    ? CHAT_ONLY_EMPTY_SUBTITLE_STYLE
-                    : EMPTY_SUBTITLE_STYLE
-                }
-              >
-                {agent.role}
-              </p>
+              {!centered && (
+                <p
+                  style={
+                    chatOnly || expanded
+                      ? CHAT_ONLY_EMPTY_SUBTITLE_STYLE
+                      : EMPTY_SUBTITLE_STYLE
+                  }
+                >
+                  {agent.role}
+                </p>
+              )}
               {expanded && visibleSuggestedActions.length > 0
                 ? openingSuggestions
                 : null}
@@ -1552,12 +1623,15 @@ export function AgentDock(props: AgentDockProps) {
               </div>
             </div>
           ) : null}
-          {expanded && thread.length > 0 && visibleSuggestedActions.length > 0
+          {(expanded || centered) &&
+          thread.length > 0 &&
+          visibleSuggestedActions.length > 0
             ? openingSuggestions
             : null}
         </div>
 
-        {transcriptScroll === "answer-start" ? (
+        {transcriptScroll === "answer-start" &&
+        (!centered || thread.length > 0) ? (
           <div
             style={{
               height: 34,
@@ -1593,13 +1667,26 @@ export function AgentDock(props: AgentDockProps) {
         ) : null}
 
         {/* Suggested actions */}
-        {visibleSuggestedActions.length > 0 && !expanded
+        {visibleSuggestedActions.length > 0 && !expanded && !centered
           ? openingSuggestions
           : null}
 
         {/* Pending attachment chips */}
         {uploads.length > 0 ? (
-          <div style={CHIPS_ROW_STYLE} data-testid="agent-dock-chips">
+          <div
+            style={
+              centered
+                ? {
+                    ...CHIPS_ROW_STYLE,
+                    width: "min(calc(100% - 32px), 760px)",
+                    margin: "0 auto",
+                    borderTop: "none",
+                    background: "#FFFFFF",
+                  }
+                : CHIPS_ROW_STYLE
+            }
+            data-testid="agent-dock-chips"
+          >
             {uploads.map((u) => (
               <UploadChip
                 key={u.localId}
@@ -1613,35 +1700,52 @@ export function AgentDock(props: AgentDockProps) {
           </div>
         ) : null}
 
-        <div
-          style={
-            expanded
-              ? EXPANDED_COMPOSER_DISCLAIMER_STYLE
-              : COMPOSER_DISCLAIMER_STYLE
-          }
-          data-testid="agent-dock-disclaimer"
-        >
-          aVa can make mistakes. Check important info.
-        </div>
+        {!centered && (
+          <div
+            style={
+              expanded
+                ? EXPANDED_COMPOSER_DISCLAIMER_STYLE
+                : COMPOSER_DISCLAIMER_STYLE
+            }
+            data-testid="agent-dock-disclaimer"
+          >
+            aVa can make mistakes. Check important info.
+          </div>
+        )}
 
         {/* Composer */}
         <form
           onSubmit={submit}
-          style={expanded ? EXPANDED_INPUT_FORM_STYLE : INPUT_FORM_STYLE}
+          style={
+            centered
+              ? CENTERED_INPUT_FORM_STYLE
+              : expanded
+                ? EXPANDED_INPUT_FORM_STYLE
+                : INPUT_FORM_STYLE
+          }
           aria-label={`Ask ${displayAgentName}`}
           data-testid="agent-dock-form"
         >
           <button
             type="button"
             aria-label="Attach files"
+            title="Attach files"
             data-testid="agent-dock-attach"
             onClick={() => fileInputRef.current?.click()}
             disabled={submitting || composerDisabled}
-            style={ATTACH_BUTTON_STYLE}
+            style={
+              centered
+                ? { ...ATTACH_BUTTON_STYLE, gridRow: 2, gridColumn: 1 }
+                : ATTACH_BUTTON_STYLE
+            }
           >
-            <span aria-hidden="true" style={ATTACH_PLUS_STYLE}>
-              +
-            </span>
+            {centered ? (
+              <Plus size={19} aria-hidden="true" />
+            ) : (
+              <span aria-hidden="true" style={ATTACH_PLUS_STYLE}>
+                +
+              </span>
+            )}
           </button>
           <input
             ref={fileInputRef}
@@ -1670,22 +1774,57 @@ export function AgentDock(props: AgentDockProps) {
             spellCheck
             disabled={submitting || composerDisabled}
             data-testid="agent-dock-input"
-            style={INPUT_STYLE}
+            style={
+              centered
+                ? {
+                    ...INPUT_STYLE,
+                    gridRow: 1,
+                    gridColumn: "1 / -1",
+                    minHeight: 40,
+                    fontSize: 15,
+                    padding: "4px 6px",
+                  }
+                : INPUT_STYLE
+            }
           />
           <button
             type="submit"
             disabled={sendDisabled}
             aria-label="Send message"
+            title="Send message"
             data-testid="agent-dock-send"
             style={{
               ...SUBMIT_BUTTON_STYLE,
+              ...(centered
+                ? {
+                    gridRow: 2,
+                    gridColumn: 3,
+                    background: "#111111",
+                    color: "#FFFFFF",
+                  }
+                : null),
               opacity: sendDisabled ? 0.45 : 1,
               cursor: sendDisabled ? "not-allowed" : "pointer",
             }}
           >
-            ↑
+            {centered ? <ArrowUp size={19} aria-hidden="true" /> : "\u2191"}
           </button>
         </form>
+        {centered && (
+          <div
+            style={{
+              ...COMPOSER_DISCLAIMER_STYLE,
+              padding: "8px 16px 12px",
+              background: "#FFFFFF",
+            }}
+            data-testid="agent-dock-disclaimer"
+          >
+            aVa can make mistakes. Check important info.
+          </div>
+        )}
+        {centered && thread.length === 0 && visibleSuggestedActions.length > 0
+          ? openingSuggestions
+          : null}
         {showReviewChrome ? (
           <>
             <div
@@ -1714,6 +1853,7 @@ export function AgentDock(props: AgentDockProps) {
     agent,
     chatOnly,
     chatOnlyFullWidth,
+    centered,
     compactSheet,
     composerDisabled,
     composerDisabledReason,
@@ -2775,6 +2915,25 @@ const EXPANDED_SUGGESTION_BUTTON_STYLE: CSSProperties = {
   textAlign: "left",
 };
 
+const CENTERED_SUGGESTIONS_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 2,
+  width: "min(calc(100% - 32px), 760px)",
+  margin: "8px auto 24px",
+  flexShrink: 0,
+};
+
+const CENTERED_SUGGESTION_BUTTON_STYLE: CSSProperties = {
+  ...EXPANDED_SUGGESTION_BUTTON_STYLE,
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  padding: "10px 12px",
+  borderBottom: "none",
+  fontSize: 14,
+  color: "#737373",
+};
+
 const CHIPS_ROW_STYLE: CSSProperties = {
   display: "flex",
   flexWrap: "wrap",
@@ -2962,6 +3121,23 @@ const EXPANDED_INPUT_FORM_STYLE: CSSProperties = {
   margin: "0 auto 8px",
   borderRadius: 24,
   boxShadow: "0 4px 24px rgba(12, 26, 58, 0.10)",
+};
+
+const CENTERED_INPUT_FORM_STYLE: CSSProperties = {
+  ...INPUT_FORM_STYLE,
+  display: "grid",
+  gridTemplateColumns: "36px minmax(0, 1fr) 36px",
+  gap: "8px 10px",
+  width: "min(calc(100% - 32px), 760px)",
+  margin: "0 auto",
+  padding: "12px 10px 8px",
+  minHeight: 100,
+  borderRadius: 18,
+  background: "#FFFFFF",
+  borderColor: "#D8D8D8",
+  boxShadow: "0 3px 18px rgba(0,0,0,0.05)",
+  position: "relative",
+  bottom: "auto",
 };
 
 const RESPONSIBILITY_FOOTER_WRAP_STYLE: CSSProperties = {

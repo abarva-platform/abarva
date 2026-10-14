@@ -34,7 +34,7 @@ function matrixLabelLines(label: string) {
 }
 
 /** Shared categorical SVG geometry for the browser, HTML and PDF. */
-export function matrixPlot(chart: AnswerChart) {
+export function matrixPlot(chart: AnswerChart, compact = false) {
   const rows = chart.data as Record<string, string | number | null>[];
   const entries = rows.map((row, i) => ({
     index: i + 1,
@@ -46,29 +46,40 @@ export function matrixPlot(chart: AnswerChart) {
       .filter(([key]) => !["label", chart.xKey!, chart.yKey!].includes(key))
       .map(([key, value]) => ({ key, value: String(value ?? "") })),
   }));
-  const rowHeight = Math.max(
-    112,
-    ...matrixQuadrants(chart).map(
-      (q) =>
-        24 +
-        q.rows.reduce(
-          (sum, row) =>
-            sum + matrixLabelLines(String(row.label)).length * 19 + 20,
-          0,
+  const rowHeight = compact
+    ? Math.max(
+        96,
+        ...matrixQuadrants(chart).map(
+          (q) => 28 + Math.ceil(q.rows.length / 3) * 32,
         ),
-    ),
-  );
-  const left = 84,
+      )
+    : Math.max(
+        112,
+        ...matrixQuadrants(chart).map(
+          (q) =>
+            24 +
+            q.rows.reduce(
+              (sum, row) =>
+                sum + matrixLabelLines(String(row.label)).length * 19 + 20,
+              0,
+            ),
+        ),
+      );
+  const left = compact ? 64 : 84,
     top = 22,
-    cellWidth = 322;
+    cellWidth = compact ? 206 : 322;
   const quadrants = matrixQuadrants(chart).map((q, i) => {
     const x = left + (i % 2) * cellWidth;
     const y = top + Math.floor(i / 2) * rowHeight;
     let cursor = y + 24;
     const items = entries
       .filter((e) => e.xCategory === q.x && e.yCategory === q.y)
-      .map((entry) => {
-        const item = { ...entry, x: x + 18, y: cursor };
+      .map((entry, index) => {
+        const item = {
+          ...entry,
+          x: x + 18 + (compact ? (index % 3) * 56 : 0),
+          y: compact ? y + 28 + Math.floor(index / 3) * 32 : cursor,
+        };
         cursor += entry.lines.length * 19 + 20;
         return item;
       });
@@ -87,7 +98,7 @@ export function matrixPlot(chart: AnswerChart) {
     top,
     cellWidth,
     rowHeight,
-    width: 760,
+    width: compact ? 500 : 760,
     height: rowHeight * 2 + 92,
   };
 }

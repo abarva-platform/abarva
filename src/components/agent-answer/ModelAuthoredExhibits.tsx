@@ -8,9 +8,11 @@ import { sourceDisplayLabel } from "@/lib/intelligence/answer/source-display-lab
 export function ModelAuthoredExhibits({
   answer,
   showSources = true,
+  compact = false,
 }: {
   answer: AvaAnswerPacket;
   showSources?: boolean;
+  compact?: boolean;
 }) {
   return (
     <div className="space-y-4" aria-label="Claude exhibits">
@@ -49,7 +51,7 @@ export function ModelAuthoredExhibits({
               {a.note && <p className="mt-2 text-sm">{a.note}</p>}
             </>
           ) : a.artifact === "chart" ? (
-            <ModelAuthoredChart chart={a} />
+            <ModelAuthoredChart chart={a} compact={compact} />
           ) : (
             (() => {
               const p = graphPlot(a);
