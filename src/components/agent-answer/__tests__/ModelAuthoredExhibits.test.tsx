@@ -2,6 +2,8 @@
 import { render, screen } from "@testing-library/react";
 import { ModelAuthoredExhibits } from "../ModelAuthoredExhibits";
 import { modelAuthoredAnswerPacket } from "@/lib/intelligence/answer/model-authored-answer";
+import { ExecutiveReadingView } from "../ExecutiveReadingView";
+import { executiveReadingBudget } from "@/lib/intelligence/answer/compact-reading-view";
 
 jest.mock("recharts", () => {
   const actual = jest.requireActual("recharts");
@@ -26,6 +28,48 @@ const packet = (chart: unknown) =>
     "test",
     [],
   );
+
+it.each(["json", "bare"])(
+  "renders a requested five-option matrix from %s in the concise reading view",
+  (transport) => {
+    const matrix = {
+      id: "priorities",
+      kind: "quadrant-matrix",
+      title: "Advisory AI options",
+      subtitle: "Qualitative judgment; validate before investment",
+      xKey: "Effort",
+      yKey: "Potential",
+      data: Array.from({ length: 5 }, (_, i) => ({
+        label: `Option ${i + 1}`,
+        Effort: i % 2 ? "high" : "low",
+        Potential: "high",
+        reason: "Recorded business hypothesis to validate",
+        Gate: "Measure the relevant outcome baseline",
+      })),
+      sourceNote: "Qualitative advisory categories, not measured outcomes",
+    };
+    const payload = JSON.stringify(matrix);
+    const raw = `Placement is advisory, not a rollout recommendation.\n\n${transport === "bare" ? payload : `\`\`\`json\n${payload}\n\`\`\``}`;
+    const question = "Can you show that view visually in a 2x2?";
+    const answer = modelAuthoredAnswerPacket(raw, question, "test", []);
+    const { container } = render(
+      <ExecutiveReadingView
+        text={answer.prose!}
+        answer={answer}
+        budget={executiveReadingBudget(question)}
+      />,
+    );
+    expect(
+      container.querySelector('[data-chart-renderer="svg-matrix"]'),
+    ).not.toBeNull();
+    expect(container.querySelectorAll("circle")).toHaveLength(5);
+    expect(container.textContent).not.toContain('"kind"');
+    expect(container.textContent).toContain("Placement is advisory");
+    expect(
+      screen.getByLabelText("Options in the matrix").textContent,
+    ).toContain("Option 5");
+  },
+);
 
 it("shows readable source names without rendering transport code badges", () => {
   const raw = 'Decision.\n\n```sources\n["S2"]\n```';

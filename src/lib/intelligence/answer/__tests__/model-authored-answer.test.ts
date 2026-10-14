@@ -41,6 +41,163 @@ const chart = {
 const fence = (kind: string, value: unknown) =>
   `\`\`\`${kind}\n${JSON.stringify(value)}\n\`\`\``;
 
+const advisoryMatrix = {
+  id: "ai-priorities",
+  kind: "quadrant-matrix",
+  title: "Recorded AI portfolio - advisory priority view",
+  subtitle: "Qualitative judgment; validate before investment",
+  xKey: "Effort",
+  yKey: "Potential",
+  data: [
+    {
+      label: "Ambient documentation",
+      Effort: "low",
+      Potential: "high",
+      reason: "Clinician time hypothesis",
+      Gate: "Measure note-time delta",
+    },
+    {
+      label: "Coding assist",
+      Effort: "low",
+      Potential: "high",
+      reason: "Revenue capture hypothesis",
+      Gate: "Audit coder acceptance",
+    },
+    {
+      label: "Denials prediction",
+      Effort: "high",
+      Potential: "high",
+      reason: "Revenue cycle complexity",
+      Gate: "Baseline denial rate",
+    },
+    {
+      label: "Care gap targeting",
+      Effort: "low",
+      Potential: "high",
+      reason: "Quality program hypothesis",
+      Gate: "Measure closure rate",
+    },
+    {
+      label: "Early warning",
+      Effort: "high",
+      Potential: "high",
+      reason: "Clinical safety stakes",
+      Gate: "Validate alert precision",
+    },
+  ],
+  sourceNote: "Qualitative advisory categories; not measured scores",
+  citationIds: ["S2"],
+};
+
+it.each(["json", "", "bare"])(
+  "renders a self-describing matrix from %s transport instead of exposing JSON",
+  (kind) => {
+    const payload =
+      kind === "bare"
+        ? JSON.stringify(advisoryMatrix, null, 2)
+        : fence(kind, advisoryMatrix);
+    const raw = `Validate the opportunity.\n\n${payload}\n\nPlacement is advisory, not confirmed outcomes.`;
+    const answer = modelAuthoredAnswerPacket(
+      raw,
+      "Show that view in a 2x2",
+      "test",
+      [
+        { id: "unused", type: "TENANT", name: "Unused", detail: "" },
+        {
+          id: "recorded-portfolio",
+          type: "TENANT",
+          name: "Recorded portfolio",
+          detail: "Provisional examples",
+        },
+      ],
+    );
+    expect(answer.artifacts).toEqual([
+      { ...advisoryMatrix, artifact: "chart" },
+    ]);
+    expect(answer.prose).toBe(
+      "Validate the opportunity.\n\n\n\nPlacement is advisory, not confirmed outcomes.",
+    );
+    expect(answer.citations.map((source) => source.label)).toEqual([
+      "Recorded portfolio",
+    ]);
+    expect(answer.modelAuthored?.protocolIssues).toEqual([]);
+    expect(answer.modelAuthored?.rawText).toBe(raw);
+    expect(isIntactModelAuthoredPacket(answer)).toBe(true);
+    for (let i = 0; i <= raw.length; i++) {
+      expect(modelAuthoredStreamingProse(raw.slice(0, i))).not.toMatch(
+        /"id"|"kind"|citationIds|"Gate"|"Effort"|```/,
+      );
+    }
+  },
+);
+
+it.each([table, chart, graph])(
+  "decodes only exact supported exhibit schemas in generic JSON",
+  (exhibit) => {
+    const raw = `Validate first.\n\n${fence("json", exhibit)}`;
+    expect(decodeModelAuthoredAnswer(raw).artifacts).toHaveLength(1);
+    expect(decodeModelAuthoredAnswer(raw).prose).toBe("Validate first.\n\n");
+  },
+);
+
+it("keeps ordinary JSON, unsupported code fences and invalid chart values unchanged", () => {
+  for (const payload of [
+    JSON.stringify({ message: "Ordinary JSON", value: 3 }),
+    JSON.stringify([advisoryMatrix], null, 2),
+    fence("typescript", advisoryMatrix),
+    "```typescript\n{not JSON}\n```",
+    fence("json", { ...advisoryMatrix, unexpected: "Not supported" }),
+    JSON.stringify({
+      ...chart,
+      data: [{ period: "A", value: "unknown" }, chart.data[1]],
+    }),
+  ]) {
+    const raw = `Review.\n\n${payload}\n\nNext.`;
+    const decoded = decodeModelAuthoredAnswer(raw);
+    expect(decoded.prose).toBe(raw);
+    expect(decoded.artifacts).toEqual([]);
+  }
+});
+
+it("does not interpret objects inside incomplete code fences as standalone exhibits", () => {
+  const raw = `Decision.\n\n\`\`\`chart\n${JSON.stringify(advisoryMatrix)}`;
+  expect(decodeModelAuthoredAnswer(raw).artifacts).toEqual([]);
+  expect(decodeModelAuthoredAnswer(raw).prose).toBe(raw);
+  expect(modelAuthoredStreamingProse(raw)).toBe("Decision.\n\n");
+});
+
+it("handles escaped quotes and braces without consuming adjacent prose or exhibits", () => {
+  const first = {
+    ...chart,
+    id: "escaped",
+    title: 'A {brace} and a "quote"',
+    sourceNote: "A backslash \\ remains intact",
+  };
+  const raw = `Decision.\n\n${JSON.stringify(first)}\n\nKeep this explanation.\n\n${fence("chart", chart)}`;
+  const decoded = decodeModelAuthoredAnswer(raw);
+  expect(decoded.artifacts).toEqual([
+    { ...first, artifact: "chart" },
+    { ...chart, artifact: "chart" },
+  ]);
+  expect(decoded.prose).toContain("Keep this explanation.");
+});
+
+it("accepts explicit empty source metadata without rendering brackets or accepting duplicate metadata", () => {
+  const raw = `Illustration supplied by the user.\n\n${fence("sources", [])}`;
+  expect(decodeModelAuthoredAnswer(raw)).toEqual({
+    prose: "Illustration supplied by the user.\n\n",
+    artifacts: [],
+    followups: [],
+    sourceIds: [],
+    protocolIssues: [],
+  });
+  const duplicate = decodeModelAuthoredAnswer(
+    `${raw}\n\n${fence("sources", ["S1"])}`,
+  );
+  expect(duplicate.sourceIds).toEqual([]);
+  expect(duplicate.protocolIssues).toHaveLength(1);
+});
+
 it("decodes generic JSON provenance and question arrays while preserving ordinary JSON", () => {
   const questions = [
     "Which eligibility boundary should discovery test?",

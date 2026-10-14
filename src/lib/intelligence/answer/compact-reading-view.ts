@@ -12,7 +12,7 @@ export function executiveReadingBudget(question: string): number {
     );
   return wordCount(question) <= 25 &&
     !decisionDetail &&
-    !/\b(compare|comparison|options|discovery|plan|brief|portfolio|detailed)\b/i.test(
+    !/\b(compare|comparison|options|discovery|plan|brief|portfolio|detailed|charts?|graphs?|visual(?:ly)?|matrix|quadrant|2\s*[x\u00d7]\s*2)\b/i.test(
       question,
     )
     ? 100

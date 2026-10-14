@@ -7,6 +7,25 @@ import { validateSession } from "../validate-session";
 import { modelAuthoredAnswerPacket } from "@/lib/intelligence/answer/model-authored-answer";
 import { renderModelAuthoredSessionHtml } from "../render-model-authored-html";
 
+it("keeps a packet from an already-open pre-upgrade conversation exportable without rewriting it", () => {
+  const session = sessionFixture();
+  const answer = session.turns[1].answer!;
+  const raw =
+    'Review the inputs.\n\n```json\n{"id":"before-upgrade","kind":"bar","xKey":"label","yKey":"value","data":[{"label":"A","value":12},{"label":"B","value":9}]}\n```';
+  answer.modelAuthored = { rawText: raw, protocolIssues: [] };
+  answer.directAnswer = raw;
+  answer.prose = raw;
+  answer.artifacts = [];
+  session.turns[1].body = raw;
+  const validated = validateSession(session);
+  expect(validated.error).toBeUndefined();
+  expect(validated.session!.turns[1].answer).toEqual(answer);
+  expect(validated.session!.turns[1].body).toBe(raw);
+  expect(renderModelAuthoredSessionHtml(validated.session!)).toContain(
+    "before-upgrade",
+  );
+});
+
 function sessionFixture() {
   const raw =
     Array(60).fill("Unverified").join(" ") +
@@ -60,67 +79,76 @@ it("rejects altered prose and oversized content instead of silently changing the
   expect(validateSession(oversized).error?.status).toBe(413);
 });
 
-it("exports categorical matrix labels and caveats without transforming advisory categories into scores", () => {
-  const session = sessionFixture();
-  const chart = {
-    id: "bets",
-    kind: "quadrant-matrix",
-    title: "Tradeoffs",
-    subtitle: "Advisory judgment; validate",
-    xKey: "Effort",
-    yKey: "Potential",
-    data: [
-      {
-        label: "Assist",
-        Effort: "low",
-        Potential: "high",
-        reason: "Needs economics",
-      },
-      {
-        label: "Platform",
-        Effort: "high",
-        Potential: "high",
-        reason: "Needs dependency proof",
-      },
-    ],
-  };
-  const raw = `Validate first.\n\n\`\`\`chart\n${JSON.stringify(chart)}\n\`\`\``;
-  const answer = modelAuthoredAnswerPacket(raw, "Compare", "fixture", []);
-  session.turns[1] = {
-    id: "a1",
-    role: "agent",
-    reviewStatus: "complete",
-    body: answer.prose!,
-    answer,
-  };
-  const validated = validateSession(session);
-  expect(validated.error).toBeUndefined();
-  const html = renderModelAuthoredSessionHtml(validated.session!);
-  expect(html).toContain('class="matrix"');
-  expect(html).toContain('<svg class="matrix"');
-  expect(html).toContain("rotate(-90)");
-  expect(html).not.toContain("reason:");
-  expect(html).toContain("Needs dependency proof");
-  expect(validated.session!.turns[1].answer!.modelAuthored!.rawText).toBe(raw);
-});
+it.each(["chart", "json", "bare"])(
+  "exports categorical matrix labels and caveats from %s without transforming advisory categories into scores",
+  (transport) => {
+    const session = sessionFixture();
+    const chart = {
+      id: "bets",
+      kind: "quadrant-matrix",
+      title: "Tradeoffs",
+      subtitle: "Advisory judgment; validate",
+      xKey: "Effort",
+      yKey: "Potential",
+      data: [
+        {
+          label: "Assist",
+          Effort: "low",
+          Potential: "high",
+          reason: "Needs economics",
+        },
+        {
+          label: "Platform",
+          Effort: "high",
+          Potential: "high",
+          reason: "Needs dependency proof",
+        },
+      ],
+    };
+    const payload = JSON.stringify(chart);
+    const raw = `Validate first.\n\n${transport === "bare" ? payload : `\`\`\`${transport}\n${payload}\n\`\`\``}`;
+    const answer = modelAuthoredAnswerPacket(raw, "Compare", "fixture", []);
+    session.turns[1] = {
+      id: "a1",
+      role: "agent",
+      reviewStatus: "complete",
+      body: answer.prose!,
+      answer,
+    };
+    const validated = validateSession(session);
+    expect(validated.error).toBeUndefined();
+    const html = renderModelAuthoredSessionHtml(validated.session!);
+    expect(html).toContain('class="matrix"');
+    expect(html).toContain('<svg class="matrix"');
+    expect(html).toContain("rotate(-90)");
+    expect(html).not.toContain("reason:");
+    expect(html).toContain("Needs dependency proof");
+    expect(validated.session!.turns[1].answer!.modelAuthored!.rawText).toBe(
+      raw,
+    );
+  },
+);
 
-it.each([":", " ·"])("formats source metadata with separator %s without altering the source record or Claude prose", (separator) => {
-  const fixture = sessionFixture();
-  const answer = fixture.turns[1].answer!;
-  answer.citations = [
-    {
-      id: "S1",
-      label: `H123${separator} Recorded evidence review`,
-      sourceClass: "tenant-fact",
-    },
-  ];
-  const table = answer.artifacts.find((a) => a.artifact === "table");
-  if (table?.artifact === "table")
-    table.columns[0].label = "H123: Authored title";
-  const original = JSON.stringify(answer);
-  const html = renderModelAuthoredSessionHtml(fixture);
-  expect(html).toContain("Recorded evidence review");
-  expect(html).not.toContain(`H123${separator} Recorded evidence review`);
-  expect(html).toContain("<th>H123: Authored title</th>");
-  expect(JSON.stringify(answer)).toBe(original);
-});
+it.each([":", " ·"])(
+  "formats source metadata with separator %s without altering the source record or Claude prose",
+  (separator) => {
+    const fixture = sessionFixture();
+    const answer = fixture.turns[1].answer!;
+    answer.citations = [
+      {
+        id: "S1",
+        label: `H123${separator} Recorded evidence review`,
+        sourceClass: "tenant-fact",
+      },
+    ];
+    const table = answer.artifacts.find((a) => a.artifact === "table");
+    if (table?.artifact === "table")
+      table.columns[0].label = "H123: Authored title";
+    const original = JSON.stringify(answer);
+    const html = renderModelAuthoredSessionHtml(fixture);
+    expect(html).toContain("Recorded evidence review");
+    expect(html).not.toContain(`H123${separator} Recorded evidence review`);
+    expect(html).toContain("<th>H123: Authored title</th>");
+    expect(JSON.stringify(answer)).toBe(original);
+  },
+);

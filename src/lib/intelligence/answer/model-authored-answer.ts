@@ -94,64 +94,147 @@ const graphSchema = z
     );
   }, "Invalid graph endpoints");
 const followupSchema = z.array(z.string().min(1)).length(3);
-const sourceIdsSchema = z.array(z.string().regex(/^S[1-9]\d*$/)).min(1);
+const sourceIdsSchema = z.array(z.string().regex(/^S[1-9]\d*$/));
+const exhibitSchemas = {
+  table: tableSchema,
+  chart: chartSchema,
+  "quadrant-matrix": matrixChartSchema,
+  graph: graphSchema,
+};
+
+// Locate a complete object without treating escaped quotes or braces in labels
+// as boundaries. JSON.parse and the strict schemas still own validation.
+function jsonValueEnd(text: string, start: number): number | null {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < text.length; i++) {
+    const char = text[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === '"') inString = false;
+    } else if (char === '"') inString = true;
+    else if (char === "{" || char === "[") depth++;
+    else if ((char === "}" || char === "]") && --depth === 0) return i + 1;
+  }
+  return null;
+}
 
 /** Decode transport blocks. Unsupported content stays verbatim in prose. */
-export function decodeModelAuthoredAnswer(rawText: string) {
+export function decodeModelAuthoredAnswer(
+  rawText: string,
+  transport: "current" | "named-fences-only" = "current",
+) {
   const artifacts: AvaArtifact[] = [];
   const followups: string[] = [];
   const sourceIds: string[] = [];
   const protocolIssues: string[] = [];
-  const prose = rawText.replace(
-    /^```(table|chart|quadrant-matrix|graph|sources|followups|json)?[ \t]*\r?\n([\s\S]*?)^```[ \t]*(?=\r?$)/gm,
-    (block, kind: string, payload: string) => {
-      try {
-        const value: unknown = JSON.parse(payload);
-        // Some completions use a generic JSON fence for the two metadata
-        // arrays. Their exact shapes are unambiguous; ordinary JSON remains
-        // prose. Exhibit shapes still require an explicit transport label.
-        if (!kind || kind === "json") {
-          if (sourceIdsSchema.safeParse(value).success) kind = "sources";
-          else if (
-            followupSchema.safeParse(value).success &&
-            (value as string[]).every((q) => q.trim().endsWith("?"))
-          )
-            kind = "followups";
-          else return block;
+  let seenSources = false;
+  function decodePayload(block: string, kind: string, payload: string): string {
+    if (
+      kind &&
+      kind !== "json" &&
+      kind !== "sources" &&
+      kind !== "followups" &&
+      !Object.hasOwn(exhibitSchemas, kind)
+    )
+      return block;
+    try {
+      const value: unknown = JSON.parse(payload);
+      // Generic fences and bare objects are accepted only when they match an
+      // existing complete schema. No values, fields or chart scores are repaired.
+      if (!kind || kind === "json") {
+        if (
+          Array.isArray(value) &&
+          value.length > 0 &&
+          sourceIdsSchema.safeParse(value).success
+        )
+          kind = "sources";
+        else if (
+          followupSchema.safeParse(value).success &&
+          (value as string[]).every((q) => q.trim().endsWith("?"))
+        )
+          kind = "followups";
+        else {
+          if (transport === "named-fences-only") return block;
+          const matched = Object.entries(exhibitSchemas).find(
+            ([, schema]) => schema.safeParse(value).success,
+          );
+          if (!matched) return block;
+          kind = matched[0];
         }
-        if (kind === "sources") {
-          if (sourceIds.length) throw new Error("Duplicate sources block");
-          sourceIds.push(...sourceIdsSchema.parse(value));
-        } else if (kind === "followups") {
-          if (followups.length) throw new Error("Duplicate follow-up block");
-          followups.push(...followupSchema.parse(value));
-        } else {
-          const schema =
-            kind === "table"
-              ? tableSchema
-              : kind === "quadrant-matrix"
-                ? matrixChartSchema
-                : kind === "chart"
-                  ? chartSchema
-                  : graphSchema;
-          const decoded = schema.parse(value);
-          if (artifacts.some((a) => a.id === decoded.id))
-            throw new Error("Duplicate exhibit ID");
-          artifacts.push({
-            ...decoded,
-            artifact: kind === "quadrant-matrix" ? "chart" : kind,
-          } as AvaArtifact);
-        }
-        return "";
-      } catch {
-        if (!kind || kind === "json") return block;
-        protocolIssues.push(
-          `Unrendered ${kind} block; original content retained.`,
-        );
-        return block;
       }
-    },
-  );
+      if (kind === "sources") {
+        if (seenSources) throw new Error("Duplicate sources block");
+        sourceIds.push(
+          ...(transport === "named-fences-only"
+            ? sourceIdsSchema.min(1)
+            : sourceIdsSchema
+          ).parse(value),
+        );
+        seenSources = true;
+      } else if (kind === "followups") {
+        if (followups.length) throw new Error("Duplicate follow-up block");
+        followups.push(...followupSchema.parse(value));
+      } else {
+        const schema = exhibitSchemas[kind as keyof typeof exhibitSchemas];
+        if (!schema) return block;
+        const decoded = schema.parse(value);
+        if (artifacts.some((a) => a.id === decoded.id))
+          throw new Error("Duplicate exhibit ID");
+        artifacts.push({
+          ...decoded,
+          artifact: kind === "quadrant-matrix" ? "chart" : kind,
+        } as AvaArtifact);
+      }
+      return "";
+    } catch {
+      if (!kind || kind === "json") return block;
+      protocolIssues.push(
+        `Unrendered ${kind} block; original content retained.`,
+      );
+      return block;
+    }
+  }
+
+  function decodeBareObjects(text: string): string {
+    if (transport === "named-fences-only") return text;
+    const starts = /^ {0,3}(?:```|[\[{])/gm;
+    let result = "";
+    let cursor = 0;
+    for (let match = starts.exec(text); match; match = starts.exec(text)) {
+      if (match[0].endsWith("```")) break;
+      const start = match.index + match[0].length - 1;
+      const end = jsonValueEnd(text, start);
+      if (end === null) break;
+      starts.lastIndex = end;
+      if (text[start] !== "{") continue;
+      const lineEnd = text.indexOf("\n", end);
+      if (text.slice(end, lineEnd < 0 ? text.length : lineEnd).trim()) continue;
+      const block = text.slice(match.index, end);
+      result +=
+        text.slice(cursor, match.index) +
+        decodePayload(block, "json", text.slice(start, end));
+      cursor = end;
+    }
+    return result + text.slice(cursor);
+  }
+
+  // Decode bare objects only outside complete code fences so ordinary code
+  // examples cannot accidentally become exhibits.
+  const fences =
+    transport === "named-fences-only"
+      ? /^```(table|chart|quadrant-matrix|graph|sources|followups|json)?[ \t]*\r?\n([\s\S]*?)^```[ \t]*(?=\r?$)/gm
+      : /^ {0,3}```([\w-]*)[ \t]*\r?\n([\s\S]*?)^ {0,3}```[ \t]*(?=\r?$)/gm;
+  let prose = "";
+  let cursor = 0;
+  for (let match = fences.exec(rawText); match; match = fences.exec(rawText)) {
+    prose += decodeBareObjects(rawText.slice(cursor, match.index));
+    prose += decodePayload(match[0], match[1] ?? "", match[2]);
+    cursor = match.index + match[0].length;
+  }
+  prose += decodeBareObjects(rawText.slice(cursor));
   return { prose, artifacts, followups, sourceIds, protocolIssues };
 }
 
@@ -159,8 +242,8 @@ export function decodeModelAuthoredAnswer(rawText: string) {
 export function modelAuthoredStreamingProse(rawText: string): string {
   const { prose } = decodeModelAuthoredAnswer(rawText);
   // Complete valid blocks are decoded above. Hold an incomplete or malformed
-  // fence, including a split opener, until the final packet can account for it.
-  const pendingFence = prose.search(/^ {0,3}`/m);
+  // fence or bare object, including a split opener, until the final packet can account for it.
+  const pendingFence = prose.search(/^ {0,3}(?:`|\{)/m);
   return pendingFence < 0 ? prose : prose.slice(0, pendingFence);
 }
 
@@ -286,14 +369,22 @@ export function isIntactModelAuthoredPacket(
   const result = exportPacketSchema.safeParse(value);
   if (!result.success) return false;
   const packet = result.data;
-  const decoded = decodeModelAuthoredAnswer(packet.modelAuthored.rawText);
-  return (
-    packet.directAnswer === decoded.prose &&
-    (packet.prose === undefined || packet.prose === decoded.prose) &&
-    JSON.stringify(packet.artifacts) === JSON.stringify(decoded.artifacts) &&
-    JSON.stringify(packet.modelAuthored.protocolIssues) ===
-      JSON.stringify(decoded.protocolIssues) &&
-    JSON.stringify(packet.nextSteps.map((s) => s.label)) ===
-      JSON.stringify(decoded.followups)
-  );
+  // Already-open conversations may contain a packet decoded before generic
+  // exhibits were recognized. Validate that exact historical projection too;
+  // do not rewrite its prose, artifacts or original model output on export.
+  return (["current", "named-fences-only"] as const).some((transport) => {
+    const decoded = decodeModelAuthoredAnswer(
+      packet.modelAuthored.rawText,
+      transport,
+    );
+    return (
+      packet.directAnswer === decoded.prose &&
+      (packet.prose === undefined || packet.prose === decoded.prose) &&
+      JSON.stringify(packet.artifacts) === JSON.stringify(decoded.artifacts) &&
+      JSON.stringify(packet.modelAuthored.protocolIssues) ===
+        JSON.stringify(decoded.protocolIssues) &&
+      JSON.stringify(packet.nextSteps.map((s) => s.label)) ===
+        JSON.stringify(decoded.followups)
+    );
+  });
 }
