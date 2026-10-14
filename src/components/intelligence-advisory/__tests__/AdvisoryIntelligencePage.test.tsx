@@ -32,10 +32,15 @@ describe("AdvisoryIntelligencePage", () => {
     expect(screen.getByTestId("agent-dock-panel").style.maxWidth).toBe("none");
     expect(screen.getByTestId("agent-dock-thread").style.maxWidth).toBe("none");
     expect(screen.queryByTestId("agent-dock-side-rail-shell")).toBeNull();
-    expect(screen.getAllByText("Intelligence advisor").length).toBeGreaterThan(
-      0,
+    expect(screen.getByText("How can I help?")).toBeTruthy();
+    expect(screen.getByTestId("agent-dock-panel").dataset.presentation).toBe(
+      "centered-conversation",
     );
-    expect(screen.getByText("Ask aVa anything.")).toBeTruthy();
+    const expectedForm = document.createElement("form");
+    expectedForm.style.width = "min(calc(100% - 32px), 760px)";
+    expect(screen.getByTestId("agent-dock-form").style.width).toBe(
+      expectedForm.style.width,
+    );
     expect(screen.queryByLabelText("Intelligence briefing")).toBeNull();
     expect(
       screen.queryByRole("button", { name: /Industry Outlook/i }),

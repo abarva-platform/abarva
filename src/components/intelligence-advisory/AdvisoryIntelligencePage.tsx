@@ -472,6 +472,8 @@ export function AdvisoryIntelligencePage({
         placeholder="Ask aVa"
         layout="chat-only"
         chatOnlyFullWidth
+        chatOnlyCentered
+        transcriptScroll="answer-start"
         defaultLeftPercent={40}
         minLeftPx={380}
         thread={thread}

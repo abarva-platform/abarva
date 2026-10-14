@@ -10,6 +10,7 @@ import {
   EXECUTIVE_FOLLOWUP_CONTRACT,
   EXECUTIVE_FIRST_RESPONSE_BUDGET,
 } from "./executive-brief-contract";
+import { executiveVisualSelectionContract } from "./executive-visual-selection";
 import { prepareExecutiveContext } from "./executive-context";
 import { getAuditedAnthropicClient } from "@/lib/agent/stream";
 import type { AskSource, AskIntent } from "./types";
@@ -722,7 +723,7 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
     ? CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH
     : CONSULTANT_ANSWER_SHAPE_CONTRACT;
   const rawSystem = modelAuthored
-    ? `${contextBlocks.join("\n\n")}\n\n${EXECUTIVE_BRIEF_CONTRACT}\n\n${executiveContext?.decisionGuard ?? ""}${multiPartDiscovery ? `\n\n${MULTI_PART_EXECUTIVE_FORMAT}` : ""}`
+    ? `${contextBlocks.join("\n\n")}\n\n${EXECUTIVE_BRIEF_CONTRACT}\n\n${executiveContext?.decisionGuard ?? ""}${multiPartDiscovery ? `\n\n${MULTI_PART_EXECUTIVE_FORMAT}` : ""}\n\n${executiveVisualSelectionContract(args.query)}`
     : contextBlocks.length > 0
       ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`
       : `${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`;

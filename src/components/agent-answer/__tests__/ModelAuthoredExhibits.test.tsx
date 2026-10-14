@@ -31,7 +31,12 @@ it("shows readable source names without rendering transport code badges", () => 
   const raw = 'Decision.\n\n```sources\n["S2"]\n```';
   const answer = modelAuthoredAnswerPacket(raw, "Decide", "test", [
     { id: "unused", type: "TENANT", name: "Unused", detail: "" },
-    { id: "plan", type: "TENANT", name: "Reviewed operating plan", detail: "Decision evidence" },
+    {
+      id: "plan",
+      type: "TENANT",
+      name: "Reviewed operating plan",
+      detail: "Decision evidence",
+    },
   ]);
   const { container } = render(<ModelAuthoredExhibits answer={answer} />);
   expect(screen.getByText("Sources")).toBeTruthy();
@@ -101,4 +106,74 @@ it("renders authored qualitative tradeoffs with their evidence caveat and no num
     screen.getByText("Advisory judgment; validate before investment"),
   ).toBeTruthy();
   expect(container.textContent).not.toMatch(/\d+%/);
+});
+
+it("bounds compact numeric charts and keeps all original data in a disclosure", () => {
+  const answer = packet({
+    id: "measure",
+    kind: "horizontal-bar",
+    title: "Measured mix",
+    xKey: "label",
+    yKey: "value",
+    unit: "%",
+    data: [
+      { label: "First", value: 60 },
+      { label: "Second", value: 40 },
+    ],
+    sourceNote: "Declared shares, not measured benefits",
+  });
+  const { container } = render(
+    <ModelAuthoredExhibits answer={answer} compact />,
+  );
+  expect(
+    container.querySelector<HTMLElement>('[data-chart-frame="numeric"]')?.style
+      .height,
+  ).toBe("clamp(220px, 30dvh, 300px)");
+  const details = screen.getByText("Chart data").closest("details");
+  expect(details?.open).toBe(false);
+  expect(details?.textContent).toContain("First: 60");
+  expect(
+    screen.getByText("Declared shares, not measured benefits"),
+  ).toBeTruthy();
+});
+
+it("keeps compact matrix labels legible and all rationale available without changing the packet", () => {
+  const data = Array.from({ length: 8 }, (_, i) => ({
+    label: `Option ${i + 1}`,
+    Effort: "low",
+    Potential: "high",
+    reason: `Constraint ${i + 1}`,
+    Gate: `Evidence ${i + 1}`,
+  }));
+  const answer = packet({
+    id: "tradeoff",
+    kind: "quadrant-matrix",
+    title: "Options",
+    xKey: "Effort",
+    yKey: "Potential",
+    data,
+    subtitle: "Advisory judgment, not verified value",
+  });
+  const before = JSON.stringify(answer);
+  const { container } = render(
+    <ModelAuthoredExhibits answer={answer} compact />,
+  );
+  expect(container.querySelector("svg")?.getAttribute("viewBox")).toBe(
+    "0 0 500 340",
+  );
+  const circles = Array.from(container.querySelectorAll("circle"));
+  expect(circles).toHaveLength(8);
+  expect(
+    new Set(
+      circles.map((c) => `${c.getAttribute("cx")}:${c.getAttribute("cy")}`),
+    ).size,
+  ).toBe(8);
+  expect(screen.getByLabelText("Options in the matrix").textContent).toContain(
+    "Option 8",
+  );
+  expect(
+    screen.getByText("Rationale & validation gates").closest("details")?.open,
+  ).toBe(false);
+  expect(screen.getByText("Gate: Evidence 8")).toBeTruthy();
+  expect(JSON.stringify(answer)).toBe(before);
 });

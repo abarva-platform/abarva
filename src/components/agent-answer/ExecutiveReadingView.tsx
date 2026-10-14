@@ -36,6 +36,7 @@ export function ExecutiveReadingView({
             <ModelAuthoredExhibits
               answer={{ ...answer, artifacts }}
               showSources={false}
+              compact={!expanded}
             />
           </div>
         )}
