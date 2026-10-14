@@ -18,6 +18,12 @@ jest.mock("@/lib/agent/stream", () => ({
   getAuditedAnthropicClient: jest.fn(),
 }));
 
+jest.mock("../source-support", () => ({
+  verifyHomeAnswerSupport: jest.fn().mockResolvedValue({
+    supported: true, reason: "supported", unsupportedFields: [],
+  }),
+}));
+
 const auditedClient = jest.mocked(getAuditedAnthropicClient);
 const tenantKey = CANONICAL_TENANT_KEYS[0];
 const graphQuestion =
