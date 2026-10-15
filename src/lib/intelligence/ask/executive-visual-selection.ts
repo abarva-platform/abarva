@@ -31,7 +31,11 @@ export function executiveVisualForm(question: string): ExecutiveVisualForm {
     )
   )
     return "numeric-chart";
-  if (/\b(?:table|tabular)\b/.test(positive)) return "comparison-table";
+  const explicitTable =
+    /\b(?:as|in|into|using)\s+(?:(?:a|an|one|single|compact|concise|advisory|comparison|markdown)\s+){0,5}(?:table|tabular)\b|\b(?:show|give|provide|return|create|render|use|make)\s+(?:(?:me|us|this|that|it|the|a|an|one|single|compact|concise|advisory|comparison|markdown)\s+){0,6}(?:table|tabular)\b|\btabulate\b/.test(
+      positive,
+    );
+  if (explicitTable) return "comparison-table";
   if (
     /\b(?:gates?|discovery plan|validation sequence|roadmap|next steps)\b/.test(
       q,

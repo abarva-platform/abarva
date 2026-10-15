@@ -36,7 +36,7 @@ Give each mounted Intelligence conversation its own opaque session identifier, r
 
 ## QA / Validation
 
-- PASS: 121 tests across 12 focused suites, Node 24 repository typecheck, scoped ESLint, all 11 release gates and context-corpus governance. Existing approval-metadata warnings remain unchanged.
+- PASS: 123 tests across 12 focused suites, Node 24 repository typecheck, scoped ESLint, all 11 release gates and context-corpus governance. Existing approval-metadata warnings remain unchanged.
 - Regression coverage checks the same ID across follow-ups, a new ID across mounts, explicit table selection and actual model-call guidance.
 - Existing session-history quarantine tests are required; no guard removal is permitted.
 - Signed-in acceptance must repeat a table, a short redraw follow-up preserving the exact option names/categories, and a synthetic numeric comparison.

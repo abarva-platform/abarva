@@ -26,6 +26,8 @@ it.each([
   ["What gates are needed before discovery approval?", "gate-table"],
   ["Show three options in an effort/potential 2x2", "qualitative-matrix"],
   ["What is the recorded business model?", "none"],
+  ["What is in the customer table?", "none"],
+  ["How many records are in the member table?", "none"],
   ["Explain the decision without any exhibits", "none"],
   ["Where should leadership focus?", "auto"],
 ] as const)("routes %s to %s", (question, expected) => {
