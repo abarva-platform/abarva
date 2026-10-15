@@ -4,6 +4,7 @@ import {
   createRouteMatcher,
 } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { isDemoVisitorRoute } from "@/lib/demo-library/policy";
 import type { NextFetchEvent, NextRequest } from "next/server";
 import {
   isExternalOnlyRole,
@@ -133,6 +134,7 @@ export const PUBLIC_ROUTE_PATTERNS = [
   // Demo code sign-in starts unauthenticated from /sign-in, so the ticket
   // handoff route must stay publicly reachable and perform its own checks.
   "/api/auth/demo-code-sign-in(.*)",
+  "/api/auth/demo-viewer",
   "/api/auth/access-eligibility(.*)",
   "/api/auth/launch-user(.*)",
   // Private browser proof helper is self-guarded by an opt-in env flag and
@@ -579,6 +581,28 @@ const clerkProtectedProxy = clerkMiddleware(
     const email = identity.email;
     const role = resolveSessionRole(metadataRole, email);
     const isAuthenticated = Boolean(userId || privateProofSession);
+    if (
+      isAuthenticated &&
+      !role &&
+      !isDemoVisitorRoute(request.nextUrl.pathname)
+    ) {
+      return NextResponse.json(
+        { error: "session_identity_unavailable" },
+        { status: 503, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+    if (
+      isAuthenticated &&
+      isExternalOnlyRole(role) &&
+      !isDemoVisitorRoute(request.nextUrl.pathname)
+    ) {
+      return request.nextUrl.pathname.startsWith("/api/")
+        ? NextResponse.json(
+            { error: "demo_only_access" },
+            { status: 403, headers: { "Cache-Control": "no-store" } },
+          )
+        : NextResponse.redirect(new URL("/demo", request.url));
+    }
     const requestedClientId = request.nextUrl.searchParams.get("client");
     const activeClientId =
       request.cookies.get(ACTIVE_CLIENT_COOKIE)?.value ?? null;
@@ -816,7 +840,12 @@ const clerkProtectedProxy = clerkMiddleware(
     if (isAuthenticated && request.nextUrl.pathname.startsWith("/sign-in")) {
       return withProductionReadinessNoStoreHeaders(
         request,
-        NextResponse.redirect(new URL("/auth-redirect", request.url)),
+        NextResponse.redirect(
+          new URL(
+            isExternalOnlyRole(role) ? "/demo" : "/auth-redirect",
+            request.url,
+          ),
+        ),
       );
     }
 
@@ -838,7 +867,11 @@ const clerkProtectedProxy = clerkMiddleware(
       return createSignInRedirect(request);
     }
 
-    if (requiresAuth && isExternalOnlyRole(role)) {
+    if (
+      requiresAuth &&
+      isExternalOnlyRole(role) &&
+      !isDemoVisitorRoute(request.nextUrl.pathname)
+    ) {
       return withProductionReadinessNoStoreHeaders(
         request,
         NextResponse.redirect(new URL("/", request.url)),

@@ -8,6 +8,7 @@ import {
   StorageSharedKeyCredential,
   type BlobHTTPHeaders,
   type ContainerClient,
+  type BlobClient,
 } from '@azure/storage-blob';
 
 type EnvLike = NodeJS.ProcessEnv;
@@ -205,6 +206,14 @@ async function normalizeBody(body: BodyInitLike): Promise<Buffer> {
     return Buffer.from(await body.arrayBuffer());
   }
   throw new Error(`Unsupported object storage body type: ${typeof body}`);
+}
+
+/** Streaming keeps private blob URLs and credentials inside the server data plane. */
+export async function getPrivateObjectStorageBlobClient(bucket: string, path: string): Promise<BlobClient> {
+  const { container, blobName } = containerClient(bucket, path);
+  const properties = await container.getProperties();
+  if (properties.blobPublicAccess) throw new Error('private_container_required');
+  return container.getBlobClient(blobName);
 }
 
 function headersFromOptions(options?: ObjectStorageUploadOptions): BlobHTTPHeaders {

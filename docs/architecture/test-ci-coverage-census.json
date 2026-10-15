@@ -18,25 +18,25 @@
     "No timestamp is recorded, so refreshing this file on an unchanged tree is a no-op."
   ],
   "counts": {
-    "testFiles": 3047,
-    "coveredTestFiles": 2882,
-    "pullRequestCoveredTestFiles": 2882,
-    "uncoveredTestFiles": 165,
-    "directoriesWithTests": 528,
-    "directoriesFullyCovered": 458,
+    "testFiles": 3064,
+    "coveredTestFiles": 2898,
+    "pullRequestCoveredTestFiles": 2898,
+    "uncoveredTestFiles": 166,
+    "directoriesWithTests": 529,
+    "directoriesFullyCovered": 459,
     "directoriesPartiallyCovered": 27,
     "directoriesUncovered": 43,
     "directoriesWithUnrunTestFiles": 70,
     "directoriesWithUntriagedUnrunTestFiles": 59,
     "declaredQuarantineTestFiles": 52,
-    "untriagedUnrunTestFiles": 113,
+    "untriagedUnrunTestFiles": 114,
     "indeterminateInvocations": 0,
     "unresolvedIgnoreArguments": 0,
     "criticalGovernedRiskDirectories": 0,
     "highGovernedRiskDirectories": 1,
     "unclassifiedRiskDirectories": 58,
     "rankedDirectories": 1,
-    "rankedUntriagedUnrunTestFiles": 20,
+    "rankedUntriagedUnrunTestFiles": 21,
     "unclassifiedRiskDirectoriesWithResolvedProductSources": 52,
     "unclassifiedRiskDirectoriesWithNoResolvedProductSource": 6
   },
@@ -227,10 +227,10 @@
     },
     {
       "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 27,
+      "testFiles": 28,
       "coveredTestFiles": 7,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 20,
+      "untriagedUnrunTestFiles": 21,
       "via": [
         "command"
       ]
@@ -475,7 +475,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -505,7 +505,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -532,7 +532,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -562,7 +562,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -592,7 +592,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -622,7 +622,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -652,7 +652,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -682,7 +682,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -709,7 +709,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -734,7 +734,32 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
+        "rank": 1
+      }
+    },
+    {
+      "directory": "src/lib/intelligence/ask/__tests__",
+      "testPath": "src/lib/intelligence/ask/__tests__/executive-visual-selection.test.ts",
+      "enumerated": true,
+      "collected": false,
+      "run": false,
+      "green": "unknown",
+      "covered": false,
+      "pullRequestCovered": false,
+      "declaredQuarantine": false,
+      "declaredQuarantineShape": null,
+      "untriaged": true,
+      "triageVerdict": null,
+      "drawable": true,
+      "via": [],
+      "governedRisk": {
+        "score": 10,
+        "band": "high",
+        "signals": [
+          "tenant_scoped_read"
+        ],
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -764,7 +789,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -791,7 +816,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -821,7 +846,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -851,7 +876,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -881,7 +906,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -911,7 +936,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -941,7 +966,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -971,7 +996,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -1001,7 +1026,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -1031,7 +1056,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -1063,7 +1088,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -1095,7 +1120,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -1125,7 +1150,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -1155,7 +1180,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -1187,7 +1212,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -1217,7 +1242,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     },
@@ -1247,7 +1272,7 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     }
@@ -1255,14 +1280,15 @@
   "governedRiskRanking": [
     {
       "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 27,
-      "unrunTestFiles": 20,
+      "testFiles": 28,
+      "unrunTestFiles": 21,
       "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 20,
+      "untriagedUnrunTestFiles": 21,
       "verdictHeldUntriagedUnrunTestFiles": 19,
-      "drawableUnrunTestFiles": 1,
+      "drawableUnrunTestFiles": 2,
       "drawableTestPaths": [
-        "src/lib/intelligence/ask/__tests__/executive-reasoning.test.ts"
+        "src/lib/intelligence/ask/__tests__/executive-reasoning.test.ts",
+        "src/lib/intelligence/ask/__tests__/executive-visual-selection.test.ts"
       ],
       "admittedBy": "governed_risk_signal",
       "governedRisk": {
@@ -1271,14 +1297,14 @@
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "rank": 1
       }
     }
   ],
   "triageVerdicts": {
     "heldUntriagedUnrunTestFiles": 112,
-    "drawableUntriagedUnrunTestFiles": 1,
+    "drawableUntriagedUnrunTestFiles": 2,
     "heldByVerdict": {
       "already_verdicted_elsewhere": 36,
       "real": 1,
@@ -2772,19 +2798,6 @@
       }
     },
     {
-      "directory": "src/components/agent-answer/__tests__",
-      "testFiles": 5,
-      "unrunTestFiles": 1,
-      "declaredQuarantineTestFiles": 0,
-      "untriagedUnrunTestFiles": 1,
-      "governedRisk": {
-        "score": 0,
-        "band": "unclassified",
-        "signals": [],
-        "productSourceCount": 5
-      }
-    },
-    {
       "directory": "src/lib/programs/mobilization/__tests__",
       "testFiles": 1,
       "unrunTestFiles": 1,
@@ -2809,6 +2822,19 @@
         "signals": [
           "tenant_scoped_read"
         ],
+        "productSourceCount": 6
+      }
+    },
+    {
+      "directory": "src/components/agent-answer/__tests__",
+      "testFiles": 5,
+      "unrunTestFiles": 1,
+      "declaredQuarantineTestFiles": 0,
+      "untriagedUnrunTestFiles": 1,
+      "governedRisk": {
+        "score": 0,
+        "band": "unclassified",
+        "signals": [],
         "productSourceCount": 6
       }
     },
@@ -2914,15 +2940,15 @@
   "governedRiskEvidence": [
     {
       "directory": "src/lib/intelligence/ask/__tests__",
-      "testFiles": 27,
-      "unrunTestFiles": 20,
+      "testFiles": 28,
+      "unrunTestFiles": 21,
       "governedRisk": {
         "score": 10,
         "band": "high",
         "signals": [
           "tenant_scoped_read"
         ],
-        "productSourceCount": 36,
+        "productSourceCount": 37,
         "tenantScopedReadSourceCount": 8,
         "tenantScopedReadSources": [
           "src/lib/intelligence/ask/tenant-fence-answer.ts",

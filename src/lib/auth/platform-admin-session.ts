@@ -13,6 +13,18 @@ const ADMIN_EMAIL_ALLOWLIST: ReadonlySet<string> = new Set([
   ...CANONICAL_CLIENT_ADMIN_EMAILS,
 ]);
 
+export function isPlatformAdminIdentity(
+  role: unknown,
+  primaryEmail: string | null | undefined,
+): boolean {
+  return (
+    role === "admin" ||
+    Boolean(
+      primaryEmail && ADMIN_EMAIL_ALLOWLIST.has(primaryEmail.toLowerCase()),
+    )
+  );
+}
+
 export async function isPlatformAdminSession(): Promise<boolean> {
   const session = await auth();
   if (!session.userId) return false;
@@ -40,10 +52,7 @@ export async function isPlatformAdminSession(): Promise<boolean> {
     user?.primaryEmailAddress?.emailAddress
   )?.toLowerCase();
 
-  return (
-    role === "admin" ||
-    (!!primaryEmail && ADMIN_EMAIL_ALLOWLIST.has(primaryEmail))
-  );
+  return isPlatformAdminIdentity(role, primaryEmail);
 }
 
 export async function requirePlatformAdminEmail(): Promise<string | null> {

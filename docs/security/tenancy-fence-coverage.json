@@ -10,11 +10,11 @@
     "This census ranks and does not repair. Each repair is its own backlog item so that a sweep finding twenty routes is not one change nobody reads."
   ],
   "counts": {
-    "routes": 421,
+    "routes": 424,
     "fenced": 233,
     "fencedDirect": 109,
     "fencedIndirect": 124,
-    "unfenced": 188,
+    "unfenced": 191,
     "unfencedButReachesFenceModule": 105,
     "behavioral": 88,
     "byteScannerOnly": 7,
@@ -1356,6 +1356,18 @@
       }
     },
     {
+      "route": "src/app/api/admin/demo-access/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
       "route": "src/app/api/admin/diagnostics/enterprise-context/route.ts",
       "fence": "none",
       "fenceSymbols": [],
@@ -1832,6 +1844,18 @@
       }
     },
     {
+      "route": "src/app/api/auth/demo-viewer/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
       "route": "src/app/api/auth/launch-user/route.ts",
       "fence": "none",
       "fenceSymbols": [],
@@ -2190,6 +2214,18 @@
     },
     {
       "route": "src/app/api/debug/vip/route.ts",
+      "fence": "none",
+      "fenceSymbols": [],
+      "fenceVia": [],
+      "reachesFenceModule": false,
+      "coverage": null,
+      "suites": {
+        "behavioral": [],
+        "byteScanner": []
+      }
+    },
+    {
+      "route": "src/app/api/demo-video/[videoId]/route.ts",
       "fence": "none",
       "fenceSymbols": [],
       "fenceVia": [],

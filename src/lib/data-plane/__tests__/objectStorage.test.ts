@@ -5,6 +5,7 @@ const exists = jest.fn();
 const uploadData = jest.fn();
 const deleteIfExists = jest.fn();
 const downloadToBuffer = jest.fn();
+const getProperties = jest.fn();
 
 jest.mock('@azure/storage-blob', () => {
   class BlobServiceClient {
@@ -15,6 +16,7 @@ jest.mock('@azure/storage-blob', () => {
     getContainerClient() {
       return {
         createIfNotExists,
+        getProperties,
         getBlockBlobClient: () => ({
           exists,
           uploadData,
@@ -56,10 +58,20 @@ describe('Azure object storage adapter', () => {
     };
     exists.mockResolvedValue(false);
     uploadData.mockResolvedValue(undefined);
+    getProperties.mockResolvedValue({});
   });
 
   afterAll(() => {
     process.env = previousEnv;
+  });
+
+  it('opens media only from a private container and never changes its access policy', async () => {
+    const { getPrivateObjectStorageBlobClient } = await import('@/lib/data-plane/objectStorage');
+    await expect(getPrivateObjectStorageBlobClient('demo-videos', 'release/full.mp4')).resolves.toBeDefined();
+    getProperties.mockResolvedValue({ blobPublicAccess: 'blob' });
+    await expect(getPrivateObjectStorageBlobClient('demo-videos', 'release/full.mp4')).rejects.toThrow('private_container_required');
+    expect(createIfNotExists).not.toHaveBeenCalled();
+    expect(uploadData).not.toHaveBeenCalled();
   });
 
   it('continues to blob upload when container-create is not authorized', async () => {

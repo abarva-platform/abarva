@@ -1541,4 +1541,36 @@ body {
     padding: 18px 0;
   }
 }
+@media (max-width: 640px) {
+  .abarva-landing .fb-nav .wrap {
+    gap: 12px;
+    min-height: 76px;
+    height: auto;
+  }
+  .abarva-landing .fb-nav img {
+    max-width: 120px !important;
+    height: auto !important;
+  }
+  .abarva-landing .fb-nav .navlinks {
+    gap: 8px;
+  }
+  .abarva-landing .fb-nav .btn {
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+  .abarva-landing .fb-content {
+    width: 100%;
+    min-width: 0;
+    padding: 20px 22px 30px;
+  }
+  .abarva-landing .fb-left,
+  .abarva-landing .fb-dims,
+  .abarva-landing .fb-dim-card {
+    min-width: 0;
+  }
+  .abarva-landing .fb-head {
+    font-size: 36px;
+    letter-spacing: 0;
+  }
+}
 /* END logged-out landing page */

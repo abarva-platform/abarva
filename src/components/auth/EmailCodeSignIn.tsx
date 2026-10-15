@@ -6,6 +6,7 @@ import { useMemo, useRef, useState } from 'react'
 
 interface Props {
   redirectUrl: string
+  purpose?: 'workspace' | 'demo'
 }
 
 interface ClerkErrorLike {
@@ -164,7 +165,7 @@ function navigateAfterSignIn(url: string) {
   window.location.assign(url)
 }
 
-export function EmailCodeSignIn({ redirectUrl }: Props) {
+export function EmailCodeSignIn({ redirectUrl, purpose = 'workspace' }: Props) {
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
   const [safeIdentifier, setSafeIdentifier] = useState<string | null>(null)
@@ -191,7 +192,7 @@ export function EmailCodeSignIn({ redirectUrl }: Props) {
         throw new Error('clerk_not_ready')
       }
 
-      const bootstrap = await fetch('/api/auth/launch-user', {
+      const bootstrap = await fetch(purpose === 'demo' ? '/api/auth/demo-viewer' : '/api/auth/launch-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: normalizedEmail }),
@@ -216,7 +217,9 @@ export function EmailCodeSignIn({ redirectUrl }: Props) {
       setStep('code')
     } catch (err) {
       console.error('[EmailCodeSignIn] send code failure', err)
-      setError(describeFailure(err, 'Could not send a sign-in code'))
+      setError(purpose === 'demo' && err instanceof Error && err.message === 'demo_access_not_approved'
+        ? 'Demo access has not been approved for this email, or its approval has expired.'
+        : describeFailure(err, 'Could not send a sign-in code'))
     } finally {
       setPending(false)
     }
@@ -264,7 +267,7 @@ export function EmailCodeSignIn({ redirectUrl }: Props) {
           marginBottom: 24,
         }}
       >
-        <Image
+        {purpose === 'demo' ? <Image src="/brand/nexus/abarva-nexus-navbar-light-clearance.svg" alt="Abarva Nexus" width={248} height={42} priority /> : <><Image
           src="/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg"
           alt="AbarVa"
           width={92}
@@ -285,6 +288,7 @@ export function EmailCodeSignIn({ redirectUrl }: Props) {
         >
           <strong style={{ fontWeight: 600 }}>AI</strong> Success Platform
         </div>
+        </>}
       </div>
 
       <div
@@ -309,7 +313,7 @@ export function EmailCodeSignIn({ redirectUrl }: Props) {
           marginBottom: 22,
         }}
       >
-        Enter your approved workspace email. Clerk will email a one-time code to that address.
+        {purpose === 'demo' ? 'Enter your approved email to receive a one-time code. Demo access does not include a client workspace.' : 'Enter your approved workspace email. Clerk will email a one-time code to that address.'}
       </div>
 
       {step === 'email' ? (
@@ -324,7 +328,7 @@ export function EmailCodeSignIn({ redirectUrl }: Props) {
             type="email"
             value={email}
             onChange={event => setEmail(event.target.value)}
-            placeholder="anand.sundaram+apex@thesundaram.com"
+            placeholder={purpose === 'demo' ? 'you@company.com' : 'anand.sundaram+apex@thesundaram.com'}
             style={INPUT}
           />
 
@@ -437,7 +441,7 @@ export function EmailCodeSignIn({ redirectUrl }: Props) {
           textAlign: 'center',
         }}
       >
-        Each email is mapped to one client workspace. No tenant switcher is used.
+        {purpose === 'demo' ? 'Demo access is limited to approved videos. No client workspace is included.' : 'Each email is mapped to one client workspace. No tenant switcher is used.'}
       </div>
     </div>
   )
