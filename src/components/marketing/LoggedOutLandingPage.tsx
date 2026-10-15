@@ -17,14 +17,25 @@ export function LoggedOutLandingPage({
             <img
               src="/brand/nexus/abarva-nexus-navbar-dark-clearance.svg"
               alt="Abarva Nexus"
-              style={{ height: 34, width: "auto", display: "block", maxWidth: "45vw" }}
+              style={{
+                height: 34,
+                width: "auto",
+                display: "block",
+                maxWidth: "45vw",
+              }}
             />
             <div className="navlinks">
-              <Link className="btn btn-line" href="/demo">Watch the demo</Link>
+              <Link className="btn btn-line" href="/demo">
+                Watch the demo
+              </Link>
               <Link className="btn btn-dark" href="/sign-in">
                 Sign in
               </Link>
-              <button className="btn btn-prime" type="button" data-request-access>
+              <button
+                className="btn btn-prime"
+                type="button"
+                data-request-access
+              >
                 Request access
               </button>
             </div>
@@ -37,17 +48,18 @@ export function LoggedOutLandingPage({
               Private preview · founder-led
             </span>
             <h1 className="fb-head">
-              Turn AI ambition into{" "}
-              <span className="grad">governed execution</span> and measurable
-              value.
+              Nexus. The <span className="grad">AI Success Platform.</span>
             </h1>
             <p className="fb-sub">
-              Nexus connects enterprise context, Anthropic Claude reasoning and human
-              decisions. Choose the right investments, build the business case,
-              improve supplier economics, and track the outcome.
+              Anthropic Claude is the reasoning engine. Nexus brings the
+              enterprise context, workflows, governance and human decisions
+              around it, so your team can build a credible investment case, act
+              on supplier evidence and review the result.
             </p>
             <div className="fb-cta">
-              <Link className="btn btn-line" href="/demo">Watch the Nexus demo</Link>
+              <Link className="btn btn-line" href="/demo">
+                Watch the Nexus demo
+              </Link>
               <Link className="btn btn-dark" href="/sign-in">
                 Sign in
               </Link>
@@ -63,7 +75,7 @@ export function LoggedOutLandingPage({
               </span>
               <span>
                 <i />
-                Measurable value
+                Evidence of outcomes
               </span>
             </div>
             {signedOut && (
@@ -79,13 +91,10 @@ export function LoggedOutLandingPage({
               <span className="fb-dim-n">01</span>
               <div className="fb-dim-card">
                 <div className="fb-dim-k">Decide · before funding</div>
-                <div className="fb-dim-h">
-                  See the bet that won&rsquo;t land — and move the money to two
-                  that will.
-                </div>
+                <div className="fb-dim-h">Make the case before you spend.</div>
                 <div className="fb-dim-sig">
-                  <span>Readiness</span>
-                  <b>Review before funding</b>
+                  <span>Decide</span>
+                  <b>Compare options. Test the case.</b>
                 </div>
               </div>
             </div>
@@ -94,11 +103,11 @@ export function LoggedOutLandingPage({
               <div className="fb-dim-card">
                 <div className="fb-dim-k">Source · at the table</div>
                 <div className="fb-dim-h">
-                  Walk into the negotiation already holding the evidence.
+                  Challenge the commitment before you renew.
                 </div>
                 <div className="fb-dim-sig">
                   <span>Leverage</span>
-                  <b>Compare on evidence</b>
+                  <b>Connect terms, spend and service evidence.</b>
                 </div>
               </div>
             </div>
@@ -107,11 +116,11 @@ export function LoggedOutLandingPage({
               <div className="fb-dim-card">
                 <div className="fb-dim-k">Prove · after launch</div>
                 <div className="fb-dim-h">
-                  Show exactly where the value showed up — and defend it.
+                  Prove the result before you scale.
                 </div>
                 <div className="fb-dim-sig">
-                  <span>Value</span>
-                  <b>projected → validated</b>
+                  <span>Review</span>
+                  <b>Separate usage from business value.</b>
                 </div>
               </div>
             </div>
@@ -133,7 +142,7 @@ export function LoggedOutLandingPage({
                 <span>human-approved</span>
               </div>
               <div className="fb-stat">
-                <b>Value proof</b>
+                <b>Outcome review</b>
                 <span>projected · observed · validated</span>
               </div>
             </div>
@@ -145,15 +154,13 @@ export function LoggedOutLandingPage({
       <section className="why">
         <div className="wrap rv">
           <div className="eyebrow">Why now</div>
-          <h2 className="lead">
-            AI spend is moving faster than enterprise control.
-          </h2>
+          <h2 className="lead">A capable model is not a business outcome.</h2>
           <p className="body body-wide">
-            Boards are asking for AI growth. Business units are launching
-            pilots. Vendors are pushing platforms. Transformation teams are
-            trying to scale use cases. But most companies still lack one
-            governed system to connect funding decisions, program execution,
-            sourcing choices, adoption, risk, and value proof.
+            Buying an AI tool does not resolve fragmented information, unclear
+            ownership or unchanged ways of working. Before funding a new idea,
+            leaders need to understand the problem, the data it depends on, the
+            people and processes that must change, and how the result will be
+            measured.
           </p>
           <div className="question-grid">
             <div className="quote-box">
@@ -162,36 +169,43 @@ export function LoggedOutLandingPage({
                   The real failure point
                 </div>
                 <h3>
-                  Enterprise AI is not failing only at the model layer. It is
-                  failing at the decision, funding, sourcing, execution, and
-                  value-realization layer.
+                  The model can reason. The enterprise still needs a way to
+                  decide, fund, deliver and prove the change.
                 </h3>
               </div>
               <p>
-                The bottleneck is not ambition. It is the missing operating
-                system from board intent to measurable outcome.
+                Nexus connects those decisions to the same enterprise context,
+                with evidence gaps, accountable owners and human review kept
+                visible.
               </p>
             </div>
             <div className="q-list">
               <div className="q-line">
                 <span>→</span>
-                <b>Which AI bets should we fund?</b>
+                <b>
+                  Is this problem worth solving, and is AI the right answer?
+                </b>
               </div>
               <div className="q-line">
                 <span>→</span>
-                <b>Which should we stop early?</b>
+                <b>
+                  What data, operating model and adoption changes are needed?
+                </b>
               </div>
               <div className="q-line">
                 <span>→</span>
-                <b>Who owns the value?</b>
+                <b>What will delivery cost, and who owns the business case?</b>
               </div>
               <div className="q-line">
                 <span>→</span>
-                <b>Are we sourcing the right partners?</b>
+                <b>What should we challenge in our supplier commitments?</b>
               </div>
               <div className="q-line">
                 <span>→</span>
-                <b>Can we prove the outcome after launch?</b>
+                <b>
+                  What evidence justifies scaling, repairing, pausing or
+                  stopping?
+                </b>
               </div>
             </div>
           </div>
@@ -210,15 +224,21 @@ export function LoggedOutLandingPage({
           <div className="eyebrow">One platform · five connected surfaces</div>
           <h2 className="lead">Five surfaces. One continuous loop.</h2>
           <p className="body">
-            Each module reuses the same governed enterprise context. Decisions
-            and reviewed outcomes carry forward, instead of becoming another
-            disconnected report.
+            Home establishes the starting point. Intelligence tests the idea.
+            Moves builds the plan. Source addresses supplier commitments. Tower
+            reviews the result. Reviewed evidence informs the next decision.
           </p>
           <div className="surfaces" id="surfaces-row">
             <div className="surf">
-              <div className="smg" style={{ backgroundImage: "url(/marketing/surf-context.png)" }} />
+              <div
+                className="smg"
+                style={{ backgroundImage: "url(/marketing/surf-context.png)" }}
+              />
               <b>Home</b>
-              <p>Establish the enterprise context: its strategy, operations, systems, owners and evidence gaps.</p>
+              <p>
+                Establish the enterprise context: its strategy, operations,
+                systems, owners and evidence gaps.
+              </p>
             </div>
             <div className="surf">
               <div
@@ -229,8 +249,9 @@ export function LoggedOutLandingPage({
               />
               <b>Intelligence</b>
               <p>
-                Decide which AI bets are worth it — and which to kill or reshape
-                early.
+                Compare AI assistance, process redesign and other options
+                against your enterprise context. Identify the evidence needed
+                before funding.
               </p>
             </div>
             <div className="surf">
@@ -240,8 +261,9 @@ export function LoggedOutLandingPage({
               />
               <b>Moves</b>
               <p>
-                Turn a bet into an execution-ready program — sponsor, scope,
-                value logic, gates.
+                Originate, Charter, Discover, Design, Roadmap and Mobilize.
+                Build the data foundation, governance, operating model, adoption
+                plan, estimates and business case, with human decisions.
               </p>
             </div>
             <div className="surf">
@@ -251,8 +273,9 @@ export function LoggedOutLandingPage({
               />
               <b>Source</b>
               <p>
-                Negotiate from evidence on every vendor, SI, and platform
-                decision.
+                Source Optimize connects existing terms with spend and
+                operational evidence. Source New structures the next event with
+                deal-specific questions, requirements and release gates.
               </p>
             </div>
             <div className="surf">
@@ -262,8 +285,9 @@ export function LoggedOutLandingPage({
               />
               <b>Tower</b>
               <p>
-                Connect investment, adoption and outcomes to the next decision:
-                scale, repair or stop.
+                Review AI initiatives separately from tool adoption. Ask what
+                outcome evidence is needed before scaling, repairing, pausing or
+                stopping.
               </p>
             </div>
           </div>
@@ -277,20 +301,24 @@ export function LoggedOutLandingPage({
         <div className="wrap rv">
           <div className="section-head">
             <div>
-              <div className="eyebrow">Inside the product</div>
-          <h2 className="lead">Inside the Nexus workflow.</h2>
+              <div className="eyebrow">The connected product vision</div>
+              <h2 className="lead">
+                One enterprise context. Decisions that carry forward.
+              </h2>
             </div>
             <p className="body">
-            An illustrative product preview. Watch the walkthrough to follow
-            the workflow, decision gates and evidence together.
+              Strategy, operations, systems, owners and evidence form the
+              reusable starting point. Claude reasons over the supplied context;
+              workflows and people govern what happens next. Follow the actual
+              recorded examples in the private walkthrough.
             </p>
           </div>
           <div className="product-frame">
             <img
-              src="/marketing/moves-real.png"
-              alt="AbarVa Strategic Moves — illustrative product view"
+              src="/marketing/nexus-governed-journey.png"
+              alt="The connected Nexus journey: Home, Intelligence, Moves and Source, and Tower, above the governed enterprise context layer"
             />
-            <span className="pf-tag">Illustrative</span>
+            <span className="pf-tag">Product vision</span>
           </div>
         </div>
       </section>
@@ -311,13 +339,19 @@ export function LoggedOutLandingPage({
             <span className="chip">Source-aware recommendations</span>
             <span className="chip">Human approval at every gate</span>
             <span className="chip">Decision and risk traceability</span>
-            <span className="chip">Measurable value</span>
+            <span className="chip">Outcome evidence</span>
             <span className="chip">Clear accountability</span>
           </div>
           <p className="body" style={{ marginTop: 24 }}>
             Built for CIOs, CDAOs, CFOs, CPOs, and transformation leaders
             accountable for outcomes. Client-specific detail, methodology, and
             sample value loops are shown only in private preview.
+          </p>
+          <p className="body" style={{ marginTop: 18 }}>
+            Recorded facts and deterministic calculations stay separate from
+            Claude&apos;s explanations and proposed actions. A recommendation is
+            not an approval, adoption is not ROI, and a projected benefit is not
+            a Finance-confirmed result.
           </p>
         </div>
       </section>
@@ -335,20 +369,17 @@ export function LoggedOutLandingPage({
               }}
             >
               <span className="dot" />
-              Limited launch cohort
+              Start with one consequential decision
             </span>
-            <h2>
-              Bring one real AI initiative. We will pressure-test the bet
-              together.
-            </h2>
+            <h2>A Nexus decision review with Anand.</h2>
             <p>
-              AbarVa is opening a small number of founder-led private previews
-              for enterprise leaders preparing to fund, scale, source, or govern
-              major AI programs.
+              Bring one AI investment or one major contract. Review the context,
+              the evidence gaps and the next accountable action with your team.
             </p>
             <div className="bring">
-              Pressure-test value · expose execution risk · clarify the path to
-              proof
+              For consulting firms, the opportunity is a recurring platform
+              relationship supported by integration, transformation and advisory
+              services.
             </div>
             <br />
             <button className="btn btn-prime" type="button" data-request-access>
@@ -376,8 +407,7 @@ export function LoggedOutLandingPage({
             style={{ height: 26, width: "auto", display: "block" }}
           />
           <div>
-            The AI value operating system for governed execution and measurable
-            outcomes.
+            The AI Success Platform. Context, decisions, action and proof.
             <br />
             <span style={{ fontSize: 11 }}>© 2026 AbarVa, Inc.</span>
           </div>

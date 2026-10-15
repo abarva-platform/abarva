@@ -1,11 +1,12 @@
-import { LoggedOutLandingPage } from '@/components/marketing/LoggedOutLandingPage'
+import { LoggedOutLandingPage } from "@/components/marketing/LoggedOutLandingPage";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 export const metadata = {
-  title: 'Nexus | The enterprise AI operating system',
-  description: 'Connect enterprise context, Anthropic Claude reasoning, governed workflows and outcome evidence. Explore the private Nexus walkthrough.',
-}
+  title: "Nexus | The AI Success Platform",
+  description:
+    "Make the case before you spend. Challenge the commitment before you renew. Prove the result before you scale. Enterprise context, Anthropic Claude reasoning and governed workflows.",
+};
 
 export default function HomePage() {
-  return <LoggedOutLandingPage />
+  return <LoggedOutLandingPage />;
 }

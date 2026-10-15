@@ -89,9 +89,9 @@ describe("demo library presentation", () => {
       "/api/demo-video/full",
     );
     fireEvent.change(screen.getByLabelText("Jump to chapter"), {
-      target: { value: "392.4" },
+      target: { value: "343.133333" },
     });
-    expect(container.querySelector("video")?.currentTime).toBe(392.4);
+    expect(container.querySelector("video")?.currentTime).toBe(343.133333);
     expect(container.querySelector("video")?.autoplay).toBe(false);
   });
   it("supports keyboard tabs and limits access management to administrators", () => {
@@ -126,6 +126,62 @@ describe("demo library presentation", () => {
     ).toBe("/demo");
     expect(screen.queryByText("72% · reshape")).toBeNull();
     expect(screen.getAllByAltText("Abarva Nexus").length).toBe(2);
+  });
+
+  it("defines Nexus and carries the film's decision story onto the public landing page", () => {
+    const { container } = render(<LoggedOutLandingPage />);
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toMatch(
+      /Nexus.*AI Success Platform/,
+    );
+    for (const line of [
+      "Make the case before you spend.",
+      "Challenge the commitment before you renew.",
+      "Prove the result before you scale.",
+    ])
+      expect(screen.getByText(line)).toBeTruthy();
+    const text = container.textContent ?? "";
+    expect(text).toContain("Anthropic Claude is the reasoning engine");
+    expect(text).toContain(
+      "Originate, Charter, Discover, Design, Roadmap and Mobilize",
+    );
+    expect(text).toContain("Source Optimize");
+    expect(text).toContain("Source New");
+    expect(text).toContain("recurring platform");
+    expect(text).toContain("integration, transformation and advisory services");
+    expect(screen.getByAltText(/connected Nexus journey/)).toBeTruthy();
+    expect(text).not.toMatch(
+      /move the money to two that will|Show exactly where the value showed up|which to kill/i,
+    );
+  });
+
+  it("uses the published V3 versions and their actual chapter timeline", () => {
+    expect(DEMO_VIDEOS.map((video) => video.duration)).toEqual([
+      "5 min 02 sec",
+      "8 min 31 sec",
+    ]);
+    expect(DEMO_VIDEOS.map((video) => video.blobPath)).toEqual([
+      "2026-10-15/v3/nexus-executive.mp4",
+      "2026-10-15/v3/nexus-full.mp4",
+    ]);
+    expect(
+      DEMO_VIDEOS[0].chapters.find((chapter) =>
+        chapter.title.startsWith("Tower"),
+      )?.at,
+    ).toBeCloseTo(218.833333, 5);
+    expect(
+      DEMO_VIDEOS[1].chapters.find((chapter) =>
+        chapter.title.startsWith("Source New"),
+      )?.at,
+    ).toBeCloseTo(360.533333, 5);
+    for (const video of DEMO_VIDEOS) {
+      expect(video.captionsPath).toBe(video.blobPath.replace(/\.mp4$/, ".vtt"));
+      expect(video.chapters[0].at).toBe(0);
+      for (let index = 1; index < video.chapters.length; index++) {
+        expect(video.chapters[index].at).toBeGreaterThan(
+          video.chapters[index - 1].at,
+        );
+      }
+    }
   });
 
   it("keeps the video library accessible on an actual phone user agent", () => {
