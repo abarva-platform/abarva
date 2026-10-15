@@ -104,6 +104,27 @@ describe("demo email-code eligibility", () => {
 });
 
 describe("admin demo grants", () => {
+  it("calculates the expiry from the server clock for duration-based approvals", async () => {
+    const before = Date.now();
+    const response = await manage(
+      request({ action: "grant", email: address.emailAddress, days: 30 }),
+    );
+    expect(response.status).toBe(200);
+    const result = await response.json();
+    expect(Date.parse(result.expiresAt)).toBeGreaterThanOrEqual(
+      before + 30 * 86400000,
+    );
+    expect(Date.parse(result.expiresAt)).toBeLessThanOrEqual(
+      Date.now() + 30 * 86400000,
+    );
+    expect(
+      (
+        await manage(
+          request({ action: "grant", email: address.emailAddress, days: 31 }),
+        )
+      ).status,
+    ).toBe(400);
+  });
   it("denies unauthenticated callers and signed-in non-admins", async () => {
     currentUser.mockResolvedValue(null);
     expect((await manage(request({}))).status).toBe(401);

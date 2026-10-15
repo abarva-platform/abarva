@@ -42,9 +42,7 @@ function AccessManager() {
           email,
           ...(action === "grant"
             ? {
-                expiresAt: new Date(
-                  Date.now() + Number(days) * 86400000,
-                ).toISOString(),
+                days: Number(days),
               }
             : {}),
         }),

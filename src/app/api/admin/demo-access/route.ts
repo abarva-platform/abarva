@@ -9,6 +9,7 @@ const input = z.object({
   action: z.enum(["grant", "revoke"]),
   email: z.string().trim().toLowerCase().email().max(254),
   expiresAt: z.string().datetime().optional(),
+  days: z.number().int().min(1).max(30).optional(),
 });
 
 export async function POST(request: Request) {
@@ -24,8 +25,11 @@ export async function POST(request: Request) {
       return json("rate_limited", 429);
     const parsed = input.safeParse(await request.json());
     if (!parsed.success) return json("invalid_request", 400);
-    const { action, email, expiresAt } = parsed.data;
+    const { action, email, days } = parsed.data;
     const now = new Date();
+    const expiresAt = days
+      ? new Date(now.getTime() + days * 86400000).toISOString()
+      : parsed.data.expiresAt;
     if (
       action === "grant" &&
       (!expiresAt ||
