@@ -8,10 +8,15 @@ jest.mock("@/lib/agent/stream", () => ({
 
 import { CANONICAL_TENANT_KEYS } from "@/config/tenants/CANONICAL_TENANTS";
 import { synthesizeStream } from "../synthesizer";
+import { executiveVisualSelectionContract } from "../executive-visual-selection";
 
-const originalAnswer = "Validate the recorded opportunity first.\n\nKeep this original text, including [S1], unchanged.";
+const originalAnswer =
+  "Validate the recorded opportunity first.\n\nKeep this original text, including [S1], unchanged.";
 
-async function generate(modelAuthoredOutput: boolean) {
+async function generate(
+  modelAuthoredOutput: boolean,
+  query = "Give a brief executive recommendation.",
+) {
   const previous = process.env.ANTHROPIC_API_KEY;
   process.env.ANTHROPIC_API_KEY = "test";
   create.mockClear();
@@ -41,18 +46,33 @@ async function generate(modelAuthoredOutput: boolean) {
       tenantId: "test-tenant",
       tenantClientKey: CANONICAL_TENANT_KEYS[0],
       intent: "general_synthesis",
-      query: "Give a brief executive recommendation.",
+      query,
       modelAuthoredOutput,
       answerOnlyStreaming: true,
       richText: true,
       sources: [],
-    })) output += delta;
+    }))
+      output += delta;
     return { output, request: create.mock.calls[0][0] };
   } finally {
     if (previous === undefined) delete process.env.ANTHROPIC_API_KEY;
     else process.env.ANTHROPIC_API_KEY = previous;
   }
 }
+
+it("places the explicit exhibit form at the end of the actual model request", async () => {
+  const query = "Compare options in a table with Effort, Potential and a gate.";
+  const { request, output } = await generate(true, query);
+  expect(
+    request.messages[0].content.endsWith(
+      executiveVisualSelectionContract(query),
+    ),
+  ).toBe(true);
+  expect(request.messages[0].content).toContain(
+    "requires a table transport block, not a chart or quadrant",
+  );
+  expect(output).toBe(originalAnswer);
+});
 
 it("uses low adaptive effort without exposing reasoning or changing answer text", async () => {
   const { output, request } = await generate(true);
@@ -62,8 +82,12 @@ it("uses low adaptive effort without exposing reasoning or changing answer text"
   expect(request.max_tokens).toBe(8192);
   expect(output).toBe(originalAnswer);
   expect(output).not.toContain("PRIVATE_REASONING_MARKER");
-  expect(request.messages[0].content).toContain("Every supplied company source is provisional");
-  expect(request.messages[0].content).toContain("Do not output any company inventory totals");
+  expect(request.messages[0].content).toContain(
+    "Every supplied company source is provisional",
+  );
+  expect(request.messages[0].content).toContain(
+    "Do not output any company inventory totals",
+  );
 });
 
 it("gives a multi-part discovery request enough output room and a dynamic format", async () => {
@@ -94,13 +118,16 @@ it("gives a multi-part discovery request enough output room and a dynamic format
       answerOnlyStreaming: true,
       richText: true,
       sources: [],
-    })) output += delta;
+    }))
+      output += delta;
     expect(output).toBe(originalAnswer);
     const request = create.mock.calls[0][0];
     expect(request.model).toBe("claude-sonnet-4-6");
     expect(request.max_tokens).toBe(12000);
     expect(request.system).toContain("roughly 300 words total");
-    expect(request.messages[0].content).toContain("Answer every requested area");
+    expect(request.messages[0].content).toContain(
+      "Answer every requested area",
+    );
   } finally {
     if (previous === undefined) delete process.env.ANTHROPIC_API_KEY;
     else process.env.ANTHROPIC_API_KEY = previous;
@@ -111,26 +138,31 @@ it("retries once when private thinking consumes the first answer", async () => {
   const previous = process.env.ANTHROPIC_API_KEY;
   process.env.ANTHROPIC_API_KEY = "test";
   create.mockClear();
-  create.mockImplementationOnce(async () => ({
-    async *[Symbol.asyncIterator]() {
-      yield {
-        type: "content_block_delta",
-        delta: { type: "thinking_delta", thinking: "PRIVATE_REASONING_MARKER" },
-      };
-      yield {
-        type: "message_delta",
-        delta: { stop_reason: "max_tokens" },
-        usage: { output_tokens: 8192 },
-      };
-    },
-  })).mockImplementationOnce(async () => ({
-    async *[Symbol.asyncIterator]() {
-      yield {
-        type: "content_block_delta",
-        delta: { type: "text_delta", text: originalAnswer },
-      };
-    },
-  }));
+  create
+    .mockImplementationOnce(async () => ({
+      async *[Symbol.asyncIterator]() {
+        yield {
+          type: "content_block_delta",
+          delta: {
+            type: "thinking_delta",
+            thinking: "PRIVATE_REASONING_MARKER",
+          },
+        };
+        yield {
+          type: "message_delta",
+          delta: { stop_reason: "max_tokens" },
+          usage: { output_tokens: 8192 },
+        };
+      },
+    }))
+    .mockImplementationOnce(async () => ({
+      async *[Symbol.asyncIterator]() {
+        yield {
+          type: "content_block_delta",
+          delta: { type: "text_delta", text: originalAnswer },
+        };
+      },
+    }));
   getAuditedAnthropicClient.mockResolvedValue({
     auditId: "test",
     client: { messages: { create } },
@@ -146,7 +178,8 @@ it("retries once when private thinking consumes the first answer", async () => {
       answerOnlyStreaming: true,
       richText: true,
       sources: [],
-    })) output += delta;
+    }))
+      output += delta;
     expect(output).toBe(originalAnswer);
     expect(create).toHaveBeenCalledTimes(2);
     expect(create.mock.calls[0][0].output_config).toEqual({ effort: "low" });

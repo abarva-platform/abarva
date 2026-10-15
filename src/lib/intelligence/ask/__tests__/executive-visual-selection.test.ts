@@ -9,6 +9,10 @@ it.each([
     "comparison-table",
   ],
   ["Rank the options by value and risk", "comparison-table"],
+  [
+    "Compare five options in a compact table with Effort, Potential and a validation gate",
+    "comparison-table",
+  ],
   ["Give a comparison matrix of build, buy and partner", "comparison-table"],
   ["Compare delivery options, not a 2x2", "comparison-table"],
   ["Compare options without another quadrant matrix", "comparison-table"],
@@ -22,10 +26,28 @@ it.each([
   ["What gates are needed before discovery approval?", "gate-table"],
   ["Show three options in an effort/potential 2x2", "qualitative-matrix"],
   ["What is the recorded business model?", "none"],
+  ["What is in the customer table?", "none"],
+  ["How many records are in the member table?", "none"],
   ["Explain the decision without any exhibits", "none"],
   ["Where should leadership focus?", "auto"],
 ] as const)("routes %s to %s", (question, expected) => {
   expect(executiveVisualForm(question)).toBe(expected);
+});
+
+it("keeps an explicit table request as a table and preserves the exact prior view on redraw", () => {
+  const contract = executiveVisualSelectionContract(
+    "Compare in a table with Effort, Potential and a gate",
+  );
+  expect(contract).toContain(
+    "requires a table transport block, not a chart or quadrant",
+  );
+  expect(contract).toContain(
+    "Keep supplied qualitative categories as table cells",
+  );
+  expect(contract).toContain(
+    "preserve the exact options and supplied categories",
+  );
+  expect(contract).toContain("ask a focused clarification");
 });
 
 it("requires compatible sources and never converts a user target into chart measurements", () => {

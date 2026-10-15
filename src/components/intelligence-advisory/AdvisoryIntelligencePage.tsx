@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   EnterpriseLandscapeViewModel,
   LandscapeSection,
@@ -135,6 +135,7 @@ export function AdvisoryIntelligencePage({
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
   const [isAsking, setIsAsking] = useState(false);
+  const conversationId = useRef<string | null>(null);
   const [homeQuestion, setHomeQuestion] = useState<string | null>(null);
   const continuationBlocked = homeHandoff && homeHandoff.status !== "ready";
   useEffect(() => {
@@ -159,6 +160,7 @@ export function AdvisoryIntelligencePage({
   async function submitAsk(input: string = question) {
     const trimmed = input.trim();
     if (!trimmed || isAsking || continuationBlocked) return;
+    conversationId.current ??= `intelligence-${crypto.randomUUID()}`;
     const messageIndex = messages.length;
 
     const userMsg: UserMessage = {
@@ -208,6 +210,7 @@ export function AdvisoryIntelligencePage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: trimmed,
+          tabId: conversationId.current,
           client: viewModel.clientKey,
           format: "rich",
           richText: true,

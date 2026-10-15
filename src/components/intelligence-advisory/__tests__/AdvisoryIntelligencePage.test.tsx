@@ -6,6 +6,7 @@ import { TextDecoder, TextEncoder } from "util";
 import { StrictMode } from "react";
 import {
   act,
+  cleanup,
   fireEvent,
   render,
   screen,
@@ -220,6 +221,27 @@ describe("AdvisoryIntelligencePage stream chunk boundaries", () => {
       .join("\n");
 
   const LEAK = /change this view|What would|followups|```|"\]/;
+
+  it("uses one explicit session ID for follow-ups and a new ID for a fresh conversation", async () => {
+    const stream = await askFirstStarter();
+    const fetchMock = global.fetch as jest.Mock;
+    const first = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(first.tabId).toMatch(/^intelligence-[a-f0-9-]{36}$/);
+    await stream.close();
+    fireEvent.change(screen.getByTestId("agent-dock-input"), {
+      target: { value: "Show that view as a 2x2." },
+    });
+    fireEvent.submit(screen.getByTestId("agent-dock-form"));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).tabId).toBe(first.tabId);
+    cleanup();
+    const fresh = await askFirstStarter();
+    const secondFetch = global.fetch as jest.Mock;
+    expect(JSON.parse(secondFetch.mock.calls[0][1].body).tabId).not.toBe(
+      first.tabId,
+    );
+    await fresh.close();
+  });
 
   it("shows progress after ten seconds while the answer has no text", async () => {
     const intervalSpy = jest.spyOn(window, "setInterval");
