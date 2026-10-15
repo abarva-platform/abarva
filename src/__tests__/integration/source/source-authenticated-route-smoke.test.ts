@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import ts from "typescript";
 
 jest.mock("next/navigation", () => ({
   usePathname: () => "/source/events/evt-source-data-ai-si-selection",
@@ -40,7 +41,47 @@ function readWorkspaceFile(filePath: string) {
   return readFileSync(join(process.cwd(), filePath), "utf8");
 }
 
+function surfaceImports(filePath: string, source: string) {
+  const parsed = ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest);
+  return parsed.statements.flatMap((statement) => {
+    if (
+      !ts.isImportDeclaration(statement) ||
+      !ts.isStringLiteral(statement.moduleSpecifier)
+    )
+      return [];
+    const modulePath = statement.moduleSpecifier.text;
+    const bindings = statement.importClause?.namedBindings;
+    const isViewerAccessPolicy =
+      filePath === "src/proxy.ts" &&
+      modulePath === "@/lib/demo-library/policy" &&
+      !statement.importClause?.name &&
+      bindings &&
+      ts.isNamedImports(bindings) &&
+      bindings.elements.length === 1 &&
+      bindings.elements[0].name.text === "isDemoVisitorRoute" &&
+      !bindings.elements[0].propertyName;
+    return isViewerAccessPolicy ? [] : [modulePath];
+  });
+}
+
 describe("Source authenticated route smoke", () => {
+  it("exempts only the middleware's exact viewer-access policy import", () => {
+    const policy =
+      'import { isDemoVisitorRoute } from "@/lib/demo-library/policy"';
+    expect(surfaceImports("src/proxy.ts", policy)).toEqual([]);
+    expect(surfaceImports(sourceRouteFiles[0], policy)).toEqual([
+      "@/lib/demo-library/policy",
+    ]);
+    expect(
+      surfaceImports(
+        "src/proxy.ts",
+        policy.replace("isDemoVisitorRoute", "mockData"),
+      ),
+    ).toEqual(["@/lib/demo-library/policy"]);
+    expect(
+      surfaceImports("src/proxy.ts", policy.replace("/policy", "/mock")),
+    ).toEqual(["@/lib/demo-library/mock"]);
+  });
   it("keeps Source routes behind the authenticated route matcher", () => {
     const proxySource = readWorkspaceFile("src/proxy.ts");
 
@@ -97,14 +138,13 @@ describe("Source authenticated route smoke", () => {
   });
 
   it("documents the current auth test boundary without weakening auth", () => {
-    const sources = [
+    const paths = [
       "src/proxy.ts",
       ...sourceRouteFiles,
       "src/components/source/SentinelEngagementCanvas.tsx",
       "src/components/source/SourceDataReadinessPanel.tsx",
-    ]
-      .map(readWorkspaceFile)
-      .join("\n");
+    ];
+    const sources = paths.map(readWorkspaceFile).join("\n");
 
     expect(sources).not.toMatch(
       /from ['"][^'"]*(openai|anthropic|@anthropic-ai\/sdk|ai\/react|ai)['"]/i,
@@ -112,9 +152,16 @@ describe("Source authenticated route smoke", () => {
     expect(sources).not.toMatch(
       /from ['"][^'"]*(upload|parser|parsing|scorecard-ui|artifact-drawer)[^'"]*['"]/i,
     );
-    expect(sources).not.toMatch(
-      /from ['"][^'"]*(ProgramSurface|programs\/mock|preview|demo)[^'"]*['"]/i,
-    );
+    for (const filePath of paths) {
+      for (const modulePath of surfaceImports(
+        filePath,
+        readWorkspaceFile(filePath),
+      )) {
+        expect(modulePath).not.toMatch(
+          /ProgramSurface|programs\/mock|preview|demo/i,
+        );
+      }
+    }
     expect(sources).not.toMatch(
       /\b(parseUploadedFile|parseDocument|uploadFile|createScorecardUi|openArtifactDrawer)\b/,
     );

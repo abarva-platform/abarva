@@ -39,10 +39,11 @@ Layer 4 presentation plus global identity/access controls. Video bytes remain in
 - Red-first access-policy and media-route suites failed before implementation, then passed.
 - Mutation proof: removing grant expiry, removing media approval checks, and deleting the external-only middleware fence each caused the focused tests to fail. All mutations were restored before the green baseline.
 - Focused validation: 13 suites / 103 tests passed, covering existing launch provisioning, email-code sign-in, proxy routing, presentation, private storage and video ranges. Duration-based approvals use the server clock rather than trusting the visitor's clock. Demo administration reuses the existing platform-admin identity policy and still requires a verified primary email. Origin checks accept the exact public app origin behind ACA without trusting forwarded-host input.
-- Local TypeScript check passed with a 12 GiB heap after the default heap was insufficient. Final post-format check is required before merge.
+- Final post-format TypeScript check passed with a 12 GiB heap after the default heap was insufficient.
 - Browser review of anonymous demo entry at desktop and 390-pixel width: no horizontal overflow; sign-in scope is video-only. No production OTP acceptance or real video playback claim is made here.
 - A separate pre-existing sign-in-routing test expects a Tower destination while the unchanged foundation routing implementation returns a knowledge route; it is not included as a passing check.
 - Focused suites are wired into the private-demo-library pull-request workflow. Generated test/fence inventories are refreshed as applicable.
+- Source integration validation: 110 suites / 812 tests passed. The import-boundary check permits only the middleware's exact production viewer-route policy import. It still rejects demo/mock surface imports, including that policy imported by Source itself; executable proxy tests separately prove the access fence.
 
 ## Rollout Plan
 
