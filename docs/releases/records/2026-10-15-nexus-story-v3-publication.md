@@ -30,7 +30,7 @@ The `public-demo` lane changes Layer 4 presentation only: public landing copy, a
 
 ## Changes Included
 
-- `LoggedOutLandingPage` and root metadata state the platform purpose and connected journey.
+- `LoggedOutLandingPage`, root metadata and link-preview metadata state the platform purpose and connected journey.
 - Ordered planning phases and the two commercial paths replace overly broad outcome promises.
 - A generic approved product-vision image replaces the older illustrative workspace image.
 - The fixed video IDs now resolve to immutable V3 blobs with matching captions and actual chapter boundaries.

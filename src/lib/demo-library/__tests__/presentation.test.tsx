@@ -5,6 +5,7 @@ import { DemoLibrary } from "@/components/marketing/DemoLibrary";
 import { LoggedOutLandingPage } from "@/components/marketing/LoggedOutLandingPage";
 import { DEMO_VIDEOS } from "../catalog";
 import MobileGuard from "@/components/MobileGuard";
+import { metadata as landingMetadata } from "@/app/page";
 jest.mock("next/navigation", () => ({ usePathname: () => "/demo" }));
 jest.mock("@clerk/nextjs", () => ({
   SignOutButton: ({ children }: { children: React.ReactNode }) => (
@@ -182,6 +183,14 @@ describe("demo library presentation", () => {
         );
       }
     }
+  });
+
+  it("shares the current landing story instead of inheriting the legacy preview claim", () => {
+    expect(landingMetadata.openGraph?.title).toBe(landingMetadata.title);
+    expect(landingMetadata.openGraph?.description).toBe(
+      landingMetadata.description,
+    );
+    expect(landingMetadata.openGraph?.url).toBe("https://app.abarva.ai");
   });
 
   it("keeps the video library accessible on an actual phone user agent", () => {
