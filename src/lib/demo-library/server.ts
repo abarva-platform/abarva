@@ -1,7 +1,8 @@
 import "server-only";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { getPrivateObjectStorageBlobClient } from "@/lib/data-plane/objectStorage";
-import { evaluateDemoAccess } from "./policy";
+import { evaluateDemoAccess, type DemoIdentity } from "./policy";
+import { isPlatformAdminIdentity } from "@/lib/auth/platform-admin-session";
 import {
   DEMO_MEDIA_BUCKET,
   type DemoVideo,
@@ -13,12 +14,23 @@ export const PRIVATE_DEMO_HEADERS = {
   "X-Content-Type-Options": "nosniff",
   Vary: "Cookie",
 };
+export function evaluateDemoUser(user: DemoIdentity | null) {
+  const primary = user?.emailAddresses.find(
+    (address) => address.id === user.primaryEmailAddressId,
+  );
+  const role = (user?.publicMetadata as { role?: unknown } | undefined)?.role;
+  return evaluateDemoAccess(
+    user,
+    new Date(),
+    isPlatformAdminIdentity(role, primary?.emailAddress),
+  );
+}
 export async function readDemoSession() {
   // Current provider metadata keeps revoked grants independent of stale JWT claims.
   const session = await auth();
   if (!session.userId) return { user: null, access: evaluateDemoAccess(null) };
   const user = await currentUser();
-  return { user, access: evaluateDemoAccess(user) };
+  return { user, access: evaluateDemoUser(user) };
 }
 export function demoBlob(video: DemoVideo, captions = false) {
   return getPrivateObjectStorageBlobClient(

@@ -12,6 +12,8 @@ jest.mock("@/lib/admin/invite-rate-limit", () => ({
   checkInviteRateLimit: jest.fn(() => ({ allowed: true })),
 }));
 jest.mock("@/lib/demo-library/server", () => ({
+  evaluateDemoUser: (user: unknown) =>
+    jest.requireActual("../policy").evaluateDemoAccess(user),
   PRIVATE_DEMO_HEADERS: { "Cache-Control": "private, no-store" },
 }));
 import { POST as bootstrap } from "@/app/api/auth/demo-viewer/route";

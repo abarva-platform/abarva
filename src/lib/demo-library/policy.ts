@@ -33,6 +33,7 @@ export function isDemoVideoId(value: unknown): value is DemoVideoId {
 export function evaluateDemoAccess(
   user: DemoIdentity | null,
   now = new Date(),
+  trustedPlatformAdmin = false,
 ): DemoAccess {
   const denied: DemoAccess = { allowed: false, admin: false, videoIds: [] };
   if (!user) return denied;
@@ -40,7 +41,7 @@ export function evaluateDemoAccess(
     (email) => email.id === user.primaryEmailAddressId,
   );
   if (!primary || primary.verification?.status !== "verified") return denied;
-  if (record(user.publicMetadata).role === "admin")
+  if (trustedPlatformAdmin || record(user.publicMetadata).role === "admin")
     return { allowed: true, admin: true, videoIds: [...DEMO_VIDEO_IDS] };
   const grant = record(record(user.privateMetadata).nexusDemoAccess);
   const expires =

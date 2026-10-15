@@ -1,7 +1,9 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { checkInviteRateLimit } from "@/lib/admin/invite-rate-limit";
-import { evaluateDemoAccess } from "@/lib/demo-library/policy";
-import { PRIVATE_DEMO_HEADERS } from "@/lib/demo-library/server";
+import {
+  PRIVATE_DEMO_HEADERS,
+  evaluateDemoUser,
+} from "@/lib/demo-library/server";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +42,7 @@ export async function POST(request: Request) {
     if (
       !user ||
       primary?.emailAddress.toLowerCase() !== email ||
-      !evaluateDemoAccess(user).allowed
+      !evaluateDemoUser(user).allowed
     )
       return json("demo_access_not_approved", 403);
     return Response.json({ ok: true }, { headers: PRIVATE_DEMO_HEADERS });
