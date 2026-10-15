@@ -86,6 +86,14 @@ export function isDemoVisitorRoute(pathname: string): boolean {
   );
 }
 
+export function isDemoRequestOriginAllowed(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  // ACA may expose an internal request URL; only the exact public app origin is an alternative.
+  return (
+    origin === new URL(request.url).origin || origin === "https://app.abarva.ai"
+  );
+}
+
 export function parseVideoRange(
   value: string | null,
   size: number,

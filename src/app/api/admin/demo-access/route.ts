@@ -1,6 +1,9 @@
 import { clerkClient, currentUser } from "@clerk/nextjs/server";
 import { z } from "zod";
-import { DEMO_VIDEO_IDS } from "@/lib/demo-library/policy";
+import {
+  DEMO_VIDEO_IDS,
+  isDemoRequestOriginAllowed,
+} from "@/lib/demo-library/policy";
 import {
   PRIVATE_DEMO_HEADERS,
   evaluateDemoUser,
@@ -22,7 +25,7 @@ export async function POST(request: Request) {
     const actor = await currentUser();
     if (!actor) return json("unauthenticated", 401);
     if (!evaluateDemoUser(actor).admin) return json("forbidden", 403);
-    if (request.headers.get("origin") !== new URL(request.url).origin)
+    if (!isDemoRequestOriginAllowed(request))
       return json("invalid_origin", 403);
     if (!checkInviteRateLimit(`demo-grant:${actor.id}`).allowed)
       return json("rate_limited", 429);

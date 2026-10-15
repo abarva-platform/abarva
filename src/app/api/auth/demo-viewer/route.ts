@@ -1,5 +1,6 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { checkInviteRateLimit } from "@/lib/admin/invite-rate-limit";
+import { isDemoRequestOriginAllowed } from "@/lib/demo-library/policy";
 import {
   PRIVATE_DEMO_HEADERS,
   evaluateDemoUser,
@@ -10,8 +11,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   const json = (error: string, status: number) =>
     Response.json({ error }, { status, headers: PRIVATE_DEMO_HEADERS });
-  if (request.headers.get("origin") !== new URL(request.url).origin)
-    return json("invalid_origin", 403);
+  if (!isDemoRequestOriginAllowed(request)) return json("invalid_origin", 403);
   // This per-instance throttle complements Clerk's provider-side OTP limits.
   if (!checkInviteRateLimit("demo-viewer-bootstrap").allowed)
     return json("rate_limited", 429);

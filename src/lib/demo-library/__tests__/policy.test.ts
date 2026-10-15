@@ -1,4 +1,5 @@
 import {
+  isDemoRequestOriginAllowed,
   evaluateDemoAccess,
   isDemoVisitorRoute,
   parseVideoRange,
@@ -28,6 +29,38 @@ const viewer = {
 };
 
 describe("private demo access", () => {
+  it("accepts the exact app origin behind ACA without trusting forwarded-host input", () => {
+    expect(
+      isDemoRequestOriginAllowed(
+        new Request("http://internal:3000/api/auth/demo-viewer", {
+          headers: { origin: "https://app.abarva.ai" },
+        }),
+      ),
+    ).toBe(true);
+    expect(
+      isDemoRequestOriginAllowed(
+        new Request("http://localhost:3127/api/auth/demo-viewer", {
+          headers: { origin: "http://localhost:3127" },
+        }),
+      ),
+    ).toBe(true);
+  });
+  it("rejects missing, lookalike and attacker origins even with forged forwarded-host headers", () => {
+    for (const origin of [
+      "",
+      "null",
+      "https://app.abarva.ai.attacker.example",
+      "https://attacker.example",
+    ]) {
+      expect(
+        isDemoRequestOriginAllowed(
+          new Request("http://internal:3000/api/auth/demo-viewer", {
+            headers: { origin, "x-forwarded-host": "attacker.example" },
+          }),
+        ),
+      ).toBe(false);
+    }
+  });
   it("does not confuse an authenticated identity with an access grant", () => {
     expect(evaluateDemoAccess(null, now).allowed).toBe(false);
     expect(
