@@ -14,12 +14,12 @@ Media uses the existing Azure object-storage configuration and a logical `demo-v
 
 Fixed catalog paths:
 
-| Video ID    | MP4                              | Captions                         |
-| ----------- | -------------------------------- | -------------------------------- |
-| `executive` | `2026-10-14/nexus-executive.mp4` | `2026-10-14/nexus-executive.vtt` |
-| `full`      | `2026-10-14/nexus-full.mp4`      | `2026-10-14/nexus-full.vtt`      |
+| Video ID    | MP4                                 | Captions                            |
+| ----------- | ----------------------------------- | ----------------------------------- |
+| `executive` | `2026-10-15/v3/nexus-executive.mp4` | `2026-10-15/v3/nexus-executive.vtt` |
+| `full`      | `2026-10-15/v3/nexus-full.mp4`      | `2026-10-15/v3/nexus-full.vtt`      |
 
-Before publication, verify the final files against the approved visual master, soundtrack, edit timeline and chapter timings in `src/lib/demo-library/catalog.ts`. Decode the entire MP4, inspect framing and audiovisual sync, and retain file hashes plus review evidence privately. The current catalog matches the existing five-minute and thirteen-minute edit timelines; it is not proof the MP4s exist.
+Before publication, verify the final files against the approved visual master, soundtrack, edit timeline and chapter timings in `src/lib/demo-library/catalog.ts`. Decode the entire MP4, inspect framing and audiovisual sync, and retain file hashes plus review evidence privately. The V3 catalog matches the five-minute-two-second and eight-minute-thirty-one-second cuts; it is not proof the MP4s exist. Keep previous versioned blobs intact for rollback. Publish and verify all four new blobs before switching the catalog through the repo-owned ACA main deploy workflow.
 
 Publish the approved files through the sanctioned private-network operator/upload lane. Do not open the private storage account to the internet to upload from a laptop. Set the MP4 content type to `video/mp4` and only then mark its blob metadata `demo_published=true`. Captions use `text/vtt`; only publish reviewed captions. Until the MP4 exists with that marker, the library displays a preparation state. There is no public upload endpoint in this release.
 

@@ -295,7 +295,7 @@ export function DemoLibrary({ state, admin, videos }: Props) {
               </h2>
               <p>
                 {state === "anonymous"
-                  ? "Two versions: a five-minute overview and a thirteen-minute walkthrough. Verify your approved email to continue."
+                  ? "Two versions: a five-minute overview and an eight-and-a-half-minute walkthrough. Verify your approved email to continue."
                   : state === "unavailable"
                     ? "Please reload and try again. No video is available without a successful access check."
                     : "Access may not have been granted, or it may have expired. Request a new approval from your host."}
