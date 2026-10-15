@@ -90,9 +90,9 @@ describe("demo library presentation", () => {
       "/api/demo-video/full",
     );
     fireEvent.change(screen.getByLabelText("Jump to chapter"), {
-      target: { value: "343.133333" },
+      target: { value: "372.4" },
     });
-    expect(container.querySelector("video")?.currentTime).toBe(343.133333);
+    expect(container.querySelector("video")?.currentTime).toBe(372.4);
     expect(container.querySelector("video")?.autoplay).toBe(false);
   });
   it("supports keyboard tabs and limits access management to administrators", () => {
@@ -155,25 +155,25 @@ describe("demo library presentation", () => {
     );
   });
 
-  it("uses the published V3 versions and their actual chapter timeline", () => {
+  it("uses the engaged V3.2 cuts and their actual chapter timeline", () => {
     expect(DEMO_VIDEOS.map((video) => video.duration)).toEqual([
-      "5 min 02 sec",
-      "8 min 31 sec",
+      "5 min 26 sec",
+      "9 min 10 sec",
     ]);
     expect(DEMO_VIDEOS.map((video) => video.blobPath)).toEqual([
-      "2026-10-15/v3/nexus-executive.mp4",
-      "2026-10-15/v3/nexus-full.mp4",
+      "2026-10-15/v3-2/nexus-executive.mp4",
+      "2026-10-15/v3-2/nexus-full.mp4",
     ]);
     expect(
       DEMO_VIDEOS[0].chapters.find((chapter) =>
         chapter.title.startsWith("Tower"),
       )?.at,
-    ).toBeCloseTo(218.833333, 5);
+    ).toBeCloseTo(244.633333, 5);
     expect(
       DEMO_VIDEOS[1].chapters.find((chapter) =>
         chapter.title.startsWith("Source New"),
       )?.at,
-    ).toBeCloseTo(360.533333, 5);
+    ).toBeCloseTo(392.4, 5);
     for (const video of DEMO_VIDEOS) {
       expect(video.captionsPath).toBe(video.blobPath.replace(/\.mp4$/, ".vtt"));
       expect(video.chapters[0].at).toBe(0);
@@ -191,6 +191,25 @@ describe("demo library presentation", () => {
       landingMetadata.description,
     );
     expect(landingMetadata.openGraph?.url).toBe("https://app.abarva.ai");
+  });
+
+  it("uses modules consistently and separates the partner message from the client review", () => {
+    const { container } = render(<LoggedOutLandingPage />);
+    expect(screen.getByText("5 modules")).toBeTruthy();
+    expect(
+      screen.getByRole("heading", {
+        name: "Five modules. One continuous loop.",
+      }),
+    ).toBeTruthy();
+    expect(container.querySelector(".cohort")?.textContent).not.toContain(
+      "consulting",
+    );
+    expect(container.querySelector("footer")?.textContent).toContain(
+      "For consulting partners",
+    );
+    expect(container.querySelector("footer")?.textContent).toContain(
+      "recurring platform relationship",
+    );
   });
 
   it("keeps the video library accessible on an actual phone user agent", () => {

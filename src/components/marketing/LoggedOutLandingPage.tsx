@@ -134,7 +134,7 @@ export function LoggedOutLandingPage({
                 <span>before a dollar is funded</span>
               </div>
               <div className="fb-stat">
-                <b>5 surfaces</b>
+                <b>5 modules</b>
                 <span>one governed loop</span>
               </div>
               <div className="fb-stat">
@@ -221,8 +221,8 @@ export function LoggedOutLandingPage({
       {/* ===== FIVE SURFACES ===== */}
       <section>
         <div className="wrap rv">
-          <div className="eyebrow">One platform · five connected surfaces</div>
-          <h2 className="lead">Five surfaces. One continuous loop.</h2>
+          <div className="eyebrow">One platform · five connected modules</div>
+          <h2 className="lead">Five modules. One continuous loop.</h2>
           <p className="body">
             Home establishes the starting point. Intelligence tests the idea.
             Moves builds the plan. Source addresses supplier commitments. Tower
@@ -376,12 +376,6 @@ export function LoggedOutLandingPage({
               Bring one AI investment or one major contract. Review the context,
               the evidence gaps and the next accountable action with your team.
             </p>
-            <div className="bring">
-              For consulting firms, the opportunity is a recurring platform
-              relationship supported by integration, transformation and advisory
-              services.
-            </div>
-            <br />
             <button className="btn btn-prime" type="button" data-request-access>
               Request access
             </button>
@@ -411,6 +405,11 @@ export function LoggedOutLandingPage({
             <br />
             <span style={{ fontSize: 11 }}>© 2026 AbarVa, Inc.</span>
           </div>
+          <p style={{ flexBasis: "100%", margin: 0, maxWidth: 780 }}>
+            <strong>For consulting partners.</strong> A recurring platform
+            relationship supported by integration, transformation and advisory
+            services.
+          </p>
         </div>
       </footer>
 

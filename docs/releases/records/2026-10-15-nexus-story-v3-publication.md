@@ -6,7 +6,9 @@
 
 ## Status
 
-`candidate`
+`released`
+
+Public entry and authorized media behavior were live-proven on 15 October 2026. This status does not certify visual editorial acceptance, pronunciation, financial figures or end-to-end product workflows.
 
 ## Plain-English Summary
 
@@ -70,6 +72,12 @@ Revert the presentation/catalog changes through a PR and the same main deploy wo
 ## Audit Evidence
 
 PR and repo-owned deploy run; focused test and mutation results; private media publication/readback proof; unchanged operator template/idle proof; browser captures of the root page and protected player. Private proof remains outside the public repository.
+
+- PR: https://github.com/abarva-platform/abarva/pull/9540; main squash `12cf076790576b1afb1f16026b0709db953ecb0a`.
+- Repo-owned deploy: https://github.com/abarva-platform/abarva/actions/runs/38805935567, succeeded.
+- Revision `ca-abarva-web-lab-eastus--m12cf0767`, healthy at 100% traffic; template, revision and both required deliverable workers matched approved digest `sha256:a2b112a02c63a9bb9c678e39590d7dd2ca60be87bb0a16dd7db259ea9211604d` in independent readback.
+- Approved-viewer browser proof: both files played, advanced, sought to the catalog chapter and rendered English captions. Anonymous media and caption probes returned HTTP 401.
+- Private evidence ID: `2026-10-15-nexus-story-v3-publication`; includes runtime proof, landing metadata, player state and caption screenshots.
 
 ## Known Gaps
 
