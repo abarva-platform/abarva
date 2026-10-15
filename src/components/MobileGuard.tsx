@@ -13,6 +13,7 @@ export default function MobileGuard({ children }: { children: React.ReactNode })
     // The signed-in product surfaces remain desktop/tablet-first.
     const publicMobileAllowed =
       pathname === '/' ||
+      pathname === '/demo' ||
       pathname === '/signed-out' ||
       pathname === '/forbidden' ||
       pathname === '/access-denied'

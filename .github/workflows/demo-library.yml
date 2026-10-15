@@ -1,0 +1,20 @@
+name: Private demo library
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  demo-access:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Prove demo access, streaming, private storage and presentation states
+        run: npx jest --runInBand src/lib/demo-library/__tests__ src/lib/data-plane/__tests__/objectStorage.test.ts src/__tests__/integration/launch-user-route.test.ts src/__tests__/integration/email-code-sign-in-panel.test.tsx

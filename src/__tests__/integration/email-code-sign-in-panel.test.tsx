@@ -71,6 +71,18 @@ describe('EmailCodeSignIn', () => {
     }) as jest.Mock;
   });
 
+  it('uses demo eligibility instead of workspace provisioning and makes the restricted scope explicit', async () => {
+    installClerkMock();
+    render(<EmailCodeSignIn redirectUrl="/demo" purpose="demo" />);
+    expect(screen.getByText('Demo access is limited to approved videos. No client workspace is included.')).toBeTruthy();
+    expect(screen.queryByText('Each email is mapped to one client workspace. No tenant switcher is used.')).toBeNull();
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'viewer@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: /send email code/i }));
+    await screen.findByText(/we sent a code to/i);
+    expect(global.fetch).toHaveBeenCalledWith('/api/auth/demo-viewer', expect.objectContaining({ method: 'POST', body: JSON.stringify({ email: 'viewer@example.com' }) }));
+    expect((global.fetch as jest.Mock).mock.calls.some(call => call[0] === '/api/auth/launch-user')).toBe(false);
+  });
+
   it('asks only for email before sending a one-time code', () => {
     render(<EmailCodeSignIn redirectUrl="/auth-redirect" />);
 
