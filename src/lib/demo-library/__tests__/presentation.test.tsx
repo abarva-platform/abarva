@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { DemoLibrary } from "@/components/marketing/DemoLibrary";
 import { LoggedOutLandingPage } from "@/components/marketing/LoggedOutLandingPage";
 import { DEMO_VIDEOS } from "../catalog";
@@ -41,6 +41,32 @@ const videos = DEMO_VIDEOS.map(
 );
 
 describe("demo library presentation", () => {
+  it("presents both access paths without duplicating sign-in or request logic", () => {
+    const { container } = render(
+      <DemoLibrary state="anonymous" admin={false} videos={[]} />,
+    );
+    const approved = screen.getByRole("region", { name: "Already approved" });
+    const newcomer = screen.getByRole("region", { name: "New here" });
+    expect(within(approved).getByTestId("demo-sign-in").textContent).toBe(
+      "demo:/demo",
+    );
+    expect(
+      within(approved).getByText(
+        "Codes go only to emails already provisioned for demo access.",
+      ),
+    ).toBeTruthy();
+    expect(
+      within(newcomer).getByRole("button", { name: "Request access" }).dataset
+        .requestAccess,
+    ).toBe("");
+    expect(
+      within(newcomer).getByText(
+        "We review requests and email you when your access is ready.",
+      ),
+    ).toBeTruthy();
+    expect(container.querySelectorAll("[data-request-access]")).toHaveLength(1);
+    expect(screen.getAllByTestId("demo-sign-in")).toHaveLength(1);
+  });
   it("offers scoped sign-in without any playable source or admin control to anonymous visitors", () => {
     const { container } = render(
       <DemoLibrary state="anonymous" admin={false} videos={[]} />,

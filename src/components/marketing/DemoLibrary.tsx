@@ -282,31 +282,63 @@ export function DemoLibrary({ state, admin, videos }: Props) {
               illustrative economics are not verified client results.
             </p>
           </>
+        ) : state === "anonymous" ? (
+          <div className={styles.accessPaths}>
+            <section
+              className={styles.accessPath}
+              aria-labelledby="approved-access-title"
+            >
+              <h2 id="approved-access-title">Already approved</h2>
+              <div className={styles.signInPanel}>
+                <EmailCodeSignIn redirectUrl="/demo" purpose="demo" />
+              </div>
+              <p className={styles.pathNote}>
+                Codes go only to emails already provisioned for demo access.
+              </p>
+            </section>
+            <section
+              className={styles.accessPath}
+              aria-labelledby="request-access-title"
+            >
+              <h2 id="request-access-title">New here</h2>
+              <div className={styles.requestPanel}>
+                <LockKeyhole size={26} />
+                <h3>Request access to the private demo.</h3>
+                <p>
+                  Watch the executive overview or the full product walkthrough
+                  with your approved email. No client workspace is included.
+                </p>
+                <button
+                  type="button"
+                  className={styles.primary}
+                  data-request-access=""
+                >
+                  Request access
+                </button>
+              </div>
+              <p className={styles.pathNote}>
+                We review requests and email you when your access is ready.
+              </p>
+            </section>
+          </div>
         ) : (
           <section className={styles.access}>
             <div>
               <LockKeyhole size={26} />
               <h2>
-                {state === "anonymous"
-                  ? "Watch with approved access."
-                  : state === "unavailable"
-                    ? "Access verification is unavailable."
-                    : "This account is not approved for the demo."}
+                {state === "unavailable"
+                  ? "Access verification is unavailable."
+                  : "This account is not approved for the demo."}
               </h2>
               <p>
-                {state === "anonymous"
-                  ? "Two versions: a five-and-a-half-minute overview and a nine-minute walkthrough. Verify your approved email to continue."
-                  : state === "unavailable"
-                    ? "Please reload and try again. No video is available without a successful access check."
-                    : "Access may not have been granted, or it may have expired. Request a new approval from your host."}
+                {state === "unavailable"
+                  ? "Please reload and try again. No video is available without a successful access check."
+                  : "Access may not have been granted, or it may have expired. Request a new approval from your host."}
               </p>
               <button type="button" data-request-access>
                 Request access
               </button>
             </div>
-            {state === "anonymous" && (
-              <EmailCodeSignIn redirectUrl="/demo" purpose="demo" />
-            )}
           </section>
         )}
         {admin && <AccessManager />}
