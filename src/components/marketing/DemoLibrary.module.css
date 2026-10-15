@@ -188,11 +188,69 @@
   border-bottom: 1px solid #dce2e5;
 }
 .access {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 460px);
-  gap: 80px;
-  align-items: start;
   padding: 18px 0 64px;
+}
+.accessPaths {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px;
+  padding: 18px 0 64px;
+  max-width: 1120px;
+}
+.accessPath {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+.accessPath h2 {
+  font-size: 18px;
+  margin: 0 0 16px;
+}
+.signInPanel {
+  display: flex;
+  min-width: 0;
+}
+.signInPanel > div,
+.requestPanel {
+  width: 100%;
+  border: 1px solid #d9d6cd;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 24px 70px rgba(17, 19, 24, 0.1);
+}
+.signInPanel > div {
+  max-width: none !important;
+}
+.requestPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.requestPanel svg {
+  color: #176c5d;
+  margin-bottom: 24px;
+}
+.requestPanel h3 {
+  font:
+    24px/1.2 Georgia,
+    serif;
+  margin: 0 0 12px;
+}
+.requestPanel p,
+.pathNote {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #59646b;
+}
+.requestPanel p {
+  margin: 0 0 24px;
+}
+.requestPanel button {
+  width: 100%;
+  margin-top: auto;
+}
+.pathNote {
+  margin: 16px 0 0;
 }
 .access > div:first-child {
   padding-top: 30px;
@@ -289,7 +347,7 @@
   .heading p:last-child {
     font-size: 17px;
   }
-  .access {
+  .accessPaths {
     grid-template-columns: minmax(0, 1fr);
     gap: 28px;
   }
