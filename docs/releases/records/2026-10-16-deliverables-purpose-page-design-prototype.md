@@ -67,6 +67,53 @@ or editorial acceptance; the flag remains disabled.
 
 ## QA / Validation
 
+### Fresh-writing control pass (16 October, subsequent review)
+
+- PASS: 75 orchestrator suites / 1,131 tests; focused renderer/money suites 15/15;
+  Node 24 typecheck with a 12 GiB heap; release checks 11/11;
+  changed-file ESLint; export reachability matches the existing seven-declaration baseline.
+- P1/P2 prompts and quality validation consume the canonical phase contracts.
+  Missing or reordered beats, an earlier-phase opening request, and unqualified
+  draft self-authorization are blocked. Contract-permitted appendices follow the
+  complete core sequence; the validator does not invent a conflicting appendix ban.
+- Compact statement/two-column/table forms precede splitting. Structured proposed
+  actions render as Owner / Action / Evidence. Continuations are bounded and
+  balanced; sparse continuations refuse export. Combined source groups retain
+  their evidence family and purpose. These checks are geometric estimates, not
+  raster occupancy certification or a universal sparse-page merge algorithm.
+- Explicit numeric types control display precision and unit compatibility.
+  The offline experiment preserves raw source values and exact binding locations.
+  Production synthesis discards model-authored numeric-unit metadata; the complete
+  production evidence-to-typed-slot adapter remains a prerequisite for enrollment.
+- Absence checks require explicit cited source wording and reject inference from
+  an evidence plan. Tests include removed/mismatched citations, unrelated quoted
+  evidence, JSON spreadsheet rows and citations before a sentence's final period.
+  This is conservative textual support,
+  not general semantic entailment or historical completeness verification.
+- Classification markers are refused in authored visible content; the server
+  supplies the disclosure footer. Authorization remains a separate human act.
+- Fresh generation is re-run from raw sources, with rejected candidates and all
+  completed model responses retained privately. Initial P2 retries were refused
+  for writing/shape defects rather than silently exported. A fresh experiment
+  cannot overwrite an earlier prompt/audit directory.
+- Four latest offline review outputs render. Discovery readouts have sixteen and
+  fourteen pages, with no repeated-title pages or one-row source-register pages.
+  A native-table expansion defect found in PDF review required more conservative
+  row measurement; structure-only validation had not caught the crowded takeaway.
+  Source batches are balanced and retain all registered references.
+- PASS, LIMITED: private review index checks all 39 page images and 83 links;
+  desktop and phone widths have no horizontal overflow. Twenty-one related-topic
+  comparison pairs are included. Index QA is not editorial acceptance.
+- NOT ACCEPTED: earlier candidates changed amount scope or reversed source
+  conditions. Those failures remain in the private audit. Latest editorial review
+  still finds headline/exhibit mismatch, hypothesis-to-fact overstatement and
+  internal operator prose in client-facing writing. Native Word reflow improves
+  scope columns and footer clearance but remains a distinct visual-review gate.
+  No human acceptance, tenant enrollment, production generation, merge or
+  deployment is claimed.
+
+### Earlier benchmark measurements (retained history)
+
 - PASS: 75 orchestrator suites / 1,109 tests.
 - PASS: fifteen exported-file corruptions rejected: removed status, citation, notes,
   chart and table; tiny font; undersized text box; overlap; off-slide content.
@@ -162,9 +209,9 @@ through a PR. No canonical data or approval record needs rollback.
 - Frozen same-source rendering and fresh offline writing are separate tests.
   Fresh writing is not integrated into a new two-pass production orchestration,
   and source-slot validation does not verify every claim-to-source entailment.
-- Fresh Word pagination still leaves sparse continuation pages. Fresh decks
-  repeat action pages and can regress from a phase readout to an earlier request.
-  These are unresolved quality defects, not approved output characteristics.
+- The new controls reject known repetitive deck pagination and earlier-phase
+  openers. Fresh Word density, narrative redundancy, source-to-claim meaning,
+  and reliable first-pass generation remain unresolved acceptance risks.
 - Sparse-content support remains partial. No universal 55% fill threshold,
   compatible-page merge planner or automatic raster repair is claimed.
 - Existing governed reference-deck payloads and public-source citation payloads

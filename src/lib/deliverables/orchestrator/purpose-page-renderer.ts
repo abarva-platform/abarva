@@ -10,6 +10,7 @@ import {
   purposeCitations,
   purposeTableWidths,
   purposeStatementHeight,
+  purposeRowHeight,
   type PurposeChart,
   type PurposePage,
 } from "./purpose-page-plan";
@@ -176,9 +177,9 @@ function frame(
     slide,
     `${sourceLine(page)}     ${index + 1} / ${total}`,
     8.45,
-    6.98,
+    6.94,
     4.25,
-    0.22,
+    0.44,
     10,
     { color: muted, align: "right", objectName: "purpose:sources" },
   );
@@ -226,19 +227,28 @@ function labelledStatements(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
       line: { color },
       objectName: `purpose:statement-tone:${i}:${item.tone}`,
     });
-    text(slide, item.label, X + 0.25, y + 0.18, 2.65, h - 0.3, 20, {
-      bold: true,
-      color,
-      objectName: `purpose:statement-label:${i}`,
-    });
+    text(
+      slide,
+      item.label,
+      X + 0.25,
+      y + 0.18,
+      3.2,
+      h - 0.3,
+      page.compact ? 18 : 20,
+      {
+        bold: true,
+        color,
+        objectName: `purpose:statement-label:${i}`,
+      },
+    );
     text(
       slide,
       copy(page, item.detail),
-      X + 3.15,
+      X + 3.7,
       y + 0.18,
-      W - 3.15,
+      W - 3.7,
       h - 0.3,
-      20,
+      page.compact ? 18 : 20,
       { objectName: `purpose:statement-detail:${i}` },
     );
   });
@@ -509,18 +519,7 @@ function renderPage(
     const columns = page.columns!,
       rows = page.rows!;
     const weights = purposeTableWidths(page);
-    const chars = weights.map((w) => Math.floor(100 * w));
-    const lineCounts = rows.map((row) =>
-      Math.max(...row.map((cell, i) => estimatedLines(cell, chars[i]!))),
-    );
-    const heights = [
-      0.62,
-      ...lineCounts.map((lines) =>
-        page.sourceRegister
-          ? Math.max(0.45, lines * 0.23 + 0.12)
-          : Math.max(0.5, lines * 0.245 + 0.17),
-      ),
-    ];
+    const heights = [0.62, ...rows.map((row) => purposeRowHeight(page, row))];
     const height = heights.reduce((sum, h) => sum + h, 0);
     if (height > H + 0.001)
       throw new PurposePageError("table_text_needs_split", page.id);
@@ -658,29 +657,36 @@ function renderPage(
       );
     });
   } else if (page.family === "statement") {
+    const columns = page.statementColumns || 1;
+    const width = columns === 2 ? 5.1 : W - 0.85;
+    const font = page.compact ? 18 : 22;
     const heights = page.items.map((item) =>
-      purposeStatementHeight(copy(page, item.detail)),
+      purposeStatementHeight(copy(page, item.detail), width, font),
     );
-    const used = heights.reduce((a, b) => a + b, 0);
-    if (used > H + 0.05)
+    const used = Array.from({ length: columns }, (_, column) =>
+      heights.reduce((sum, h, i) => sum + (i % columns === column ? h : 0), 0),
+    );
+    if (used.some((h) => h > H + 0.05))
       throw new PurposePageError("statement_needs_split", page.id);
-    let cursor = TOP + (H - used) / 2;
+    const cursor = used.map((h) => TOP + (H - h) / 2);
     page.items.forEach((item, i) => {
-      const y = cursor,
+      const column = i % columns,
+        x = X + column * (W / columns + 0.1);
+      const y = cursor[column]!,
         h = heights[i]!;
-      cursor += h;
-      text(slide, String(i + 1).padStart(2, "0"), X, y + 0.1, 0.6, 0.4, 18, {
+      cursor[column] = y + h;
+      text(slide, String(i + 1).padStart(2, "0"), x, y + 0.1, 0.6, 0.4, 18, {
         color: C.navy,
         bold: true,
       });
       text(
         slide,
         copy(page, item.detail),
-        X + 0.85,
+        x + 0.85,
         y + 0.1,
-        W - 0.85,
+        width,
         h - 0.2,
-        22,
+        font,
       );
     });
   } else cards(pptx, slide, page);

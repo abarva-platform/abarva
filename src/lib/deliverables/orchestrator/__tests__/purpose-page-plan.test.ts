@@ -11,8 +11,92 @@ import {
   purposeStatementHeight,
   purposePlainText,
 } from "../purpose-page-plan";
+import {
+  formatPurposeNumber,
+  explicitPurposeNumber,
+} from "../purpose-number-display";
+import { formatConsultantCents } from "@/lib/programs/value-engine/format-money";
 
 describe("purpose page planning", () => {
+  it("formats typed values without changing source values or money defaults", () => {
+    expect(
+      formatPurposeNumber(15.8482, { kind: "percent", scale: "whole" }),
+    ).toBe("15.8%");
+    expect(
+      formatPurposeNumber(0.158482, { kind: "percent", scale: "ratio" }),
+    ).toBe("15.8%");
+    expect(
+      formatPurposeNumber(2200000, { kind: "currency", currency: "USD" }),
+    ).toBe("$2.2M");
+    expect(
+      formatPurposeNumber(1236000, { kind: "count", unit: "claims" }),
+    ).toBe("1,236,000");
+    expect(formatPurposeNumber(638, { kind: "duration", unit: "sec" })).toBe(
+      "638 sec",
+    );
+    expect(formatPurposeNumber(41, { kind: "rate", unit: "USD/hr" })).toBe(
+      "41.0 USD/hr",
+    );
+    expect(explicitPurposeNumber("15.8482%")?.display).toBe("15.8%");
+    expect(explicitPurposeNumber("$2,200,000.00")?.display).toBe("$2.2M");
+    expect(explicitPurposeNumber("0.95")).toBeUndefined();
+    expect(formatConsultantCents(220000000)).toBe("$2.20M");
+    expect(() =>
+      formatPurposeNumber(NaN, { kind: "percent", scale: "ratio" }),
+    ).toThrow("non_finite");
+  });
+  it("keeps all five next actions in one owner/action/evidence table", () => {
+    const doc = purposeFixture();
+    doc.nextActions = [];
+    doc.actionRegister = Array.from({ length: 5 }, (_, i) => ({
+      owner: `Owner ${i}`,
+      action: "Confirm the definition.",
+      evidence: "Signed definition [1].",
+    }));
+    const pages = planPurposePages(doc).filter((p) =>
+      p.id.startsWith("next-actions"),
+    );
+    expect(pages).toHaveLength(1);
+    expect(pages[0]!.columns).toEqual(["Owner", "Action", "Evidence"]);
+    expect(pages[0]!.rows).toHaveLength(5);
+  });
+  it("rejects mixed big-number units and adjacent duplicate titles", () => {
+    const doc = purposeFixture();
+    doc.exhibits = [];
+    doc.nextActions = [];
+    doc.tables = [
+      {
+        key: "numbers",
+        title: "Different units",
+        columns: ["Label", "Value", "Basis"],
+        rows: [
+          ["Count", "4", "Source [1]"],
+          ["Share", "4%", "Source [2]"],
+        ],
+        pageShape: "big_numbers",
+        valueUnits: ["count:claims", "percent"],
+        targetFormat: "pptx",
+      },
+    ];
+    doc.deckSlides = [
+      {
+        key: "numbers",
+        governingMessage: "Definitions differ",
+        pageIntent: {
+          question: "Comparable?",
+          scopeNote: "Definition review required.",
+          tableKey: "numbers",
+        },
+      },
+    ];
+    expect(() => planPurposePages(doc)).toThrow("units_not_comparable");
+    doc.tables = [];
+    doc.deckSlides = [
+      { governingMessage: "Same title", points: ["First question."] },
+      { governingMessage: "Same title", points: ["Second question."] },
+    ];
+    expect(() => planPurposePages(doc)).toThrow("repeated_title");
+  });
   it("removes emphasis syntax without erasing words or unsupported markup", () => {
     expect(
       purposePlainText("**Required resolution:** Confirm the source [1]."),
@@ -55,7 +139,7 @@ describe("purpose page planning", () => {
     expect(page.rows).toEqual(doc.tables[0]!.rows);
     expect(page.columnWeights).toEqual([4, 8.05]);
   });
-  it("splits statements by rendered height without dropping their content", () => {
+  it("compacts statements before splitting without dropping their content", () => {
     const doc = purposeFixture();
     const points = Array.from(
       { length: 3 },
@@ -74,13 +158,17 @@ describe("purpose page planning", () => {
     doc.exhibits = [];
     doc.nextActions = [];
     const pages = planPurposePages(doc).filter((p) => p.family === "statement");
-    expect(pages.length).toBeGreaterThan(1);
+    expect(pages).toHaveLength(1);
+    expect(pages[0]!.compact).toBe(true);
     expect(pages.flatMap((p) => p.items.map((i) => i.detail))).toEqual(
       points.map((p) => p.trim()),
     );
     for (const page of pages)
       expect(
-        page.items.reduce((n, i) => n + purposeStatementHeight(i.detail), 0),
+        page.items.reduce(
+          (n, i) => n + purposeStatementHeight(i.detail, 11.2, 18),
+          0,
+        ),
       ).toBeLessThanOrEqual(4.1);
   });
   it("preserves shared comparison attributes as columns and source purposes as semantic groups", () => {
@@ -92,9 +180,8 @@ describe("purpose page planning", () => {
         p.sourceRegister &&
         p.rows?.some((r) => r.includes("Scope only; not authorization.")),
     )!;
-    expect(source.title).toBe(
-      `Sources: ${doc.sourceRegister[0]!.evidenceFamily}`,
-    );
+    expect(source.title).toContain(doc.sourceRegister[0]!.evidenceFamily);
+    expect(source.rows).toHaveLength(2);
     expect(source.columns).toContain("Use and limitation");
     const table = doc.tables.find((t) => t.pageShape === "comparison")!;
     const comparison = pages.find(
@@ -151,6 +238,50 @@ describe("purpose page planning", () => {
       "unknown_source",
     );
   });
+  it("keeps five short labelled readiness conditions on one semantic page", () => {
+    const doc = purposeFixture();
+    doc.exhibits = [];
+    doc.nextActions = [];
+    const labels = [
+      "Source access",
+      "Identity lineage",
+      "Reason grouping",
+      "Ownership",
+      "Finance certification",
+    ];
+    doc.tables = [
+      {
+        key: "readiness",
+        title: "Readiness conditions",
+        targetFormat: "pptx",
+        pageShape: "labelled_statements",
+        columns: ["Condition", "Required evidence"],
+        rows: labels.map((label) => [
+          label,
+          "Owner confirms the recorded basis before approval [1].",
+        ]),
+        rowTones: ["condition", "risk", "risk", "candidate", "later"],
+      },
+    ];
+    doc.deckSlides = [
+      {
+        key: "readiness",
+        governingMessage: "The next decision depends on five conditions",
+        pageIntent: {
+          question: "What must close?",
+          scopeNote: "Proposed only.",
+          tableKey: "readiness",
+        },
+      },
+    ];
+    const pages = planPurposePages(doc).filter((page) =>
+      page.id.startsWith("readiness"),
+    );
+    expect(pages).toHaveLength(1);
+    expect(pages[0]!.family).toBe("labelled_statements");
+    expect(pages[0]!.items.map((item) => item.label)).toEqual(labels);
+    expect(pages[0]!.compact).toBe(true);
+  });
   it("chooses content-shaped families and leaves the input unchanged", () => {
     const doc = purposeFixture(),
       before = JSON.stringify(doc);
@@ -173,7 +304,7 @@ describe("purpose page planning", () => {
     ).toBe(true);
   });
   it.each(["concepts", "comparison", "roles", "decision"] as const)(
-    "paginates %s at the item limit without losing words",
+    "converts overflowing %s to a compact table without losing words",
     (shape) => {
       const doc = purposeFixture();
       doc.exhibits = [];
@@ -196,12 +327,17 @@ describe("purpose page planning", () => {
             citationsUsed: [1],
           },
         ];
-        const pages = planPurposePages(doc).filter(
-          (page) => page.family === family,
+        const pages = planPurposePages(doc).filter((page) =>
+          page.id.startsWith("page-1"),
         );
-        expect(pages).toHaveLength(count === limit ? 1 : 2);
+        expect(pages).toHaveLength(1);
+        expect(pages[0]!.family).toBe(count === limit ? family : "register");
         expect(
-          pages.flatMap((page) => page.items.map((item) => item.detail)),
+          pages.flatMap((page) =>
+            page.rows
+              ? page.rows.map((r) => r[1])
+              : page.items.map((item) => item.detail),
+          ),
         ).toEqual(doc.deckSlides[0]!.points);
       }
     },
@@ -212,7 +348,7 @@ describe("purpose page planning", () => {
       key: "long",
       title: "Source detail",
       columns: ["Record", "Detail"],
-      rows: Array.from({ length: 15 }, (_, i) => [
+      rows: Array.from({ length: 10 }, (_, i) => [
         String(i),
         "Evidence remains unreviewed [1].",
       ]),
@@ -222,6 +358,9 @@ describe("purpose page planning", () => {
       page.id.startsWith("long:"),
     );
     expect(pages.length).toBeGreaterThan(1);
+    expect(pages).toHaveLength(2);
+    expect(new Set(pages.map((p) => p.title)).size).toBe(2);
+    expect(pages[1]!.title.endsWith("(continued)")).toBe(true);
     expect(pages.flatMap((page) => page.rows!)).toEqual(
       doc.tables.at(-1)!.rows,
     );

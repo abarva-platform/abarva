@@ -71,11 +71,15 @@ function table(
     throw new PurposePageError("table_shape", "charter");
   const weights =
     columnWeights ||
-    (columns.length === 2
-      ? [1.6, 5.4]
-      : columns.length === 3
-        ? [1.5, 3.5, 2]
-        : columns.map(() => 7 / columns.length));
+    (columns.length === 2 &&
+    /^in scope(?:\s*\[[A-Z0-9,\s]+\])*$/i.test(columns[0]!) &&
+    /^out of scope(?:\s*\[[A-Z0-9,\s]+\])*$/i.test(columns[1]!)
+      ? [3.5, 3.5]
+      : columns.length === 2
+        ? [1.6, 5.4]
+        : columns.length === 3
+          ? [1.5, 3.5, 2]
+          : columns.map(() => 7 / columns.length));
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     columnWidths: weights.map((w) => Math.round(w * 1440)),
@@ -203,11 +207,6 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       order.includes(key) ? order.indexOf(key) : order.length;
     return rank(a.key) - rank(b.key);
   });
-  const long =
-    sections
-      .map((s) => s.bodyMarkdown)
-      .join(" ")
-      .split(/\s+/).length > 900;
   const children: (Paragraph | Table)[] = [
     new Paragraph({
       children: [
@@ -263,16 +262,7 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
   ];
   const used = new Set<string>();
   for (const section of sections) {
-    children.push(
-      heading(
-        section.title,
-        1,
-        long &&
-          ["scope", "evidence_plan", "sponsorship_governance"].includes(
-            section.key,
-          ),
-      ),
-    );
+    children.push(heading(section.title, 1, false));
     const tree = fromMarkdown(cite(section.bodyMarkdown), {
       extensions: [gfm()],
       mdastExtensions: [gfmFromMarkdown()],
@@ -326,10 +316,22 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       ),
     );
   children.push(
-    heading("Review and authorization", 1, long),
+    heading("Review and authorization"),
     para(cite(doc.recommendation)),
   );
-  if (doc.nextActions.length)
+  if (doc.actionRegister?.length)
+    children.push(
+      heading("Next actions", 2),
+      table(
+        ["Owner", "Action", "Evidence"],
+        doc.actionRegister.map((a) => [
+          a.owner,
+          cite(a.action),
+          cite(a.evidence),
+        ]),
+      ),
+    );
+  else if (doc.nextActions.length)
     children.push(
       heading("Next actions", 2),
       ...doc.nextActions.map((a) => para(cite(a))),
@@ -354,9 +356,19 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
         ],
       ],
     ),
-    heading("Source register", 2),
+    heading("Source register", 2, doc.sourceRegister.length >= 4),
   );
-  for (const { family, entries } of purposeSourceGroups(doc.sourceRegister))
+  for (const { family, entries } of purposeSourceGroups(doc.sourceRegister)) {
+    if (entries.length === 1) {
+      const s = entries[0]!;
+      children.push(
+        heading(family, 2),
+        para(
+          `[${s.referenceId || s.citationNumber}] ${s.label}. ${s.reviewStatus || `${s.confidence} confidence`}. Use in this document: ${s.useAndLimitation || "Confirm the intended use with the source owner."}`,
+        ),
+      );
+      continue;
+    }
     children.push(
       heading(family, 2),
       table(
@@ -370,6 +382,7 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
         [0.6, 2.0, 4.4],
       ),
     );
+  }
   return new Document({
     creator: "Abarva",
     title: doc.title,
@@ -384,7 +397,7 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
             size: { width: 12240, height: 15840 },
             margin: {
               top: 1008,
-              bottom: 936,
+              bottom: 1296,
               left: 1037,
               right: 1037,
               header: 360,

@@ -571,6 +571,8 @@ export interface RenderableDeliverable {
   clientCompleteChecklist: ClientCompleteItem[];
   recommendation: string;
   nextActions: string[];
+  /** Structured proposed actions; not approval or completion records. */
+  actionRegister?: { owner: string; action: string; evidence: string }[];
 }
 
 export interface RenderableDeckSlide {
@@ -620,6 +622,14 @@ export interface RenderableTable {
     | "big_numbers";
   /** Explicit semantics, never guessed from a label or a numeric value. */
   rowTones?: import("./purpose-page-plan").PurposeTone[];
+  /** Server-bound numeric units for the two big-number values; not model-authored. */
+  valueUnits?: string[];
+  numericCells?: {
+    row: number;
+    column: number;
+    value: number;
+    type: import("./purpose-number-display").PurposeNumberType;
+  }[];
   key: string;
   title: string;
   columns: string[];

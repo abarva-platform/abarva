@@ -17,6 +17,7 @@ import type {
   PlannedSection,
 } from "./types";
 import { renderEvidenceForPrompt } from "./source-register";
+import { purposePhasePrompt } from "./purpose-story-contract";
 import {
   sectionCapFor,
   type SectionWordBudgetPlan,
@@ -898,7 +899,12 @@ export function buildPassPrompt(
     ),
   }));
   const highStakes = req.qualityBar.tone === "board_grade_consulting";
-  const system = buildSystemPrompt(req);
+  const system =
+    buildSystemPrompt(req) +
+    (req.purposePageDesign &&
+    ["charter", "discovery_report"].includes(req.deliverableType)
+      ? `\n${purposePhasePrompt(req.deliverableType)}`
+      : "");
   const context = buildContextBlock(req, brief, evidence);
   let user = "";
 

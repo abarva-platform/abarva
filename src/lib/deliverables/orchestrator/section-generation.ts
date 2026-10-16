@@ -308,11 +308,21 @@ function repairStructuredDeckSlides(
   const repaired = (deckSlides ?? [])
     .map((slide) => ({
       ...slide,
-      ...(slide.pageIntent ? { pageIntent: {
-        ...slide.pageIntent,
-        question: repairStructuredClientFactText(slide.pageIntent.question, lineage),
-        scopeNote: repairStructuredClientFactText(slide.pageIntent.scopeNote, lineage),
-      } } : {}),
+      ...(slide.pageIntent
+        ? {
+            pageIntent: {
+              ...slide.pageIntent,
+              question: repairStructuredClientFactText(
+                slide.pageIntent.question,
+                lineage,
+              ),
+              scopeNote: repairStructuredClientFactText(
+                slide.pageIntent.scopeNote,
+                lineage,
+              ),
+            },
+          }
+        : {}),
       ...(slide.title
         ? { title: repairStructuredClientFactText(slide.title, lineage) }
         : {}),
@@ -608,6 +618,7 @@ export interface SynthesisResult {
   subtitle?: string;
   recommendation?: string;
   nextActions?: string[];
+  actionRegister?: RenderableDeliverable["actionRegister"];
   deckSlides?: RenderableDeliverable["deckSlides"];
   tables?: RenderableTable[];
   exhibits?: RenderableExhibit[];
@@ -1019,9 +1030,13 @@ export function assembleDeliverable(
     })),
   ];
   const openInputs = openInputsTable(req, combinedClaims);
-  const tables = (synth.tables ?? []).map((table) =>
-    repairStructuredTable(table, lineage),
-  );
+  const tables = (synth.tables ?? []).map((table) => {
+    // Numeric metadata is a server-bound field, never an LLM assertion of units.
+    const safeTable = { ...table };
+    delete safeTable.numericCells;
+    delete safeTable.valueUnits;
+    return repairStructuredTable(safeTable, lineage);
+  });
   if (openInputs && !tables.some((t) => t.key === openInputs.key)) {
     tables.push(openInputs);
   }
@@ -1046,14 +1061,17 @@ export function assembleDeliverable(
     nextActions,
   );
   const generatedSections = sectionsWithSignals;
-  const deckSlides = ensureContractedDeckSlides({
-    req,
-    sections: generatedSections,
-    repairedSlides: repairStructuredDeckSlides(synth.deckSlides, lineage),
-    recommendation,
-    nextActions,
-    tablePages: tables.filter((table) => table.targetFormat !== "xlsx").length,
-  });
+  const deckSlides = req.purposePageDesign
+    ? repairStructuredDeckSlides(synth.deckSlides, lineage)
+    : ensureContractedDeckSlides({
+        req,
+        sections: generatedSections,
+        repairedSlides: repairStructuredDeckSlides(synth.deckSlides, lineage),
+        recommendation,
+        nextActions,
+        tablePages: tables.filter((table) => table.targetFormat !== "xlsx")
+          .length,
+      });
   return {
     title: honestTitle(req, synth),
     subtitle: synth.subtitle,
@@ -1068,5 +1086,14 @@ export function assembleDeliverable(
     clientCompleteChecklist: checklist,
     recommendation,
     nextActions,
+    ...(req.purposePageDesign && synth.actionRegister
+      ? {
+          actionRegister: synth.actionRegister.map((row) => ({
+            owner: repairStructuredClientFactText(row.owner, lineage),
+            action: repairStructuredClientFactText(row.action, lineage),
+            evidence: repairStructuredClientFactText(row.evidence, lineage),
+          })),
+        }
+      : {}),
   };
 }

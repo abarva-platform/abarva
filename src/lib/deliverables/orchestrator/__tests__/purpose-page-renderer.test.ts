@@ -125,6 +125,7 @@ describe("purpose page rendered objects", () => {
         title: "Definitions",
         targetFormat: "pptx",
         pageShape: "big_numbers",
+        valueUnits: ["duration:sec", "duration:sec"],
         columns: ["Measure", "Value", "Basis"],
         rows: [
           ["Recorded", "638 sec", "Recorded definition [1]."],
@@ -139,7 +140,10 @@ describe("purpose page rendered objects", () => {
     ];
     doc.deckSlides = doc.tables.map((t) => ({
       key: t.key,
-      governingMessage: "Definitions must agree before comparison",
+      governingMessage:
+        t.key === "values"
+          ? "Definitions must agree before comparison"
+          : "The proposed decision retains its conditions",
       pageIntent: {
         question: "What needs resolving?",
         scopeNote: "No benefit is established.",
@@ -250,6 +254,30 @@ describe("purpose page rendered objects", () => {
       expect(() => validatePurposeInspection(damaged, pages)).toThrow(error);
     }
   });
+  it("keeps a full-source evidence footer readable without dropping references", async () => {
+    const doc = purposeFixture();
+    doc.sourceRegister = Array.from({ length: 17 }, (_, i) => ({
+      ...doc.sourceRegister[0]!,
+      citationNumber: i + 1,
+      referenceId: `E${String(i + 1).padStart(2, "0")}`,
+      label: `Evidence ${i + 1}`,
+    }));
+    doc.deckSlides![0]!.citationsUsed = doc.sourceRegister.map(
+      (s) => s.citationNumber,
+    );
+    const report = await inspectDeck(
+      await renderPurposeDeck(doc, [purposeChartFixture()]),
+    );
+    const sources = report.slides[1]!.namedText?.["purpose:sources"] || "";
+    expect(sources).toContain("E01");
+    expect(sources).toContain("E17");
+    expect(() =>
+      validatePurposeInspection(
+        report,
+        planPurposePages(doc, [purposeChartFixture()]),
+      ),
+    ).not.toThrow();
+  });
   it("flags sparse content independently of background or frame size", () => {
     const page = planPurposePages(purposeFixture())[1]!;
     expect(
@@ -286,7 +314,7 @@ describe("purpose page rendered objects", () => {
       await Packer.toBuffer(renderDeliverableDocx(doc)),
     );
     const xml = await zip.file("word/document.xml")!.async("string");
-    expect(xml.match(/<w:tbl>/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(xml.match(/<w:tbl>/g)?.length).toBe(2);
     expect(xml).toContain("[C01]");
     expect(xml).toContain("Bounded discovery proposal [C01].");
     expect(xml).toContain('w:ascii="Arial"');
@@ -303,6 +331,34 @@ describe("purpose page rendered objects", () => {
     expect(await zip.file("word/footer1.xml")!.async("string")).toContain(
       "Human approval required",
     );
+  });
+  it("keeps cited scope headers without turning equal scope columns into a label table", async () => {
+    const doc = purposeFixture();
+    doc.deliverableType = "charter";
+    doc.exhibits = [];
+    doc.tables = [];
+    doc.generatedSections = [
+      {
+        key: "scope",
+        title: "Scope boundary",
+        bodyMarkdown:
+          "| In Scope [1] | Out of Scope [1] |\n|---|---|\n| Review evidence | Commit funding |",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+      },
+    ];
+    const zip = await JSZip.loadAsync(
+      await Packer.toBuffer(renderDeliverableDocx(doc)),
+    );
+    const xml = await zip.file("word/document.xml")!.async("string");
+    const scopeTable = xml.match(/<w:tbl>[\s\S]*?<\/w:tbl>/)![0];
+    expect(
+      [...scopeTable.matchAll(/<w:gridCol w:w="(\d+)"/g)].map((m) =>
+        Number(m[1]),
+      ),
+    ).toEqual([5040, 5040]);
+    expect(scopeTable).toContain("In Scope [1]");
+    expect(scopeTable).toContain("Out of Scope [1]");
   });
   it("keeps native charts, data workbooks, tables, notes and source references", async () => {
     const doc = purposeFixture(),
