@@ -6,7 +6,8 @@
 
 ## Status
 
-`candidate` - local prototype. Not merged, deployed, enrolled or live-proven.
+`candidate` - disabled release candidate. Deployment authorized; runtime proof pending.
+No tenants enrolled and no production artifact-quality acceptance claimed.
 
 ## Plain-English Summary
 
@@ -66,6 +67,25 @@ or editorial acceptance; the flag remains disabled.
   syntax without deleting the words or mutating the original payload.
 
 ## QA / Validation
+
+### Deployment preparation (16 October, subsequent user authorization)
+
+- User authorized continued work and deployment of the implementation. This
+  does not waive the independent fresh-output review or enroll any tenant.
+- PASS: 75 orchestrator suites / 1,138 tests, including seven new regressions.
+- Chart pages now require a descriptive title bound to the supplied chart titles.
+  Additional model-authored chart points or takeaways are refused until a governed
+  interpretation binding exists. This prevents unrelated causal claims over valid
+  numeric series; it is not a general semantic proof of the narrative.
+- A page whose scope calls its explanation a hypothesis must retain uncertainty
+  in the headline. Known package-operation instructions and raw status codes in
+  authored visible text are rejected, not silently rewritten.
+- Charter measures require a Markdown/native table. Short Word paragraphs stay
+  together across page breaks. These are targeted writing/reflow controls, not
+  acceptance of every generated document.
+- The experimental tenant list remains empty. Current exports keep the existing
+  path. New raw-source writing is evaluated offline with source/response hashes;
+  acceptance results remain distinct from the controlled deployment.
 
 ### Fresh-writing control pass (16 October, subsequent review)
 
@@ -154,16 +174,18 @@ or editorial acceptance; the flag remains disabled.
 
 ## Rollout Plan
 
-Keep the flag off. Do not merge or deploy as completion of the design brief.
-Repair fresh-writing and pagination findings, then obtain independent visual review and production chart binding,
-remaining layout families and render-repair requirements before tenant enrollment.
+Keep the flag off. The user has authorized merging and deploying this dormant
+implementation through the main ACA workflow, not declaring the design brief
+complete. Obtain independent fresh-writing visual review and production chart
+binding, remaining layout families and render-repair requirements before enrollment.
 The current renderer remains available with the flag off. Unsupported inputs on
 the prototype path fail explicitly; there is no silent downgrade to a weaker export.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
-- No workflow dispatch, Azure mutation, database operation or shared traffic change performed.
+- Merge uses the protected PR/squash path; the main workflow owns build and traffic.
+- No data mutation or tenant enrollment is part of this release.
 - Approved image digest: none assigned to this candidate.
 - Runtime invariant and signed-in proof required before a future live-proven claim.
 

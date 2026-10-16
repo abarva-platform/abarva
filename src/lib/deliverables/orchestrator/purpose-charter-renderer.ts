@@ -44,7 +44,11 @@ const order = [
 const run = (text: string, bold = false) =>
   new TextRun({ text, font: FONT, size: 22, color: INK, bold });
 const para = (text: string) =>
-  new Paragraph({ children: [run(text)], spacing: { after: 140, line: 260 } });
+  new Paragraph({
+    children: [run(text)],
+    keepLines: true,
+    spacing: { after: 140, line: 260 },
+  });
 const heading = (text: string, level: 1 | 2 = 1, pageBreakBefore = false) =>
   new Paragraph({
     heading: level === 1 ? HeadingLevel.HEADING_1 : HeadingLevel.HEADING_2,
@@ -155,6 +159,7 @@ function blocks(node: RootContent): (Paragraph | Table)[] {
       return [
         new Paragraph({
           children: inline(node.children),
+          keepLines: true,
           spacing: { after: 140, line: 260 },
         }),
       ];

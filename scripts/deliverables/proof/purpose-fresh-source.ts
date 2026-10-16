@@ -278,6 +278,7 @@ async function main() {
     slots,
     charts: (cfg.charts || []).map((c) => ({
       key: c.key,
+      title: c.title,
       metric: c.metric,
       unit: c.unit,
       period: c.period,

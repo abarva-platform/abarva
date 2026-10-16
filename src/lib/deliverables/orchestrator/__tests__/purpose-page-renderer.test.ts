@@ -202,15 +202,16 @@ describe("purpose page rendered objects", () => {
       section: "WHAT",
       takeaway: "The scope is a proposal; the owner must decide [1].",
     };
-    const first = purposeChartFixture(),
+    const first = { ...purposeChartFixture(), title: "Observed demand" },
       second = {
         ...purposeChartFixture(),
         key: "second",
+        title: "Separate measure",
         metric: "Separate measure",
       };
     doc.deckSlides!.push({
       key: "paired",
-      governingMessage: "Two measures retain separate units",
+      governingMessage: `${first.title} and ${second.title}`,
       citationsUsed: [1],
       pageIntent: {
         question: "What changed?",

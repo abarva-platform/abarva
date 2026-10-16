@@ -10,6 +10,7 @@ import {
   purposeCitations,
   purposeStatementHeight,
   purposePlainText,
+  purposeChartHeadline,
 } from "../purpose-page-plan";
 import {
   formatPurposeNumber,
@@ -18,6 +19,37 @@ import {
 import { formatConsultantCents } from "@/lib/programs/value-engine/format-money";
 
 describe("purpose page planning", () => {
+  it("refuses unrelated or causal chart headlines even when every numeric source is valid", () => {
+    const chart = purposeChartFixture();
+    const doc = purposeFixture();
+    doc.tables = [];
+    doc.exhibits = [];
+    doc.deckSlides = [
+      {
+        key: "trend",
+        governingMessage: "Knowledge search causes longer calls",
+        pageIntent: {
+          question: "What changed?",
+          scopeNote: "Recorded series only.",
+          chartKeys: [chart.key],
+        },
+      },
+    ];
+    expect(() => planPurposePages(doc, [chart])).toThrow(
+      "chart_headline_not_bound_to_measures",
+    );
+    doc.deckSlides[0]!.governingMessage = purposeChartHeadline([chart]);
+    expect(() => planPurposePages(doc, [chart])).not.toThrow();
+    doc.deckSlides[0]!.pageIntent!.takeaway = "The new tool caused the change";
+    expect(() => planPurposePages(doc, [chart])).toThrow(
+      "chart_interpretation_needs_governed_binding",
+    );
+    delete doc.deckSlides[0]!.pageIntent!.takeaway;
+    doc.deckSlides[0]!.points = ["Search is the proven cause."];
+    expect(() => planPurposePages(doc, [chart])).toThrow(
+      "chart_interpretation_needs_governed_binding",
+    );
+  });
   it("formats typed values without changing source values or money defaults", () => {
     expect(
       formatPurposeNumber(15.8482, { kind: "percent", scale: "whole" }),

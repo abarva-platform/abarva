@@ -4,8 +4,15 @@ import {
   renderDeckContractPrompt,
 } from "../shared/deck-story-contract";
 import type { GovernedEvidenceItem, RenderableDeliverable } from "./types";
+import { fromMarkdown } from "mdast-util-from-markdown";
+import { gfmFromMarkdown } from "mdast-util-gfm";
+import { gfm } from "micromark-extension-gfm";
 
 const marker = /\b(?:synthetic|invented|fixture|demo)\b/i;
+const operatorProse =
+  /\b(?:seed rows?|scoped rebind|rebind(?:ing)? the (?:tenant|dataset)|run the (?:loader|migration)|feature[_ -]flag|fixture loader)\b/i;
+const uncertainty =
+  /\b(?:hypothes(?:is|es)|suspected|possible|potential|may|might|could|to (?:test|validate|confirm))\b/i;
 const absence =
   /\b(?:no|none|missing|absent|unavailable|unrecorded|uncollected|lacks?|not\s+(?:yet\s+)?(?:collected|received|available|recorded|provided|loaded|supplied|established))\b/i;
 const normalize = (s: string) =>
@@ -39,7 +46,7 @@ export function purposePhasePrompt(type: string): string {
           .join(
             ", ",
           )}. The first slide states the finding AND a proposed proceed, hold or stop decision. Put the decision in the title, points, table or takeaway, not only speaker notes. Never open with an ask to authorize Discovery, test whether, or repeat the Charter request. Findings may remain conditional; do not invent a resolved cause. Optional permitted evidence-detail appendices follow the complete core spine and use unique appendix_ keys. Do not add appendices merely to reach a slide count.`;
-  return `${phase}\nVisible titles, body, scope notes and takeaways contain no synthetic/invented/fixture/demo markers; classification is carried by the server footer. Retain hypotheses, constraints and source limitations. A planned row supports planned, not not-collected. Any absence claim must quote the exact explicit absence from its cited source; otherwise ask the owner to confirm the state. Do not paraphrase absence into a stronger claim. Use a structured actionRegister [{owner, action, evidence}] instead of repeated nextActions prose. Evidence is a short completion test plus citations. Keep number slots intact; the server formats their declared units. Prefer one message per page, short cells, and source-specific scope notes. Put qualifications in notes rather than repeating them three times.`;
+  return `${phase}\nVisible titles, body, scope notes and takeaways contain no synthetic/invented/fixture/demo markers; classification is carried by the server footer. Retain hypotheses, constraints and source limitations. If a scope note calls the explanation a hypothesis, the headline must also say hypothesis, possible, suspected or may. Qualifications that change a claim's meaning stay visible next to that claim, not only in notes. A planned row supports planned, not not-collected. Any absence claim must quote the exact explicit absence from its cited source; otherwise ask the owner to confirm the state. Do not paraphrase absence into a stronger claim. Use a structured actionRegister [{owner, action, evidence}] instead of repeated nextActions prose. Evidence is a short completion test plus citations. Keep number slots intact; the server formats their declared units. Prefer one message per page, short cells, and source-specific scope notes. Exclude source-package operator instructions (seed rows, scoped rebind, loaders and feature flags) from client business controls. Translate status labels into ordinary words, not underscore codes. Charter success_measures must contain a native Markdown table separating outcome, measure and basis or next validation; never a dense baseline/target paragraph. Chart slides use the exact supplied chart title, or two chart titles joined by " and ", as their governingMessage. Omit points and takeaway on chart slides: the governed chart interpretation supplies the boundary. Put causal diagnoses on their own evidence-supported page, never over unrelated time series.`;
 }
 
 export function purposeVisibleText(doc: RenderableDeliverable): string[] {
@@ -147,6 +154,29 @@ export function validatePurposeStory(
   if (!["charter", "discovery_report"].includes(doc.deliverableType || ""))
     return errors;
   const charter = doc.deliverableType === "charter";
+  if (charter) {
+    const measures = doc.generatedSections.find(
+      (s) => s.key === "success_measures",
+    );
+    const tree =
+      measures &&
+      fromMarkdown(measures.bodyMarkdown, {
+        extensions: [gfm()],
+        mdastExtensions: [gfmFromMarkdown()],
+      });
+    const nativeTable = doc.tables.some(
+      (t) =>
+        ["success_measures", "success_measures_table"].includes(t.key) &&
+        t.targetFormat !== "xlsx" &&
+        t.rows?.length > 0,
+    );
+    if (
+      measures &&
+      !nativeTable &&
+      !tree?.children.some((n) => n.type === "table" && n.children.length > 1)
+    )
+      errors.push("purpose_story:success_measures_need_table");
+  }
   for (const table of doc.tables)
     if (!Array.isArray(table.columns) || !Array.isArray(table.rows))
       errors.push(
@@ -183,6 +213,15 @@ export function validatePurposeStory(
     seen.add(key);
   }
   if (!charter) {
+    for (const slide of doc.deckSlides || []) {
+      if (
+        /\bhypothes(?:is|es)\b/i.test(slide.pageIntent?.scopeNote || "") &&
+        !uncertainty.test(slide.governingMessage)
+      )
+        errors.push(
+          `purpose_story:hypothesis_hidden_from_headline:${slide.key}`,
+        );
+    }
     const first = doc.deckSlides?.[0];
     const opener = [
       first?.governingMessage,
@@ -202,6 +241,16 @@ export function validatePurposeStory(
       errors.push("purpose_story:opening_decision_missing");
   }
   for (const text of purposeVisibleText(doc)) {
+    if (operatorProse.test(text))
+      errors.push(
+        `purpose_story:operator_instructions_in_body:${text.slice(0, 100)}`,
+      );
+    if (
+      /\b(?:not_reviewed|not_verified|review_pending|owner_review_pending|source_asserted|client_confirmed|one_source)\b/i.test(
+        text,
+      )
+    )
+      errors.push(`purpose_story:raw_status_in_body:${text.slice(0, 100)}`);
     if (
       charter &&
       text

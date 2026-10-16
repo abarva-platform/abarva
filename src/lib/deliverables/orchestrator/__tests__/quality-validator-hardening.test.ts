@@ -11,6 +11,8 @@ import { CHARTER_CONTRACT } from "../../shared/artifact-contracts";
 import { purposeFixture } from "../__fixtures__/purpose-pages";
 
 describe("fresh purpose storyline contract", () => {
+  const measuresTable =
+    "| Outcome | Measure | Basis |\n| --- | --- | --- |\n| Better service | Resolution rate | Owner validation pending |";
   function complete() {
     const doc = purposeFixture();
     doc.tables = [];
@@ -78,7 +80,10 @@ describe("fresh purpose storyline contract", () => {
     doc.generatedSections = CHARTER_CONTRACT.sections.map((s) => ({
       key: s.key,
       title: s.title,
-      bodyMarkdown: "Owner review is the next step.",
+      bodyMarkdown:
+        s.key === "success_measures"
+          ? measuresTable
+          : "Owner review is the next step.",
       groundingMode: "expert_template",
       citationsUsed: [],
     }));
@@ -94,7 +99,8 @@ describe("fresh purpose storyline contract", () => {
     doc.generatedSections = CHARTER_CONTRACT.sections.map((s) => ({
       key: s.key,
       title: s.title,
-      bodyMarkdown: "Owner review pending.",
+      bodyMarkdown:
+        s.key === "success_measures" ? measuresTable : "Owner review pending.",
       groundingMode: "expert_template" as const,
       citationsUsed: [],
     }));
@@ -130,6 +136,65 @@ describe("fresh purpose storyline contract", () => {
     });
     expect(validatePurposeStory(early, []).join()).toContain(
       "beat_order:appendix_evidence",
+    );
+  });
+  it("rejects prose-only Charter measures and accepts native table bindings", () => {
+    const doc = complete();
+    doc.deliverableType = "charter";
+    doc.generatedSections = CHARTER_CONTRACT.sections.map((s) => ({
+      key: s.key,
+      title: s.title,
+      bodyMarkdown: "Owner review pending.",
+      groundingMode: "expert_template" as const,
+      citationsUsed: [],
+    }));
+    expect(validatePurposeStory(doc, [])).toContain(
+      "purpose_story:success_measures_need_table",
+    );
+    doc.tables = [
+      {
+        key: "success_measures",
+        title: "Measures",
+        columns: ["Measure", "Basis"],
+        rows: [["Resolution rate", "Owner review pending"]],
+        targetFormat: "docx",
+      },
+    ];
+    expect(validatePurposeStory(doc, [])).toEqual([]);
+    doc.tables[0]!.targetFormat = "xlsx";
+    expect(validatePurposeStory(doc, [])).toContain(
+      "purpose_story:success_measures_need_table",
+    );
+    doc.generatedSections.find(
+      (s) => s.key === "success_measures",
+    )!.bodyMarkdown = measuresTable;
+    expect(validatePurposeStory(doc, [])).toEqual([]);
+  });
+  it("keeps a scope-note hypothesis in the headline rather than asserting a cause", () => {
+    const doc = complete();
+    const slide = doc.deckSlides![2]!;
+    slide.governingMessage = "Fragmented knowledge causes longer calls";
+    slide.pageIntent = {
+      question: "Why?",
+      scopeNote: "Hypotheses require owner confirmation.",
+    };
+    expect(validatePurposeStory(doc, []).join()).toContain(
+      "hypothesis_hidden_from_headline",
+    );
+    slide.governingMessage =
+      "Fragmented knowledge may contribute to longer calls";
+    expect(validatePurposeStory(doc, [])).toEqual([]);
+  });
+  it.each([
+    "Preserve seed rows.",
+    "Perform a scoped rebind.",
+    "Run the loader.",
+    "Status: not_reviewed",
+  ])("refuses client-facing operator or status-code prose: %s", (text) => {
+    const doc = complete();
+    doc.deckSlides![2]!.points = [text];
+    expect(validatePurposeStory(doc, []).join()).toMatch(
+      /operator_instructions_in_body|raw_status_in_body/,
     );
   });
   it("requires an explicit cited absence, not a plan, unrelated absence, or changed citation", () => {

@@ -635,6 +635,7 @@ export function validatePurposeChart(
   if (chart.points.length > PURPOSE_LAYOUTS.trend.maxItems)
     throw new PurposePageError("chart_needs_split", chart.key);
   if (
+    !chart.title.trim() ||
     !chart.metric.trim() ||
     !chart.unit.trim() ||
     !chart.period.trim() ||
@@ -657,6 +658,11 @@ export function validatePurposeChart(
     )
   )
     throw new PurposePageError("chart_point_invalid", chart.key);
+}
+
+/** Descriptive chart framing until a governed claim-to-series adapter exists. */
+export function purposeChartHeadline(charts: readonly PurposeChart[]): string {
+  return charts.map((chart) => chart.title).join(" and ");
 }
 
 /** Presentation only: preserve the authored sequence and declared graph edges. */
@@ -732,6 +738,16 @@ export function planPurposePages(
         usedCharts.add(key);
         return chart;
       });
+      if (slide.governingMessage !== purposeChartHeadline(selected))
+        throw new PurposePageError(
+          "chart_headline_not_bound_to_measures",
+          page.id,
+        );
+      if (slide.pageIntent.takeaway || slide.points?.length)
+        throw new PurposePageError(
+          "chart_interpretation_needs_governed_binding",
+          page.id,
+        );
       page.family = "trend";
       page.charts = selected;
       page.sources = [
