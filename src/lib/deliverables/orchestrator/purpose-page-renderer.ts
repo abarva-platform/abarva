@@ -7,6 +7,9 @@ import {
   estimatedLines,
   planPurposePages,
   PurposePageError,
+  purposeCitations,
+  purposeTableWidths,
+  purposeStatementHeight,
   type PurposeChart,
   type PurposePage,
 } from "./purpose-page-plan";
@@ -47,7 +50,17 @@ export function purposeDensity(page: PurposePage) {
 const reference = (page: PurposePage, id: number) =>
   `[${page.referenceLabels?.[id] || id}]`;
 const copy = (page: PurposePage, value: string) =>
-  value.replace(/\[(\d+)\]/g, (_, id) => reference(page, Number(id)));
+  purposeCitations(value, page.referenceLabels || {});
+const sourceLine = (page: PurposePage) =>
+  page.sources.length
+    ? copy(page, page.sources.map((id) => `[${id}]`).join(" "))
+    : "";
+const semanticColors = {
+  candidate: C.navy,
+  condition: "9C650E",
+  later: C.deckMuted,
+  risk: "AE3547",
+};
 
 function text(
   slide: Slide,
@@ -110,7 +123,7 @@ function frame(
   );
   text(
     slide,
-    page.title,
+    copy(page, page.title),
     X,
     cover ? 4.1 : 0.55,
     W,
@@ -122,14 +135,21 @@ function frame(
       objectName: "purpose:title",
     },
   );
+  const scopeFont = cover
+    ? 22
+    : [14, 13, 12].find(
+        (size) =>
+          referenceCellTextHeight(copy(page, page.scope), W, size) <= 0.36,
+      );
+  if (!scopeFont) throw new PurposePageError("scope_needs_edit", page.id);
   text(
     slide,
-    page.scope,
+    copy(page, page.scope),
     X,
     cover ? 5.0 : 1.65,
     W,
     cover ? 0.85 : 0.36,
-    cover ? 22 : 14,
+    scopeFont,
     {
       color: muted,
       objectName: "purpose:scope",
@@ -154,7 +174,7 @@ function frame(
   );
   text(
     slide,
-    `${page.sources.map((id) => reference(page, id)).join(" ")}     ${index + 1} / ${total}`,
+    `${sourceLine(page)}     ${index + 1} / ${total}`,
     8.45,
     6.98,
     4.25,
@@ -167,12 +187,79 @@ function frame(
   );
   if (page.takeaway) {
     rule(pptx, slide, X, 6.35, 0.12, C.navy, 3);
-    text(slide, copy(page, page.takeaway), X + 0.25, 6.23, W - 0.25, 0.58, 16, {
-      color: C.deckMuted,
-      objectName: "purpose:annotation:takeaway",
-    });
+    const labelW = page.takeawayLabel ? 2.55 : 0;
+    if (page.takeawayLabel)
+      text(slide, page.takeawayLabel, X + 0.25, 6.23, labelW - 0.15, 0.58, 16, {
+        bold: true,
+        color: C.navy,
+        objectName: "purpose:annotation:takeaway-label",
+      });
+    text(
+      slide,
+      copy(page, page.takeaway),
+      X + 0.25 + labelW,
+      6.23,
+      W - 0.25 - labelW,
+      0.58,
+      16,
+      {
+        color: C.deckMuted,
+        objectName: "purpose:annotation:takeaway",
+      },
+    );
   }
   return slide;
+}
+
+function labelledStatements(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
+  const h = H / page.items.length;
+  page.items.forEach((item, i) => {
+    const y = TOP + i * h,
+      color = semanticColors[item.tone!];
+    rule(pptx, slide, X, y, W);
+    slide.addShape(pptx.ShapeType.rect, {
+      x: X,
+      y: y + 0.14,
+      w: 0.06,
+      h: h - 0.28,
+      fill: { color },
+      line: { color },
+      objectName: `purpose:statement-tone:${i}:${item.tone}`,
+    });
+    text(slide, item.label, X + 0.25, y + 0.18, 2.65, h - 0.3, 20, {
+      bold: true,
+      color,
+      objectName: `purpose:statement-label:${i}`,
+    });
+    text(
+      slide,
+      copy(page, item.detail),
+      X + 3.15,
+      y + 0.18,
+      W - 3.15,
+      h - 0.3,
+      20,
+      { objectName: `purpose:statement-detail:${i}` },
+    );
+  });
+}
+
+function bigNumbers(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
+  const w = (W - 0.65) / 2;
+  page.items.forEach((item, i) => {
+    const x = X + i * (w + 0.65),
+      color = semanticColors[item.tone || (i ? "condition" : "candidate")];
+    text(slide, item.label, x, TOP + 0.15, w, 0.8, 22, { bold: true });
+    text(slide, item.value!, x, TOP + 1.15, w, 1.2, 54, {
+      color,
+      bold: true,
+      objectName: `purpose:number:${i}`,
+    });
+    rule(pptx, slide, x, TOP + 2.6, w, color, 2);
+    text(slide, copy(page, item.detail), x, TOP + 2.85, w, 1.15, 18, {
+      objectName: `purpose:number-basis:${i}`,
+    });
+  });
 }
 
 function cards(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
@@ -209,9 +296,18 @@ function cards(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
     const chars = Math.floor((w - 0.4) * 7.3);
     if (estimatedLines(item.detail, chars) * 0.29 > detailH + 0.05)
       throw new PurposePageError("card_text_needs_split", page.id);
-    text(slide, item.detail, x + 0.2, detailY, w - 0.4, detailH, 18, {
-      objectName: `purpose:item-detail:${i}`,
-    });
+    text(
+      slide,
+      copy(page, item.detail),
+      x + 0.2,
+      detailY,
+      w - 0.4,
+      detailH,
+      18,
+      {
+        objectName: `purpose:item-detail:${i}`,
+      },
+    );
   }
 }
 
@@ -329,13 +425,27 @@ function options(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
       objectName: `purpose:option:${i}`,
     });
     rule(pptx, slide, x, TOP + 2.0, w);
-    text(slide, item.detail, x, TOP + 2.2, w, 1.9, 18);
+    text(slide, copy(page, item.detail), x, TOP + 2.2, w, 1.9, 18);
   });
 }
 
 function renderProcess(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
   const gap = 0.4,
     w = (W - (page.items.length - 1) * gap) / page.items.length;
+  const labelH = Math.max(
+    0.85,
+    ...page.items.map((item) => referenceCellTextHeight(item.label, w, 24)),
+  );
+  const detailTop = TOP + 1.5 + labelH + 0.15;
+  const detailH = TOP + H - detailTop;
+  if (
+    detailH < 0 ||
+    page.items.some(
+      (item) =>
+        referenceCellTextHeight(copy(page, item.detail), w, 18) > detailH,
+    )
+  )
+    throw new PurposePageError("process_text_needs_edit", page.id);
   page.items.forEach((item, i) => {
     const x = X + i * (w + gap);
     slide.addShape(pptx.ShapeType.ellipse, {
@@ -359,11 +469,11 @@ function renderProcess(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
         h: 0,
         line: { color: C.navy, width: 1.4, endArrowType: "triangle" },
       });
-    text(slide, item.label, x, TOP + 1.5, w, 0.85, 24, {
+    text(slide, item.label, x, TOP + 1.5, w, labelH, 24, {
       bold: true,
       objectName: `purpose:process:${i}`,
     });
-    text(slide, item.detail, x, TOP + 2.5, w, 1.5, 18);
+    text(slide, copy(page, item.detail), x, detailTop, w, detailH, 18);
   });
 }
 
@@ -398,16 +508,21 @@ function renderPage(
   } else if (page.family === "register") {
     const columns = page.columns!,
       rows = page.rows!;
-    const chars = Math.floor(100 / columns.length);
+    const weights = purposeTableWidths(page);
+    const chars = weights.map((w) => Math.floor(100 * w));
     const lineCounts = rows.map((row) =>
-      Math.max(...row.map((cell) => estimatedLines(cell, chars))),
+      Math.max(...row.map((cell, i) => estimatedLines(cell, chars[i]!))),
     );
     const heights = [
       0.62,
-      ...lineCounts.map((lines) => Math.max(0.5, lines * 0.245 + 0.17)),
+      ...lineCounts.map((lines) =>
+        page.sourceRegister
+          ? Math.max(0.45, lines * 0.23 + 0.12)
+          : Math.max(0.5, lines * 0.245 + 0.17),
+      ),
     ];
     const height = heights.reduce((sum, h) => sum + h, 0);
-    if (height > H + 0.3)
+    if (height > H + 0.001)
       throw new PurposePageError("table_text_needs_split", page.id);
     slide.addTable(
       [
@@ -426,7 +541,7 @@ function renderPage(
         x: X,
         y: TOP + Math.max(0, (H - height) / 2),
         w: W,
-        colW: columns.map(() => W / columns.length),
+        colW: weights.map((w) => W * w),
         rowH: heights,
         fontFace: "Arial",
         fontSize: 16,
@@ -445,31 +560,50 @@ function renderPage(
       const width = (W - (charts.length - 1) * 0.45) / charts.length;
       const x = X + index * (width + 0.45);
       text(slide, chart.metric, x, TOP, width, 0.65, 22, { bold: true });
+      text(
+        slide,
+        `${chart.unit} / ${chart.period}`,
+        x,
+        TOP + 0.67,
+        width,
+        0.32,
+        14,
+        {
+          color: C.deckMuted,
+          objectName: `purpose:annotation:chart-unit:${index}`,
+        },
+      );
       slide.addChart(
         pptx.ChartType.line,
         [
           {
             name: chart.metric,
-            labels: chart.points.map((point) => point.label),
+            labels: chart.points.map((point) =>
+              point.label.replace(
+                /^(January|February|March|April|May|June|July|August|September|October|November|December)$/i,
+                (month) => month.slice(0, 3),
+              ),
+            ),
             values: chart.points.map((point) => point.value),
           },
         ],
         {
           x,
-          y: TOP + 0.75,
+          y: TOP + 1.08,
           w: width,
-          h: H - 1.0,
+          h: H - 1.25,
           showLegend: false,
           showTitle: false,
           showValue: charts.length === 1,
           catAxisLabelFontFace: "Arial",
-          catAxisLabelFontSize: 16,
+          catAxisLabelFontSize: 12,
+          // PptxGenJS omits zero (auto-rotation); this rounds to explicit OOXML rot="0".
+          catAxisLabelRotate: Number.EPSILON,
           valAxisLabelFontFace: "Arial",
           valAxisLabelFontSize: 16,
           lineDataSymbol: "circle",
           lineDataSymbolSize: 5,
           chartColors: [C.navy],
-          valAxisTitle: chart.unit,
           valAxisMinVal: chart.axisMin,
           valAxisMaxVal: chart.axisMax,
           dataLabelFormatCode: "0.##",
@@ -477,10 +611,14 @@ function renderPage(
           dataLabelColor: C.deckInk,
           dataLabelFontSize: 16,
           valGridLine: { color: C.deckRule },
-          showValAxisTitle: true,
+          showValAxisTitle: false,
         },
       );
     });
+  } else if (page.family === "labelled_statements") {
+    labelledStatements(pptx, slide, page);
+  } else if (page.family === "big_numbers") {
+    bigNumbers(pptx, slide, page);
   } else if (page.family === "process") {
     renderProcess(pptx, slide, page);
   } else if (page.family === "decision") {
@@ -509,11 +647,19 @@ function renderPage(
       text(slide, item.label, X + 0.18, y + 0.18, 2.64, h - 0.36, 18, {
         bold: true,
       });
-      text(slide, item.detail, X + 3.25, y + 0.18, W - 3.25, h - 0.36, 18);
+      text(
+        slide,
+        copy(page, item.detail),
+        X + 3.25,
+        y + 0.18,
+        W - 3.25,
+        h - 0.36,
+        18,
+      );
     });
   } else if (page.family === "statement") {
     const heights = page.items.map((item) =>
-      Math.max(0.65, referenceCellTextHeight(item.detail, W - 0.85, 22) + 0.32),
+      purposeStatementHeight(copy(page, item.detail)),
     );
     const used = heights.reduce((a, b) => a + b, 0);
     if (used > H + 0.05)
@@ -581,8 +727,8 @@ export function validatePurposeInspection(
   for (const [i, slide] of inspection.slides.entries()) {
     const page = pages[i]!;
     if (
-      slide.namedText?.["purpose:title"] !== page.title ||
-      slide.namedText?.["purpose:scope"] !== page.scope ||
+      slide.namedText?.["purpose:title"] !== copy(page, page.title) ||
+      slide.namedText?.["purpose:scope"] !== copy(page, page.scope) ||
       !slide.namedText?.["purpose:status"]?.includes("Human approval required")
     )
       throw new PurposePageError("frame_missing", page.id);
@@ -598,15 +744,37 @@ export function validatePurposeInspection(
     )
       throw new PurposePageError("takeaway_missing", page.id);
     if (
+      page.takeawayLabel &&
+      slide.namedText?.["purpose:annotation:takeaway-label"] !==
+        page.takeawayLabel
+    )
+      throw new PurposePageError("takeaway_label_missing", page.id);
+    if (page.family === "labelled_statements")
+      page.items.forEach((item, n) => {
+        if (
+          slide.namedText?.[`purpose:statement-label:${n}`] !== item.label ||
+          !slide.objectNames?.includes(
+            `purpose:statement-tone:${n}:${item.tone}`,
+          )
+        )
+          throw new PurposePageError("statement_semantics_missing", page.id);
+      });
+    if (page.family === "big_numbers")
+      page.items.forEach((item, n) => {
+        const box = slide.purposeText?.find(
+          (t) => t.name === `purpose:number:${n}`,
+        );
+        if (!box || box.text !== item.value || box.fontSize < 48)
+          throw new PurposePageError("display_number_missing", page.id);
+      });
+    if (
       page.classification &&
       !slide.namedText?.["purpose:status"]?.includes(page.classification)
     )
       throw new PurposePageError("classification_missing", page.id);
     if (
-      page.sources.some(
-        (id) =>
-          !slide.namedText?.["purpose:sources"]?.includes(reference(page, id)),
-      )
+      page.sources.length &&
+      !slide.namedText?.["purpose:sources"]?.includes(sourceLine(page))
     )
       throw new PurposePageError("citation_missing", page.id);
     if (page.family === "register" && !slide.tableCount)

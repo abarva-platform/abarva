@@ -7,9 +7,150 @@ import {
   planPurposePages,
   validatePurposeChart,
   PURPOSE_LAYOUTS,
+  purposeCitations,
+  purposeStatementHeight,
+  purposePlainText,
 } from "../purpose-page-plan";
 
 describe("purpose page planning", () => {
+  it("removes emphasis syntax without erasing words or unsupported markup", () => {
+    expect(
+      purposePlainText("**Required resolution:** Confirm the source [1]."),
+    ).toBe("Required resolution: Confirm the source [1].");
+    expect(purposePlainText("**Decision** with `literal_code`")).toBe(
+      "**Decision** with `literal_code`",
+    );
+  });
+  it("uses a readable table when a full role title exceeds the card label capacity", () => {
+    const doc = purposeFixture();
+    doc.tables = [
+      {
+        key: "roles",
+        title: "Decision rights",
+        pageShape: "roles",
+        targetFormat: "pptx",
+        columns: ["Role", "Responsibility"],
+        rows: [
+          [
+            "Coding manager and documentation operations lead",
+            "Review correction rules and preserve human approval [1].",
+          ],
+        ],
+      },
+    ];
+    doc.deckSlides = [
+      {
+        key: "roles",
+        governingMessage: "Decision rights remain with accountable owners",
+        pageIntent: {
+          question: "Who reviews?",
+          scopeNote: "No approval recorded.",
+          tableKey: "roles",
+        },
+      },
+    ];
+    doc.exhibits = [];
+    const page = planPurposePages(doc).find((p) => p.id.startsWith("roles"))!;
+    expect(page.family).toBe("register");
+    expect(page.rows).toEqual(doc.tables[0]!.rows);
+    expect(page.columnWeights).toEqual([4, 8.05]);
+  });
+  it("splits statements by rendered height without dropping their content", () => {
+    const doc = purposeFixture();
+    const points = Array.from(
+      { length: 3 },
+      (_, i) =>
+        `Position ${i + 1}: ` +
+        "Confirm the source and preserve the decision boundary. ".repeat(4),
+    );
+    doc.deckSlides = [
+      {
+        key: "dense",
+        governingMessage: "Confirm the evidence before committing",
+        points,
+      },
+    ];
+    doc.tables = [];
+    doc.exhibits = [];
+    doc.nextActions = [];
+    const pages = planPurposePages(doc).filter((p) => p.family === "statement");
+    expect(pages.length).toBeGreaterThan(1);
+    expect(pages.flatMap((p) => p.items.map((i) => i.detail))).toEqual(
+      points.map((p) => p.trim()),
+    );
+    for (const page of pages)
+      expect(
+        page.items.reduce((n, i) => n + purposeStatementHeight(i.detail), 0),
+      ).toBeLessThanOrEqual(4.1);
+  });
+  it("preserves shared comparison attributes as columns and source purposes as semantic groups", () => {
+    const doc = purposeFixture();
+    doc.sourceRegister[0]!.useAndLimitation = "Scope only; not authorization.";
+    const pages = planPurposePages(doc);
+    const source = pages.find(
+      (p) =>
+        p.sourceRegister &&
+        p.rows?.some((r) => r.includes("Scope only; not authorization.")),
+    )!;
+    expect(source.title).toBe(
+      `Sources: ${doc.sourceRegister[0]!.evidenceFamily}`,
+    );
+    expect(source.columns).toContain("Use and limitation");
+    const table = doc.tables.find((t) => t.pageShape === "comparison")!;
+    const comparison = pages.find(
+      (p) => JSON.stringify(p.rows) === JSON.stringify(table.rows),
+    )!;
+    expect(comparison.family).toBe("register");
+    expect(comparison.columns).toEqual(table.columns);
+    expect(comparison.rows).toEqual(table.rows);
+  });
+  it("keeps explicit status semantics and number bases without guessing", () => {
+    const doc = purposeFixture();
+    doc.exhibits = [];
+    doc.tables = [
+      {
+        key: "status",
+        title: "Decision boundary",
+        targetFormat: "pptx",
+        pageShape: "labelled_statements",
+        columns: ["Label", "Statement"],
+        rows: [
+          ["Design candidate", "Review only [1]"],
+          ["Conditions to close", "Confirm source [2]"],
+        ],
+        rowTones: ["candidate", "condition"],
+      },
+    ];
+    doc.deckSlides = [
+      {
+        key: "status",
+        governingMessage: "The decision remains conditional",
+        pageIntent: {
+          question: "What can proceed?",
+          scopeNote: "No approval.",
+          tableKey: "status",
+          takeaway: "Owner must confirm [1].",
+          takeawayLabel: "Required resolution",
+        },
+      },
+    ];
+    const page = planPurposePages(doc)[1]!;
+    expect(page.family).toBe("labelled_statements");
+    expect(page.items.map((i) => i.tone)).toEqual(["candidate", "condition"]);
+    expect(page.takeawayLabel).toBe("Required resolution");
+    delete doc.tables[0]!.rowTones;
+    expect(() => planPurposePages(doc)).toThrow(
+      "labelled_statement_semantics_missing",
+    );
+  });
+  it("groups adjacent and already-grouped citations without losing IDs", () => {
+    expect(
+      purposeCitations("Basis [1] [2]. More [1, 2].", { 1: "C01", 2: "C02" }),
+    ).toBe("Basis [C01, C02]. More [C01, C02].");
+    expect(() => purposeCitations("[99]", { 1: "C01" })).toThrow(
+      "unknown_source",
+    );
+  });
   it("chooses content-shaped families and leaves the input unchanged", () => {
     const doc = purposeFixture(),
       before = JSON.stringify(doc);
@@ -20,7 +161,6 @@ describe("purpose page planning", () => {
         "decision",
         "process",
         "roles",
-        "options",
         "layers",
         "statement",
         "register",

@@ -18,6 +18,7 @@ export interface GovernedCandidateLike {
   evidenceFamily: string;
   confidence: "high" | "medium" | "low";
   asOf?: string;
+  useAndLimitation?: string;
   disclosureTier?: "vendor_facing" | "internal_only" | "aggregate_only";
   /** opaque internal handles — kept out of the body. */
   provenanceRef: string;
@@ -130,12 +131,15 @@ export function buildSourceRegister(
     provenanceRef: c.provenanceRef,
   }));
 
-  const register: SourceRegisterEntry[] = evidence.map((e) => ({
+  const register: SourceRegisterEntry[] = evidence.map((e, i) => ({
     citationNumber: e.citationNumber,
     label: e.label,
     evidenceFamily: e.evidenceFamily,
     confidence: e.confidence,
     asOf: e.asOf,
+    ...(visible[i]?.useAndLimitation
+      ? { useAndLimitation: visible[i]!.useAndLimitation }
+      : {}),
   }));
 
   return { evidence, register };

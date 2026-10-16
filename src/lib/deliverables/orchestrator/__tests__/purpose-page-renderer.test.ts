@@ -11,13 +11,183 @@ import {
 } from "../purpose-page-renderer";
 import { renderDeliverableDocx, renderDeliverablePptx } from "../renderers";
 import { inspectDeck } from "../deck-inspection";
-import { planPurposePages } from "../purpose-page-plan";
+import { planPurposePages, purposeCitations } from "../purpose-page-plan";
 
 describe("purpose page rendered objects", () => {
+  it("keeps native table rows inside the body above the takeaway", async () => {
+    const doc = purposeFixture();
+    doc.exhibits = [];
+    doc.nextActions = [];
+    doc.tables = [
+      {
+        key: "limits",
+        title: "Control boundaries",
+        pageShape: "register",
+        targetFormat: "pptx",
+        columns: ["Control", "Prohibited", "Alternative", "Owner"],
+        rows: Array.from({ length: 5 }, () => [
+          "Human review",
+          "No automatic record write or direct member message",
+          "Draft for review before a deliberate human confirmation",
+          "Accountable product owner",
+        ]),
+      },
+    ];
+    doc.deckSlides = [
+      {
+        key: "limits",
+        governingMessage: "Control boundaries remain explicit",
+        pageIntent: {
+          question: "What requires review?",
+          scopeNote: "No approval recorded.",
+          tableKey: "limits",
+          takeaway: "Confirm the accountable reviewer.",
+        },
+      },
+    ];
+    const zip = await JSZip.loadAsync(await renderPurposeDeck(doc));
+    for (const name of Object.keys(zip.files).filter((n) =>
+      /^ppt\/slides\/slide\d+\.xml$/.test(n),
+    )) {
+      const xml = await zip.file(name)!.async("string");
+      for (const table of xml.matchAll(/<a:tbl>([\s\S]*?)<\/a:tbl>/g)) {
+        const height = [...table[1]!.matchAll(/<a:tr h="(\d+)"/g)].reduce(
+          (n, m) => n + Number(m[1]) / 914400,
+          0,
+        );
+        expect(height).toBeLessThanOrEqual(4.101);
+      }
+    }
+  });
+  it("allocates readable process label height before the detail without hiding a step", async () => {
+    const doc = purposeFixture();
+    doc.tables = [];
+    doc.nextActions = [];
+    const labels = [
+      "Verify caller in CRM",
+      "Search claims status",
+      "Check eligibility",
+      "Consult approved knowledge",
+      "Key and verify summary",
+    ];
+    doc.exhibits = [
+      {
+        key: "flow",
+        title: "Recorded workflow",
+        description: "Synthetic process",
+        kind: "flow",
+        targetFormat: "pptx",
+        data: {
+          kind: "flow",
+          nodes: labels.map((label, i) => ({
+            id: `s${i}`,
+            label,
+            role: "Agent",
+          })),
+          edges: labels
+            .slice(1)
+            .map((_, i) => ({ from: `s${i}`, to: `s${i + 1}` })),
+        },
+      },
+    ];
+    doc.deckSlides = [
+      {
+        key: "flow",
+        governingMessage: "Each handoff retains human accountability",
+        exhibitKey: "flow",
+      },
+    ];
+    const result = await inspectDeck(await renderPurposeDeck(doc));
+    labels.forEach((label, i) =>
+      expect(result.slides[1]!.namedText?.[`purpose:process:${i}`]).toBe(label),
+    );
+  });
+  it("renders explicit status labels, labelled conclusions and display-size figures", async () => {
+    const doc = purposeFixture();
+    doc.exhibits = [];
+    doc.nextActions = [];
+    doc.tables = [
+      {
+        key: "decision-status",
+        title: "Decision",
+        targetFormat: "pptx",
+        pageShape: "labelled_statements",
+        columns: ["Label", "Statement"],
+        rowTones: ["candidate", "condition", "later"],
+        rows: [
+          ["Design candidate", "Review this option [1]."],
+          ["Conditions to close", "Agree the baseline [2]."],
+          ["Later approval", "Build remains outside this decision [1]."],
+        ],
+      },
+      {
+        key: "values",
+        title: "Definitions",
+        targetFormat: "pptx",
+        pageShape: "big_numbers",
+        columns: ["Measure", "Value", "Basis"],
+        rows: [
+          ["Recorded", "638 sec", "Recorded definition [1]."],
+          [
+            "Reference",
+            "~703 sec",
+            "Competing definition; not an improvement [2].",
+          ],
+        ],
+        rowTones: ["candidate", "condition"],
+      },
+    ];
+    doc.deckSlides = doc.tables.map((t) => ({
+      key: t.key,
+      governingMessage: "Definitions must agree before comparison",
+      pageIntent: {
+        question: "What needs resolving?",
+        scopeNote: "No benefit is established.",
+        tableKey: t.key,
+        takeawayLabel: "Required resolution",
+        takeaway: "Agree the denominator before proceeding [1].",
+      },
+    }));
+    const pages = planPurposePages(doc),
+      buffer = await renderPurposeDeck(doc),
+      inspection = await inspectDeck(buffer);
+    expect(inspection.slides[1]!.namedText?.["purpose:statement-label:1"]).toBe(
+      "Conditions to close",
+    );
+    expect(
+      inspection.slides[2]!.purposeText?.find(
+        (t) => t.name === "purpose:number:0",
+      )?.fontSize,
+    ).toBe(54);
+    const zip = await JSZip.loadAsync(buffer);
+    expect(await zip.file("ppt/slides/slide3.xml")!.async("string")).toContain(
+      "9C650E",
+    );
+    for (const [slideNo, from, error] of [
+      [2, "Required resolution", "takeaway_label_missing"],
+      [2, "Conditions to close", "statement_semantics_missing"],
+      [3, 'sz="5400"', "display_number_missing"],
+    ] as const) {
+      const broken = await JSZip.loadAsync(buffer),
+        file = `ppt/slides/slide${slideNo}.xml`;
+      const xml = await broken.file(file)!.async("string");
+      expect(xml).toContain(from);
+      broken.file(
+        file,
+        xml.replace(from, from.startsWith("sz=") ? 'sz="2400"' : "REMOVED"),
+      );
+      expect(() => validatePurposeInspection(inspection, pages)).not.toThrow();
+      const mutated = await inspectDeck(
+        await broken.generateAsync({ type: "nodebuffer" }),
+      );
+      expect(() => validatePurposeInspection(mutated, pages)).toThrow(error);
+    }
+  });
   it("renders page-specific framing and declared citation IDs, including paired native charts", async () => {
     const doc = purposeFixture();
     doc.sourceRegister[0]!.referenceId = "C01";
     doc.sourceRegister[1]!.referenceId = "E01";
+    doc.subtitle = "Scope for review [1] [2].";
     doc.presentationCover = {
       edition: "Review draft",
       date: "16 October 2026",
@@ -48,6 +218,9 @@ describe("purpose page rendered objects", () => {
     const pages = planPurposePages(doc, [first, second]);
     const buffer = await renderPurposeDeck(doc, [first, second]);
     const inspection = await inspectDeck(buffer);
+    expect(inspection.slides[0]!.namedText?.["purpose:scope"]).toBe(
+      "Scope for review [C01, E01].",
+    );
     expect(
       inspection.slides[1]!.namedText?.["purpose:annotation:takeaway"],
     ).toContain("[C01]");
@@ -98,6 +271,7 @@ describe("purpose page rendered objects", () => {
     doc.exhibits = [];
     doc.tables = [];
     doc.sourceRegister[0]!.referenceId = "C01";
+    doc.subtitle = "Bounded discovery proposal [1].";
     doc.generatedSections = [
       {
         key: "success_measures",
@@ -114,8 +288,14 @@ describe("purpose page rendered objects", () => {
     const xml = await zip.file("word/document.xml")!.async("string");
     expect(xml.match(/<w:tbl>/g)?.length).toBeGreaterThanOrEqual(3);
     expect(xml).toContain("[C01]");
+    expect(xml).toContain("Bounded discovery proposal [C01].");
     expect(xml).toContain('w:ascii="Arial"');
     expect(xml).toContain("Reading guide:");
+    expect(xml).toContain("Guidance (not a recorded decision)");
+    expect(xml).toContain(
+      "Authorize with conditions / Request revision / Hold",
+    );
+    expect(xml).toContain("Use in this document");
     expect(xml).not.toContain("Required next steps");
     expect(await zip.file("word/header1.xml")!.async("string")).toContain(
       "P1 CHARTER",
@@ -147,6 +327,13 @@ describe("purpose page rendered objects", () => {
       /^ppt\/charts\/chart\d+\.xml$/.test(name),
     )!;
     const chartXml = await zip.file(chartPath)!.async("string");
+    expect(chartXml).toContain('rot="0"');
+    expect(chartXml).not.toContain("<c:title>");
+    expect(
+      inspection.slides.some((s) =>
+        s.namedText?.["purpose:annotation:chart-unit:0"]?.includes(chart.unit),
+      ),
+    ).toBe(true);
     for (const point of chart.points)
       expect(chartXml).toContain(`<c:v>${point.value}</c:v>`);
     expect(
@@ -159,8 +346,13 @@ describe("purpose page rendered objects", () => {
       const slide = inspection.slides[i]!;
       expect(slide.namedText?.["purpose:title"]).toBe(page.title);
       expect(slide.namedText?.["purpose:scope"]).toBe(page.scope);
-      for (const id of page.sources)
-        expect(slide.namedText?.["purpose:sources"]).toContain(`[${id}]`);
+      if (page.sources.length)
+        expect(slide.namedText?.["purpose:sources"]).toContain(
+          purposeCitations(
+            page.sources.map((id) => `[${id}]`).join(" "),
+            page.referenceLabels!,
+          ),
+        );
       expect(slide.namedText?.["purpose:status"]).toContain(
         "Human approval required",
       );
@@ -182,7 +374,7 @@ describe("purpose page rendered objects", () => {
     const inspection = await inspectDeck(
       await renderPurposeDeck(purposeFixture()),
     );
-    for (const family of ["decision", "role", "option", "process"]) {
+    for (const family of ["decision", "role", "process"]) {
       expect(
         inspection.slides.some((slide) =>
           slide.objectNames?.includes(`purpose:${family}:0`),

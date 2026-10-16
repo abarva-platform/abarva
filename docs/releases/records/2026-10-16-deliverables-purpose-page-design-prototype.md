@@ -20,8 +20,10 @@ sections and leaves a blank authorization record for a human reviewer.
 This remains an incomplete, disabled implementation slice. The initial minimal
 fixture is now supplemented by a full-content same-source renderer benchmark.
 That benchmark freezes an already reviewed narrative and verifies its seventeen
-synthetic input hashes. It is not fresh evidence-to-model generation or a live
-Move load. Human visual acceptance remains pending.
+synthetic input hashes. A separate offline experiment now generates fresh writing
+from those sources and a second synthetic scenario. Neither experiment is a live
+Move load or production-generation acceptance. Fresh output has not passed visual
+or editorial acceptance; the flag remains disabled.
 
 ## Layer Impact
 
@@ -54,14 +56,25 @@ Move load. Human visual acceptance remains pending.
 - Frame, citations, speaker notes, geometry and native-object checks on exported bytes.
 - Minimal synthetic fixtures, two test suites and offline probe/comparison scripts.
 - Generated feature documentation and test-coverage census.
+- Explicit semantic status statements and labelled conclusions, display-sized
+  number comparisons, horizontal chart categories and unit captions.
+- Shared-attribute option tables and purpose-grouped source registers with use
+  and limitation columns. Charter title hierarchy, bold lead-ins, decision guidance
+  and grouped citation labels are retained, including cover text.
+- Content-height pagination for statements, full-label role-table fallback and
+  strict table-body bounds. Presentation text removes supported Markdown emphasis
+  syntax without deleting the words or mutating the original payload.
 
 ## QA / Validation
 
-- PASS: 75 orchestrator suites / 1,100 tests.
-- PASS: twelve exported-file corruptions rejected: removed status, citation, notes,
+- PASS: 75 orchestrator suites / 1,109 tests.
+- PASS: fifteen exported-file corruptions rejected: removed status, citation, notes,
   chart and table; tiny font; undersized text box; overlap; off-slide content.
   The full-content frame adds removed section, takeaway and classification checks.
   These are artifact mutation probes, not a claim of exhaustive source-code mutation coverage.
+  Additional probes remove a semantic label or conclusion label and reduce a
+  display number below the required size. Chart tests inspect horizontal category
+  rotation and absent rotated axis titles in the exported OOXML.
 - PASS: changed-file ESLint.
 - PASS: library orphan audit, no baseline change.
 - PASS: route reachability, no new unreachable components or exports.
@@ -73,18 +86,29 @@ Move load. Human visual acceptance remains pending.
   Discovery slides. Twenty-one side-by-side PNG pairs cover every page, including
   source appendices. Seventeen source hashes checked; twenty-four chart points
   read from the source CSV. Charter sources remain limited to its five phase-correct inputs.
-- REVIEW PENDING: the rendered comparison, especially sparse decision pages.
-  Text-band occupancy is advisory, not a pixel-area fidelity score. Four pages
-  remain flagged for human review, including the intentionally sparse cover.
+- REVIEW PENDING: independent acceptance of the refined frozen comparison.
+  Text-band occupancy is advisory, not a pixel-area fidelity score.
+- COMPLETED, NOT ACCEPTED: fresh Anthropic writing and product rendering for
+  two synthetic scenarios, each with a seven-page Charter and twenty-three-slide
+  Discovery readout. The first scenario uses five phase-correct Charter inputs
+  and seventeen Discovery inputs. The second uses one Charter brief and eight
+  Discovery files; its large baseline workbook supplies only its Summary worksheet
+  to the model, with omitted worksheets declared in the coverage proof.
+- PASS, LIMITED: separate offline reconciliation of the second scenario's full
+  baseline cohorts. This does not establish that the model consumed those rows.
+- Fresh-output review found phase-framing regression, repetitive next-action
+  pages, over-broad absence wording, sparse continuations and raw numeric display
+  formatting. Exact source-slot binding does not prove semantic claim correctness.
+  These findings block tenant enrollment despite passing structural tests.
 - PASS: Node 24 typecheck, zero errors; release checks 11/11.
 - PASS: export reachability, exactly the existing seven-declaration baseline.
-- NOT RUN: fresh governed evidence-to-generation benchmark, automated visual fidelity judge,
+- NOT RUN: production governed evidence-to-generation acceptance, automated visual fidelity judge,
   native PowerPoint acceptance of this prototype, signed-in product acceptance.
 
 ## Rollout Plan
 
 Keep the flag off. Do not merge or deploy as completion of the design brief.
-Finish fresh golden-source generation and human design review, production chart binding,
+Repair fresh-writing and pagination findings, then obtain independent visual review and production chart binding,
 remaining layout families and render-repair requirements before tenant enrollment.
 The current renderer remains available with the flag off. Unsupported inputs on
 the prototype path fail explicitly; there is no silent downgrade to a weaker export.
@@ -108,6 +132,14 @@ through a PR. No canonical data or approval record needs rollback.
 - `scripts/deliverables/proof/purpose-same-source.ts` verifies a local source
   manifest and declared references, then renders a frozen reviewed storyline.
   It refuses later-phase source references in the Charter and writes outside the repo.
+- `scripts/deliverables/proof/purpose-fresh-source.ts` is a synthetic-only offline
+  writing experiment using the validated context bundle and audited Anthropic
+  egress wrapper. It hashes source extracts, binds numeric literals to declared
+  source slots, records coverage and retains failed/truncated attempts. Objects
+  remain not reviewed and not indexed; no agent-ready status is earned. Re-rendering
+  requires a response hash from the same sources in the local egress audit.
+- Local generation logs retain initial validation failures and two truncated
+  responses. Successful rendering is not recorded as editorial acceptance.
 - Tests inspect actual PPTX XML, the native chart values and its embedded workbook.
 - [Synthetic comparison index](../../design/reviews/purpose-pages-2026-10-16/README.md)
   links every requested page pair. Only explicitly synthetic rendered images are
@@ -127,8 +159,12 @@ through a PR. No canonical data or approval record needs rollback.
   two-pass automatic raster repair loop or fidelity score of 90 is claimed.
 - Chart production inputs still need the governed read binding; the comparison
   reads the supplied synthetic CSV offline, not a production projection.
-- Same-source rendering is not end-to-end client generation. The model narrative
-  was frozen from the reviewed golden output rather than regenerated from inputs.
+- Frozen same-source rendering and fresh offline writing are separate tests.
+  Fresh writing is not integrated into a new two-pass production orchestration,
+  and source-slot validation does not verify every claim-to-source entailment.
+- Fresh Word pagination still leaves sparse continuation pages. Fresh decks
+  repeat action pages and can regress from a phase readout to an earlier request.
+  These are unresolved quality defects, not approved output characteristics.
 - Sparse-content support remains partial. No universal 55% fill threshold,
   compatible-page merge planner or automatic raster repair is claimed.
 - Existing governed reference-deck payloads and public-source citation payloads

@@ -131,6 +131,8 @@ export interface SourceRegisterEntry {
   referenceId?: string;
   /** Recorded source review state, when supplied by the evidence register. */
   reviewStatus?: string;
+  /** Declared source purpose and limits; not inferred from confidence. */
+  useAndLimitation?: string;
   label: string;
   evidenceFamily: string;
   confidence: "high" | "medium" | "low";
@@ -540,6 +542,9 @@ export interface RenderableDeliverable {
   purposePageDesign?: boolean;
   subtitle?: string;
   presentationCover?: {
+    eyebrow?: string;
+    displayTitle?: string;
+    status?: string;
     edition?: string;
     date?: string;
     milestone?: string;
@@ -606,7 +611,15 @@ export interface RenderableSection {
 
 export interface RenderableTable {
   /** Declared content semantics. Layout selection and fit remain deterministic. */
-  pageShape?: "roles" | "comparison" | "decision" | "register";
+  pageShape?:
+    | "roles"
+    | "comparison"
+    | "decision"
+    | "register"
+    | "labelled_statements"
+    | "big_numbers";
+  /** Explicit semantics, never guessed from a label or a numeric value. */
+  rowTones?: import("./purpose-page-plan").PurposeTone[];
   key: string;
   title: string;
   columns: string[];

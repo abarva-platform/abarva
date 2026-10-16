@@ -19,7 +19,11 @@ import {
   BorderStyle,
 } from "docx";
 import type { RenderableDeliverable } from "./types";
-import { PurposePageError } from "./purpose-page-plan";
+import {
+  PurposePageError,
+  purposeCitations,
+  purposeSourceGroups,
+} from "./purpose-page-plan";
 import { purposeBrand } from "./purpose-page-brand";
 
 const FONT = "Arial",
@@ -58,15 +62,20 @@ const heading = (text: string, level: 1 | 2 = 1, pageBreakBefore = false) =>
     ],
   });
 
-function table(columns: string[], rows: string[][]): Table {
+function table(
+  columns: string[],
+  rows: string[][],
+  columnWeights?: number[],
+): Table {
   if (!columns.length || rows.some((row) => row.length !== columns.length))
     throw new PurposePageError("table_shape", "charter");
   const weights =
-    columns.length === 2
+    columnWeights ||
+    (columns.length === 2
       ? [1.6, 5.4]
       : columns.length === 3
         ? [1.5, 3.5, 2]
-        : columns.map(() => 7 / columns.length);
+        : columns.map(() => 7 / columns.length));
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     columnWidths: weights.map((w) => Math.round(w * 1440)),
@@ -182,14 +191,13 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
   const brand = purposeBrand();
   if (doc.exhibits.some((exhibit) => exhibit.data) || doc.publicSources?.length)
     throw new PurposePageError("charter_visual_needs_adapter", "charter");
-  const cite = (text: string) =>
-    text.replace(/\[(\d+)\]/g, (_, number) => {
-      const source = doc.sourceRegister.find(
-        (s) => s.citationNumber === Number(number),
-      );
-      if (!source) throw new PurposePageError("unknown_source", "charter");
-      return `[${source.referenceId || number}]`;
-    });
+  const labels = Object.fromEntries(
+    doc.sourceRegister.map((s) => [
+      s.citationNumber,
+      s.referenceId || String(s.citationNumber),
+    ]),
+  );
+  const cite = (text: string) => purposeCitations(text, labels);
   const sections = [...doc.generatedSections].sort((a, b) => {
     const rank = (key: string) =>
       order.includes(key) ? order.indexOf(key) : order.length;
@@ -203,17 +211,52 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
   const children: (Paragraph | Table)[] = [
     new Paragraph({
       children: [
-        new TextRun({ text: doc.title, font: "Georgia", size: 54, color: INK }),
+        new TextRun({
+          text:
+            doc.presentationCover?.eyebrow ||
+            `P1 CHARTER / ${doc.clientDisplayName.toUpperCase()}`,
+          font: FONT,
+          size: 20,
+          color: MUTED,
+        }),
       ],
+      spacing: { after: 120 },
+      keepNext: true,
+    }),
+    new Paragraph({
+      children: cite(doc.presentationCover?.displayTitle || doc.title)
+        .split("\n")
+        .map(
+          (text, i) =>
+            new TextRun({
+              text,
+              break: i ? 1 : undefined,
+              font: "Georgia",
+              size: 54,
+              color: INK,
+            }),
+        ),
       heading: HeadingLevel.TITLE,
       spacing: { after: 180 },
     }),
-    para([doc.clientDisplayName, doc.subtitle].filter(Boolean).join(" / ")),
-    para(
-      [doc.presentationCover?.edition, doc.presentationCover?.date]
-        .filter(Boolean)
-        .join(" / "),
-    ),
+    para(cite(doc.subtitle || "Discovery charter and decision record")),
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: [
+            doc.presentationCover?.edition,
+            doc.presentationCover?.date,
+            doc.presentationCover?.status || "Approval pending",
+          ]
+            .filter(Boolean)
+            .join(" / "),
+          font: FONT,
+          size: 18,
+          color: MUTED,
+        }),
+      ],
+      spacing: { after: 140 },
+    }),
     para(
       "Reading guide: decision and scope; outcomes and measures; evidence and owners; controls; authorization and sources.",
     ),
@@ -296,25 +339,37 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       "This draft does not authorize Discovery, funding or implementation. Only the authorized reviewer can record the decision, its scope and any conditions below.",
     ),
     table(
-      ["Decision record", "To be completed by the authorized reviewer"],
+      ["Decision record", "Guidance (not a recorded decision)"],
       [
-        ["Decision", ""],
-        ["Approver and role", ""],
-        ["Date", ""],
-        ["Scope and resources", ""],
-        ["Conditions or exclusions", ""],
+        ["Decision", "Authorize with conditions / Request revision / Hold"],
+        ["Approver and role", "Record the authorized reviewer and their role."],
+        ["Date", "Record the date of the decision."],
+        [
+          "Scope and resources",
+          "State the boundary and resources authorized; do not imply build funding.",
+        ],
+        [
+          "Conditions or exclusions",
+          "Name any condition to close, accountable role and excluded work.",
+        ],
       ],
     ),
     heading("Source register", 2),
-    table(
-      ["ID", "Source", "Status and snapshot"],
-      doc.sourceRegister.map((s) => [
-        `[${s.referenceId || s.citationNumber}]`,
-        s.label,
-        `${s.reviewStatus || `${s.confidence} confidence`}${s.asOf ? ` / ${s.asOf}` : ""}`,
-      ]),
-    ),
   );
+  for (const { family, entries } of purposeSourceGroups(doc.sourceRegister))
+    children.push(
+      heading(family, 2),
+      table(
+        ["ID", "Source and review", "Use in this document"],
+        entries.map((s) => [
+          `[${s.referenceId || s.citationNumber}]`,
+          `${s.label}\n${s.reviewStatus || `${s.confidence} confidence`}${s.asOf ? ` / ${s.asOf}` : ""}`,
+          s.useAndLimitation ||
+            "Use and limitations not recorded; confirm before relying on this source.",
+        ]),
+        [0.6, 2.0, 4.4],
+      ),
+    );
   return new Document({
     creator: "Abarva",
     title: doc.title,
