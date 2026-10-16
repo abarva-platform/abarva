@@ -99,15 +99,17 @@ function frame(
   const cover = page.family === "cover";
   const muted = cover ? C.deckCoverMuted : C.deckMuted;
   slide.background = { color: cover ? C.deckInk : C.white };
-  const brand = purposeBrand(cover ? "dark" : "light");
-  slide.addImage({
-    data: `image/png;base64,${brand.png.toString("base64")}`,
-    x: X,
-    y: 0.19,
-    w: 2.25,
-    h: 2.25 / brand.aspect,
-    objectName: "purpose:brand",
-  });
+  if (cover) {
+    const brand = purposeBrand("dark");
+    slide.addImage({
+      data: `image/png;base64,${brand.png.toString("base64")}`,
+      x: X,
+      y: 0.19,
+      w: 2.25,
+      h: 2.25 / brand.aspect,
+      objectName: "purpose:brand",
+    });
+  }
   text(
     slide,
     `${page.section || (page.family === "cover" ? "CONTEXT" : "VALIDATE")}  /  DISCOVERY`,
@@ -214,15 +216,18 @@ function frame(
 
 function labelledStatements(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
   const h = H / page.items.length;
+  const labelWidth = page.statementLabelWidth ?? 3.2;
+  const inset = page.compact ? 0.06 : 0.18;
+  const padding = page.compact ? 0.12 : 0.3;
   page.items.forEach((item, i) => {
     const y = TOP + i * h,
       color = semanticColors[item.tone!];
     rule(pptx, slide, X, y, W);
     slide.addShape(pptx.ShapeType.rect, {
       x: X,
-      y: y + 0.14,
+      y: y + inset,
       w: 0.06,
-      h: h - 0.28,
+      h: h - padding,
       fill: { color },
       line: { color },
       objectName: `purpose:statement-tone:${i}:${item.tone}`,
@@ -231,9 +236,9 @@ function labelledStatements(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
       slide,
       item.label,
       X + 0.25,
-      y + 0.18,
-      3.2,
-      h - 0.3,
+      y + inset,
+      labelWidth,
+      h - padding,
       page.compact ? 18 : 20,
       {
         bold: true,
@@ -244,10 +249,10 @@ function labelledStatements(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
     text(
       slide,
       copy(page, item.detail),
-      X + 3.7,
-      y + 0.18,
-      W - 3.7,
-      h - 0.3,
+      X + labelWidth + 0.5,
+      y + inset,
+      W - labelWidth - 0.5,
+      h - padding,
       page.compact ? 18 : 20,
       { objectName: `purpose:statement-detail:${i}` },
     );

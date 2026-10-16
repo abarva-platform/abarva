@@ -388,6 +388,26 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       ),
     );
   }
+  const footer = () =>
+    new Footer({
+      children: [
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `${doc.presentationCover?.classification || doc.clientDisplayName} / AI-generated working draft. Human approval required. / `,
+              font: FONT,
+              size: 17,
+              color: MUTED,
+            }),
+            new TextRun({
+              children: [PageNumber.CURRENT],
+              font: FONT,
+              size: 17,
+            }),
+          ],
+        }),
+      ],
+    });
   return new Document({
     creator: "Abarva",
     title: doc.title,
@@ -398,6 +418,7 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
     sections: [
       {
         properties: {
+          titlePage: true,
           page: {
             size: { width: 12240, height: 15840 },
             margin: {
@@ -411,7 +432,7 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
           },
         },
         headers: {
-          default: new Header({
+          first: new Header({
             children: [
               new Paragraph({
                 children: [
@@ -430,27 +451,24 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
               }),
             ],
           }),
-        },
-        footers: {
-          default: new Footer({
+          default: new Header({
             children: [
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: `${doc.presentationCover?.classification || doc.clientDisplayName} / AI-generated working draft. Human approval required. / `,
+                    text: "MOVES / P1 CHARTER",
                     font: FONT,
-                    size: 17,
+                    size: 18,
                     color: MUTED,
-                  }),
-                  new TextRun({
-                    children: [PageNumber.CURRENT],
-                    font: FONT,
-                    size: 17,
                   }),
                 ],
               }),
             ],
           }),
+        },
+        footers: {
+          first: footer(),
+          default: footer(),
         },
         children,
       },

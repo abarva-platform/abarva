@@ -72,7 +72,8 @@ or editorial acceptance; the flag remains disabled.
 
 - User authorized continued work and deployment of the implementation. This
   does not waive the independent fresh-output review or enroll any tenant.
-- PASS: 75 orchestrator suites / 1,138 tests, including seven new regressions.
+- PASS: 75 orchestrator suites / 1,141 tests, Node 24 typecheck, changed-file
+  ESLint, release checks 11/11. Existing listener-count warning remains visible.
 - Chart pages now require a descriptive title bound to the supplied chart titles.
   Additional model-authored chart points or takeaways are refused until a governed
   interpretation binding exists. This prevents unrelated causal claims over valid
@@ -83,6 +84,13 @@ or editorial acceptance; the flag remains disabled.
 - Charter measures require a Markdown/native table. Short Word paragraphs stay
   together across page breaks. These are targeted writing/reflow controls, not
   acceptance of every generated document.
+- Branding follows the requested restrained treatment: the deck cover and the
+  Charter's first-page header carry logos. Ordinary content pages retain section
+  labels, citations and page numbering without repeating the logo.
+- Compact status rows use measured text widths and reduced padding before
+  splitting, with unchanged minimum type sizes. Markdown table claims are checked
+  cell by cell with row-local citations. Draft scope statements do not suppress
+  separate unsupported claims in the same sentence.
 - The experimental tenant list remains empty. Current exports keep the existing
   path. New raw-source writing is evaluated offline with source/response hashes;
   acceptance results remain distinct from the controlled deployment.

@@ -329,7 +329,28 @@ describe("purpose page rendered objects", () => {
     expect(await zip.file("word/header1.xml")!.async("string")).toContain(
       "P1 CHARTER",
     );
+    expect(xml).toContain("<w:titlePg");
+    const rels = await zip
+      .file("word/_rels/document.xml.rels")!
+      .async("string");
+    for (const type of ["first", "default"]) {
+      const id = xml.match(
+        new RegExp(
+          `<w:headerReference[^>]*w:type="${type}"[^>]*r:id="([^"]+)"`,
+        ),
+      )?.[1];
+      expect(id).toBeDefined();
+      const target = rels.match(
+        new RegExp(`<Relationship[^>]*Id="${id}"[^>]*Target="([^"]+)"`),
+      )?.[1];
+      expect(target).toBeDefined();
+      const header = await zip.file(`word/${target}`)!.async("string");
+      expect(header.includes("<w:drawing>")).toBe(type === "first");
+    }
     expect(await zip.file("word/footer1.xml")!.async("string")).toContain(
+      "Human approval required",
+    );
+    expect(await zip.file("word/footer2.xml")!.async("string")).toContain(
       "Human approval required",
     );
   });
@@ -417,10 +438,13 @@ describe("purpose page rendered objects", () => {
   }, 60_000);
   it("dispatches the new PPTX path only when the server marks P2", async () => {
     const doc = purposeFixture();
+    const slides = (await inspectDeck(await renderDeliverablePptx(doc))).slides;
+    expect(slides[0]!.objectNames).toContain("purpose:brand");
     expect(
-      (await inspectDeck(await renderDeliverablePptx(doc))).slides[0]!
-        .objectNames,
-    ).toContain("purpose:brand");
+      slides
+        .slice(1)
+        .every((slide) => !slide.objectNames?.includes("purpose:brand")),
+    ).toBe(true);
     doc.purposePageDesign = false;
     expect(
       (await inspectDeck(await renderDeliverablePptx(doc))).slides[0]!

@@ -7,6 +7,7 @@ import type { GovernedEvidenceItem, RenderableDeliverable } from "./types";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import { gfmFromMarkdown } from "mdast-util-gfm";
 import { gfm } from "micromark-extension-gfm";
+import type { Nodes } from "mdast";
 
 const marker = /\b(?:synthetic|invented|fixture|demo)\b/i;
 const operatorProse =
@@ -49,12 +50,50 @@ export function purposePhasePrompt(type: string): string {
   return `${phase}\nVisible titles, body, scope notes and takeaways contain no synthetic/invented/fixture/demo markers; classification is carried by the server footer. Retain hypotheses, constraints and source limitations. If a scope note calls the explanation a hypothesis, the headline must also say hypothesis, possible, suspected or may. Qualifications that change a claim's meaning stay visible next to that claim, not only in notes. A planned row supports planned, not not-collected. Any absence claim must quote the exact explicit absence from its cited source; otherwise ask the owner to confirm the state. Do not paraphrase absence into a stronger claim. Use a structured actionRegister [{owner, action, evidence}] instead of repeated nextActions prose. Evidence is a short completion test plus citations. Keep number slots intact; the server formats their declared units. Prefer one message per page, short cells, and source-specific scope notes. Exclude source-package operator instructions (seed rows, scoped rebind, loaders and feature flags) from client business controls. Translate status labels into ordinary words, not underscore codes. Charter success_measures must contain a native Markdown table separating outcome, measure and basis or next validation; never a dense baseline/target paragraph. Chart slides use the exact supplied chart title, or two chart titles joined by " and ", as their governingMessage. Omit points and takeaway on chart slides: the governed chart interpretation supplies the boundary. Put causal diagnoses on their own evidence-supported page, never over unrelated time series.`;
 }
 
+function markdownClaims(markdown: string): string[] {
+  const tree = fromMarkdown(markdown, {
+    extensions: [gfm()],
+    mdastExtensions: [gfmFromMarkdown()],
+  });
+  const source = (node: Nodes): string =>
+    "value" in node
+      ? node.value
+      : "children" in node
+        ? node.children
+            .map(source)
+            .join(
+              ["root", "list", "listItem", "blockquote"].includes(node.type)
+                ? "\n"
+                : "",
+            )
+        : "alt" in node
+          ? node.alt || ""
+          : node.type === "break"
+            ? "\n"
+            : "";
+  return tree.children.flatMap((node) => {
+    if (node.type !== "table") return [source(node)];
+    return node.children.flatMap((row) => {
+      const cells = row.children.map(source);
+      const cites =
+        cells
+          .join(" ")
+          .match(/\[\d+(?:\s*,\s*\d+)*\]/g)
+          ?.join(" ") || "";
+      return cells.map((cell) => `${cell} ${cites}`);
+    });
+  });
+}
+
 export function purposeVisibleText(doc: RenderableDeliverable): string[] {
   return [
     doc.title,
     doc.subtitle || "",
     doc.recommendation,
-    ...doc.generatedSections.flatMap((s) => [s.title, s.bodyMarkdown]),
+    ...doc.generatedSections.flatMap((s) => [
+      s.title,
+      ...markdownClaims(s.bodyMarkdown),
+    ]),
     ...(doc.deckSlides || []).flatMap((s) => [
       s.governingMessage,
       ...(s.points || []),
@@ -102,17 +141,29 @@ export function unsupportedPurposeAbsences(
     .map((s) => s.trim())
     .filter(Boolean);
   return chunks.filter((sentence) => {
+    const factualText = sentence
+      .replace(/\bno-double-count(?:ing)?\b/gi, "overlap control")
+      .replace(
+        /\bno (?:approval|signature) is recorded in this (?:draft|document)\b/gi,
+        "draft decision record",
+      )
+      .replace(
+        /\bno (?:benefit|funding|implementation) is approved (?:here|by this (?:draft|document))\b/gi,
+        "draft authority boundary",
+      )
+      .replace(
+        /\bthis (?:page|readout|document) attributes no cause and sizes no benefit\b/gi,
+        "document scope",
+      )
+      .replace(
+        /\b(?:this|the) (?:charter|document|readout|page|slide) (?:commits|defines|authorizes|sets) no (?:implementation funding|architecture|investment|operating model|roadmap|baseline|target|benefit)\b/gi,
+        "draft scope boundary",
+      );
     // A draft's own scope boundary is not a statement about evidence history.
     if (
-      /\b(?:this|the) (?:charter|document|readout|page|slide) (?:commits|defines|authorizes|sets) no (?:implementation funding|architecture|investment|operating model|roadmap|baseline|target|benefit)\b/i.test(
-        sentence,
-      )
-    )
-      return false;
-    if (
-      !absence.test(sentence) ||
+      !absence.test(factualText) ||
       /^(?:(?:confirm|check|test|review|validate|determine) whether\b|if\b)/i.test(
-        sentence,
+        normalize(sentence),
       )
     )
       return false;

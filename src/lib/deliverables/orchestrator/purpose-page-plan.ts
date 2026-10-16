@@ -91,6 +91,7 @@ export interface PurposePage {
   classification?: string;
   compact?: boolean;
   statementColumns?: 2;
+  statementLabelWidth?: number;
 }
 
 export class PurposePageError extends Error {
@@ -432,24 +433,25 @@ function paginateContent(page: PurposePage): PurposePage[] {
       items: [],
     };
   }
-  if (
-    page.family === "labelled_statements" &&
-    page.items.length <= 6 &&
-    page.items.every(
-      (i) =>
-        Math.max(
-          referenceCellTextHeight(i.label, 3.2, 18),
-          referenceCellTextHeight(
-            purposeCitations(i.detail, page.referenceLabels || {}),
-            8.35,
-            18,
-          ),
-        ) +
-          0.25 <=
-        4.1 / page.items.length,
-    )
-  )
-    return [{ ...page, compact: true }];
+  if (page.family === "labelled_statements" && page.items.length <= 6) {
+    const labelWidth = [3.2, 4.2, 5.2].find((width) =>
+      page.items.every(
+        (i) =>
+          Math.max(
+            referenceCellTextHeight(i.label, width, 18),
+            referenceCellTextHeight(
+              purposeCitations(i.detail, page.referenceLabels || {}),
+              11.55 - width,
+              18,
+            ),
+          ) +
+            0.12 <=
+          4.1 / page.items.length,
+      ),
+    );
+    if (labelWidth !== undefined)
+      return [{ ...page, compact: true, statementLabelWidth: labelWidth }];
+  }
   if (
     ["concepts", "options", "roles", "decision"].includes(page.family) &&
     page.items.length > PURPOSE_LAYOUTS[page.family].maxItems

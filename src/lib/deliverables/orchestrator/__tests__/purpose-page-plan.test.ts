@@ -19,6 +19,55 @@ import {
 import { formatConsultantCents } from "@/lib/programs/value-engine/format-money";
 
 describe("purpose page planning", () => {
+  it("widens long statement labels before splitting five short status rows", () => {
+    const doc = purposeFixture();
+    doc.tables = [
+      {
+        key: "strengths",
+        title: "Controls",
+        columns: ["Strength", "Status"],
+        rows: [
+          [
+            "Human verification before external member-facing action",
+            "Owner review pending [1]",
+          ],
+          ["Draft red lines with named reviewing roles", "Condition [1]"],
+          ["Read-only initial-phase boundary", "Planning decision [1]"],
+          ["Metric definitions and their caveats", "For reconciliation [1]"],
+          ["Business ownership of training and adoption", "Proposed [1]"],
+        ],
+        rowTones: [
+          "candidate",
+          "condition",
+          "candidate",
+          "candidate",
+          "condition",
+        ],
+        pageShape: "labelled_statements",
+        targetFormat: "pptx",
+      },
+    ];
+    doc.deckSlides = [
+      {
+        key: "strengths",
+        governingMessage: "Controls remain explicit",
+        pageIntent: {
+          question: "What stays?",
+          scopeNote: "Owner review pending.",
+          tableKey: "strengths",
+        },
+      },
+    ];
+    doc.exhibits = [];
+    const pages = planPurposePages(doc).filter((p) =>
+      p.id.startsWith("strengths"),
+    );
+    expect(pages).toHaveLength(1);
+    expect(pages[0]!.statementLabelWidth).toBeGreaterThan(3.2);
+    expect(pages[0]!.items.map((i) => [i.label, i.detail])).toEqual(
+      doc.tables[0]!.rows,
+    );
+  });
   it("refuses unrelated or causal chart headlines even when every numeric source is valid", () => {
     const chart = purposeChartFixture();
     const doc = purposeFixture();

@@ -275,6 +275,61 @@ describe("fresh purpose storyline contract", () => {
       ]),
     ).toHaveLength(1);
   });
+  it("distinguishes a draft's own scope from claims about evidence history", () => {
+    for (const text of [
+      "No approval is recorded in this document.",
+      "No signature is recorded in this draft.",
+      "No benefit is approved here.",
+      "Monetary claims follow the no-double-count rules [1].",
+      "This page attributes no cause and sizes no benefit.",
+      "**If approved**, Discovery sets no operating model.",
+    ])
+      expect(unsupportedPurposeAbsences(text, [])).toEqual([]);
+    for (const text of [
+      "No approval was ever recorded.",
+      "No evidence has been collected. No approval is recorded in this document.",
+      "This page attributes no cause and sizes no benefit; no baseline exists.",
+      "This charter defines no baseline; no evidence has been collected.",
+    ])
+      expect(unsupportedPurposeAbsences(text, []).length).toBeGreaterThan(0);
+  });
+  it("checks Markdown table claims independently with row-local citations", () => {
+    const doc = complete();
+    doc.generatedSections = [
+      {
+        key: "evidence",
+        title: "Evidence status",
+      groundingMode: "expert_template",
+      citationsUsed: [1],
+        bodyMarkdown:
+          "| Item | Status | Basis |\n| --- | --- | --- |\n| Baseline | No baseline has been collected. | [1] |\n| Interviews | Planned | [2] |",
+      },
+    ];
+    const evidence = [
+      { citationNumber: 1, statement: "No baseline has been collected." },
+    ];
+    expect(
+      validatePurposeStory(doc, evidence).filter((e) =>
+        e.includes("unsupported_absence"),
+      ),
+    ).toEqual([]);
+    doc.generatedSections[0]!.bodyMarkdown =
+      doc.generatedSections[0]!.bodyMarkdown.replace(
+        "No baseline has been collected.",
+        "No interviews were collected.",
+      );
+    expect(validatePurposeStory(doc, evidence).join()).toContain(
+      "unsupported_absence",
+    );
+    doc.generatedSections[0]!.bodyMarkdown =
+      doc.generatedSections[0]!.bodyMarkdown.replace(
+        "No interviews were collected.",
+        "No baseline has been collected.",
+      ).replace("| [1] |", "| [2] |");
+    expect(validatePurposeStory(doc, evidence).join()).toContain(
+      "unsupported_absence",
+    );
+  });
   it.each(["synthetic", "invented", "fixture", "demo"])(
     "rejects %s in visible authored text, but not the footer",
     (word) => {
