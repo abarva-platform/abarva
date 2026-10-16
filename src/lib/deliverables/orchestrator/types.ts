@@ -280,6 +280,8 @@ export interface DeliverableIntelligenceRequest {
    * lineage. Absent = exactly the behaviour before the register existed.
    */
   assumptionRegisterEnforced?: boolean;
+  /** Server-selected presentation experiment; never changes evidence or approvals. */
+  purposePageDesign?: boolean;
   artifactStandard: string; // reference to the standard doc/key
   exemplarGuidance?: string; // optional exemplar/style hint
   outputFormats: OutputFormat[];
@@ -530,6 +532,8 @@ export interface RenderableDeliverable {
   title: string;
   /** Canonical deliverable key, carried by persistence for format-specific layout. */
   deliverableType?: string;
+  /** Set by the server for the P1/P2 presentation experiment only. */
+  purposePageDesign?: boolean;
   subtitle?: string;
   clientDisplayName: string;
   initiativeDisplayName: string;
@@ -555,6 +559,7 @@ export interface RenderableDeliverable {
 }
 
 export interface RenderableDeckSlide {
+  pageIntent?: import("./purpose-page-plan").PageIntent;
   key?: string;
   title?: string;
   /** One sentence: the argument this slide makes, not a topic label. */
@@ -590,6 +595,8 @@ export interface RenderableSection {
 }
 
 export interface RenderableTable {
+  /** Declared content semantics. Layout selection and fit remain deterministic. */
+  pageShape?: "roles" | "comparison" | "decision" | "register";
   key: string;
   title: string;
   columns: string[];

@@ -308,6 +308,11 @@ function repairStructuredDeckSlides(
   const repaired = (deckSlides ?? [])
     .map((slide) => ({
       ...slide,
+      ...(slide.pageIntent ? { pageIntent: {
+        ...slide.pageIntent,
+        question: repairStructuredClientFactText(slide.pageIntent.question, lineage),
+        scopeNote: repairStructuredClientFactText(slide.pageIntent.scopeNote, lineage),
+      } } : {}),
       ...(slide.title
         ? { title: repairStructuredClientFactText(slide.title, lineage) }
         : {}),

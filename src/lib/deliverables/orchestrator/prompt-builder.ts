@@ -1082,6 +1082,9 @@ export function buildPassPrompt(
         plainEnglishMirrorInstruction(req),
         requiredExhibitsInstruction(req),
         SYNTHESIS_SCHEMA_HINT,
+        ...(req.purposePageDesign ? [
+          `PAGE DESIGN: each deckSlides entry also has pageIntent: {question, scopeNote, shape?, tableKey?}. question names the reader's question. scopeNote states the important interpretation boundary in no more than 180 characters; it must not assert approval. shape is concepts, comparison, roles or decision only when that is what the content means. tableKey binds an existing table instead of repeating it. Tables may declare pageShape: roles, comparison, decision or register. Use exhibitKey for the actual workflow or system exhibit. Keep every declared exhibit reachable from a slide. Never choose coordinates, fonts or a layout name. Keep titles under 100 characters and card support points under 140 characters. Preserve all source references and qualifiers. Never invent quantities to make a chart. The renderer selects layouts and splits dense records.`,
+        ] : []),
         ``,
         `SECTION SUMMARIES:`,
         summaries,

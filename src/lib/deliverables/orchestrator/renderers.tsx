@@ -90,6 +90,7 @@ import { inspectDeck } from "./deck-inspection";
 import { judgeRenderedDeck } from "./deck-quality";
 import { judgeSheetQuality } from "./sheet-quality";
 import { renderReferenceDeck } from "./reference-deck-renderer";
+import { renderPurposeDeck } from "./purpose-page-renderer";
 import {
   MAX_SLIDE_BULLETS,
   normaliseSlideText,
@@ -492,6 +493,8 @@ export function renderDeliverableDocx(
   architectureModel?: ArchitectureModel,
 ): Document {
   const children: (Paragraph | Table)[] = [];
+  const charterDesign = doc.purposePageDesign === true && doc.deliverableType === "charter";
+  const placedTables = new Set<string>();
 
   // Cover
   children.push(eyebrowParagraph(DOC_COVER_EYEBROW));
@@ -519,22 +522,31 @@ export function renderDeliverableDocx(
   children.push(
     bodyParagraph([boldRun("Document status: "), bodyRun(DOC_STATUS_LABEL)]),
   );
-  children.push(bodyParagraph([bodyRun(DOC_STATUS_BODY)]));
+  if (!charterDesign) children.push(bodyParagraph([bodyRun(DOC_STATUS_BODY)]));
 
   // Sections — render the authored markdown body PROPERLY (headings, bold,
   // ordered/unordered + nested lists, inline GFM tables) via the shared
   // mdast walker, instead of flattening every line to a paragraph.
-  for (const section of doc.generatedSections) {
+  const charterOrder = ["charter_decision", "opportunity_context", "scope", "success_measures", "sponsorship_governance", "known_constraints_dependencies", "authorization_conditions"];
+  const sections = charterDesign ? [...doc.generatedSections].sort((a, b) => {
+    const order = (key: string) => charterOrder.includes(key) ? charterOrder.indexOf(key) : charterOrder.length;
+    return order(a.key) - order(b.key);
+  }) : doc.generatedSections;
+  for (const section of sections) {
     children.push(designedHeading(section.title, 1));
     children.push(
       ...markdownToDocxBlocks(
         normalizeSectionMarkdown(section.bodyMarkdown, section.title),
       ),
     );
+    if (charterDesign) for (const table of doc.tables.filter((table) => table.targetFormat !== "xlsx" && [section.key, `${section.key}_table`].includes(table.key))) {
+      children.push(tableToDocx(table));
+      placedTables.add(table.key);
+    }
   }
 
   // In-document tables (those NOT routed to the Excel companion)
-  const inDocTables = doc.tables.filter((t) => t.targetFormat !== "xlsx");
+  const inDocTables = doc.tables.filter((t) => t.targetFormat !== "xlsx" && !placedTables.has(t.key));
   if (inDocTables.length) {
     children.push(designedHeading("Tables & Exhibits", 1));
     for (const t of inDocTables) {
@@ -638,6 +650,13 @@ export function renderDeliverableDocx(
   if (citedSources.length) {
     children.push(designedHeading("Sources", 1));
     children.push(lightTable(PUBLIC_SOURCE_COLUMNS, citedSources));
+  }
+  if (charterDesign) {
+    children.push(designedHeading("Review and authorization", 1));
+    children.push(bodyParagraph([bodyRun(DOC_STATUS_BODY)]));
+    children.push(lightTable(["Decision record", "To be completed by the authorized reviewer"], [
+      ["Decision", ""], ["Approver and role", ""], ["Date", ""], ["Conditions or exclusions", ""],
+    ]));
   }
 
   return new Document({
@@ -3311,6 +3330,7 @@ export async function renderDeliverablePptx(
   doc: RenderableDeliverable,
   architectureModel?: ArchitectureModel,
 ): Promise<Buffer> {
+  if (doc.purposePageDesign === true && doc.deliverableType === "discovery_report") return renderPurposeDeck(doc);
   if (doc.referenceDeck) return renderReferenceDeck(doc.referenceDeck);
   const { default: PptxGenJS } = await import("pptxgenjs");
   const pptx = new PptxGenJS();
