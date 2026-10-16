@@ -15,6 +15,7 @@
 
 import "server-only";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { tenantKeyReadValues } from "@/lib/programs/tenant-key-filter";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
 import type { CurrentStateRecommendation } from "@/lib/programs/current-state-maturity";
@@ -178,7 +179,7 @@ export async function resolveDiagnoseIntake(
     const { data, error } = await sb
       .from("program_evidence_items")
       .select("step_id, extracted_text, summary")
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantKeyReadValues(tenantKey))
       .eq("program_id", moveId)
       .like("step_id", `${STEP_PREFIX}%`);
     if (error || !Array.isArray(data)) return {};
@@ -330,7 +331,7 @@ export async function resolveDesignIntake(
     const { data, error } = await sb
       .from("program_evidence_items")
       .select("step_id, extracted_text, summary")
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantKeyReadValues(tenantKey))
       .eq("program_id", moveId)
       .like("step_id", `${DESIGN_PREFIX}%`);
     if (error || !Array.isArray(data)) return {};
