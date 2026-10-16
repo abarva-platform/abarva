@@ -127,6 +127,12 @@ export interface ApprovedAssumption {
 /** One row of the clean source register exposed in the document. */
 export interface SourceRegisterEntry {
   citationNumber: number;
+  /** Optional identifier declared by the source register, not inferred from a filename. */
+  referenceId?: string;
+  /** Recorded source review state, when supplied by the evidence register. */
+  reviewStatus?: string;
+  /** Declared source purpose and limits; not inferred from confidence. */
+  useAndLimitation?: string;
   label: string;
   evidenceFamily: string;
   confidence: "high" | "medium" | "low";
@@ -280,6 +286,8 @@ export interface DeliverableIntelligenceRequest {
    * lineage. Absent = exactly the behaviour before the register existed.
    */
   assumptionRegisterEnforced?: boolean;
+  /** Server-selected presentation experiment; never changes evidence or approvals. */
+  purposePageDesign?: boolean;
   artifactStandard: string; // reference to the standard doc/key
   exemplarGuidance?: string; // optional exemplar/style hint
   outputFormats: OutputFormat[];
@@ -530,7 +538,18 @@ export interface RenderableDeliverable {
   title: string;
   /** Canonical deliverable key, carried by persistence for format-specific layout. */
   deliverableType?: string;
+  /** Set by the server for the P1/P2 presentation experiment only. */
+  purposePageDesign?: boolean;
   subtitle?: string;
+  presentationCover?: {
+    eyebrow?: string;
+    displayTitle?: string;
+    status?: string;
+    edition?: string;
+    date?: string;
+    milestone?: string;
+    classification?: string;
+  };
   clientDisplayName: string;
   initiativeDisplayName: string;
   generatedSections: RenderableSection[];
@@ -552,9 +571,12 @@ export interface RenderableDeliverable {
   clientCompleteChecklist: ClientCompleteItem[];
   recommendation: string;
   nextActions: string[];
+  /** Structured proposed actions; not approval or completion records. */
+  actionRegister?: { owner: string; action: string; evidence: string }[];
 }
 
 export interface RenderableDeckSlide {
+  pageIntent?: import("./purpose-page-plan").PageIntent;
   key?: string;
   title?: string;
   /** One sentence: the argument this slide makes, not a topic label. */
@@ -590,6 +612,24 @@ export interface RenderableSection {
 }
 
 export interface RenderableTable {
+  /** Declared content semantics. Layout selection and fit remain deterministic. */
+  pageShape?:
+    | "roles"
+    | "comparison"
+    | "decision"
+    | "register"
+    | "labelled_statements"
+    | "big_numbers";
+  /** Explicit semantics, never guessed from a label or a numeric value. */
+  rowTones?: import("./purpose-page-plan").PurposeTone[];
+  /** Server-bound numeric units for the two big-number values; not model-authored. */
+  valueUnits?: string[];
+  numericCells?: {
+    row: number;
+    column: number;
+    value: number;
+    type: import("./purpose-number-display").PurposeNumberType;
+  }[];
   key: string;
   title: string;
   columns: string[];
