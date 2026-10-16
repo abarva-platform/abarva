@@ -20,6 +20,9 @@ export interface PageIntent {
   scopeNote: string;
   shape?: "concepts" | "comparison" | "roles" | "decision";
   tableKey?: string;
+  section?: "CONTEXT" | "WHAT" | "WHY" | "VALIDATE" | "HOW";
+  takeaway?: string;
+  chartKeys?: string[];
 }
 
 /** Supplied by a governed read, never parsed from model-authored prose. */
@@ -32,6 +35,8 @@ export interface PurposeChart {
   sourceIds: number[];
   points: { label: string; value: number; sourceRow: string }[];
   interpretation: string;
+  axisMin?: number;
+  axisMax?: number;
 }
 
 export const PURPOSE_LAYOUTS = {
@@ -39,8 +44,8 @@ export const PURPOSE_LAYOUTS = {
   statement: { maxItems: 3, minFontPt: 20 },
   concepts: { maxItems: 4, minFontPt: 18 },
   options: { maxItems: 3, minFontPt: 18 },
-  roles: { maxItems: 4, minFontPt: 18 },
-  process: { maxItems: 4, minFontPt: 18 },
+  roles: { maxItems: 6, minFontPt: 18 },
+  process: { maxItems: 5, minFontPt: 18 },
   layers: { maxItems: 4, minFontPt: 18 },
   decision: { maxItems: 2, minFontPt: 18 },
   register: { maxItems: 6, minFontPt: 16 },
@@ -59,6 +64,12 @@ export interface PurposePage {
   columns?: string[];
   rows?: string[][];
   chart?: PurposeChart;
+  charts?: PurposeChart[];
+  section?: PageIntent["section"];
+  takeaway?: string;
+  referenceLabels?: Record<number, string>;
+  cover?: RenderableDeliverable["presentationCover"];
+  classification?: string;
 }
 
 export class PurposePageError extends Error {
@@ -166,7 +177,12 @@ function paginate(page: PurposePage): PurposePage[] {
     }));
   }
   const items = page.items.flatMap((item) => {
-    const max = page.family === "statement" ? 260 : 140;
+    const max =
+      page.family === "statement"
+        ? 420
+        : page.family === "decision"
+          ? 550
+          : 360;
     if (estimatedLines(item.label, 27) > 2)
       throw new PurposePageError("label_needs_edit", page.id);
     const parts = splitText(item.detail, max);
@@ -197,6 +213,8 @@ function basePage(slide: RenderableDeckSlide, index: number): PurposePage {
     title: slide.governingMessage,
     question,
     scope: slide.pageIntent?.scopeNote || draftScope,
+    section: slide.pageIntent?.section,
+    takeaway: slide.pageIntent?.takeaway,
     sources: [
       ...new Set([
         ...(slide.citationsUsed ?? []),
@@ -238,7 +256,11 @@ function tablePage(table: RenderableTable, base: PurposePage): PurposePage {
         label: row[0]!,
         detail: row
           .slice(1)
-          .map((cell, i) => `${table.columns[i + 1]}: ${cell}`)
+          .map((cell, i) =>
+            table.columns.length === 2
+              ? cell
+              : `${table.columns[i + 1]}: ${cell}`,
+          )
           .join("\n"),
       })),
     };
@@ -259,6 +281,19 @@ export function validatePurposeChart(
 ): void {
   if (!chart.points.length)
     throw new PurposePageError("chart_without_data", chart.key);
+  if (
+    (chart.axisMin !== undefined && !Number.isFinite(chart.axisMin)) ||
+    (chart.axisMax !== undefined && !Number.isFinite(chart.axisMax)) ||
+    (chart.axisMin !== undefined &&
+      chart.axisMax !== undefined &&
+      chart.axisMin >= chart.axisMax) ||
+    chart.points.some(
+      (point) =>
+        (chart.axisMin !== undefined && point.value < chart.axisMin) ||
+        (chart.axisMax !== undefined && point.value > chart.axisMax),
+    )
+  )
+    throw new PurposePageError("chart_axis_invalid", chart.key);
   if (chart.points.length > PURPOSE_LAYOUTS.trend.maxItems)
     throw new PurposePageError("chart_needs_split", chart.key);
   if (
@@ -298,6 +333,14 @@ export function planPurposePages(
   const known = new Set(
     doc.sourceRegister.map((source) => source.citationNumber),
   );
+  const labels = doc.sourceRegister.map(
+    (source) => source.referenceId || String(source.citationNumber),
+  );
+  if (
+    new Set(labels).size !== labels.length ||
+    labels.some((label) => !/^[A-Za-z0-9_-]{1,16}$/.test(label))
+  )
+    throw new PurposePageError("invalid_reference_labels", "deck");
   if (!doc.deckSlides?.length)
     throw new PurposePageError("storyline_missing", "deck");
   const pages: PurposePage[] = [
@@ -306,7 +349,10 @@ export function planPurposePages(
       family: "cover",
       title: doc.title,
       question: "What decision does this readout support?",
-      scope: draftScope,
+      scope:
+        doc.subtitle ||
+        "The recommendation is for review, not authorization to implement.",
+      cover: doc.presentationCover,
       sources: [],
       notes: `The point: ${doc.recommendation}\n${draftScope}`,
       items: [
@@ -314,6 +360,7 @@ export function planPurposePages(
       ],
     },
   ];
+  const usedCharts = new Set<string>();
   const usedTables = new Set<string>(),
     usedExhibits = new Set<string>();
   for (const [index, slide] of doc.deckSlides.entries()) {
@@ -328,7 +375,34 @@ export function planPurposePages(
       if (!family) throw new PurposePageError("unknown_shape", page.id);
       page.family = family as PurposeFamily;
     }
-    if (slide.pageIntent?.tableKey) {
+    if (slide.pageIntent?.chartKeys?.length) {
+      if (slide.pageIntent.chartKeys.length > 2)
+        throw new PurposePageError("chart_pair_limit", page.id);
+      const selected = slide.pageIntent.chartKeys.map((key) => {
+        const chart = charts.find((item) => item.key === key);
+        if (!chart)
+          throw new PurposePageError("chart_reference_missing", page.id);
+        validatePurposeChart(chart, known);
+        usedCharts.add(key);
+        return chart;
+      });
+      page.family = "trend";
+      page.charts = selected;
+      page.sources = [
+        ...new Set([
+          ...page.sources,
+          ...selected.flatMap((chart) => chart.sourceIds),
+        ]),
+      ];
+      page.notes +=
+        "\n" +
+        selected
+          .map(
+            (chart) =>
+              `${chart.metric} (${chart.unit}), ${chart.period}\n${chart.points.map((p) => `${p.label}: ${p.value}; ${p.sourceRow}`).join("\n")}`,
+          )
+          .join("\n");
+    } else if (slide.pageIntent?.tableKey) {
       const table = doc.tables.find(
         (item) => item.key === slide.pageIntent!.tableKey,
       );
@@ -384,7 +458,7 @@ export function planPurposePages(
           items: [],
         };
         const chain =
-          data.nodes.length <= 4 &&
+          data.nodes.length <= PURPOSE_LAYOUTS.process.maxItems &&
           data.edges.length === data.nodes.length - 1 &&
           data.nodes
             .slice(0, -1)
@@ -505,6 +579,7 @@ export function planPurposePages(
       }),
     );
   for (const chart of charts) {
+    if (usedCharts.has(chart.key)) continue;
     validatePurposeChart(chart, known);
     pages.push({
       id: chart.key,
@@ -545,14 +620,21 @@ export function planPurposePages(
           "The point: source references let the reviewer trace claims. Review status remains separate.",
         columns: ["Ref", "Source", "Status / date"],
         rows: doc.sourceRegister.map((source) => [
-          `[${source.citationNumber}]`,
+          `[${source.referenceId || source.citationNumber}]`,
           source.label,
-          `${source.confidence}${source.asOf ? ` / ${source.asOf}` : ""}`,
+          `${source.reviewStatus || `${source.confidence} confidence`}${source.asOf ? ` / ${source.asOf}` : ""}`,
         ]),
         items: [],
       }),
     );
   for (const page of pages) {
+    page.classification = doc.presentationCover?.classification;
+    page.referenceLabels = Object.fromEntries(
+      doc.sourceRegister.map((source) => [
+        source.citationNumber,
+        source.referenceId || String(source.citationNumber),
+      ]),
+    );
     page.sources = [
       ...new Set([
         ...page.sources,
@@ -560,6 +642,7 @@ export function planPurposePages(
           [
             page.title,
             page.scope,
+            page.takeaway || "",
             page.notes,
             ...page.items.flatMap((item) => [item.label, item.detail]),
             ...(page.columns ?? []),

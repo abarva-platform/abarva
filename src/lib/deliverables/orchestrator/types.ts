@@ -127,6 +127,10 @@ export interface ApprovedAssumption {
 /** One row of the clean source register exposed in the document. */
 export interface SourceRegisterEntry {
   citationNumber: number;
+  /** Optional identifier declared by the source register, not inferred from a filename. */
+  referenceId?: string;
+  /** Recorded source review state, when supplied by the evidence register. */
+  reviewStatus?: string;
   label: string;
   evidenceFamily: string;
   confidence: "high" | "medium" | "low";
@@ -535,6 +539,12 @@ export interface RenderableDeliverable {
   /** Set by the server for the P1/P2 presentation experiment only. */
   purposePageDesign?: boolean;
   subtitle?: string;
+  presentationCover?: {
+    edition?: string;
+    date?: string;
+    milestone?: string;
+    classification?: string;
+  };
   clientDisplayName: string;
   initiativeDisplayName: string;
   generatedSections: RenderableSection[];

@@ -7,12 +7,123 @@ import {
 import {
   renderPurposeDeck,
   validatePurposeInspection,
+  purposeDensity,
 } from "../purpose-page-renderer";
 import { renderDeliverableDocx, renderDeliverablePptx } from "../renderers";
 import { inspectDeck } from "../deck-inspection";
 import { planPurposePages } from "../purpose-page-plan";
 
 describe("purpose page rendered objects", () => {
+  it("renders page-specific framing and declared citation IDs, including paired native charts", async () => {
+    const doc = purposeFixture();
+    doc.sourceRegister[0]!.referenceId = "C01";
+    doc.sourceRegister[1]!.referenceId = "E01";
+    doc.presentationCover = {
+      edition: "Review draft",
+      date: "16 October 2026",
+      classification: "Synthetic scenario",
+    };
+    doc.deckSlides![0]!.pageIntent = {
+      ...doc.deckSlides![0]!.pageIntent!,
+      section: "WHAT",
+      takeaway: "The scope is a proposal; the owner must decide [1].",
+    };
+    const first = purposeChartFixture(),
+      second = {
+        ...purposeChartFixture(),
+        key: "second",
+        metric: "Separate measure",
+      };
+    doc.deckSlides!.push({
+      key: "paired",
+      governingMessage: "Two measures retain separate units",
+      citationsUsed: [1],
+      pageIntent: {
+        question: "What changed?",
+        scopeNote: "No causal change is established.",
+        chartKeys: [first.key, second.key],
+        section: "WHY",
+      },
+    });
+    const pages = planPurposePages(doc, [first, second]);
+    const buffer = await renderPurposeDeck(doc, [first, second]);
+    const inspection = await inspectDeck(buffer);
+    expect(
+      inspection.slides[1]!.namedText?.["purpose:annotation:takeaway"],
+    ).toContain("[C01]");
+    expect(inspection.slides[1]!.namedText?.["purpose:section"]).toBe(
+      "WHAT  /  DISCOVERY",
+    );
+    expect(inspection.slides[0]!.namedText?.["purpose:edition"]).toContain(
+      "16 October 2026",
+    );
+    expect(inspection.slides.find((s) => s.chartCount === 2)).toBeDefined();
+    for (const [from, error] of [
+      ["WHAT  /  DISCOVERY", "section_missing"],
+      [
+        "The scope is a proposal; the owner must decide [C01].",
+        "takeaway_missing",
+      ],
+      ["Synthetic scenario", "classification_missing"],
+    ]) {
+      const zip = await JSZip.loadAsync(buffer);
+      const original = await zip.file("ppt/slides/slide2.xml")!.async("string");
+      expect(original).toContain(from);
+      zip.file("ppt/slides/slide2.xml", original.replace(from!, "REMOVED"));
+      expect(() => validatePurposeInspection(inspection, pages)).not.toThrow();
+      const damaged = await inspectDeck(
+        await zip.generateAsync({ type: "nodebuffer" }),
+      );
+      expect(() => validatePurposeInspection(damaged, pages)).toThrow(error);
+    }
+  });
+  it("flags sparse content independently of background or frame size", () => {
+    const page = planPurposePages(purposeFixture())[1]!;
+    expect(
+      purposeDensity({
+        ...page,
+        items: [{ label: "Owner", detail: "Confirm scope." }],
+      }).reviewRequired,
+    ).toBe(true);
+    expect(
+      purposeDensity({
+        ...page,
+        items: [{ label: "Owner", detail: "Evidence ".repeat(80) }],
+      }).reviewRequired,
+    ).toBe(false);
+  });
+  it("keeps Charter tables, source labels, readable type and a blank authority record", async () => {
+    const doc = purposeFixture();
+    doc.deliverableType = "charter";
+    doc.exhibits = [];
+    doc.tables = [];
+    doc.sourceRegister[0]!.referenceId = "C01";
+    doc.generatedSections = [
+      {
+        key: "success_measures",
+        title: "Outcomes and measures",
+        bodyMarkdown:
+          "| Outcome | Evidence needed |\n|---|---|\n| Less rework | Agreed baseline [1] |",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+      },
+    ];
+    const zip = await JSZip.loadAsync(
+      await Packer.toBuffer(renderDeliverableDocx(doc)),
+    );
+    const xml = await zip.file("word/document.xml")!.async("string");
+    expect(xml.match(/<w:tbl>/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(xml).toContain("[C01]");
+    expect(xml).toContain('w:ascii="Arial"');
+    expect(xml).toContain("Reading guide:");
+    expect(xml).not.toContain("Required next steps");
+    expect(await zip.file("word/header1.xml")!.async("string")).toContain(
+      "P1 CHARTER",
+    );
+    expect(await zip.file("word/footer1.xml")!.async("string")).toContain(
+      "Human approval required",
+    );
+  });
   it("keeps native charts, data workbooks, tables, notes and source references", async () => {
     const doc = purposeFixture(),
       chart = purposeChartFixture();
@@ -32,7 +143,10 @@ describe("purpose page rendered objects", () => {
     expect(
       inspection.slides.reduce((sum, slide) => sum + slide.chartCount, 0),
     ).toBe(1);
-    const chartXml = await zip.file("ppt/charts/chart1.xml")!.async("string");
+    const chartPath = Object.keys(zip.files).find((name) =>
+      /^ppt\/charts\/chart\d+\.xml$/.test(name),
+    )!;
+    const chartXml = await zip.file(chartPath)!.async("string");
     for (const point of chart.points)
       expect(chartXml).toContain(`<c:v>${point.value}</c:v>`);
     expect(
@@ -103,7 +217,7 @@ describe("purpose page rendered objects", () => {
       },
       {
         entry: "ppt/slides/slide2.xml",
-        from: /cy="1920240"/g,
+        from: /cy="2011680"/g,
         to: 'cy="91440"',
         error: "text_does_not_fit",
       },
@@ -185,7 +299,7 @@ describe("purpose page rendered objects", () => {
     expect(xml).toContain("Approver and role");
     expect(xml).toContain("Build funding remains unapproved");
     expect(xml.indexOf("Decision requested")).toBeLessThan(
-      xml.indexOf("Required next steps"),
+      xml.indexOf("Review and authorization"),
     );
     doc.purposePageDesign = false;
     const legacy = await JSZip.loadAsync(

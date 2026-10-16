@@ -17,9 +17,11 @@ or unreadable inputs. It does not shorten source facts to make a page fit.
 The Charter puts the requested decision first, places matching tables with their
 sections and leaves a blank authorization record for a human reviewer.
 
-This is the first implementation slice, not completion of the design brief.
-The local layout probe is minimal synthetic test content, not a client artifact
-or a generation from an approved evidence package.
+This remains an incomplete, disabled implementation slice. The initial minimal
+fixture is now supplemented by a full-content same-source renderer benchmark.
+That benchmark freezes an already reviewed narrative and verifies its seventeen
+synthetic input hashes. It is not fresh evidence-to-model generation or a live
+Move load. Human visual acceptance remains pending.
 
 ## Layer Impact
 
@@ -41,16 +43,24 @@ or a generation from an approved evidence package.
 
 - Content-shaped deck planner and native PowerPoint renderer.
 - Separate decision, role, option, process, layer, statement and register compositions.
-- Native editable tables and a native line chart with an embedded workbook.
+- Native editable tables and line charts with embedded workbooks; paired charts
+  retain separate units and explicit source-supported axis bounds.
+- Page-specific scope notes, section labels, optional sourced takeaways, a cover
+  with supplied edition/date, app branding and lighter role compositions.
+- Compact variants and sparse-content advisory checks, without a claim of
+  minimum meaningful occupied area or automatic compatible-page merging.
+- Dedicated Charter renderer with native outcomes/measures tables, a reading
+  guide, registered citation labels and blank human authorization fields.
 - Frame, citations, speaker notes, geometry and native-object checks on exported bytes.
-- Minimal synthetic fixtures, two test suites and an offline probe script.
+- Minimal synthetic fixtures, two test suites and offline probe/comparison scripts.
 - Generated feature documentation and test-coverage census.
 
 ## QA / Validation
 
-- PASS: 75 orchestrator suites / 1,097 tests.
-- PASS: nine exported-file corruptions rejected: removed status, citation, notes,
+- PASS: 75 orchestrator suites / 1,100 tests.
+- PASS: twelve exported-file corruptions rejected: removed status, citation, notes,
   chart and table; tiny font; undersized text box; overlap; off-slide content.
+  The full-content frame adds removed section, takeaway and classification checks.
   These are artifact mutation probes, not a claim of exhaustive source-code mutation coverage.
 - PASS: changed-file ESLint.
 - PASS: library orphan audit, no baseline change.
@@ -59,15 +69,22 @@ or a generation from an approved evidence package.
   uncovered files remain 166. Both are swept by the AI surface control catalog.
 - PASS: local 11-slide probe and 2-page Charter rendered through bundled
   LibreOffice and inspected page by page. This validates those fixtures only.
+- PASS: full-content renderer benchmark produces five Charter pages and sixteen
+  Discovery slides. Twenty-one side-by-side PNG pairs cover every page, including
+  source appendices. Seventeen source hashes checked; twenty-four chart points
+  read from the source CSV. Charter sources remain limited to its five phase-correct inputs.
+- REVIEW PENDING: the rendered comparison, especially sparse decision pages.
+  Text-band occupancy is advisory, not a pixel-area fidelity score. Four pages
+  remain flagged for human review, including the intentionally sparse cover.
 - PASS: Node 24 typecheck, zero errors; release checks 11/11.
 - PASS: export reachability, exactly the existing seven-declaration baseline.
-- NOT RUN: real evidence-to-generation benchmark, visual fidelity judge,
+- NOT RUN: fresh governed evidence-to-generation benchmark, automated visual fidelity judge,
   native PowerPoint acceptance of this prototype, signed-in product acceptance.
 
 ## Rollout Plan
 
 Keep the flag off. Do not merge or deploy as completion of the design brief.
-Finish the golden-source benchmark and design review, production chart binding,
+Finish fresh golden-source generation and human design review, production chart binding,
 remaining layout families and render-repair requirements before tenant enrollment.
 The current renderer remains available with the flag off. Unsupported inputs on
 the prototype path fail explicitly; there is no silent downgrade to a weaker export.
@@ -88,8 +105,14 @@ through a PR. No canonical data or approval record needs rollback.
 
 - `scripts/deliverables/proof/purpose-pages.ts` creates local probe artifacts and
   a structured inspection report without model calls or database access.
+- `scripts/deliverables/proof/purpose-same-source.ts` verifies a local source
+  manifest and declared references, then renders a frozen reviewed storyline.
+  It refuses later-phase source references in the Charter and writes outside the repo.
 - Tests inspect actual PPTX XML, the native chart values and its embedded workbook.
-- Layout probe and comparison files remain in the local review package.
+- [Synthetic comparison index](../../design/reviews/purpose-pages-2026-10-16/README.md)
+  links every requested page pair. Only explicitly synthetic rendered images are
+  public. Source files, manifests, original artifact IDs and native-file metadata
+  remain in the local review package.
 - Full reference packages remain private. A client-name scan alone is not a
   sufficient public-disclosure review of document metadata and source identifiers.
 
@@ -102,9 +125,12 @@ through a PR. No canonical data or approval record needs rollback.
 - Generated HTML preview still uses the existing design and is not export-parity proof.
 - Geometry checks are not raster clipping/contrast/empty-region detection. No
   two-pass automatic raster repair loop or fidelity score of 90 is claimed.
-- Chart production inputs still need the governed read binding; the chart in the
-  probe uses explicit synthetic test rows only.
-- No source-matched golden comparison or end-to-end client generation was performed.
+- Chart production inputs still need the governed read binding; the comparison
+  reads the supplied synthetic CSV offline, not a production projection.
+- Same-source rendering is not end-to-end client generation. The model narrative
+  was frozen from the reviewed golden output rather than regenerated from inputs.
+- Sparse-content support remains partial. No universal 55% fill threshold,
+  compatible-page merge planner or automatic raster repair is claimed.
 - Existing governed reference-deck payloads and public-source citation payloads
   are refused pending dedicated adapters, never silently discarded by this renderer.
 - Long/unsupported labels, rows and graph topologies fail rather than inventing
