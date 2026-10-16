@@ -26,6 +26,7 @@ const insertMock = jest.fn();
 const updateMock = jest.fn();
 const selectMock = jest.fn();
 const eqMock = jest.fn();
+const inMock = jest.fn();
 const orderMock = jest.fn();
 const singleMock = jest.fn();
 const maybeSingleMock = jest.fn();
@@ -80,6 +81,11 @@ function makeQueryBuilder(table: string) {
       eqMock(table, column, value);
       return qb;
     },
+    in(column: string, values: unknown[]) {
+      state.filters.push({ column, value: values });
+      inMock(table, column, values);
+      return qb;
+    },
     order(column: string, opts: { ascending: boolean }) {
       state.orderBy = { column, ascending: opts.ascending };
       orderMock(table, column, opts);
@@ -114,6 +120,7 @@ const mockAssertP0SourceEvidenceReady = jest.fn();
 
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureWriteFluentClient: () => ({ from: fromMock }),
+  getAzureReadFluentClient: () => ({ from: fromMock }),
 }));
 
 jest.mock("../origination-close", () => ({
@@ -133,6 +140,7 @@ import {
   getApprovalRequestById,
   type ApprovalRequest,
 } from "../approval";
+import { tenantKeyReadValues } from "@/lib/programs/tenant-key-filter";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
@@ -162,6 +170,7 @@ beforeEach(() => {
   updateMock.mockClear();
   selectMock.mockClear();
   eqMock.mockClear();
+  inMock.mockClear();
   orderMock.mockClear();
   singleMock.mockClear();
   maybeSingleMock.mockClear();
@@ -702,22 +711,35 @@ describe("getApprovalQueueForTenant", () => {
       { ascending: true },
     );
 
-    // Tenant + status filters were applied
-    const filters = eqMock.mock.calls.filter(
+    // The tenant filter is the per-tenant alias set (every spelling of this
+    // tenant's key), never one spelling; the status filter is unchanged.
+    expect(inMock).toHaveBeenCalledWith(
+      "program_approval_requests",
+      "tenant_key",
+      tenantKeyReadValues("apex-retail"),
+    );
+    const eqFilters = eqMock.mock.calls.filter(
       ([t]) => t === "program_approval_requests",
     );
-    expect(filters).toEqual(
+    expect(eqFilters).toEqual(
       expect.arrayContaining([
-        ["program_approval_requests", "tenant_key", "apex-retail"],
         ["program_approval_requests", "request_status", "pending"],
       ]),
     );
+    expect(eqFilters.map(([, column]) => column)).not.toContain("tenant_key");
   });
 
   it("returns [] for a tenant with no pending requests", async () => {
     pendingResults.push({ arrayResult: { data: [], error: null } });
     const out = await getApprovalQueueForTenant("meridian");
     expect(out).toEqual([]);
+    // A tenant whose rows carry more than one spelling is asked for under all
+    // of them, so a read of a single spelling cannot report a false empty queue.
+    const [, , values] = inMock.mock.calls.find(
+      ([t, column]) => t === "program_approval_requests" && column === "tenant_key",
+    ) as [string, string, string[]];
+    expect(values).toEqual(expect.arrayContaining(["meridian", "meridian-health"]));
+    expect(values.length).toBeGreaterThan(1);
   });
 
   it("throws if tenantKey is missing", async () => {

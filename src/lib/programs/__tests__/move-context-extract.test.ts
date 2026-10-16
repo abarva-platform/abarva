@@ -2,6 +2,25 @@ const queryContext = jest.fn();
 const saveArtifact = jest.fn();
 const recordEvidence = jest.fn();
 const existingExtract = jest.fn();
+const defaultExtractTenantFilter = jest.fn();
+
+jest.mock("@/lib/data-plane/postgresCompat", () => ({
+  getAzureWriteFluentClient: jest.fn(() => {
+    const chain: Record<string, unknown> = {};
+    for (const method of ["from", "select", "eq", "limit"]) {
+      chain[method] = jest.fn(() => chain);
+    }
+    chain.in = jest.fn((column: string, values: unknown[]) => {
+      defaultExtractTenantFilter(column, values);
+      return chain;
+    });
+    chain.maybeSingle = jest.fn(async () => ({ data: null, error: null }));
+    return chain;
+  }),
+  getAzureReadFluentClient: jest.fn(() => {
+    throw new Error("read client not expected in this suite");
+  }),
+}));
 const loadMoveEvidence = jest.fn();
 
 jest.mock("@/lib/azure-search/tenant-context-retriever", () => ({
@@ -577,5 +596,31 @@ describe("createMoveContextExtract", () => {
     expect(loadMoveEvidence).toHaveBeenCalled();
     expect(saveArtifact).not.toHaveBeenCalled();
     expect(recordEvidence).not.toHaveBeenCalled();
+  });
+});
+
+describe("createMoveContextExtract — the tenant filter of its own existing-extract read", () => {
+  it("reads the current extract under every spelling of the tenant key when no reader is injected", async () => {
+    const { tenantKeyReadValues } = await import("@/lib/programs/tenant-key-filter");
+    defaultExtractTenantFilter.mockClear();
+    queryContext.mockResolvedValue([]);
+
+    await createMoveContextExtract(baseInput, {
+      queryContext,
+      saveArtifact,
+      recordEvidence,
+      loadMoveEvidence,
+    });
+
+    expect(defaultExtractTenantFilter).toHaveBeenCalledWith(
+      "tenant_key",
+      tenantKeyReadValues(baseInput.tenantKey),
+    );
+    const [, values] = defaultExtractTenantFilter.mock.calls[0] as [string, string[]];
+    // The injected-reader cases never reach this read; this one does, and a
+    // filter carrying only the spelling it was called with would make every
+    // extract stored under the other spelling read as absent and be rebuilt.
+    expect(values).toContain(baseInput.tenantKey);
+    expect(values.length).toBeGreaterThan(1);
   });
 });

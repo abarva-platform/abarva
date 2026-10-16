@@ -6,6 +6,7 @@
  * leave the worker's claim exactly as wrong as before.
  */
 const maybeSingle = jest.fn();
+const tenantFilter = jest.fn();
 
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureReadFluentClient: () => {
@@ -13,6 +14,10 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
     for (const method of ["from", "select", "eq", "limit"]) {
       chain[method] = jest.fn(() => chain);
     }
+    chain.in = jest.fn((column: string, values: unknown[]) => {
+      tenantFilter(column, values);
+      return chain;
+    });
     chain.maybeSingle = maybeSingle;
     return chain;
   },
@@ -29,6 +34,7 @@ jest.mock("@/lib/programs/approved-move-evidence-snapshot", () => ({
 }));
 
 import { loadCurrentMoveContextExtractFreshness } from "@/lib/programs/move-context-extract-freshness";
+import { tenantKeyReadValues } from "@/lib/programs/tenant-key-filter";
 
 const EXTRACT_ROW = {
   generated_at: "2026-10-01T00:00:00.000Z",
@@ -140,5 +146,21 @@ describe("loadCurrentMoveContextExtractFreshness — the basis it compared again
   it("returns null when no current extract row is readable", async () => {
     maybeSingle.mockResolvedValue({ data: null, error: null });
     expect(await loadCurrentMoveContextExtractFreshness(ARGS)).toBeNull();
+  });
+});
+
+describe("loadCurrentMoveContextExtractFreshness — the tenant filter it reads under", () => {
+  it("asks for the extract under every spelling of the tenant key, never one", async () => {
+    loadApprovedMoveEvidenceSnapshot.mockResolvedValue({ revision: "rev-1" });
+
+    await loadCurrentMoveContextExtractFreshness({ ...ARGS, tenantKey: "meridian" });
+
+    expect(tenantFilter).toHaveBeenCalledWith("tenant_key", tenantKeyReadValues("meridian"));
+    const [, values] = tenantFilter.mock.calls[0] as [string, string[]];
+    // The demo tenant's rows are persisted under both its app and canonical
+    // spellings; a filter that carried only the one it was called with would
+    // report the extract absent and the P3 sign-off precondition would refuse.
+    expect(values).toEqual(expect.arrayContaining(["meridian", "meridian-health"]));
+    expect(values.length).toBeGreaterThan(1);
   });
 });

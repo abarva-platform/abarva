@@ -14,6 +14,7 @@ import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { decideApprovalRequest } from "@/lib/programs/approval";
 import { azureRead } from "@/lib/data-plane/azureRead";
+import { tenantKeyReadValues } from "@/lib/programs/tenant-key-filter";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,7 +53,9 @@ export async function POST(
       limit: 1,
     });
     const row = rows[0];
-    if (!row || row.tenant_key !== ctx.clientKey) {
+    // Tenant isolation on the alias set: the row may be stored under any
+    // spelling of this tenant's key; another tenant's spelling is never in it.
+    if (!row || !tenantKeyReadValues(ctx.clientKey ?? "").includes(row.tenant_key)) {
       return Response.json(
         {
           error: "no_pending_request",

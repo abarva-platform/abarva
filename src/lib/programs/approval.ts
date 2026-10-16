@@ -29,6 +29,7 @@ import {
 } from "@/lib/programs/approval-notifications";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import { assertP0SourceEvidenceReady } from "@/lib/programs/p0-source-evidence";
+import { tenantKeyReadValues } from "@/lib/programs/tenant-key-filter";
 import { writeProgramAuditLogBestEffort } from "./audit-log";
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -710,7 +711,7 @@ export async function getApprovalQueueForTenant(
   const { data, error } = await sb
     .from("program_approval_requests")
     .select(APPROVAL_COLUMNS)
-    .eq("tenant_key", tenantKey)
+    .in("tenant_key", tenantKeyReadValues(tenantKey))
     .eq("request_status", "pending")
     .order("requested_at", { ascending: true });
 
@@ -744,7 +745,7 @@ export async function listApprovalAuditForTenant(
   let query = sb
     .from("program_approval_requests")
     .select(APPROVAL_COLUMNS)
-    .eq("tenant_key", input.tenantKey)
+    .in("tenant_key", tenantKeyReadValues(input.tenantKey))
     .order("requested_at", { ascending: false })
     .limit(limit);
 

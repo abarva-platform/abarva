@@ -5,6 +5,7 @@ import { queryTenantContext } from "@/lib/azure-search/tenant-context-retriever"
 import type { TenantContextChunk } from "@/lib/azure-search/tenant-context-retriever";
 import { findSkyHarborPreviewModule } from "@/lib/enterprise-data/candidate-preview-enablement/skyharbor-preview-package";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { tenantKeyReadValues } from "@/lib/programs/tenant-key-filter";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import { getDiscoveryBlueprint } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
 import {
@@ -471,7 +472,7 @@ async function defaultExistingExtract(args: {
   const { data, error } = await sb
     .from("move_artifacts")
     .select("artifact_id, metadata, created_at, generated_at")
-    .eq("tenant_key", args.tenantKey)
+    .in("tenant_key", tenantKeyReadValues(args.tenantKey))
     .eq("move_id", args.moveId)
     .eq("artifact_type", args.artifactType)
     .eq("lifecycle_state", "current")
