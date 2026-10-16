@@ -49,12 +49,21 @@ const docxArtifact = {
 let insertedDecision: Record<string, unknown> | null = null;
 let latestDecision: Record<string, unknown> | null = null;
 let mockCanApproveGates = true;
+const tenantSetFilters: Array<[string, string, unknown[]]> = [];
+const tenantEqFilters: Array<[string, string, unknown]> = [];
 
 function builder(table: string) {
   const state: { insertPayload?: Record<string, unknown> } = {};
   const api: Record<string, jest.Mock> = {};
   api.select = jest.fn(() => api);
-  api.eq = jest.fn(() => api);
+  api.eq = jest.fn((column: string, value: unknown) => {
+    if (column === "tenant_key") tenantEqFilters.push([table, column, value]);
+    return api;
+  });
+  api.in = jest.fn((column: string, values: unknown[]) => {
+    if (column === "tenant_key") tenantSetFilters.push([table, column, values]);
+    return api;
+  });
   api.order = jest.fn(() => api);
   api.limit = jest.fn(() => api);
   api.insert = jest.fn((payload: Record<string, unknown>) => {
@@ -112,7 +121,12 @@ jest.mock("@/lib/auth/program-access-policy", () => ({
   })),
 }));
 
+jest.mock("@/lib/programs/tenant-key-filter", () => ({
+  tenantKeyReadValues: (key: string) => [key, `${key}-canonical`],
+}));
+
 import { GET, POST } from "../route";
+import { tenantKeyReadValues } from "@/lib/programs/tenant-key-filter";
 
 function req(body: Record<string, unknown>) {
   return {
@@ -128,6 +142,8 @@ beforeEach(() => {
   insertedDecision = null;
   latestDecision = null;
   mockCanApproveGates = true;
+  tenantSetFilters.length = 0;
+  tenantEqFilters.length = 0;
   callerRole = "workspace_member";
 });
 
@@ -207,6 +223,26 @@ describe("artifact review decision route", () => {
     });
     expect(insertedDecision?.carried_forward_caveats).toBe("[]");
     expect(insertedDecision?.missing_evidence).toBe("[]");
+  });
+
+  it("looks the paired editable record up under every spelling of the tenant key", async () => {
+    const res = await POST(
+      req({
+        decision: "approve_for_p3_draft",
+        rationale: "Paired record lookup must not depend on one spelling of the tenant key.",
+      }),
+      params(),
+    );
+    expect(res.status).toBe(200);
+    // The paired docx lookup is the only move_artifacts read this route makes
+    // itself; it must filter on the per-tenant alias set, never one spelling.
+    expect(tenantSetFilters.filter(([table]) => table === "move_artifacts")).toEqual([
+      ["move_artifacts", "tenant_key", tenantKeyReadValues(tenancy.clientKey)],
+    ]);
+    // The alias module is mocked to answer a two-spelling set for any key, so a
+    // route that bypassed it and filtered on the one spelling it holds fails here.
+    expect(tenantSetFilters[0]?.[2]).toEqual(["test-tenant", "test-tenant-canonical"]);
+    expect(tenantEqFilters.filter(([table]) => table === "move_artifacts")).toEqual([]);
   });
 
   it("keeps P3 draft blocked when reviewer requests revisions", async () => {

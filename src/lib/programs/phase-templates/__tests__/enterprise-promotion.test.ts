@@ -45,8 +45,10 @@ describe('governance source-scan: Move-scoped + no auto-promotion', () => {
     // write inserts tenant_key + program_id
     expect(store).toMatch(/tenant_key:\s*input\.tenantKey/);
     expect(store).toMatch(/program_id:\s*input\.moveId/);
-    // read filters by tenant_key + program_id
-    expect(store).toMatch(/\.eq\("tenant_key"/);
+    // read filters by tenant_key (the per-tenant alias set: rows for one tenant
+    // are persisted under more than one spelling of its key) + program_id
+    expect(store).toMatch(/\.in\("tenant_key",\s*tenantKeyReadValues\(input\.tenantKey\)\)/);
+    expect(store).not.toMatch(/\.eq\("tenant_key"/);
     expect(store).toMatch(/\.eq\("program_id"/);
   });
 

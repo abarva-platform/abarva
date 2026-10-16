@@ -6,6 +6,7 @@
 import { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "../../../../_auth";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { tenantKeyReadValues } from "@/lib/programs/tenant-key-filter";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,7 +33,8 @@ export async function GET(
       tenant_key: string;
       metadata: { contextBundleTrace?: unknown } | null;
     };
-    if (row.tenant_key !== tenantKey)
+    // Tenant isolation on the alias set (any spelling of this tenant's key).
+    if (!tenantKeyReadValues(tenantKey).includes(row.tenant_key))
       return Response.json({ error: "forbidden" }, { status: 403 });
     const trace = row.metadata?.contextBundleTrace ?? null;
     if (!trace)

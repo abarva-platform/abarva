@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import { tenantKeyReadValues } from "@/lib/programs/tenant-key-filter";
 import {
   isApprovedMoveEvidenceBasisCurrent,
   loadApprovedMoveEvidenceSnapshot,
@@ -121,7 +122,7 @@ export async function loadCurrentMoveContextExtractFreshness(args: {
   const { data, error } = await sb
     .from("move_artifacts")
     .select("metadata, created_at, generated_at")
-    .eq("tenant_key", args.tenantKey)
+    .in("tenant_key", tenantKeyReadValues(args.tenantKey))
     .eq("move_id", args.moveId)
     .eq("artifact_type", artifactTypeForPhase(args.phase))
     .eq("lifecycle_state", "current")

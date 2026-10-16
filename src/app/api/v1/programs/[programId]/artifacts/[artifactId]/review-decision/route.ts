@@ -12,6 +12,7 @@ import {
   readinessForDecision,
 } from "@/lib/programs/deliverables/artifact-review-decisions";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { tenantKeyReadValues } from "@/lib/programs/tenant-key-filter";
 import type { MoveArtifactRow } from "@/lib/programs/deliverables/move-artifacts";
 import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import type { MoveReviewDecisionRefusalCode } from "@/lib/programs/move-review-decision-refusal";
@@ -63,7 +64,7 @@ async function findPairedReviewArtifact(
     const { data, error } = await sb
       .from("move_artifacts")
       .select("*")
-      .eq("tenant_key", ctx.clientKey ?? "")
+      .in("tenant_key", tenantKeyReadValues(ctx.clientKey ?? ""))
       .eq("move_id", programId)
       .eq("metadata->>pairedVisualCompanionArtifactId", artifact.artifact_id)
       .eq("metadata->>outputRole", "docx_editable_phase_record")

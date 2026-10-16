@@ -8,6 +8,7 @@ import "server-only";
 // enterprise context.
 
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { tenantKeyReadValues } from "@/lib/programs/tenant-key-filter";
 import {
   APPROVED_INPUTS_PACK_TYPE,
   isApprovedInputsPack,
@@ -81,7 +82,7 @@ export async function getLatestApprovedInputsPack(
   const { data, error } = await sb
     .from("program_evidence_items")
     .select("id, extracted_structured, created_at, created_by_user_id")
-    .eq("tenant_key", input.tenantKey)
+    .in("tenant_key", tenantKeyReadValues(input.tenantKey))
     .eq("program_id", input.moveId)
     .eq("phase", input.phase)
     .eq("evidence_type", APPROVED_INPUTS_PACK_TYPE)
