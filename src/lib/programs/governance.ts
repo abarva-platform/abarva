@@ -25,6 +25,7 @@
 // execution team acceptance, not just Strategic Moves team signoff.
 
 import { captureValueGateText } from "@/lib/programs/structured-capture-text";
+import { tenantKeyReadValues } from "@/lib/programs/tenant-key-filter";
 import {
   getAzureWriteFluentClient,
   type PostgresCompatClient as SupabaseClient,
@@ -812,7 +813,7 @@ export async function evaluateGate(
               .select(
                 "artifact_id, tenant_key, move_id, artifact_family, lifecycle_state, created_at, metadata",
               )
-              .eq("tenant_key", ctx.clientKey)
+              .in("tenant_key", tenantKeyReadValues(ctx.clientKey ?? ""))
               .eq("move_id", programId)
               .in("artifact_id", linkedArtifactIds),
         )
@@ -922,7 +923,9 @@ export async function evaluateGate(
     // comparison below is the only half an unevaluable basis may skip.
     const linkedArtifactIntegrityOk = Boolean(
       linkedArtifact &&
-      linkedArtifact.tenant_key === ctx.clientKey &&
+      tenantKeyReadValues(ctx.clientKey ?? "").includes(
+        linkedArtifact.tenant_key,
+      ) &&
       linkedArtifact.move_id === programId &&
       linkedArtifact.artifact_family === "generated_deliverable" &&
       linkedArtifact.lifecycle_state === "current" &&

@@ -1,6 +1,7 @@
 import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import type { TenancyCtx } from "@/lib/programs/types.db";
+import { tenantKeyReadValues } from "@/lib/programs/tenant-key-filter";
 import {
   downloadArtifactBytes,
   downloadArtifactOutcome,
@@ -137,6 +138,10 @@ describe("saveMoveArtifact", () => {
         filters.push([column, value]);
         return query;
       },
+      in(column: string, value: unknown) {
+        filters.push([column, value]);
+        return query;
+      },
       maybeSingle: async () => ({
         data: {
           blob_container: "context-drops",
@@ -158,7 +163,7 @@ describe("saveMoveArtifact", () => {
     expect(result?.bytes.toString()).toBe("source bytes");
     expect(filters).toEqual([
       ["artifact_id", "artifact-1"],
-      ["tenant_key", "meridian"],
+      ["tenant_key", tenantKeyReadValues("meridian")],
       ["move_id", "move-1"],
     ]);
     expect(downloadMock).toHaveBeenCalledWith(
@@ -179,6 +184,9 @@ describe("downloadArtifactOutcome", () => {
     const selected: string[] = [];
     const query = {
       eq() {
+        return query;
+      },
+      in() {
         return query;
       },
       maybeSingle: async () => ({

@@ -1,13 +1,12 @@
 import "server-only";
 
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { tenantKeyReadValues } from "@/lib/programs/tenant-key-filter";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import type { MoveArtifactRow } from "./move-artifacts";
 
 export type ArtifactReviewDecision =
-  | "approve_for_p3_draft"
-  | "request_revisions"
-  | "hold_for_evidence";
+  "approve_for_p3_draft" | "request_revisions" | "hold_for_evidence";
 
 export interface ArtifactReviewDecisionRow {
   id: string;
@@ -353,7 +352,7 @@ export async function getLatestArtifactReviewDecision(
     let q = sb
       .from("move_artifact_review_decisions")
       .select("*")
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantKeyReadValues(tenantKey))
       .eq("move_id", args.moveId);
     if (typeof args.phase === "number") q = q.eq("phase", args.phase);
     if (args.artifactId) q = q.eq("artifact_id", args.artifactId);

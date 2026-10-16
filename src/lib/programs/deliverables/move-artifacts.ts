@@ -11,6 +11,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { tenantKeyReadValues } from "@/lib/programs/tenant-key-filter";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import {
   moveArtifactBytesNeverRetained,
@@ -280,7 +281,7 @@ export async function listMoveArtifacts(
     let q = sb
       .from("move_artifacts")
       .select("*")
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantKeyReadValues(tenantKey))
       .eq("move_id", moveId);
     if (opts.family) q = q.eq("artifact_family", opts.family);
     if (opts.currentOnly) q = q.eq("lifecycle_state", "current");
@@ -301,7 +302,10 @@ export async function listMoveArtifactsForTenant(
   if (!tenantKey) return [];
   try {
     const sb = getAzureWriteFluentClient();
-    let q = sb.from("move_artifacts").select("*").eq("tenant_key", tenantKey);
+    let q = sb
+      .from("move_artifacts")
+      .select("*")
+      .in("tenant_key", tenantKeyReadValues(tenantKey));
     if (opts.currentOnly) q = q.eq("lifecycle_state", "current");
     const { data, error } = await q
       .order("created_at", { ascending: false })
@@ -324,7 +328,7 @@ export async function getMoveArtifactForTenant(
     const { data, error } = await sb
       .from("move_artifacts")
       .select("*")
-      .eq("tenant_key", tenantKey)
+      .in("tenant_key", tenantKeyReadValues(tenantKey))
       .eq("artifact_id", artifactId)
       .maybeSingle();
     if (error || !data) return null;
@@ -391,16 +395,17 @@ export async function downloadArtifactOutcome(
         "blob_container, blob_path, file_name, file_format, tenant_key, metadata",
       )
       .eq("artifact_id", artifactId)
-      .eq("tenant_key", tenantKey);
+      .in("tenant_key", tenantKeyReadValues(tenantKey));
     if (moveId) query = query.eq("move_id", moveId);
     const { data, error } = await query.maybeSingle();
     // A read error and an absent row are the same answer to the reader: no
     // such file is filed here. Neither says whether the id exists elsewhere.
     if (error || !data) return { ok: false, reason: "artifact_not_found" };
     row = data as typeof row;
-    // Belt-and-braces against the `.eq("tenant_key", …)` filter above; a row
-    // that got past it is reported exactly as an absent one.
-    if (row.tenant_key !== tenantKey) {
+    // Belt-and-braces against the tenant filter above; a row that got past it
+    // is reported exactly as an absent one. Rows for one tenant are keyed under
+    // any spelling in its alias set, never a bare equality.
+    if (!tenantKeyReadValues(tenantKey).includes(row.tenant_key)) {
       return { ok: false, reason: "artifact_not_found" };
     }
   } catch {
@@ -453,7 +458,7 @@ export async function getArtifactSignedUrl(
       file_name: string;
       tenant_key: string;
     };
-    if (row.tenant_key !== tenantKey) return null; // tenant isolation
+    if (!tenantKeyReadValues(tenantKey).includes(row.tenant_key)) return null; // tenant isolation (alias set, per tenant)
     const url = await getObjectStorageAdapter().createSignedUrl(
       row.blob_container,
       row.blob_path,

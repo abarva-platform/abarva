@@ -18,6 +18,7 @@
 
 import "server-only";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { tenantKeyReadValues } from "@/lib/programs/tenant-key-filter";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import type {
   EvidenceFamilySpec,
@@ -509,7 +510,7 @@ export async function ensureEvidenceReviewForUploadedEvidence(
   const { data: existing, error: existingError } = await sb
     .from("program_evidence_reviews")
     .select("id, evidence_id, family_key, decision, auto_promoted")
-    .eq("tenant_key", tenantKey)
+    .in("tenant_key", tenantKeyReadValues(tenantKey))
     .eq("program_id", args.moveId)
     .eq("evidence_id", args.evidenceId)
     .maybeSingle();
@@ -771,9 +772,7 @@ export async function ingestUploadedMoveEvidence(
  *   this id in this Move. Nothing was ever recorded to re-read.
  */
 export type EvidenceReviewRefusalReason =
-  | "reviewed_extraction_missing"
-  | "already_decided"
-  | "evidence_not_found";
+  "reviewed_extraction_missing" | "already_decided" | "evidence_not_found";
 
 /**
  * The governed promotion: flip a pending document review to approved/rejected.
