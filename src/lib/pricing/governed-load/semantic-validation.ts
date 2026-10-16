@@ -11,10 +11,16 @@
  *   1. `role_or_band_ref` must resolve to a real `pricing_roles.role_code`
  *      OR `pricing_rate_bands.rate_band_code` row; `level` (if present) must
  *      resolve to a real `pricing_seniority_levels.level_code` row.
- *   2. No duplicate rows per PR2's rate-card-line idempotency key
+ *   2. `provider_ref` (if present) must be a reference provider class or
+ *      `INTERNAL` (the client's own staff); `location_ref` (if present) must
+ *      be a reference delivery location — checked when the snapshot carries
+ *      those sets, so a misspelt dimension is a row error, not a line that
+ *      silently never matches.
+ *   3. No duplicate rows per PR2's rate-card-line idempotency key
  *      (`rateCardLineIdentityKey`) within the same upload — the SECOND and
  *      later occurrence of a key is flagged, the first occurrence is kept.
  */
+import { INTERNAL_PROVIDER_CLASS } from "../effort-engine/types";
 import { clientProfileAssumptionKey, rateCardLineIdentityKey } from "./identity-keys";
 import type {
   ClientPricingProfileCsvRow,
@@ -29,6 +35,10 @@ export interface RateCardReferenceSnapshot {
   roleCodes: ReadonlySet<string>;
   rateBandCodes: ReadonlySet<string>;
   levelCodes: ReadonlySet<string>;
+  /** Reference provider class codes; when present, `provider_ref` is checked against them (plus INTERNAL). */
+  providerClassCodes?: ReadonlySet<string>;
+  /** Reference delivery location codes; when present, `location_ref` is checked against them. */
+  locationCodes?: ReadonlySet<string>;
 }
 
 export interface SemanticValidationResult<T> {
@@ -66,6 +76,31 @@ export function validateRateCardRowsAgainstReference(
         field: "level",
         code: "unresolved_level",
         message: `"${row.level}" does not match any pricing_seniority_levels.level_code in taxonomy version ${refs.taxonomyVersion}`,
+      });
+      ok = false;
+    }
+
+    if (
+      row.providerRef &&
+      refs.providerClassCodes &&
+      row.providerRef !== INTERNAL_PROVIDER_CLASS &&
+      !refs.providerClassCodes.has(row.providerRef)
+    ) {
+      errors.push({
+        rowNumber: row.rowNumber,
+        field: "provider_ref",
+        code: "unresolved_provider_ref",
+        message: `"${row.providerRef}" is not a provider class (${[...refs.providerClassCodes].sort().join(", ")}) or ${INTERNAL_PROVIDER_CLASS} for your own staff`,
+      });
+      ok = false;
+    }
+
+    if (row.locationRef && refs.locationCodes && !refs.locationCodes.has(row.locationRef)) {
+      errors.push({
+        rowNumber: row.rowNumber,
+        field: "location_ref",
+        code: "unresolved_location_ref",
+        message: `"${row.locationRef}" does not match any pricing_delivery_locations.location_code in taxonomy version ${refs.taxonomyVersion}`,
       });
       ok = false;
     }

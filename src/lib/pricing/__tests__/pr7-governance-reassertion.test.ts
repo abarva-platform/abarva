@@ -56,6 +56,9 @@ jest.mock("../reference-repository", () => {
     listRateBands: (...args: unknown[]) => mockListRateBands(...args),
     getRoleByCode: (...args: unknown[]) => mockGetRoleByCode(...args),
     listSeniorityLevels: (...args: unknown[]) => mockListSeniorityLevels(...args),
+    // Not loaded in this fixture: the import's provider/location check is skipped.
+    listProviderClasses: async () => [],
+    listDeliveryLocations: async () => [],
   };
 });
 jest.mock("../effort-engine/model-registry", () => {

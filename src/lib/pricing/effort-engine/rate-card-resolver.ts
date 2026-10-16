@@ -44,13 +44,39 @@ import { getCurrentRateCard, listRateCardLines } from "../rate-card-repository";
 import { getRoleByCode, listRateBands } from "../reference-repository";
 import type { PricingRateBandRow, PricingRateCardLineRow, PricingRoleRow } from "../types";
 import { dollarsToCents } from "./money";
-import type { ResolvedRate } from "./types";
+import { INTERNAL_PROVIDER_CLASS, type ResolvedRate } from "./types";
+
+export { INTERNAL_PROVIDER_CLASS };
+
+type RateCardLine = Pick<PricingRateCardLineRow, "role_or_band_ref" | "level" | "rate_value" | "currency" | "card_version_id"> &
+  Partial<Pick<PricingRateCardLineRow, "provider_ref" | "location_ref">>;
 
 export interface RoleRateSnapshot {
   roles: readonly Pick<PricingRoleRow, "role_code" | "default_rate_band_code">[];
   rateBands: readonly Pick<PricingRateBandRow, "rate_band_code" | "role_code" | "level_code" | "indicative_bill_rate" | "currency">[];
-  clientLines: readonly Pick<PricingRateCardLineRow, "role_or_band_ref" | "level" | "rate_value" | "currency" | "card_version_id">[];
-  globalLines: readonly Pick<PricingRateCardLineRow, "role_or_band_ref" | "level" | "rate_value" | "currency" | "card_version_id">[];
+  clientLines: readonly RateCardLine[];
+  globalLines: readonly RateCardLine[];
+}
+
+/** The pod member's provider class and delivery location, when the caller knows them. */
+export interface RateCardLineDimensions {
+  providerClassCode?: string | null;
+  locationCode?: string | null;
+}
+
+type LineMatch = { line: RateCardLine } | { ambiguous: string } | null;
+
+// A line fits a member when each dimension the line names equals the member's.
+// The most specific fitting line wins: provider (4) outranks location (2),
+// which outranks level (1). A line naming a provider or location the caller
+// did not state is a guess, so it scores below a line that names neither; two
+// equally good guesses that differ in provider or location are ambiguous and
+// return no rate rather than an arbitrary one. A line at another level is
+// never borrowed for a member whose level is known.
+function dimensionScore(lineValue: string | null | undefined, wanted: string | null | undefined, weight: number): number | null {
+  if (lineValue === null || lineValue === undefined) return 0;
+  if (wanted === null || wanted === undefined) return -1;
+  return lineValue === wanted ? weight : null;
 }
 
 function findLine(
@@ -58,51 +84,97 @@ function findLine(
   roleCode: string,
   defaultRateBandCode: string | null,
   levelHint: string | null,
-): RoleRateSnapshot["clientLines"][number] | null {
+  dims: RateCardLineDimensions,
+): LineMatch {
   // A line may be authored at role grain (role_or_band_ref = role_code) or
   // rate-band grain (role_or_band_ref = the role's default_rate_band_code) —
   // matching pricing_rate_card_lines.role_or_band_ref's documented dual
   // grain (see PR2 migration comment, quoted in rate-card-repository.ts).
   const candidateRefs = [roleCode, ...(defaultRateBandCode ? [defaultRateBandCode] : [])];
-  const matches = lines.filter((l) => candidateRefs.includes(l.role_or_band_ref));
-  if (matches.length === 0) return null;
-  if (levelHint) {
-    const levelMatch = matches.find((l) => l.level === levelHint);
-    if (levelMatch) return levelMatch;
+  const scored: { line: RateCardLine; score: number }[] = [];
+  for (const line of lines) {
+    if (!candidateRefs.includes(line.role_or_band_ref)) continue;
+    let levelScore: number;
+    if (line.level === null) levelScore = 0;
+    else if (levelHint === null) levelScore = -0.5;
+    else if (line.level === levelHint) levelScore = 1;
+    else continue;
+    const provider = dimensionScore(line.provider_ref, dims.providerClassCode, 4);
+    const location = dimensionScore(line.location_ref, dims.locationCode, 2);
+    if (provider === null || location === null) continue;
+    scored.push({ line, score: provider + location + levelScore });
   }
-  // No level hint, or no exact level match: any line for this role is usable
-  // (a role-grain line has no level dimension at all).
-  return matches.find((l) => l.level === null) ?? matches[0];
+  if (scored.length === 0) return null;
+  const best = Math.max(...scored.map((c) => c.score));
+  const top = scored.filter((c) => c.score === best);
+  const providers = new Set(top.map((c) => c.line.provider_ref ?? null));
+  const locations = new Set(top.map((c) => c.line.location_ref ?? null));
+  if (providers.size > 1 || locations.size > 1) {
+    const named = (values: Set<string | null>) => [...values].map((v) => v ?? "any").join(", ");
+    return {
+      ambiguous:
+        `the rate card has ${top.length} equally good lines for role '${roleCode}'` +
+        (providers.size > 1 ? ` (providers: ${named(providers)})` : "") +
+        (locations.size > 1 ? ` (locations: ${named(locations)})` : "") +
+        " — state the pod member's provider class and location so one line applies",
+    };
+  }
+  return { line: top[0].line };
 }
 
 /** Pure — resolves one role's hourly rate against an in-memory snapshot. No I/O. */
-export function resolveRoleRate(roleCode: string, levelHint: string | null, snapshot: RoleRateSnapshot): ResolvedRate {
+export function resolveRoleRate(
+  roleCode: string,
+  levelHint: string | null,
+  snapshot: RoleRateSnapshot,
+  dims: RateCardLineDimensions = {},
+): ResolvedRate {
   const role = snapshot.roles.find((r) => r.role_code === roleCode) ?? null;
   const defaultRateBandCode = role?.default_rate_band_code ?? null;
 
-  const clientLine = findLine(snapshot.clientLines, roleCode, defaultRateBandCode, levelHint);
-  if (clientLine) {
+  for (const [scope, lines] of [
+    ["client", snapshot.clientLines],
+    ["global", snapshot.globalLines],
+  ] as const) {
+    const match = findLine(lines, roleCode, defaultRateBandCode, levelHint, dims);
+    if (match === null) continue;
+    if ("ambiguous" in match) {
+      // Never fall through to a lower scope: that would silently ignore the card.
+      return {
+        resolvedFromScope: "missing",
+        roleCode,
+        levelCode: levelHint,
+        hourlyRateCents: null,
+        currency: "USD",
+        rateCardVersionId: null,
+        gapReason: `${scope} ${match.ambiguous}`,
+      };
+    }
+    const { line } = match;
     return {
-      resolvedFromScope: "client",
+      resolvedFromScope: scope,
       roleCode,
-      levelCode: clientLine.level,
-      hourlyRateCents: dollarsToCents(clientLine.rate_value),
-      currency: clientLine.currency,
-      rateCardVersionId: clientLine.card_version_id,
+      levelCode: line.level,
+      hourlyRateCents: dollarsToCents(line.rate_value),
+      currency: line.currency,
+      rateCardVersionId: line.card_version_id,
       gapReason: null,
+      matchedProviderRef: line.provider_ref ?? null,
+      matchedLocationRef: line.location_ref ?? null,
     };
   }
 
-  const globalLine = findLine(snapshot.globalLines, roleCode, defaultRateBandCode, levelHint);
-  if (globalLine) {
+  if (dims.providerClassCode === INTERNAL_PROVIDER_CLASS) {
     return {
-      resolvedFromScope: "global",
+      resolvedFromScope: "missing",
       roleCode,
-      levelCode: globalLine.level,
-      hourlyRateCents: dollarsToCents(globalLine.rate_value),
-      currency: globalLine.currency,
-      rateCardVersionId: globalLine.card_version_id,
-      gapReason: null,
+      levelCode: levelHint,
+      hourlyRateCents: null,
+      currency: "USD",
+      rateCardVersionId: null,
+      gapReason:
+        `no client rate-card line prices internal staff for role '${roleCode}'${levelHint ? ` at level '${levelHint}'` : ""}` +
+        " — internal rates come only from the client's own card, never from a supplier band",
     };
   }
 

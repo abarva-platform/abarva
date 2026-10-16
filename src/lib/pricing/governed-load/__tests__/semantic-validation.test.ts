@@ -176,3 +176,40 @@ describe("validateTechnologyCostRowsWithinUpload", () => {
     expect(errors[0]).toMatchObject({ rowNumber: 2, field: "cost_key", code: "duplicate_row" });
   });
 });
+
+describe("validateRateCardRowsAgainstReference — provider and location dimensions", () => {
+  const refs: RateCardReferenceSnapshot = {
+    ...REFS,
+    providerClassCodes: new Set(["SI-T1", "ENG-B"]),
+    locationCodes: new Set(["LOC-DALLAS"]),
+  };
+
+  it("accepts a reference provider class, INTERNAL for the client's own staff, and a reference location", () => {
+    const { validRows, errors } = validateRateCardRowsAgainstReference(
+      [
+        rateCardRow({ rowNumber: 1, providerRef: "SI-T1", locationRef: "LOC-DALLAS" }),
+        rateCardRow({ rowNumber: 2, providerRef: "INTERNAL" }),
+      ],
+      refs,
+    );
+    expect(errors).toEqual([]);
+    expect(validRows).toHaveLength(2);
+  });
+
+  it("flags a misspelt provider or location as a row error instead of a line that never matches", () => {
+    const { validRows, errors } = validateRateCardRowsAgainstReference(
+      [rateCardRow({ rowNumber: 1, providerRef: "Big4" }), rateCardRow({ rowNumber: 2, locationRef: "Dallas" })],
+      refs,
+    );
+    expect(validRows).toHaveLength(0);
+    expect(errors.map((e) => [e.rowNumber, e.code])).toEqual([
+      [1, "unresolved_provider_ref"],
+      [2, "unresolved_location_ref"],
+    ]);
+  });
+
+  it("skips the dimension checks when the reference sets are not loaded", () => {
+    const { errors } = validateRateCardRowsAgainstReference([rateCardRow({ providerRef: "ANY" })], REFS);
+    expect(errors).toEqual([]);
+  });
+});

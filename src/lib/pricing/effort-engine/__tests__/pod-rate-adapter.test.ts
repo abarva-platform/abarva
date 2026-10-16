@@ -223,7 +223,7 @@ describe("createReferencePodRateResolver — bill rate", () => {
     expect(r.baseSource).toBe("client_rate_card:cv-1");
     expect([r.location.value, r.provider.value]).toEqual([1, 1]);
     expect(r.location.notAppliedReason).toContain(
-      "does not match a line's location_ref/provider_ref",
+      "generic rate-card line (no provider or location on the line)",
     );
     expect(r.provider.notAppliedReason).toContain("used as-is");
     expect(evaluateRateTerms(r.rateTerms)).toBe(14_000);
@@ -535,5 +535,44 @@ describe("against the committed reference pack (relationships only, no pinned ra
         Math.round(line.paidHours * line.rate.hourlyRateCents),
       );
     }
+  });
+});
+
+describe("createReferencePodRateResolver — provider-specific and internal card lines", () => {
+  const cardLine = (rate: number, provider_ref: string | null, location_ref: string | null = null) => ({
+    role_or_band_ref: "ROL-002",
+    level: "LVL-04",
+    rate_value: rate,
+    currency: "USD",
+    card_version_id: "card-v3",
+    provider_ref,
+    location_ref,
+  });
+  const withCard = (lines: ReturnType<typeof cardLine>[]): PodRateReference => ({
+    ...REFERENCE,
+    basis: "bill_rate",
+    rateCard: { roles: [], clientLines: lines, globalLines: [] },
+  });
+
+  it("prices each provider from its own line, used as-is with the line's provider named", () => {
+    const resolve = createReferencePodRateResolver(withCard([cardLine(320, "SI-T1"), cardLine(110, "INTERNAL")]));
+    const si = resolve(member({ providerClassCode: "SI-T1" })) as ResolvedPodRate;
+    expect(si.hourlyRateCents).toBe(32000);
+    expect(si.provider.notAppliedReason).toMatch(/provider SI-T1, used as-is/);
+    const own = resolve(member({ providerClassCode: "INTERNAL", locationCode: "LOC-DALLAS" })) as ResolvedPodRate;
+    expect(own.hourlyRateCents).toBe(11000);
+    expect(own.baseSource).toBe("client_rate_card:card-v3");
+  });
+
+  it("refuses internal staff with no internal card line instead of using a supplier band", () => {
+    const resolve = createReferencePodRateResolver(withCard([cardLine(320, "SI-T1")]));
+    const refused = resolve(member({ providerClassCode: "INTERNAL" })) as PodRateRefusal;
+    expect(refused.ok).toBe(false);
+    expect(refused.code).toBe("internal_rate_missing");
+  });
+
+  it("still refuses a provider class that is neither in the reference nor INTERNAL", () => {
+    const refused = createReferencePodRateResolver(withCard([]))(member({ providerClassCode: "BIG-FOUR" })) as PodRateRefusal;
+    expect(refused.code).toBe("unknown_provider_class");
   });
 });
