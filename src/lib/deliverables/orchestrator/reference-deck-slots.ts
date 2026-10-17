@@ -19,11 +19,12 @@ const both = ["validation", "investment"] as const;
 const investment = ["investment"] as const;
 const obj = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+// The same formatters the exhibits use: a title's figure and its exhibit's
+// figure come from one source, so they must read the same ("$3.60M", "33%").
 const cents = (value: unknown): string | null =>
-  typeof value === "number" && Number.isSafeInteger(value) && value >= 0
-    ? `$${Math.round(value / 100).toLocaleString("en-US")}` : null;
+  typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? formatConsultantCents(value) : null;
 const ratio = (value: unknown): string | null =>
-  typeof value === "number" && Number.isFinite(value) ? `${(value * 100).toFixed(1)}%` : null;
+  typeof value === "number" && Number.isFinite(value) ? formatConsultantPercent(value) : null;
 const count = (value: number): string => value.toLocaleString("en-US");
 
 /** Slots for the AI-assisted delivery scenario. The model may use them only on the slide that shows it. */
@@ -100,6 +101,8 @@ export function buildReferenceSlotTable(inputs: EditionInputs): ReferenceSlotTab
   // The AI-assisted scenario approved beside the estimate: a comparison, never
   // the funding basis. Each slot is a saving, so it is present only when the
   // scenario actually saves that much; otherwise the model may not use it.
+  // A saving is its own figure (the exhibit shows the signed difference), so it
+  // carries its own source ID and the ledger gives each figure one display.
   const ai = rom?.result.aiAssisted ?? null;
   const scenario = (key: string, meaning: string, sourceKey: string, magnitude: number | null, format: (value: number) => string | null) => {
     const display = rom && ai && magnitude !== null && magnitude > 0 ? format(magnitude) : null;
@@ -113,11 +116,11 @@ export function buildReferenceSlotTable(inputs: EditionInputs): ReferenceSlotTab
   };
   const hours = (value: number) => value.toLocaleString("en-US", { maximumFractionDigits: 1 });
   scenario(AI_SCENARIO_SLOTS.weeksSaved, "weeks an AI-assisted delivery scenario would take off the approved estimate; a comparison, not the funding basis",
-    "versus_weeks", ai ? -ai.versusEstimate.weeks : null, count);
+    "weeks_saved", ai ? -ai.versusEstimate.weeks : null, count);
   scenario(AI_SCENARIO_SLOTS.hoursSaved, "delivery hours an AI-assisted delivery scenario would take off the approved estimate; a comparison, not the funding basis",
-    "versus_hours", ai ? -ai.versusEstimate.hours : null, hours);
+    "hours_saved", ai ? -ai.versusEstimate.hours : null, hours);
   scenario(AI_SCENARIO_SLOTS.costSaved, "how much lower an AI-assisted delivery scenario's cost at plan is than the approved estimate, its AI tool licences included; a comparison, not the funding basis",
-    "versus_plan", ai ? -ai.versusEstimate.planCents : null, cents);
+    "cost_saved", ai ? -ai.versusEstimate.planCents : null, cents);
   scenario(AI_SCENARIO_SLOTS.toolCost, "the AI tool licence cost inside an AI-assisted delivery scenario",
     "tool_cost", ai ? ai.toolCostCents : null, cents);
   const activeRows = inputs.register.status === "ready" && !inputs.register.value.figuresRedacted

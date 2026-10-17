@@ -61,6 +61,20 @@ function fixture(edition: EditionInputs["edition"]): EditionInputs {
 }
 
 describe("live-input reference edition", () => {
+  it.each(["validation", "investment"] as const)("gives every %s figure one display, so a title and its exhibit match", (edition) => {
+    const inputs = fixture(edition);
+    inputs.rom = { status: "ready", value: { id: "ROM-1", result: { combined: { planCents: 55_000_000 }, releases: [] }, workbookStructure: { unitHours: {} } } } as never;
+    const sequence = edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
+    const spec = buildReferenceEdition(inputs, words(sequence.length));
+    const displays = new Map<string, Set<string>>();
+    for (const figure of spec.figureLedger) displays.set(figure.sourceId, (displays.get(figure.sourceId) ?? new Set()).add(figure.display));
+    const split = [...displays].filter(([, set]) => set.size > 1).map(([id, set]) => `${id}: ${[...set].join(" | ")}`);
+    expect(split).toEqual([]);
+    // The slot a title uses and the exhibit read the same compact form.
+    expect(displays.get("engine:three_year_credited_earned")).toEqual(new Set(["$3.60M"]));
+    if (edition === "investment") expect(displays.get("rom:ROM-1:combined_plan")).toEqual(new Set(["$0.55M"]));
+  });
+
   it("keeps unsupported wording blocked with source-free typed refusal metadata", () => {
     const inputs = fixture("validation");
     inputs.valueCase = { status: "empty", detail: "Synthetic value evidence is unavailable." };
@@ -459,7 +473,7 @@ describe("live-input reference edition", () => {
     expect(summary.answer).toBe("Confirm how value is counted before relying on this summary.");
     expect(summary.actionTitle).not.toContain("unavailable");
     expect(summary.speakerNotes).toContain("Draft title awaiting input:");
-    expect(summary.speakerNotes).toContain("$1,200,000");
+    expect(summary.speakerNotes).toContain("$1.20M");
     expect(summary.visibleNarrativeFigures).toEqual([]);
     const rendered = await inspectDeck(await renderReferenceDeck(spec));
     expect(judgeRenderedDeck(rendered, { referenceDeck: spec }).findings.filter((finding) =>
@@ -629,8 +643,8 @@ describe("live-input reference edition", () => {
     const noSlotWords = buildReferenceEdition(fixture("validation"), words(VALIDATION_SEQUENCE.length));
     expect(spec.figureLedger).toEqual(noSlotWords.figureLedger);
     const slide = spec.slides[4]!;
-    expect(slide.actionTitle).toContain("$3,600,000");
-    expect(slide.narrativeFigures?.some((figure) => figure.display === "$3,600,000")).toBe(true);
+    expect(slide.actionTitle).toBe("Credited value reaches $3.60M over three years");
+    expect(slide.narrativeFigures?.some((figure) => figure.display === "$3.60M")).toBe(true);
     expect(slide.sourceIds).toContain("engine:three_year_credited_earned");
     expect(validateReferenceDeck(spec).filter((finding) => finding.blocking)).toEqual([]);
     slide.actionTitle = "A model typed $9,999 outside the governed slot.";
@@ -932,13 +946,20 @@ describe("the AI-assisted scenario on the delivery-hours slide", () => {
     expect(comparisonRows(build(inputs))?.[5]).toEqual(["Payback", "14 months", "Not within horizon", "Not comparable"]);
   });
 
+  it("gives every scenario figure one display, so the slot and the comparison exhibit agree", () => {
+    const spec = buildReferenceEdition(scenarioInputs(), words(INVESTMENT_SEQUENCE.length));
+    const displays = new Map<string, Set<string>>();
+    for (const figure of spec.figureLedger) displays.set(figure.sourceId, (displays.get(figure.sourceId) ?? new Set()).add(figure.display));
+    expect([...displays].filter(([, set]) => set.size > 1).map(([id, set]) => `${id}: ${[...set].join(" | ")}`)).toEqual([]);
+  });
+
   it("offers the slide words only the savings the scenario makes", () => {
     const table = buildReferenceSlotTable(scenarioInputs());
     expect(["rom.ai.weeks_saved", "rom.ai.hours_saved", "rom.ai.cost_saved", "rom.ai.tool_cost"].map((key) => [table[key]?.display, table[key]?.sourceId])).toEqual([
-      ["3", `rom:${ROM_ID}:ai_assisted:versus_weeks`],
-      ["200", `rom:${ROM_ID}:ai_assisted:versus_hours`],
-      ["$80,000", `rom:${ROM_ID}:ai_assisted:versus_plan`],
-      ["$13,680", `rom:${ROM_ID}:ai_assisted:tool_cost`],
+      ["3", `rom:${ROM_ID}:ai_assisted:weeks_saved`],
+      ["200", `rom:${ROM_ID}:ai_assisted:hours_saved`],
+      ["$80.0K", `rom:${ROM_ID}:ai_assisted:cost_saved`],
+      ["$13.7K", `rom:${ROM_ID}:ai_assisted:tool_cost`],
     ]);
     expect(table["rom.ai.weeks_saved"]?.editions).toEqual(["investment"]);
     expect(buildReferenceNarrativeEvidence(table, "rom_hours", "investment").aiScenarioAvailable).toBe(true);
@@ -972,8 +993,8 @@ describe("the AI-assisted scenario on the delivery-hours slide", () => {
     const spec = buildReferenceEdition(scenarioInputs(), authored);
     const slide = spec.slides[ROM_SLIDE]!;
     expect(slide.answer).toBe("An AI-assisted scenario would take 3 weeks off, as a comparison only.");
-    expect(slide.visibleNarrativeFigures).toContainEqual(expect.objectContaining({ display: "3", sourceId: `rom:${ROM_ID}:ai_assisted:versus_weeks` }));
-    expect(slide.sourceIds).toContain(`rom:${ROM_ID}:ai_assisted:versus_weeks`);
+    expect(slide.visibleNarrativeFigures).toContainEqual(expect.objectContaining({ display: "3", sourceId: `rom:${ROM_ID}:ai_assisted:weeks_saved` }));
+    expect(slide.sourceIds).toContain(`rom:${ROM_ID}:ai_assisted:weeks_saved`);
     expect(validateReferenceDeck(spec).filter((finding) => finding.blocking)).toEqual([]);
     const rendered = await inspectDeck(await renderReferenceDeck(spec));
     expect(judgeRenderedDeck(rendered, { referenceDeck: spec }).findings.filter((finding) =>
