@@ -385,11 +385,27 @@ describe("live-input reference edition", () => {
     inputs.register = { status: "ready", value: { assumptions: [], figuresRedacted: false } };
     inputs.citations = { status: "ready", value: [] };
     const spec = buildReferenceEdition(inputs, words(VALIDATION_SEQUENCE.length));
-    for (const archetype of ["assumptions", "sources", "flow_today"] as const) {
+    for (const archetype of ["assumptions", "flow_today"] as const) {
       const blocks = spec.slides.find((slide) => slide.archetype === archetype)?.blocks;
       expect(blocks).toHaveLength(1);
       expect(blocks?.[0]?.kind).toBe("gap");
     }
+    // Sources lists what the deck does rest on, and says plainly that no published source is approved.
+    const sourcesTable = spec.slides.find((slide) => slide.archetype === "sources")?.blocks[0];
+    expect(sourcesTable?.kind === "table" ? sourcesTable.rows : null).toEqual([
+      ["Published sources", "Public evidence", "None approved yet"],
+      ["Sponsor workshop", "Workshop evidence", "Scope, commitment and success measures"],
+      ["Discovery workshop", "Workshop evidence", "Current state, handoffs and data quality"],
+      ["Design workshop", "Workshop evidence", "Operating model, controls and approach"],
+      ["Value model", "Calculated value case", "Value, timing and counting rules"],
+    ]);
+    const bare = fixture("validation");
+    bare.register = { status: "ready", value: { assumptions: [], figuresRedacted: false } };
+    bare.citations = { status: "ready", value: [] };
+    bare.valueCase = { status: "empty", detail: "Not modelled." };
+    for (const phase of [1, 2, 3] as const) bare.capture[phase] = { status: "gap", detail: "Not recorded." } as never;
+    const bareSources = buildReferenceEdition(bare, words(VALIDATION_SEQUENCE.length)).slides.find((slide) => slide.archetype === "sources")?.blocks;
+    expect(bareSources?.map((block) => block.kind)).toEqual(["gap"]);
     const partial = fixture("validation");
     if (partial.register.status !== "ready") throw new Error("missing fixture");
     partial.register.value.assumptions[0]!.source = "";
@@ -532,6 +548,27 @@ describe("live-input reference edition", () => {
     }
   });
 
+  it("lists every source the investment deck rests on, with no structure finding", async () => {
+    const inputs = fixture("investment");
+    inputs.rom = { status: "ready", value: { id: "ROM-1", result: { combined: { planCents: 55_000_000 }, releases: [] }, workbookStructure: { unitHours: {} } } } as never;
+    const spec = buildReferenceEdition(inputs, words(INVESTMENT_SEQUENCE.length));
+    const slide = spec.slides.find((entry) => entry.archetype === "sources")!;
+    const sourcesTable = slide.blocks[0];
+    expect(sourcesTable?.kind === "table" ? [sourcesTable.columns, sourcesTable.rows.map((row) => row[0])] : null).toEqual([
+      ["Source", "What it is", "Used for"],
+      ["[S:1]", "Sponsor workshop", "Discovery workshop", "Design workshop", "Working assumptions", "Value model", "Delivery estimate"],
+    ]);
+    const slideNumber = spec.slides.indexOf(slide) + 1;
+    const findings = judgeRenderedDeck(await inspectDeck(await renderReferenceDeck(spec)), { referenceDeck: spec }).findings
+      .filter((finding) => "slide" in finding && finding.slide === slideNumber);
+    expect(findings).toEqual([]);
+    // The validation edition names no estimate and no investment term.
+    const validation = buildReferenceEdition({ ...inputs, edition: "validation" }, words(VALIDATION_SEQUENCE.length));
+    const cells = validation.slides.find((entry) => entry.archetype === "sources")!.blocks.flatMap((block) => block.kind === "table" ? block.rows.flat() : []);
+    expect(cells).not.toContain("Delivery estimate");
+    for (const cell of cells) expect(String(cell)).not.toMatch(/\b(?:cost|rom|roi|investment|solution|plan|roadmap|release)\b/i);
+  }, 60_000);
+
   it("substitutes a governed title slot, carries its ledger source and rejects a model-written digit", () => {
     const authored = words(VALIDATION_SEQUENCE.length);
     authored[4] = {
@@ -591,7 +628,8 @@ describe("live-input reference edition", () => {
     const sequence = edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
     const spec = buildReferenceEdition(inputs, unavailableEditionWords(edition, sequence));
     const gaps = spec.slides.flatMap((slide) => slide.blocks).filter((block): block is Extract<ReferenceBlock, { kind: "gap" }> => block.kind === "gap");
-    expect(gaps.length).toBeGreaterThanOrEqual(3);
+    // Sources lists the workshops, so it is no longer one of the gaps.
+    expect(gaps.length).toBeGreaterThanOrEqual(2);
     expect(new Set(gaps.map((gap) => gap.detail)).size).toBe(gaps.length);
     expect(new Set(gaps.map((gap) => gap.nextAction)).size).toBe(gaps.length);
     if (edition === "validation")
