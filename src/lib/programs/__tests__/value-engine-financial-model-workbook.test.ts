@@ -42,7 +42,7 @@ describe("buildFinancialModelWorkbook", () => {
     expect(cached(check.getCell(layout.check.overall))).toBe("YES");
     const rows = [...Array(layout.check.rows).keys()].map((i) => check.getCell(5 + i, 7));
     expect(rows.map(cached)).toEqual(rows.map(() => "YES"));
-    expect(rows.length).toBe(3 + 4 + input.result.levers.filter((lever) => lever.annualCents).length);
+    expect(rows.length).toBe(4 + 4 + input.result.levers.filter((lever) => lever.annualCents).length);
   });
 
   it("writes each lever's annual value as the rounded product of its selected inputs", () => {
@@ -131,7 +131,7 @@ describe("buildFinancialModelWorkbook", () => {
       expect(formulaOf(schedule.getCell(Number(reachedAi.row), 3))).toMatch(/>=Inputs!\$E\$11,C\$4,""\)$/);
       const check = workbook.getWorksheet(FINANCIAL_MODEL_SHEETS.check)!;
       expect(cached(check.getCell(layout.check.overall))).toBe("YES");
-      expect(layout.check.rows).toBe(3 + 4 + 2 + input.result.levers.filter((lever) => lever.annualCents).length);
+      expect(layout.check.rows).toBe(4 + 4 + 2 + input.result.levers.filter((lever) => lever.annualCents).length);
       const inputsSheet = workbook.getWorksheet(FINANCIAL_MODEL_SHEETS.inputs)!;
       expect(inputsSheet.getCell("F11").value).toBe("Synthetic coding agents: a comparison, not the funding basis");
       expect(formulaOf(inputsSheet.getCell("E11"))).toBe("CHOOSE(Inputs!$B$5,B11,C11,D11)");
@@ -147,6 +147,30 @@ describe("buildFinancialModelWorkbook", () => {
     it("is absent when no scenario was approved", () => {
       expect(buildFinancialModelWorkbook(inputs()).layout.aiScenario).toBeNull();
     });
+  });
+
+  it("writes breakeven realisation over the same discounted year sums as NPV, checked against the engine", () => {
+    const input = inputs();
+    const { workbook, layout } = buildFinancialModelWorkbook(input);
+    const econ = workbook.getWorksheet(FINANCIAL_MODEL_SHEETS.economics)!;
+    const cell = econ.getCell(layout.economics.breakevenRealisation);
+    expect(cached(cell)).toBe(input.result.economics!.breakevenRealisation.base);
+    expect(cell.numFmt).toBe("0.00%");
+    // The NPV formula's year addends are the realisation's denominator.
+    const npvAddends = /^ROUND\(-B6\+(.+),0\)$/.exec(formulaOf(econ.getCell(layout.economics.npv))!)![1];
+    expect(formulaOf(cell)).toBe(`IF(B6<=0,0,IF((${npvAddends})<=0,"No positive cash",ROUND(B6/(${npvAddends}),4)))`);
+    const check = workbook.getWorksheet(FINANCIAL_MODEL_SHEETS.check)!;
+    const at = [...Array(layout.check.rows).keys()].map((i) => 5 + i).find((row) => check.getCell(row, 1).value === "Breakeven realisation")!;
+    expect([2, 3, 4].map((c) => check.getCell(at, c).value)).toEqual(["low", "base", "high"].map((s) =>
+      input.result.economics!.breakevenRealisation[s as "low" | "base" | "high"]));
+    expect(formulaOf(check.getCell(at, 6))).toBe(`'${FINANCIAL_MODEL_SHEETS.economics}'!${layout.economics.breakevenRealisation}`);
+  });
+
+  it("states no positive cash when the case's discounted cash cannot cover any share", () => {
+    const input = inputs();
+    const economics = { ...input.result.economics!, breakevenRealisation: { low: null, base: null, high: null } };
+    const { workbook, layout } = buildFinancialModelWorkbook({ ...input, result: { ...input.result, economics } });
+    expect(cached(workbook.getWorksheet(FINANCIAL_MODEL_SHEETS.economics)!.getCell(layout.economics.breakevenRealisation))).toBe("No positive cash");
   });
 
   it("shows the engine's breakeven for every lever, with its basis and each outcome in words", () => {

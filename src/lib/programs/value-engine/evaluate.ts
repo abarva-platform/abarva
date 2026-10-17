@@ -162,6 +162,7 @@ export function evaluateValueCase(
       npvCents: scenarioValues((s) => runs[s].npv.figure),
       npvTerms: scenarioValues((s) => runs[s].npv.terms),
       paybackMonth: scenarioValues((s) => runs[s].paybackMonth),
+      breakevenRealisation: scenarioValues((s) => runs[s].breakevenRealisation),
     },
     breakeven: caseBreakeven(prepared, none),
     sensitivity: oneAtATimeSensitivity(prepared),

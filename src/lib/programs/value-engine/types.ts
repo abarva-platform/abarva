@@ -362,6 +362,12 @@ export interface CaseEconomics {
   npvTerms: ScenarioValues<ValueFormulaTerm[]>;
   /** First 1-based month whose cumulative cash ≥ cost; null if not within the horizon. */
   paybackMonth: ScenarioValues<number | null>;
+  /**
+   * Share of the modelled cash, on the same schedule, at which NPV is zero:
+   * cost ÷ discounted cash, 4 decimals. 0 for no cost; null when discounted
+   * cash is not positive. Above 1: the value does not cover the cost.
+   */
+  breakevenRealisation: ScenarioValues<number | null>;
 }
 
 export interface ThreeYearBasis {

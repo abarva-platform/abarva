@@ -24,6 +24,7 @@ const evaluated: ValueCaseResult = {
     npvCents: { low: 0, base: 0, high: 0 },
     npvTerms: { low: [], base: [], high: [] },
     paybackMonth: { low: 3, base: 2, high: 2 },
+    breakevenRealisation: { low: 1, base: 1, high: 1 },
   },
   breakeven: [],
   sensitivity: [],

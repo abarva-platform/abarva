@@ -524,6 +524,11 @@ function ValueCaseReadback({
     economics?.paybackMonth && typeof economics.paybackMonth === "object"
       ? (economics.paybackMonth as Record<string, unknown>)
       : null;
+  // Absent from an engine response older than the field: show nothing rather than a guess.
+  const realisation =
+    economics?.breakevenRealisation && typeof economics.breakevenRealisation === "object"
+      ? (economics.breakevenRealisation as Record<string, unknown>)
+      : null;
   const threeYearBases = economics?.threeYearBases as
     | Record<string, Record<string, Record<string, unknown>>>
     | null
@@ -622,6 +627,21 @@ function ValueCaseReadback({
             : `${String(payback.base ?? "unknown")} months`}
           <SourceLine
             source={{ kind: "est", text: "Engine result", cite: caseSources }}
+          />
+        </p>
+      ) : null}
+      {realisation && "base" in realisation ? (
+        <p className={cx("proposal")}>
+          <strong>Breakeven realisation</strong> · plan{" "}
+          {typeof realisation.base === "number" && Number.isFinite(realisation.base)
+            ? `${(realisation.base * 100).toLocaleString("en-US", { maximumFractionDigits: 1 })}% of the modelled value`
+            : "not reached: the case has no positive cash"}
+          <SourceLine
+            source={{
+              kind: "est",
+              text: "Engine result · the share of modelled cash at which NPV is zero",
+              cite: caseSources,
+            }}
           />
         </p>
       ) : null}

@@ -10,6 +10,11 @@
  * - Payback: the first 1-based month whose cumulative (undiscounted) cash is
  *   at least the cost; 0 when there is no cost; null when the horizon ends
  *   first.
+ * - Breakeven realisation: the share of the modelled cash, received on the
+ *   same schedule, at which NPV is zero — cost ÷ Σ the same discounted year
+ *   addends, rounded to 4 decimals. Cash scales with the share, so NPV at that
+ *   share is zero. 0 when there is no cost; null when the horizon's discounted
+ *   cash is not positive. Above 1: the modelled value does not cover the cost.
  *
  * Pure, no I/O.
  */
@@ -65,6 +70,17 @@ export function npvWithTerms(
     ),
   ];
   return closeSumTerms(addends, "net present value (cents)");
+}
+
+export function breakevenRealisation(
+  monthlyCash: readonly Cents[],
+  costCents: Cents,
+  discountRate: number,
+  horizonYears: number,
+): number | null {
+  if (costCents <= 0) return 0;
+  const present = discountedYearSums(monthlyCash, discountRate, horizonYears).reduce((sum, value) => sum + value, 0);
+  return present > 0 ? Math.round((costCents / present) * 10_000) / 10_000 : null;
 }
 
 export function paybackMonth(
