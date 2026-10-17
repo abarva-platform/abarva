@@ -660,13 +660,14 @@ export function MovesStepPage(props: MovesStepPageProps) {
                 >
                   <span className={cx("step-rule")} />
                   {(done || open) && !current && step.href ? (
-                    <a className={cx("step-btn")} href={step.href}>
+                    <a className={cx("step-btn")} href={step.href} title={step.title}>
                       {inner}
                     </a>
                   ) : (
                     <button
                       type="button"
                       className={cx("step-btn")}
+                      title={step.title}
                       aria-current={current ? "step" : undefined}
                       disabled={!current && !done && !open}
                     >

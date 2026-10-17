@@ -344,6 +344,17 @@ describe("MovesStepPage", () => {
     ).toContain("· Skipped");
   });
 
+  it("names every step in full on hover, so a wrapped or clamped name is never lost", () => {
+    const { container } = render(<MovesStepPage {...props(ROWS)} />);
+    const steps = [...container.querySelectorAll('[class*="step-title"]')].map((title) => title.closest("a, button") as HTMLElement);
+    expect(steps.length).toBeGreaterThan(1);
+    for (const step of steps) {
+      const name = step.querySelector('[class*="step-title"]')?.textContent;
+      expect(name).toBeTruthy();
+      expect(step.getAttribute("title")).toBe(name);
+    }
+  });
+
   it("done: dated eyebrow, settled group open, the current step ticked", () => {
     const settled = ROWS.map((r) => ({ ...r, state: "settled" as const }));
     const { container } = render(
