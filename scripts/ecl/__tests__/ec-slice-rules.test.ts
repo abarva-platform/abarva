@@ -1,12 +1,12 @@
 import {
   EC_SLICE_STATES, ecSliceHash, evaluateOwnershipCoverage, evaluateCompetingAssertions,
   evaluateTargetReadiness, evaluateSelfServiceQa, evaluateEdgeAdapter, invalidateRuleEvaluation,
-} from "../ec-slice-rules";
+} from "../ec_slice_rules";
 import type {
   EcAssertion, EcEntity, EcEvidence, EcRuleContext, EcMeasurementGrain, EcInvalidationChange,
   OwnershipCoverageInput, CompetingAssertionsInput, TargetReadinessInput, SelfServiceQaInput,
   EdgeAdapterInput, EcEdge, EcPredicateDefinition, EcRuleEvaluation,
-} from "../ec-slice-rules";
+} from "../ec_slice_rules";
 
 // These are local rule scopes, not registered tenants or source-native fixtures.
 const scope = { namespace: "unit:ec-rules", binding_key: "binding:unit", cohort_id: "cohort:applications" };
@@ -57,6 +57,12 @@ const qa = (): SelfServiceQaInput => ({
   successful: 12, abandoned: 3, unresolved: 2, subsequent_agent: 3, follow_up_complete: true,
   repeat_contact_window_days: 7, eligibility_taxonomy: "routine-only", observation_period: ["2026-09-01", "2026-10-01"],
   timezone: "UTC",
+});
+it("abstains on non-UTC QA calendars until their date-boundary conversion is admitted", () => {
+  const result = evaluateSelfServiceQa({ ...qa(), timezone: "America/New_York" });
+  expect(result.output_state).toBe("unknown");
+  expect(result.reasons).toContain("non_utc_qa_calendar_conversion_not_admitted");
+  expect((result.details as Record<string, unknown>).successful_resolution_percent).toBeNull();
 });
 const predicate = (changes: Partial<EcPredicateDefinition> = {}): EcPredicateDefinition => ({
   predicate: "supports", inverse_predicate: "supported_by", from_types: ["application"], to_types: ["process"],

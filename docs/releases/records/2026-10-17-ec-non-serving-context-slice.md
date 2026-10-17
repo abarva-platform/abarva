@@ -39,7 +39,7 @@ See `docs/architecture/ec-slice-acceptance.md`, the semantic map, pure adapter/r
 
 ## QA / Validation
 
-- Pass: 53 pure contract tests and 235 focused rule/governance Jest tests on Node 24.
+- Pass: 53 pure contract tests and 236 focused rule/governance Jest tests on Node 24.
 - Pass: full typecheck and focused ESLint.
 - Pass: Home ratchet, no movement; existing 12 failing suites remain baselined, not fixed by this candidate.
 - Pass: full context/corpus and manifest validation; pre-existing manifest warnings remain.
@@ -47,6 +47,7 @@ See `docs/architecture/ec-slice-acceptance.md`, the semantic map, pure adapter/r
 - Pass: isolated schema draft applied twice with zero business/source rows.
 - Pass: generic disposable physical admission on local Postgres 18, effective-role read RLS, cross-tenant endpoint rejection, independent raw-byte readback, replay refusal, unverified excerpt persistence and exact shadow comparison. No product projection rows changed.
 - Pass: independent technical clearance to execute the generic fixture only. Private dataset approval remains held.
+- Pass: operator-only rule placement and unchanged library-orphan baseline; reader-view grain, canonical assertion references, null-safe subjects and UTC-only QA guards.
 - Pending: Postgres 16 CI and final adoption review. No private dataset load or product proof claimed.
 
 ## Rollout Plan

@@ -139,6 +139,8 @@ test("preserves full grain, competing values and null target/actual/baseline met
   assert.notEqual(out.measure[0].observation_key, out.measure[1].observation_key);
   assert.notEqual(out.measure[3].id, out.measure[4].id);
   assert.equal(out.assertion.length, 2);
+  const roleIds=new Set(out.object.filter(row=>row.object_type==='persona').map(row=>row.id));
+  assert.ok(out.assertion.every(row=>roleIds.has((row.value_json as {entity_id:string}).entity_id)));
   assert.notDeepEqual(out.assertion[0].value_json, out.assertion[1].value_json);
 });
 
@@ -322,7 +324,10 @@ test("typed attribute entity references must resolve the exact raw native refere
     source_locator: { ...(flow.source_locator as Row), column: "source_ref" },
     value: { entity_id: target.id } };
   fixture.input.assertions.push(referenceAssertion);
-  assert.deepEqual(adapt(fixture).assertion.at(-1)!.value_json, { entity_id: target.id });
+  const out=adapt(fixture);
+  const canonicalTarget=out.object.find(row=>row.attributes_json.raw_candidate &&
+    (row.attributes_json.raw_candidate as Row).id===target.id)!;
+  assert.deepEqual(out.assertion.at(-1)!.value_json, { entity_id: canonicalTarget.id });
   referenceAssertion.value.entity_id = byType(fixture.input, "design:role").id;
   assert.throws(() => adapt(fixture), /assertion differs from declared raw cell/);
 });

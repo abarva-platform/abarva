@@ -42,12 +42,23 @@ export async function initializeDisposableSchema(db: pg.Client) {
   await sql('docs/architecture/sql-drafts/ec_slice_context_v0.sql');
   await sql('docs/architecture/sql-drafts/ec_slice_context_v0.sql');
   // Fixture catalog metadata, not source facts. Narrow semantic types stay separate.
+  const countingClasses:Record<string,string> = {
+    enterprise:'enterprise_scope',business_segment:'business_entity',business_function:'business_entity',
+    organization:'business_entity',process:'business_entity',application:'business_entity',
+    application_deployment:'deployment_instance',data_platform:'technical_component',data_product:'business_entity',
+    infrastructure:'technical_component',vendor:'commercial_entity',contract:'commercial_entity',program:'initiative',
+    metric:'metric_definition',risk:'risk_control',control:'risk_control',ai_program:'initiative',
+    ai_use_case:'business_entity',ai_tool:'technical_component',persona:'persona',
+    application_module:'context_detail',data_flow:'context_detail',spend_line:'context_detail',
+    evidence_request:'context_detail',leadership_observation:'context_detail',strategic_priority:'context_detail',
+    capability:'business_entity',initiative:'initiative',
+  };
   for (const type of new Set(Object.values(EC_PRIVATE_TYPE_MAP).filter((value) => value !== null))) {
-    const grain = ['application_module','data_flow','spend_line','evidence_request','leadership_observation','strategic_priority'].includes(type)
-      ? type : type === 'capability' ? 'process' : type === 'initiative' ? 'program' : type;
+    const countingClass=countingClasses[type];
+    if (!countingClass) throw new Error('Fixture catalog type has no declared counting class');
     await db.query(`insert into ecl_context.object_type_catalog
       (object_type,display_label,grain,counting_class,description)
-      values ($1,$1,$2,'context_detail','Disposable admission metadata') on conflict do nothing`, [type,grain]);
+      values ($1,$1,$1,$2,'Disposable admission metadata') on conflict do nothing`, [type,countingClass]);
   }
 }
 

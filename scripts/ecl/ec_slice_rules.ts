@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 
+// Rehearsal-only operator rules; product adoption is a separate governed release.
+
 export type EcJson = null | boolean | number | string | readonly EcJson[] | { readonly [key: string]: EcJson };
 
 // The contract enumerates eight states despite the brief's seven-state count.
@@ -587,12 +589,13 @@ export function evaluateSelfServiceQa(raw: SelfServiceQaInput): EcRuleEvaluation
     instant(input.observation_period[1]) + input.repeat_contact_window_days * 86_400_000 <= instant(input.evidence.source_known_at);
   const verified = usable(context, input.evidence) && completeCounts && input.eligible! > 0 && input.follow_up_complete === true &&
     input.repeat_contact_window_days !== null && typeof input.eligibility_taxonomy === "string" && text(input.eligibility_taxonomy) &&
-    input.observation_period !== null && input.timezone !== null && chronology;
+    input.observation_period !== null && input.timezone === "UTC" && chronology;
   const numerator = verified ? input.successful! : null;
   const state: EcRuleState = restricted ? "restricted" : !verified ? "unknown" : numerator! > 0 ? "finding" : "clear";
   return evaluation("self-service-qa", context, input, [], evidenceDependencies([input.evidence]),
     { state, predicate: verified ? numerator! > 0 : null, eligible: 1, evaluated: verified ? 1 : 0,
-      reasons: verified ? [] : ["unverified_follow_up_or_denominator_or_evidence"],
+      reasons: verified ? [] : [input.timezone !== null && input.timezone !== "UTC"
+        ? "non_utc_qa_calendar_conversion_not_admitted" : "unverified_follow_up_or_denominator_or_evidence"],
       details: restricted ? null : { purpose: "qa_only", verification: verified ? "verified" : "unverified", numerator,
         denominator: verified ? input.eligible : null, successful_resolution_percent: verified ? Number(BigInt(100) * BigInt(numerator!)) / input.eligible! : null,
         business_actual: null } });

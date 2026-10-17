@@ -4,6 +4,13 @@ do $$ begin
   if current_database() <> 'ecl_admission_test' then
     raise exception 'Context slice draft requires disposable ecl_admission_test';
   end if;
+  if to_regclass('ecl_context.assertion') is not null and exists (
+    select 1 from unnest(array['subject_id','subject_kind','subject_object_id','source_access_scope','access_decision','source_locator_json']) as required(column_name)
+    where not exists (select 1 from information_schema.columns actual
+      where actual.table_schema='ecl_context' and actual.table_name='assertion' and actual.column_name=required.column_name)
+  ) then
+    raise exception 'Unsupported earlier assertion draft; use a fresh disposable database';
+  end if;
 end $$;
 
 -- Unknown receipt time is not the current clock or a fabricated intake event.
@@ -68,11 +75,22 @@ from (values
 ) as declaration(verb, from_families, to_families)
 where dictionary.relationship_type = declaration.verb;
 
+do $$ declare definition text; begin
+  select pg_get_constraintdef(oid) into definition from pg_constraint
+    where conrelid = 'ecl_context.object_type_catalog'::regclass and conname = 'object_type_catalog_grain_check';
+  if position('capability' in definition) = 0 then
+    alter table ecl_context.object_type_catalog drop constraint object_type_catalog_grain_check;
+    execute 'alter table ecl_context.object_type_catalog add constraint object_type_catalog_grain_check check (' ||
+      substring(definition from 8 for length(definition) - 8) ||
+      ' OR grain in (''capability'', ''initiative''))';
+  end if;
+end $$;
+
 insert into ecl_context.object_type_catalog
   (object_type, display_label, grain, counting_class, description)
 values
-  ('capability', 'Capability', 'process', 'business_entity', 'Declared business capability, not an application or process count.'),
-  ('initiative', 'Initiative', 'program', 'initiative', 'Declared deliverable, distinct from a program or string attribute.')
+  ('capability', 'Capability', 'capability', 'business_entity', 'Declared business capability, not an application or process count.'),
+  ('initiative', 'Initiative', 'initiative', 'initiative', 'Declared deliverable, distinct from a program or string attribute.')
 on conflict (object_type) do nothing;
 
 do $$ declare definition text; begin
@@ -112,10 +130,13 @@ create table if not exists ecl_context.assertion (
     references ecl_context.object (tenant_key, assessment_id, id),
   foreign key (tenant_key, assessment_id, source_record_id)
     references ecl_source.source_record (tenant_key, assessment_id, id),
-  check ((subject_kind = 'object' and subject_object_id = subject_id) or
-    (subject_kind <> 'object' and subject_object_id is null)),
   check (value_json is not null or missing_reason is not null),
   check (valid_to is null or valid_from is null or valid_to > valid_from)
+);
+alter table ecl_context.assertion drop constraint if exists ec_assertion_subject_check;
+alter table ecl_context.assertion add constraint ec_assertion_subject_check check (
+  (subject_kind = 'object' and subject_object_id is not null and subject_object_id = subject_id) or
+  (subject_kind <> 'object' and subject_object_id is null)
 );
 
 alter table ecl_context.measure

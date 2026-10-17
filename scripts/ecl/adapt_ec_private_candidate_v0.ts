@@ -400,7 +400,8 @@ export function adaptEcPrivateCandidateV0(
     if (row.predicate === "design:accountable_to") {
       const ref = row.value as { entity_id?: string } | null;
       const owner = ref?.entity_id ? entity(ref.entity_id) : null;
-      requireCandidate(owner?.type === "design:role" && located.value === owner.native_ref &&
+      requireCandidate(row.value !== null && typeof row.value === "object" && !Array.isArray(row.value) &&
+        Object.keys(row.value).length === 1 && owner?.type === "design:role" && located.value === owner.native_ref &&
         located.row?.values.subject_ref === subject.native_ref, "accountable assertion reference mismatch");
     } else {
       requireCandidate(row.source_locator.file_path === subject.source_locator.file_path &&
@@ -420,10 +421,14 @@ export function adaptEcPrivateCandidateV0(
       access_decision: "deny", source_version: row.source_locator.source_version_id,
       source_locator: json(row.source_locator), assertion_sha256: ecPrivateSha256(ecPrivateCanonicalJson(row)),
       input_scope_state: row.access_scope === undefined ? "absent" : "unknown" };
+    const typedReference = row.value !== null && typeof row.value === "object" && !Array.isArray(row.value) &&
+      Object.keys(row.value).length === 1 && typeof (row.value as {entity_id?:unknown}).entity_id === "string"
+      ? (row.value as {entity_id:string}).entity_id : null;
+    const canonicalValue = typedReference === null ? json(row.value) : {entity_id:entityUuid(entity(typedReference))};
     out.assertion.push({ ...timedCore("assertion", row, { source_access_scope: "unknown", access_decision: "deny",
       access_dependency: accessDependency }), subject_id: entityUuid(subject), subject_kind: kind(subject),
       subject_object_id: kind(subject) === "object" ? entityUuid(subject) : null,
-      predicate: row.predicate, value_json: json(row.value), value_state: row.value_state,
+      predicate: row.predicate, value_json: canonicalValue, value_state: row.value_state,
       missing_reason: row.missing_reason, fact_basis: row.fact_basis,
       source_access_scope: "unknown", access_decision: "deny" });
   }

@@ -22,10 +22,12 @@ Twelve steps: decisions; clean worktree; semantic map; isolated schema delta; un
 - Current baseline already defines `ecl_source.source_file`, `source_record`, `document`, `document_extraction` and `ecl_review.review_event`. The older claim that these exist only in a draft is not current.
 - Final schema draft applies twice to a fresh disposable database with zero source records, objects and assertions. Unknown source receipt times stay null rather than using the current clock.
 - Pure adapter compatibility against both frozen private builds passes in memory with identical outputs. This is not persistence or load approval; the private producer is unchanged.
-- 53 pure contract tests and 235 focused rule/governance tests pass locally. The Home ratchet has no movement from its existing baseline. Full corpus governance, manifest validation and all 11 release checks pass. Typecheck and focused lint pass.
+- 53 pure contract tests and 236 focused rule/governance tests pass locally. The Home ratchet has no movement from its existing baseline. Full corpus governance, manifest validation and all 11 release checks pass. Typecheck and focused lint pass.
 - Canonical assertions without source access scope explicitly retain `unknown`/`deny`. All adapter rows parse as governed objects, block, and remain excluded under strict and non-strict bundle options.
 - Generic-only physical proof passes on local Postgres 18: 23 objects, 15 relationships, three logical applications, one module and four deployments; independent raw-byte object/edge/payload reconstruction; occupied-assessment replay refusal; non-owner/non-BYPASSRLS tenant reads; cross-tenant endpoint foreign-key rejection; exact V6 shadow identity comparison. Source excerpts remain unverified. Product projection counts are unchanged. Postgres 16 CI evidence is pending.
 - The shadow records name their actual origin `ecl_context_object`, rather than mislabeling them as V6 business records. The corresponding enum extension is disposable-only.
+- Typed assertion references resolve to canonical UUIDs, while original source references remain in lineage. Capability and Initiative retain separate catalog grains. The actual application reader view is tested, not only object table filters.
+- Rehearsal rules live under `scripts/ecl`, not an unreachable product library. The library-orphan gate remains unchanged. Non-UTC QA calendar conversion abstains until separately admitted. Unknown earlier assertion-table drafts are refused, not silently upgraded.
 
 ## Still Owed
 

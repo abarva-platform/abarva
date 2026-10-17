@@ -5,7 +5,7 @@ import test from 'node:test';
 import Papa from 'papaparse';
 import pg from 'pg';
 import { CANONICAL_TENANT_KEYS } from '../../../src/config/tenants/CANONICAL_TENANTS';
-import { evaluateSelfServiceQa } from '../../../src/lib/ecl/insights/ec-slice-rules';
+import { evaluateSelfServiceQa } from '../ec_slice_rules';
 import { adaptEcPrivateCandidateV0 } from '../adapt_ec_private_candidate_v0';
 import { planEcSliceV6Shadow, type ShadowObjectRow, type ShadowRelationshipRow } from '../ec_slice_v6_shadow';
 import { makeEcPrivateCandidateFixture } from './ec_private_candidate_fixture';
@@ -78,6 +78,7 @@ test('isolated ECL persistence, independent raw readback, RLS and V6 shadow proo
     assert.deepEqual(objects.map(row=>row.id).sort(),rawEntityIds.sort());
     const independentCounts = Object.fromEntries(['design:application','design:application_module','design:deployment'].map(type=>[type,raw.data.filter(row=>row.ci_class===type).length]));
     assert.deepEqual(independentCounts,{'design:application':3,'design:application_module':1,'design:deployment':4});
+    assert.equal((await db.query('select count(*)::integer as count from ecl_context.application_v where tenant_key=$1 and assessment_id=$2',scope)).rows[0].count,3);
     assert.equal(new Set(objects.filter(row=>row.object_type==='application').map(row=>row.display_name)).size,1,'same labels do not collapse objects');
     const rawLinksBytes = fixture.input.raw_files['raw/fixture/links.csv'];
     const links = Papa.parse<Record<string,string>>(Buffer.from(rawLinksBytes).toString(),{header:true,skipEmptyLines:true});
@@ -121,9 +122,27 @@ test('isolated ECL persistence, independent raw readback, RLS and V6 shadow proo
     assert.equal(measures.filter(row=>row.observation_role==='actual' && row.value_number===null).length,1);
     assert.equal(measures.length,5);
     assert.equal(new Set(measures.map(row=>row.observation_key)).size < measures.length,true,'same-grain competing values survive');
-    const excerpts=(await db.query('select extracted_value,confidence,human_verification_state from ecl_source.document_extraction where tenant_key=$1 and assessment_id=$2',scope)).rows;
+    const owners=(await db.query('select subject_id,value_json,source_access_scope,access_decision,source_locator_json from ecl_context.assertion where tenant_key=$1 and assessment_id=$2',scope)).rows;
+    const ownerBytes=Papa.parse<Record<string,string>>(Buffer.from(fixture.input.raw_files['raw/fixture/owners.csv']).toString(),{header:true,skipEmptyLines:true});
+    assert.equal(owners.length,2);
+    for (const row of owners) {
+      const original=ownerBytes.data[row.source_locator_json.row_number-2];
+      assert.equal(row.subject_id,rawObjectIds.get(original.subject_ref));
+      assert.equal(row.value_json.entity_id,rawObjectIds.get(original.value_ref));
+      assert.equal(row.source_access_scope,'unknown');
+      assert.equal(row.access_decision,'deny');
+    }
+    await assert.rejects(db.query(`insert into ecl_context.assertion
+      (id,tenant_key,assessment_id,subject_id,subject_kind,subject_object_id,semantic_key,value_json,source_record_id,source_version,source_locator_json,known_at,basis)
+      select gen_random_uuid(),tenant_key,assessment_id,subject_id,'object',null,semantic_key,value_json,source_record_id,source_version,source_locator_json,known_at,basis
+      from ecl_context.assertion where tenant_key=$1 and assessment_id=$2 limit 1`,scope),/ec_assertion_subject_check/);
+    const excerpts=(await db.query('select extracted_value,confidence,human_verification_state,normalized_value_json from ecl_source.document_extraction where tenant_key=$1 and assessment_id=$2',scope)).rows;
     assert.equal(excerpts.length,envelope.evidence_item.length);
     assert.ok(excerpts.every(row=>row.confidence===null && row.human_verification_state==='unverified'));
+    for (const row of excerpts) {
+      const locator=row.normalized_value_json.candidate.evidence_locator;
+      assert.equal(createHash('sha256').update(row.extracted_value).digest('hex'),locator.excerpt_sha256);
+    }
 
     const renamed = makeEcPrivateCandidateFixture({label_suffix:' renamed'});
     renamed.binding.assessment_id=fixture.binding.assessment_id;
@@ -154,7 +173,7 @@ test('isolated ECL persistence, independent raw readback, RLS and V6 shadow proo
     const qaScope = {namespace:'unit:physical-qa',binding_key:scope[0],cohort_id:'qa-only'};
     const qa = evaluateSelfServiceQa({
       context:{scope:qaScope,selection:{valid_at:'2026-09-30',known_at:'2026-10-16T00:00:00Z'},
-        implementation_sha256:hash(readFileSync(new URL('../../../src/lib/ecl/insights/ec-slice-rules.ts',import.meta.url),'utf8')),
+        implementation_sha256:hash(readFileSync(new URL('../ec_slice_rules.ts',import.meta.url),'utf8')),
         versions:{dictionary:'unit-v0',definition:'qa-v0',crosswalk:'unit-v0',policy:'unit-v0'},
         coverage:{expected_count:1,completeness:'complete',basis:'explicit_qa_fixture_only',revision:'qa-v0'},
         applicability:'in_scope',access:{scope_ids:['qa-fixture-only'],revision:'qa-access-v0'}},
