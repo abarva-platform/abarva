@@ -23,9 +23,11 @@ import {
   PurposePageError,
   purposeCitations,
   purposeSourceGroups,
+  purposeUpstreamReferences,
 } from "./purpose-page-plan";
 import { purposeBrand } from "./purpose-page-brand";
 import { purposeCitationIds } from "./purpose-citations";
+import { purposeTypedTableRows } from "./purpose-number-display";
 import {
   layoutReferenceTable,
   referenceCellTextHeight,
@@ -60,12 +62,12 @@ const heading = (text: string, level: 1 | 2 = 1, pageBreakBefore = false) =>
     heading: level === 1 ? HeadingLevel.HEADING_1 : HeadingLevel.HEADING_2,
     keepNext: true,
     pageBreakBefore,
-    spacing: { before: 220, after: 120 },
+    spacing: { before: 160, after: 100 },
     children: [
       new TextRun({
         text,
         font: FONT,
-        size: level === 1 ? 34 : 24,
+        size: level === 1 ? 30 : 24,
         bold: true,
         color: INK,
       }),
@@ -81,11 +83,22 @@ function table(
 ): Table {
   if (!columns.length || rows.some((row) => row.length !== columns.length))
     throw new PurposePageError("table_shape", "charter");
+  const independentScope =
+    columns.length === 2 &&
+    /^in scope\b/i.test(columns[0]!) &&
+    /^(?:out of scope|excluded)\b/i.test(columns[1]!);
+  if (independentScope && rows.length <= 4)
+    rows = [
+      columns.map((_, col) =>
+        rows
+          .map((row) => row[col]!)
+          .filter(Boolean)
+          .join("\n\n"),
+      ),
+    ];
   let weights =
     columnWeights ||
-    (columns.length === 2 &&
-    /^in scope(?:\s*\[[A-Z0-9,\s]+\])*$/i.test(columns[0]!) &&
-    /^out of scope(?:\s*\[[A-Z0-9,\s]+\])*$/i.test(columns[1]!)
+    (independentScope
       ? [3.5, 3.5]
       : columns.length === 2
         ? [1.6, 5.4]
@@ -121,7 +134,7 @@ function table(
       ),
     0,
   );
-  const compactTable = rows.length <= 8 && estimatedLines <= 8;
+  const compactTable = rows.length <= 8 && estimatedLines <= 14;
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     columnWidths: weights.map((w) => Math.round(w * 1440)),
@@ -138,7 +151,7 @@ function table(
                   type: WidthType.DXA,
                 },
                 shading: { fill: i === 0 ? PALE : "FFFFFF" },
-                margins: { top: 90, bottom: 90, left: 110, right: 110 },
+                margins: { top: 55, bottom: 55, left: 110, right: 110 },
                 borders: {
                   bottom: { style: BorderStyle.SINGLE, size: 4, color: LINE },
                   top: { style: BorderStyle.NONE },
@@ -147,21 +160,23 @@ function table(
                 },
                 children: [
                   new Paragraph({
-                    spacing: { after: 30, line: 240 },
+                    spacing: { after: 10, line: 220 },
                     keepNext:
                       keepNext ||
                       (keepFollowingParagraph && i === rows.length) ||
                       (i < rows.length &&
                         (compactTable || i < 2 || i === rows.length - 1)),
-                    children: [
-                      new TextRun({
-                        text,
-                        font: FONT,
-                        size: 20,
-                        bold: i === 0,
-                        color: INK,
-                      }),
-                    ],
+                    children: text.split("\n").map(
+                      (line, lineIndex) =>
+                        new TextRun({
+                          text: line,
+                          break: lineIndex ? 1 : undefined,
+                          font: FONT,
+                          size: 20,
+                          bold: i === 0,
+                          color: INK,
+                        }),
+                    ),
                   }),
                 ],
               }),
@@ -232,7 +247,7 @@ function blocks(
     }
     case "list": {
       const shortList =
-        node.children.length <= 6 &&
+        node.children.length <= 3 &&
         node.children.reduce(
           (sum, item) =>
             sum +
@@ -245,7 +260,7 @@ function blocks(
               0,
             ),
           0,
-        ) <= 24;
+        ) <= 8;
       return node.children.flatMap((item, i) =>
         item.children.flatMap((child, childIndex) => {
           if (child.type !== "paragraph") return blocks(child as RootContent);
@@ -258,7 +273,7 @@ function blocks(
               indent: { left: 240, hanging: 180 },
               keepLines: true,
               keepNext:
-                (shortList || i === 0) &&
+                (shortList || i === 0 || i === node.children.length - 2) &&
                 (i < node.children.length - 1 ||
                   childIndex < item.children.length - 1),
               spacing: { after: 100, line: 260 },
@@ -347,12 +362,14 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       spacing: { after: 140 },
     }),
     para(
-      "Reading guide: proposed decision and scope; success measures; roles and dependencies; conditions; next actions, decision record and sources.",
+      "Reading guide: proposed decision and scope; success measures; governance; planned inputs and acceptance tests; conditions; next decision, actions and sources.",
     ),
   ];
   const used = new Set<string>();
-  for (const section of sections) {
-    children.push(heading(section.title, 1, false));
+  for (const [index, section] of sections.entries()) {
+    children.push(
+      heading(`${index + 1}. ${section.title.replace(/^\d+[.)]\s*/, "")}`, 1),
+    );
     const tree = fromMarkdown(cite(section.bodyMarkdown), {
       extensions: [gfm()],
       mdastExtensions: [gfmFromMarkdown()],
@@ -385,7 +402,7 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       children.push(
         table(
           item.columns,
-          item.rows.map((row) => row.map(cite)),
+          purposeTypedTableRows(item).map((row) => row.map(cite)),
         ),
         para(""),
       );
@@ -399,7 +416,7 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       heading(item.title, 2),
       table(
         item.columns,
-        item.rows.map((row) => row.map(cite)),
+        purposeTypedTableRows(item).map((row) => row.map(cite)),
       ),
     );
   if (doc.assumptions.length)
@@ -425,7 +442,7 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       ),
     );
   children.push(
-    heading("Next decision and review"),
+    heading(`${sections.length + 1}. Next decision and review`),
     ...fromMarkdown(cite(doc.recommendation), {
       extensions: [gfm()],
       mdastExtensions: [gfmFromMarkdown()],
@@ -433,7 +450,6 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       blocks(
         node,
         node.type === "paragraph" &&
-          plain(node.children).length <= 140 &&
           Boolean(doc.actionRegister?.length || doc.nextActions.length),
       ),
     ),
@@ -456,7 +472,7 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       ...doc.nextActions.map((a) => para(cite(a))),
     );
   children.push(
-    heading("Decision record"),
+    heading(`${sections.length + 2}. Decision record`),
     para(
       "This draft does not authorize Discovery, funding or implementation. The authorized reviewer records the decision and its limits below.",
       true,
@@ -477,7 +493,7 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
         ],
       ],
     ),
-    heading("Source register"),
+    heading(`${sections.length + 3}. Source register`),
   );
   const commonReview =
     new Set(doc.sourceRegister.map((s) => s.reviewStatus)).size === 1
@@ -495,11 +511,25 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
     "Use and limitations not recorded; confirm before relying on this source.";
   const sourceGroups = purposeSourceGroups(doc.sourceRegister);
   const usedFor = (citation: number) => {
-    const titles = sections
-      .filter((section) =>
-        purposeCitationIds(section.bodyMarkdown).includes(citation),
-      )
-      .map((section) => section.title);
+    const sectionNumbers = sections.flatMap((section, index) =>
+      purposeCitationIds(
+        [
+          section.bodyMarkdown,
+          ...doc.tables
+            .filter((t) =>
+              [section.key, `${section.key}_table`].includes(t.key),
+            )
+            .flatMap((t) => purposeTypedTableRows(t).flat()),
+        ].join(" "),
+      ).includes(citation)
+        ? [index + 1]
+        : [],
+    );
+    const titles = sectionNumbers.length
+      ? [
+          `${sectionNumbers.length === 1 ? "section" : "sections"} ${sectionNumbers.join(", ")}`,
+        ]
+      : [];
     if (purposeCitationIds(doc.recommendation).includes(citation))
       titles.push("Next decision");
     if (
@@ -510,9 +540,7 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       )
     )
       titles.push("Next actions");
-    return titles.length
-      ? `Used in: ${titles.slice(0, 3).join("; ")}${titles.length > 3 ? `; ${titles.length - 3} further sections` : ""}. `
-      : "";
+    return titles.length ? `Used in: ${titles.join("; ")}. ` : "";
   };
   for (const { family, entries } of sourceGroups) {
     children.push(
@@ -526,7 +554,7 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
         entries.map((s) => [
           `[${s.referenceId || s.citationNumber}]`,
           `${s.label}${commonReview ? "" : `\n${s.reviewStatus || `${s.confidence} confidence`}`}${s.asOf ? ` / ${s.asOf}` : ""}`,
-          `${usedFor(s.citationNumber)}${sourceUse(s.useAndLimitation)}`,
+          `${usedFor(s.citationNumber)}${sourceUse(s.useAndLimitation)}${purposeUpstreamReferences(s, "\n")}`,
         ]),
         [0.6, 2.0, 4.4],
       ),
@@ -567,7 +595,7 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
             size: { width: 12240, height: 15840 },
             margin: {
               top: 1008,
-              bottom: 1296,
+              bottom: 1008,
               left: 1037,
               right: 1037,
               header: 360,

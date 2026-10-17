@@ -15,6 +15,7 @@ import {
   purposeTableHeaderHeight,
   purposeScopeLayout,
   purposeChartAxis,
+  purposeChartTrend,
   purposeStatusLabel,
   type PurposeChart,
   type PurposePage,
@@ -162,11 +163,13 @@ function frame(
   );
   text(
     slide,
-    balancedPurposeTitle(titleCopy(page)),
+    !cover && purposeScopeLayout(page).scopeTop < 1.65
+      ? titleCopy(page)
+      : balancedPurposeTitle(titleCopy(page)),
     X,
-    cover ? 3.65 : 0.55,
+    cover ? 4.05 : 0.55,
     W,
-    cover ? 0.9 : 1.1,
+    cover ? 0.75 : purposeScopeLayout(page).scopeTop < 1.65 ? 0.65 : 1.1,
     cover ? 26 : 30,
     {
       fontFace: "Georgia",
@@ -175,13 +178,13 @@ function frame(
     },
   );
   const scopeLayout = cover
-    ? { fontSize: 22, height: 0.85 }
+    ? { fontSize: 22, height: 0.85, scopeTop: 4.9 }
     : purposeScopeLayout(page);
   text(
     slide,
     copy(page, page.scope),
     X,
-    cover ? 4.65 : 1.65,
+    scopeLayout.scopeTop,
     W,
     scopeLayout.height,
     scopeLayout.fontSize,
@@ -497,20 +500,24 @@ function options(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
 
 function renderProcess(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
   const TOP = purposeScopeLayout(page).bodyTop;
-  // The exception path takes one line under the steps rather than a column beside them.
-  const exceptionH = page.exceptionPath ? 0.55 : 0;
+  const exceptionText = [
+    page.exceptionPath
+      ? `Exception path: ${copy(page, page.exceptionPath)}`
+      : "",
+    page.processNote ? copy(page, page.processNote) : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  const exceptionTextH = exceptionText
+    ? Math.max(0.4, referenceCellTextHeight(exceptionText, W, 18))
+    : 0;
+  const exceptionH = exceptionTextH ? exceptionTextH + 0.15 : 0;
   const H = purposeBodyHeight(page) - exceptionH;
-  if (page.exceptionPath)
-    text(
-      slide,
-      `Exception path: ${copy(page, page.exceptionPath)}`,
-      X,
-      TOP + H + 0.1,
-      W,
-      0.4,
-      18,
-      { objectName: "purpose:process:exception", color: C.navy },
-    );
+  if (exceptionText)
+    text(slide, exceptionText, X, TOP + H + 0.1, W, exceptionTextH, 18, {
+      objectName: "purpose:process:exception",
+      color: C.navy,
+    });
   const gap = 0.4,
     w = (W - (page.items.length - 1) * gap) / page.items.length;
   const layouts = [24, 22, 20].map((font) => {
@@ -518,7 +525,15 @@ function renderProcess(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
       0.85,
       ...page.items.map((item) => referenceCellTextHeight(item.label, w, font)),
     );
-    const labelOffset = font === 24 ? 1.5 : 1.2;
+    const labelOffset = exceptionText
+      ? font === 24
+        ? 1.15
+        : font === 22
+          ? 0.9
+          : 0.78
+      : font === 24
+        ? 1.5
+        : 1.2;
     const detailH = H - labelOffset - labelH - 0.15;
     return {
       font,
@@ -532,7 +547,67 @@ function renderProcess(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
         ),
     };
   });
-  const layout = layouts.find((candidate) => candidate.fits) || layouts[0]!;
+  const layout = layouts.find((candidate) => candidate.fits);
+  if (!layout) {
+    // A vertical flow keeps long recorded ownership descriptions intact without
+    // shrinking a narrow horizontal lane or turning handoffs into repeated rows.
+    const labelW = 3.15;
+    const detailW = W - labelW - 0.8;
+    const heights = page.items.map(
+      (item) =>
+        Math.max(
+          0.4,
+          referenceCellTextHeight(item.label, labelW, 18),
+          referenceCellTextHeight(copy(page, item.detail), detailW, 16),
+        ) + 0.03,
+    );
+    const total =
+      heights.reduce((sum, height) => sum + height, 0) +
+      0.04 * (heights.length - 1);
+    if (total > H + 0.001)
+      throw new PurposePageError("process_text_needs_edit", page.id);
+    let y = TOP + (H - total) / 2;
+    page.items.forEach((item, i) => {
+      const height = heights[i]!;
+      slide.addShape(pptx.ShapeType.ellipse, {
+        x: X,
+        y,
+        w: 0.35,
+        h: 0.35,
+        fill: { color: C.navy },
+        line: { color: C.navy },
+      });
+      text(slide, String(i + 1), X, y, 0.35, 0.36, 18, {
+        color: C.white,
+        bold: true,
+        align: "center",
+      });
+      text(slide, item.label, X + 0.55, y, labelW, height, 18, {
+        bold: true,
+        objectName: `purpose:process:${i}`,
+      });
+      text(
+        slide,
+        copy(page, item.detail),
+        X + labelW + 0.8,
+        y,
+        detailW,
+        height,
+        16,
+        { objectName: `purpose:process-detail:${i}` },
+      );
+      if (i < page.items.length - 1)
+        slide.addShape(pptx.ShapeType.line, {
+          x: X + 0.175,
+          y: y + 0.39,
+          w: 0,
+          h: Math.max(0.02, height - 0.35),
+          line: { color: C.navy, width: 1, endArrowType: "triangle" },
+        });
+      y += height + 0.04;
+    });
+    return;
+  }
   const { labelH, labelOffset } = layout;
   const detailTop = TOP + labelOffset + labelH + 0.15;
   const detailH = TOP + H - detailTop;
@@ -548,21 +623,30 @@ function renderProcess(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
     const x = X + i * (w + gap);
     slide.addShape(pptx.ShapeType.ellipse, {
       x,
-      y: TOP + 0.5,
+      y: TOP + (exceptionText ? 0.15 : 0.5),
       w: 0.6,
       h: 0.6,
       line: { color: C.navy },
       fill: { color: C.navy },
     });
-    text(slide, String(i + 1), x, TOP + 0.61, 0.6, 0.4, 18, {
-      color: C.white,
-      bold: true,
-      align: "center",
-    });
+    text(
+      slide,
+      String(i + 1),
+      x,
+      TOP + (exceptionText ? 0.26 : 0.61),
+      0.6,
+      0.4,
+      18,
+      {
+        color: C.white,
+        bold: true,
+        align: "center",
+      },
+    );
     if (i < page.items.length - 1)
       slide.addShape(pptx.ShapeType.line, {
         x: x + 0.75,
-        y: TOP + 0.8,
+        y: TOP + (exceptionText ? 0.45 : 0.8),
         w: w + gap - 0.95,
         h: 0,
         line: { color: C.navy, width: 1.4, endArrowType: "triangle" },
@@ -571,7 +655,9 @@ function renderProcess(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
       bold: true,
       objectName: `purpose:process:${i}`,
     });
-    text(slide, copy(page, item.detail), x, detailTop, w, detailH, 18);
+    text(slide, copy(page, item.detail), x, detailTop, w, detailH, 18, {
+      objectName: `purpose:process-detail:${i}`,
+    });
   });
 }
 
@@ -589,10 +675,19 @@ function renderPage(
       color: C.deckCoverMuted,
       bold: true,
     });
-    text(slide, page.items[0]!.detail, X, 1.95, W, 1.5, 44, {
-      fontFace: "Georgia",
-      color: C.white,
-    });
+    text(
+      slide,
+      balancedPurposeTitle(page.items[0]!.detail),
+      X,
+      1.95,
+      W,
+      1.8,
+      44,
+      {
+        fontFace: "Georgia",
+        color: C.white,
+      },
+    );
     const edition = [page.cover?.edition, page.cover?.date]
       .filter(Boolean)
       .join(" / ");
@@ -695,7 +790,7 @@ function renderPage(
       const axis = purposeChartAxis(chart);
       const width = (W - (charts.length - 1) * 0.45) / charts.length;
       const x = X + index * (width + 0.45);
-      const caption = `${chart.unit} / ${chart.period}${axis.min !== undefined && axis.min !== 0 ? ` / axis starts at ${axis.min}` : ""}`;
+      const caption = `Trend: ${purposeChartTrend(chart).phrase}. ${chart.unit} / ${chart.period}${axis.min !== undefined && axis.min !== 0 ? ` / axis starts at ${axis.min}` : ""}`;
       const captionHeight = Math.max(
         0.44,
         referenceCellTextHeight(caption, width, 13) + 0.06,
@@ -802,7 +897,7 @@ function renderPage(
     );
     if (used.some((h) => h > H + 0.05))
       throw new PurposePageError("statement_needs_split", page.id);
-    const cursor = used.map((h) => TOP + (H - h) / 2);
+    const cursor = used.map(() => TOP + 0.12);
     page.items.forEach((item, i) => {
       const column = i % columns,
         x = X + column * (W / columns + 0.1);
@@ -908,6 +1003,31 @@ export function validatePurposeInspection(
         if (!box || box.text !== item.value || box.fontSize < 48)
           throw new PurposePageError("display_number_missing", page.id);
       });
+    if (page.family === "process") {
+      const normalized = (value: string) => value.replace(/\s+/g, " ").trim();
+      for (const [n, item] of page.items.entries())
+        if (
+          slide.namedText?.[`purpose:process:${n}`] !==
+            normalized(item.label) ||
+          (item.detail &&
+            slide.namedText?.[`purpose:process-detail:${n}`] !==
+              normalized(copy(page, item.detail)))
+        )
+          throw new PurposePageError("process_evidence_missing", page.id);
+      const note = [
+        page.exceptionPath
+          ? `Exception path: ${copy(page, page.exceptionPath)}`
+          : "",
+        page.processNote ? copy(page, page.processNote) : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+      if (
+        note &&
+        slide.namedText?.["purpose:process:exception"] !== normalized(note)
+      )
+        throw new PurposePageError("process_evidence_missing", page.id);
+    }
     if (
       page.classification &&
       !slide.namedText?.["purpose:status"]?.includes(page.classification)
@@ -929,7 +1049,10 @@ export function validatePurposeInspection(
         box.yIn > 6.8 ||
         box.name.startsWith("purpose:annotation:")
           ? 10
-          : 18;
+          : page.family === "process" &&
+              box.name.startsWith("purpose:process-detail:")
+            ? 16
+            : 18;
       if (!Number.isFinite(box.fontSize) || box.fontSize < minimum)
         throw new PurposePageError("text_too_small", page.id);
       if (

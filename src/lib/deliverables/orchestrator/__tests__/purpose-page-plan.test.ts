@@ -16,6 +16,7 @@ import {
   purposeBodyHeight,
   purposeRowHeight,
   purposeTableHeaderHeight,
+  purposeScopeLayout,
 } from "../purpose-page-plan";
 import {
   formatPurposeNumber,
@@ -31,6 +32,33 @@ const shownWithSource = (rows: string[][]) =>
   ]);
 
 describe("purpose page planning", () => {
+  it("keeps a project-name suffix on the cover instead of inventing a subtitle", () => {
+    const doc = purposeFixture();
+    doc.initiativeDisplayName = "Service Improvement";
+    doc.title = "Service Improvement Intelligence";
+    const page = planPurposePages(doc)[0]!;
+    expect(page.items[0]!.detail).toBe(doc.title);
+    expect(page.title).toBe("Discovery readout");
+    doc.title = "Service Improvement: Discovery findings";
+    const titled = planPurposePages(doc)[0]!;
+    expect(titled.items[0]!.detail).toBe(doc.initiativeDisplayName);
+    expect(titled.title).toBe("Discovery findings");
+  });
+  it("reclaims unused title space only when the heading fits one line", () => {
+    const base = planPurposePages(purposeFixture()).find(
+      (p) => p.family !== "cover",
+    )!;
+    const short = { ...base, title: "A supported finding" };
+    const long = {
+      ...base,
+      title: "A supported finding\nA distinct second line",
+    };
+    expect(purposeScopeLayout(short).bodyTop).toBeLessThan(
+      purposeScopeLayout(long).bodyTop,
+    );
+    expect(purposeBodyHeight(short)).toBeGreaterThan(purposeBodyHeight(long));
+    expect(purposeScopeLayout(long).scopeTop).toBe(1.65);
+  });
   it("keeps note-only references out of the visible page footer", () => {
     const doc = purposeFixture();
     doc.tables = [];
@@ -244,7 +272,7 @@ describe("purpose page planning", () => {
     doc.deckSlides = [
       {
         key: "causes",
-        governingMessage: "The candidate causes require distinct tests",
+        governingMessage: "The candidate causes\nrequire distinct tests",
         pageIntent: {
           question: "What needs testing?",
           scopeNote: "Hypotheses, not confirmed causes.",
@@ -832,7 +860,7 @@ describe("purpose page planning", () => {
       key: "long",
       title: "Source detail",
       columns: ["Record", "Detail"],
-      rows: Array.from({ length: 10 }, (_, i) => [
+      rows: Array.from({ length: 14 }, (_, i) => [
         String(i),
         "Evidence remains unreviewed [1].",
       ]),

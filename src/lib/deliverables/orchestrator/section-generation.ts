@@ -605,6 +605,10 @@ export function buildSourceRegister(
     .filter((e) => used.has(e.citationNumber))
     .map((e) => ({
       citationNumber: e.citationNumber,
+      ...(e.referenceId ? { referenceId: e.referenceId } : {}),
+      ...(e.upstreamReferences
+        ? { upstreamReferences: e.upstreamReferences }
+        : {}),
       label: e.label,
       evidenceFamily: humanizeSourceFamily(e.evidenceFamily),
       confidence: e.confidence,

@@ -7,6 +7,32 @@ import {
 } from "../source-register";
 
 describe("source-label hygiene", () => {
+  it("preserves explicitly declared upstream provenance without inventing it", () => {
+    const base = {
+      label: "Decision notes",
+      statement: "For review.",
+      evidenceFamily: "document",
+      confidence: "low" as const,
+      provenanceRef: "opaque",
+    };
+    const refs = [
+      {
+        id: "workshop-a",
+        locator: "section 2",
+        availability: "not_supplied" as const,
+      },
+    ];
+    const result = buildSourceRegister([
+      { ...base, referenceId: "S1", upstreamReferences: refs },
+      base,
+    ]);
+    expect(result.register[0]).toMatchObject({
+      referenceId: "S1",
+      upstreamReferences: refs,
+    });
+    expect(result.evidence[0]?.upstreamReferences).toEqual(refs);
+    expect(result.register[1]?.upstreamReferences).toBeUndefined();
+  });
   it("carries explicit input approval separately from confidence", () => {
     const base = {
       label: "Evidence",

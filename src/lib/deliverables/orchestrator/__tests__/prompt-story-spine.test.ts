@@ -53,6 +53,13 @@ describe("executive story spine reaches the prompt", () => {
         "Never open with an ask to authorize Discovery",
       );
       expect(prompt.system).toContain("structured actionRegister");
+      if (pass === "synthesis") {
+        expect(prompt.user).toContain(
+          "phase contract exclusively defines title and scope-note limits",
+        );
+        expect(prompt.user).not.toContain("at most 180 characters");
+        expect(prompt.user).not.toContain("under 100 characters");
+      }
     },
   );
   it("injects the P4 investment-case beats, in order, for a business case", () => {

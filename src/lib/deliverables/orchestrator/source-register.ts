@@ -13,6 +13,8 @@ import type { GovernedEvidenceItem, SourceRegisterEntry } from "./types";
 
 /** Raw governed candidate as it arrives from buildValidatedAgentContextBundle. */
 export interface GovernedCandidateLike {
+  referenceId?: string;
+  upstreamReferences?: SourceRegisterEntry["upstreamReferences"];
   label: string;
   statement: string;
   evidenceFamily: string;
@@ -123,6 +125,10 @@ export function buildSourceRegister(
 
   const evidence: GovernedEvidenceItem[] = visible.map((c, i) => ({
     citationNumber: i + 1,
+    ...(c.referenceId ? { referenceId: c.referenceId } : {}),
+    ...(c.upstreamReferences
+      ? { upstreamReferences: c.upstreamReferences }
+      : {}),
     label: humanizeSourceLabel(c.label),
     statement: c.statement,
     evidenceFamily: humanizeSourceFamily(c.evidenceFamily),
@@ -135,6 +141,10 @@ export function buildSourceRegister(
 
   const register: SourceRegisterEntry[] = evidence.map((e, i) => ({
     citationNumber: e.citationNumber,
+    ...(e.referenceId ? { referenceId: e.referenceId } : {}),
+    ...(e.upstreamReferences
+      ? { upstreamReferences: e.upstreamReferences }
+      : {}),
     label: e.label,
     evidenceFamily: e.evidenceFamily,
     confidence: e.confidence,

@@ -50,6 +50,9 @@ export type SectionGroundingMode =
 /** One clean, human-readable, citation-numbered evidence item. No internal IDs. */
 export interface GovernedEvidenceItem {
   citationNumber: number; // [n] used in the document body
+  /** Disclosure-safe source ID and references explicitly supplied by governance. */
+  referenceId?: string;
+  upstreamReferences?: SourceRegisterEntry["upstreamReferences"];
   label: string; // human-readable subject, e.g. "FY26 run-cost by tower"
   statement: string; // the clean fact text the model may assert
   evidenceFamily: string; // e.g. 'run_cost_baseline'
@@ -135,6 +138,13 @@ export interface SourceRegisterEntry {
   reviewStatus?: string;
   /** Declared source purpose and limits; not inferred from confidence. */
   useAndLimitation?: string;
+  /** Explicit upstream references; a restatement is not independent corroboration. */
+  upstreamReferences?: {
+    id: string;
+    locator: string;
+    availability: "supplied" | "not_supplied";
+    sourceReferenceId?: string;
+  }[];
   label: string;
   evidenceFamily: string;
   confidence: "high" | "medium" | "low";
@@ -631,6 +641,7 @@ export interface RenderableTable {
     column: number;
     value: number;
     type: import("./purpose-number-display").PurposeNumberType;
+    measurementPeriod?: import("./purpose-number-display").PurposeMeasurementPeriod;
   }[];
   key: string;
   title: string;

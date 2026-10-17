@@ -702,14 +702,14 @@ describe("§4 recorded handoffs read as a flow", () => {
     expect(flow?.exceptionPath).toBe("Step 1 → x! (No match)");
   });
 
-  it("keeps the register for an unconnected node, too many steps, or a branch too long for one line", () => {
+  it("keeps the register for an unconnected node, too many steps, or an overlong branch", () => {
     expect(
       purposeFlowSteps({ nodes: nodes(3), edges: chain(3) }, name, 1),
     ).toBeNull();
     expect(
-      purposeFlowSteps({ nodes: nodes(6), edges: chain(6) }, name),
+      purposeFlowSteps({ nodes: nodes(7), edges: chain(7) }, name),
     ).toBeNull();
-    const long = "a very long branch condition ".repeat(5);
+    const long = "a very long branch condition ".repeat(12);
     expect(
       purposeFlowSteps(
         {
@@ -719,6 +719,33 @@ describe("§4 recorded handoffs read as a flow", () => {
         name,
       ),
     ).toBeNull();
+  });
+
+  it("retains a separate case's entry and every timing without inventing a shared branch", () => {
+    const other = [
+      "CRM 55 sec",
+      "Authorization 118 sec",
+      "Specialist 210 sec",
+      "Record 96 sec",
+    ];
+    const flow = purposeFlowSteps(
+      {
+        nodes: [
+          ...nodes(5),
+          ...other.map((label, i) => ({ id: `x${i}`, label })),
+        ],
+        edges: [
+          ...chain(5),
+          { from: "x0", to: "x1" },
+          { from: "x1", to: "x2" },
+          { from: "x2", to: "x3" },
+        ],
+      },
+      (id) => other[Number(id.slice(1))] || id,
+    );
+    expect(flow?.steps).toHaveLength(5);
+    expect(flow?.exceptionPath).toBe(other.join(" → "));
+    expect(flow?.exceptionPath).not.toContain("Step");
   });
 
   it("keeps the register when the declared order is not the path", () => {

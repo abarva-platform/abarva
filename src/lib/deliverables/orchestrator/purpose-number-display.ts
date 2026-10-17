@@ -1,4 +1,9 @@
 import { formatConsultantCents } from "@/lib/programs/value-engine/format-money";
+import type { RenderableTable } from "./types";
+import {
+  compactPurposeCitationIds,
+  purposeCitationIds,
+} from "./purpose-citations";
 
 export type PurposeNumberType =
   | { kind: "currency"; currency: "USD" }
@@ -11,6 +16,104 @@ export interface PurposeDatePart {
   part: "year" | "month" | "day";
   iso: string;
   group: string;
+}
+
+export interface PurposeMeasurementPeriod {
+  label: string;
+  sourceCitation: number;
+  sourceQuote: string;
+}
+
+/** Bind a complete magnitude, never the integer fragment before a decimal suffix. */
+export function purposeSourceNumberPattern(): RegExp {
+  return /(?<![\w{])(?:~\s*)?(?:\$\s*)?\d[\d,]*(?:\.\d+)?(?:[KMB]|%|\s*(?:seconds?|secs?|hours?|days?|minutes?))?(?!\w|\.\d)/g;
+}
+
+export function purposeSourceNumberValue(raw: string): number {
+  const match = raw
+    .trim()
+    .match(
+      /^(?:~\s*)?(?:\$\s*)?(-?\d[\d,]*(?:\.\d+)?)([KMB])?(?:%|\s*(?:seconds?|secs?|hours?|days?|minutes?))?$/,
+    );
+  if (!match) throw new Error("purpose_number:unsupported_literal");
+  return (
+    Number(match[1]!.replace(/,/g, "")) *
+    ({ K: 1e3, M: 1e6, B: 1e9 }[match[2] || ""] || 1)
+  );
+}
+
+/** Preserve an explicit source qualifier without changing figure-slot identities. */
+export function purposeSourceApproximation(
+  line: string,
+  offset: number,
+  raw: string,
+): boolean {
+  return (
+    /^~/.test(raw.trim()) ||
+    /\b(?:approximately|approx\.?|about|roughly)\s*$/i.test(
+      line.slice(0, offset),
+    )
+  );
+}
+
+/** A common scalar period is stated once within a cell/paragraph, never borrowed across pages. */
+export function purposePeriodSuffix(
+  period: string | undefined,
+  localText: string,
+  displayed: Set<string>,
+): string {
+  if (!period) return "";
+  const normalize = (value: string) => value.replace(/\s+/g, " ").toLowerCase();
+  const seen =
+    displayed.has(period) || normalize(localText).includes(normalize(period));
+  displayed.add(period);
+  return seen ? "" : ` (${period})`;
+}
+
+/** A scalar's window must be declared independently of any chart window. */
+export function validatePurposeMeasurementPeriod(
+  period: PurposeMeasurementPeriod | undefined,
+  sources: readonly { citationNumber: number; statement: string }[],
+): void {
+  if (!period) return;
+  const source = sources.find(
+    (s) => s.citationNumber === period.sourceCitation,
+  );
+  const normalized = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
+  if (
+    !period.label.trim() ||
+    !period.sourceQuote.trim() ||
+    !normalized(period.sourceQuote).includes(normalized(period.label)) ||
+    !source ||
+    !normalized(source.statement).includes(normalized(period.sourceQuote))
+  )
+    throw new Error("purpose_number:unsupported_measurement_period");
+}
+
+/** Both native formats use the same server-bound value, unit, period and citations. */
+export function purposeTypedTableRows(table: RenderableTable): string[][] {
+  const rows = table.rows.map((row) => [...row]);
+  for (const cell of table.numericCells || []) {
+    const original = rows[cell.row]?.[cell.column];
+    if (original === undefined)
+      throw new Error(`purpose_number:numeric_cell_missing:${table.key}`);
+    const citations = [
+      ...new Set([
+        ...purposeCitationIds(original),
+        ...(cell.measurementPeriod
+          ? [cell.measurementPeriod.sourceCitation]
+          : []),
+      ]),
+    ];
+    rows[cell.row]![cell.column] = [
+      formatPurposeNumber(cell.value, cell.type),
+      cell.measurementPeriod ? `(${cell.measurementPeriod.label})` : "",
+      citations.length ? compactPurposeCitationIds(citations) : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+  return rows;
 }
 
 /** Retain an explicit adjacent calendar-duration unit without renumbering source slots. */
@@ -208,7 +311,7 @@ export function formatPurposeNumber(
     case "duration":
       return `${value.toLocaleString("en-US", { maximumFractionDigits: 1 })} ${type.unit}`;
     case "rate":
-      return `${fmt(value, 1)} ${type.unit}`;
+      return `${value.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 3 })} ${type.unit}`;
   }
 }
 
@@ -216,11 +319,12 @@ export function formatPurposeNumber(
 export function explicitPurposeNumber(
   raw: string,
 ): { value: number; type: PurposeNumberType; display: string } | undefined {
-  const value = Number(
-    raw
-      .replace(/[$%,~]|\b(?:seconds?|secs?|minutes?|hours?|days?)\b/gi, "")
-      .replace(/\s/g, ""),
-  );
+  let value: number;
+  try {
+    value = purposeSourceNumberValue(raw);
+  } catch {
+    return undefined;
+  }
   if (!Number.isFinite(value)) return undefined;
   const type: PurposeNumberType | undefined = /^~?\s*\$/.test(raw)
     ? { kind: "currency", currency: "USD" }

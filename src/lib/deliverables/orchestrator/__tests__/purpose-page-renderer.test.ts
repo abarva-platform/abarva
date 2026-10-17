@@ -16,9 +16,85 @@ import {
   purposeCitations,
   purposeChartHeadline,
   purposeScopeLayout,
+  purposeUpstreamReferences,
 } from "../purpose-page-plan";
 
 describe("purpose page rendered objects", () => {
+  it("keeps distinct upstream locators without repeating an identical ID and locator", () => {
+    const same = {
+      id: "decision-log",
+      locator: "decision-log",
+      availability: "not_supplied" as const,
+    };
+    const refs = {
+      upstreamReferences: [same, same, { ...same, locator: "section A" }],
+    };
+    expect(purposeUpstreamReferences(refs, "\n")).toBe(
+      "\nUpstream:\ndecision-log, section A (not supplied)",
+    );
+    expect(purposeUpstreamReferences({})).toBe("");
+  });
+  it("carries the declared scalar period and upstream locator into native exports", async () => {
+    const doc = purposeFixture();
+    doc.exhibits = [];
+    doc.nextActions = [];
+    doc.tables = [
+      {
+        key: "scope",
+        title: "Recorded basis",
+        targetFormat: "pptx",
+        columns: ["Measure", "Recorded value"],
+        rows: [["Submitted claims", "[1]"]],
+        numericCells: [
+          {
+            row: 0,
+            column: 1,
+            value: 618000,
+            type: { kind: "count", unit: "claims" },
+            measurementPeriod: {
+              label: "Trailing year",
+              sourceCitation: 1,
+              sourceQuote: "Trailing year",
+            },
+          },
+        ],
+      },
+    ];
+    doc.sourceRegister[0]!.upstreamReferences = [
+      {
+        id: "session-a",
+        locator: "minutes 10 to 15",
+        availability: "not_supplied",
+      },
+    ];
+    doc.deckSlides = [
+      {
+        key: "basis",
+        governingMessage: "The annual measure has its own reporting window",
+        pageIntent: {
+          question: "What period does the measure cover?",
+          scopeNote: "",
+          tableKey: "scope",
+        },
+        citationsUsed: [1],
+      },
+    ];
+    const deck = await inspectDeck(await renderPurposeDeck(doc));
+    expect(deck.slides.flatMap((s) => s.textRuns).join(" ")).toContain(
+      "Trailing year",
+    );
+    expect(deck.slides.flatMap((s) => s.textRuns).join(" ")).toContain(
+      "minutes 10 to 15",
+    );
+    doc.deliverableType = "charter";
+    doc.purposePageDesign = true;
+    const zip = await JSZip.loadAsync(
+      await Packer.toBuffer(renderDeliverableDocx(doc)),
+    );
+    const xml = await zip.file("word/document.xml")!.async("string");
+    expect(xml).toContain("618,000 (Trailing year)");
+    expect(xml).toContain("session-a, minutes 10 to 15 (not supplied)");
+  });
   it("reserves room for a bounded-axis disclosure beside two native charts", async () => {
     const doc = purposeFixture();
     doc.tables = [];
@@ -51,10 +127,11 @@ describe("purpose page rendered objects", () => {
       (box) => box.name === "purpose:annotation:chart-unit:1",
     )!;
     expect(caption.text).toContain("axis starts at");
+    expect(caption.text).toContain("Trend: holds broadly steady.");
     expect(caption.heightIn).toBeGreaterThan(0.44);
     expect(caption.fontSize).toBe(13);
   });
-  it("keeps a page-sized control list together instead of opening on unlabelled continuation bullets", async () => {
+  it("balances a long labelled control list without orphaning its first or last item", async () => {
     const doc = purposeFixture();
     doc.deliverableType = "charter";
     doc.exhibits = [];
@@ -80,8 +157,9 @@ describe("purpose page rendered objects", () => {
       .map((m) => m[0])
       .filter((p) => /Control [0-5]:/.test(p));
     expect(bullets).toHaveLength(6);
-    for (const bullet of bullets.slice(0, -1))
-      expect(bullet).toContain("<w:keepNext/>");
+    expect(bullets[0]).toContain("<w:keepNext/>");
+    expect(bullets[1]).toContain('<w:keepNext w:val="false"/>');
+    expect(bullets[4]).toContain("<w:keepNext/>");
     expect(bullets.at(-1)).toContain('<w:keepNext w:val="false"/>');
   });
   it("names the actual charter sections each source supports", async () => {
@@ -102,7 +180,8 @@ describe("purpose page rendered objects", () => {
       await Packer.toBuffer(renderDeliverableDocx(doc)),
     );
     const xml = await zip.file("word/document.xml")!.async("string");
-    expect(xml).toContain("Used in: Scope boundary.");
+    expect(xml).toContain("1. Scope boundary");
+    expect(xml).toContain("Used in: section 1.");
   });
   it("compacts status statements into one native table while retaining their semantic colour and labels", async () => {
     const doc = purposeFixture();
@@ -224,10 +303,10 @@ describe("purpose page rendered objects", () => {
     ];
     const pages = planPurposePages(doc);
     const page = pages.find((p) => p.id.startsWith("scope"))!;
-    expect(purposeScopeLayout(page).bodyTop).toBe(2.3);
-    expect(purposeScopeLayout({ ...page, scope: "For review." }).bodyTop).toBe(
-      2.08,
-    );
+    expect(purposeScopeLayout(page).bodyTop).toBeCloseTo(1.87);
+    expect(
+      purposeScopeLayout({ ...page, scope: "For review." }).bodyTop,
+    ).toBeCloseTo(1.65);
     const inspection = await inspectDeck(await renderPurposeDeck(doc));
     const slide = inspection.slides[pages.indexOf(page)]!;
     const scopeBox = slide.purposeText!.find(
@@ -394,6 +473,69 @@ describe("purpose page rendered objects", () => {
     expect(rows[6]).toContain('<w:keepNext w:val="false"/>');
     expect(rows.every((row) => row.includes("<w:cantSplit/>"))).toBe(true);
   });
+  it("lets evidence flow after either a long or short charter instead of forcing a blank tail", async () => {
+    const doc = purposeFixture();
+    doc.deliverableType = "charter";
+    doc.purposePageDesign = true;
+    doc.exhibits = [];
+    doc.tables = [];
+    doc.generatedSections = [
+      {
+        key: "scope",
+        title: "Scope",
+        bodyMarkdown: "Review the bounded business question. ".repeat(90),
+        citationsUsed: [1],
+        groundingMode: "mixed",
+      },
+      {
+        key: "known_constraints_dependencies",
+        title: "Inputs and acceptance",
+        bodyMarkdown:
+          "| Input | Acceptance |\n| --- | --- |\n" +
+          "| Record | Confirm its owner and period. |\n".repeat(5),
+        citationsUsed: [1],
+        groundingMode: "mixed",
+      },
+    ];
+    const xml = async () =>
+      (await JSZip.loadAsync(await Packer.toBuffer(renderDeliverableDocx(doc))))
+        .file("word/document.xml")!
+        .async("string");
+    expect(await xml()).not.toMatch(/<w:pageBreakBefore(?:\/>| w:val="true")/);
+    doc.generatedSections[0]!.bodyMarkdown =
+      "Review the bounded business question.";
+    expect(await xml()).not.toMatch(/<w:pageBreakBefore(?:\/>| w:val="true")/);
+  });
+  it("renders short scope columns as independent lists without a row pairing", async () => {
+    const doc = purposeFixture();
+    doc.deliverableType = "charter";
+    doc.purposePageDesign = true;
+    doc.tables = [];
+    doc.exhibits = [];
+    doc.generatedSections = [
+      {
+        key: "scope",
+        title: "Scope",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+        bodyMarkdown:
+          "| In scope, as requested | Excluded from Discovery |\n| --- | --- |\n| Review context [1] | Build approval [1] |\n| Define the baseline [1] | Production access [1] |",
+      },
+    ];
+    const xml = await (
+      await JSZip.loadAsync(await Packer.toBuffer(renderDeliverableDocx(doc)))
+    )
+      .file("word/document.xml")!
+      .async("string");
+    const scope = xml.match(/<w:tbl>[\s\S]*?<\/w:tbl>/)![0];
+    expect(scope.match(/<w:tr>/g)).toHaveLength(2);
+    expect(scope).toContain("Review context [1]");
+    expect(scope).toContain("Define the baseline [1]");
+    expect(scope).toContain("Production access [1]");
+    expect(
+      [...scope.matchAll(/<w:gridCol w:w="(\d+)"/g)].map((m) => Number(m[1])),
+    ).toEqual([5040, 5040]);
+  });
   it("lets charter sources follow the decision record without a forced blank continuation", async () => {
     const doc = purposeFixture();
     doc.deliverableType = "charter";
@@ -412,7 +554,7 @@ describe("purpose page rendered objects", () => {
     );
     const xml = await zip.file("word/document.xml")!.async("string");
     const sourceHeading = [...xml.matchAll(/<w:p[ >][\s\S]*?<\/w:p>/g)].find(
-      (p) => p[0].includes(">Source register<"),
+      (p) => />\d+\. Source register</.test(p[0]),
     )?.[0];
     expect(sourceHeading).toBeDefined();
     expect(sourceHeading).not.toMatch(
@@ -516,6 +658,55 @@ describe("purpose page rendered objects", () => {
       expect(result.slides[1]!.namedText?.[`purpose:process:${i}`]).toBe(label),
     );
   });
+  it("uses a vertical native flow when recorded role descriptions cannot fit horizontal lanes", async () => {
+    const doc = purposeFixture();
+    doc.tables = [];
+    doc.nextActions = [];
+    const detail =
+      "The accountable operational team reviews the recorded input and sends the result to its owner.";
+    doc.exhibits = [
+      {
+        key: "flow",
+        title: "Workflow",
+        description: "Recorded handoffs",
+        kind: "flow",
+        targetFormat: "pptx",
+        data: {
+          kind: "flow",
+          nodes: Array.from({ length: 5 }, (_, i) => ({
+            id: `n${i}`,
+            label: `Recorded step ${i}`,
+            role: detail,
+          })),
+          edges: Array.from({ length: 4 }, (_, i) => ({
+            from: `n${i}`,
+            to: `n${i + 1}`,
+          })),
+        },
+      },
+    ];
+    doc.deckSlides = [
+      {
+        key: "flow",
+        governingMessage: "Recorded handoffs retain accountable owners",
+        exhibitKey: "flow",
+      },
+    ];
+    const inspection = await inspectDeck(await renderPurposeDeck(doc));
+    const slide = inspection.slides[1]!;
+    expect(slide.tableCount).toBe(0);
+    for (let i = 0; i < 5; i++)
+      expect(slide.namedText?.[`purpose:process-detail:${i}`]).toBe(detail);
+    const steps = slide.purposeText!.filter((b) =>
+      /^purpose:process:\d$/.test(b.name),
+    );
+    expect(steps).toHaveLength(5);
+    expect(
+      steps
+        .slice(1)
+        .every((b, i) => b.yIn >= steps[i]!.yIn + steps[i]!.heightIn),
+    ).toBe(true);
+  });
   it("draws recorded handoffs as a flow with one exception line, not a From/To table", async () => {
     const doc = purposeFixture();
     doc.tables = [];
@@ -554,6 +745,7 @@ describe("purpose page rendered objects", () => {
         key: "flow",
         governingMessage: "Each handoff retains human accountability",
         exhibitKey: "flow",
+        points: ["A separately recorded case starts in another queue [2]."],
       },
     ];
     const result = await inspectDeck(await renderPurposeDeck(doc));
@@ -562,8 +754,13 @@ describe("purpose page rendered objects", () => {
       expect(named[`purpose:process:${i}`]).toBe(label),
     );
     expect(named["purpose:process:exception"]).toBe(
-      "Exception path: Eligibility → Supervisor review (Supervisor) (Eligibility unclear)",
+      "Exception path: Eligibility → Supervisor review (Supervisor) (Eligibility unclear) A separately recorded case starts in another queue [2].",
     );
+    expect(planPurposePages(doc)[1]!.sources).toContain(2);
+    delete result.slides[1]!.namedText!["purpose:process:exception"];
+    expect(() =>
+      validatePurposeInspection(result, planPurposePages(doc)),
+    ).toThrow("process_evidence_missing");
     expect(JSON.stringify(result.slides[1])).not.toContain(
       "Declared connection",
     );
@@ -834,7 +1031,7 @@ describe("purpose page rendered objects", () => {
         key: "scope",
         title: "Scope boundary",
         bodyMarkdown:
-          "| In Scope [1] | Out of Scope [1] |\n|---|---|\n| Review evidence | Commit funding |",
+          "| In Scope (requested) [1] | Out of Scope (not authorized) [1] |\n|---|---|\n| Review evidence | Commit funding |",
         groundingMode: "mixed",
         citationsUsed: [1],
       },
@@ -849,8 +1046,8 @@ describe("purpose page rendered objects", () => {
         Number(m[1]),
       ),
     ).toEqual([5040, 5040]);
-    expect(scopeTable).toContain("In Scope [1]");
-    expect(scopeTable).toContain("Out of Scope [1]");
+    expect(scopeTable).toContain("In Scope (requested) [1]");
+    expect(scopeTable).toContain("Out of Scope (not authorized) [1]");
   });
   it("discloses a bounded line axis in the caption and native chart XML", async () => {
     const chart = purposeChartFixture();

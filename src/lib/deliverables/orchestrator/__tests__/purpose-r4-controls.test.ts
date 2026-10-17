@@ -18,6 +18,13 @@ import {
   stripPurposeSourceVersionReferences,
   purposeSourceRecordReferences,
   stripPurposeSourceRecordReferences,
+  validatePurposeMeasurementPeriod,
+  purposeTypedTableRows,
+  purposeSourceNumberPattern,
+  purposeSourceNumberValue,
+  purposeSourceApproximation,
+  purposePeriodSuffix,
+  formatPurposeNumber,
 } from "../purpose-number-display";
 import { purposeFixture } from "../__fixtures__/purpose-pages";
 import {
@@ -25,13 +32,494 @@ import {
   purposeBodyHeight,
   purposeRowHeight,
   purposeTableHeaderHeight,
+  purposeSourceGroups,
 } from "../purpose-page-plan";
 import {
   validatePurposeText,
   validatePurposeStory,
+  purposeCharterWordCount,
 } from "../purpose-story-contract";
 
 describe("R4 claim and export controls", () => {
+  it("states a scalar period once locally while retaining unlike periods and fractional rates", () => {
+    const seen = new Set<string>();
+    expect(purposePeriodSuffix("Trailing year through Q2", "", seen)).toBe(
+      " (Trailing year through Q2)",
+    );
+    expect(purposePeriodSuffix("Trailing year through Q2", "", seen)).toBe("");
+    expect(purposePeriodSuffix("Eight-quarter cohort", "", seen)).toBe(
+      " (Eight-quarter cohort)",
+    );
+    expect(
+      purposePeriodSuffix(
+        "Trailing year through Q2",
+        "Recorded basis: trailing year through Q2",
+        new Set(),
+      ),
+    ).toBe("");
+    expect(
+      purposePeriodSuffix(
+        "Trailing year through Q2",
+        "Eight-quarter cohort",
+        new Set(),
+      ),
+    ).toBe(" (Trailing year through Q2)");
+    expect(
+      formatPurposeNumber(0.85, { kind: "rate", unit: "hr per denial" }),
+    ).toBe("0.85 hr per denial");
+  });
+  it("keeps only explicitly source-bound approximation on a figure", () => {
+    expect(
+      purposeSourceApproximation(
+        "approximately 703 seconds",
+        14,
+        "703 seconds",
+      ),
+    ).toBe(true);
+    expect(purposeSourceApproximation("~703 sec", 0, "~703 sec")).toBe(true);
+    expect(
+      purposeSourceApproximation(
+        "approximately reconciled: 638 seconds",
+        26,
+        "638 seconds",
+      ),
+    ).toBe(false);
+    expect(purposeSourceApproximation("703 seconds", 0, "703 seconds")).toBe(
+      false,
+    );
+  });
+  it("keeps column meaning with its own evidence row without borrowing another row's values", () => {
+    const evidence = [
+      {
+        citationNumber: 1,
+        statement:
+          'row 1: ["field","issue","severity"]\nrow 2: ["claim status","timestamp missing in 3 of 20 samples","medium"]\nrow 3: ["attachment","planned review","high"]',
+      },
+    ];
+    expect(
+      classifyPurposeClaims(
+        "Claim status timestamp missing in 3 of 20 samples, medium severity [1].",
+        evidence,
+      ).every((c) => c.supported),
+    ).toBe(true);
+    for (const sentence of [
+      "Claim status timestamp missing in 3 of 20 samples, high severity [1].",
+      "Claim status timestamp missing in 3 of 20 samples, medium severity [2].",
+      "Attachment timestamp missing, high severity [1].",
+    ])
+      expect(
+        classifyPurposeClaims(sentence, evidence).some((c) => !c.supported),
+      ).toBe(true);
+  });
+  it("distinguishes a charter's unselected architecture from a factual missing architecture", () => {
+    for (const sentence of [
+      "This charter selects no architecture.",
+      "This charter asserts no priced estimate.",
+    ])
+      expect(classifyPurposeClaims(sentence, [])[0]?.classification).toBe(
+        "draft_status",
+      );
+    expect(
+      classifyPurposeClaims("No architecture exists.", [])[0]?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims(
+        "This charter selects no architecture, and no records were ever collected.",
+        [],
+      ).some((claim) => !claim.supported),
+    ).toBe(true);
+  });
+  it("retains a list's immediate cited lead-in, but not a citation across a heading", () => {
+    const doc = purposeFixture();
+    doc.tables = [];
+    doc.deckSlides = [];
+    doc.exhibits = [];
+    doc.recommendation = "";
+    doc.nextActions = [];
+    doc.generatedSections = [
+      {
+        key: "controls",
+        title: "Controls",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+        bodyMarkdown:
+          "These are proposed controls [1].\n\n- **Data rights:** no reuse of restricted data.\n- **Knowledge:** no stale content presented as authoritative.",
+      },
+    ];
+    const evidence = [
+      {
+        citationNumber: 1,
+        statement:
+          "No reuse of restricted data. No stale content presented as authoritative.",
+      },
+    ];
+    const flags = () =>
+      validatePurposeStory(doc, evidence).filter((e) =>
+        e.includes("unsupported_absence"),
+      );
+    expect(flags()).toEqual([]);
+    doc.generatedSections[0]!.bodyMarkdown =
+      doc.generatedSections[0]!.bodyMarkdown.replace(
+        "\n\n-",
+        "\n\n## Unrelated section\n\n-",
+      );
+    expect(flags().length).toBeGreaterThan(0);
+    doc.generatedSections[0]!.bodyMarkdown =
+      "These controls are proposed [2].\n\n- No reuse of restricted data.";
+    expect(flags().length).toBeGreaterThan(0);
+  });
+  it("requires a none hypothesis to match a declared proposed source field", () => {
+    const evidence = [
+      {
+        citationNumber: 1,
+        statement:
+          'row 1: ["question","hypothesis","status"]\nrow 2: ["Role/accountability change","none","proposed_not_confirmed"]',
+      },
+    ];
+    const text = "Decision rights, role change hypothesised as none [1].";
+    expect(classifyPurposeClaims(text, evidence)[0]?.supported).toBe(true);
+    expect(classifyPurposeClaims(text, [])[0]?.supported).toBe(false);
+    expect(
+      classifyPurposeClaims(
+        "Headcount change hypothesised as none [1].",
+        evidence,
+      )[0]?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims("Role change is none [1].", evidence)[0]?.supported,
+    ).toBe(false);
+  });
+  it("distinguishes an attributed change assumption from an achieved or enterprise-wide absence", () => {
+    const evidence = [
+      {
+        citationNumber: 1,
+        statement:
+          "Initial change hypothesis: limited workflow changes; no assumed role reduction or operating-model redesign. Confirm after discovery.",
+      },
+    ];
+    const check = (text: string, sources = evidence) =>
+      classifyPurposeClaims(text, sources)[0]?.supported;
+    expect(
+      check(
+        "Origination hypothesises no role reduction, to confirm or correct [1].",
+      ),
+    ).toBe(true);
+    expect(
+      check("Origination hypothesizes no operating-model redesign [1]."),
+    ).toBe(true);
+    expect(check("Origination hypothesises no headcount increase [1].")).toBe(
+      false,
+    );
+    expect(check("There is no role reduction [1].")).toBe(false);
+    expect(check("Origination hypothesises no role reduction [2].")).toBe(
+      false,
+    );
+    expect(check("Origination hypothesises no role reduction [1].", [])).toBe(
+      false,
+    );
+    expect(
+      check("Origination hypothesises no role reduction [1].", [
+        { citationNumber: 1, statement: "Role reduction is planned." },
+      ]),
+    ).toBe(false);
+  });
+  it("binds compact magnitudes as whole source values rather than integer fragments", () => {
+    expect(
+      "4.82M calls, $2.2M ceiling, 15.8%, 12 months.".match(
+        purposeSourceNumberPattern(),
+      ),
+    ).toEqual(["4.82M", "$2.2M", "15.8%", "12"]);
+    expect(purposeSourceNumberValue("4.82M")).toBe(4820000);
+    expect(purposeSourceNumberValue("$2,200,000.00")).toBe(2200000);
+    expect(purposeSourceNumberValue("~703 seconds")).toBe(703);
+    expect(() => purposeSourceNumberValue("4.82MB")).toThrow(
+      "unsupported_literal",
+    );
+    expect("4.82MB".match(purposeSourceNumberPattern())).toBeNull();
+  });
+  it("renders a scalar period with its own source and rejects unbacked period metadata", () => {
+    const table = {
+      key: "basis",
+      title: "Basis",
+      columns: ["Metric", "Value"],
+      rows: [["Submitted claims", "[2]"]],
+      targetFormat: "pptx" as const,
+      numericCells: [
+        {
+          row: 0,
+          column: 1,
+          value: 618000,
+          type: { kind: "count" as const, unit: "claims" },
+          measurementPeriod: {
+            label: "Trailing year",
+            sourceCitation: 1,
+            sourceQuote: "Trailing year",
+          },
+        },
+      ],
+    };
+    expect(purposeTypedTableRows(table)[0]![1]).toBe(
+      "618,000 (Trailing year) [1, 2]",
+    );
+    expect(table.rows[0]![1]).toBe("[2]");
+    const doc = purposeFixture();
+    doc.deliverableType = "discovery_report";
+    doc.tables = [table];
+    expect(
+      validatePurposeStory(doc, []).some((error) =>
+        error.includes("unsupported_measurement_period"),
+      ),
+    ).toBe(true);
+    expect(
+      validatePurposeStory(doc, [
+        { citationNumber: 1, statement: "Trailing year" },
+      ]).some((error) => error.includes("unsupported_measurement_period")),
+    ).toBe(false);
+  });
+  it("counts native charter content without treating repeated citation markers as words", () => {
+    const doc = purposeFixture();
+    doc.deliverableType = "charter";
+    doc.tables = [];
+    doc.nextActions = [];
+    doc.actionRegister = [];
+    doc.recommendation = "";
+    doc.generatedSections = [
+      {
+        key: "scope",
+        title: "Scope",
+        bodyMarkdown:
+          "| Item | Basis |\n|---|---|\n| Review scope | Source [1] [1] |",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+      },
+    ];
+    expect(purposeCharterWordCount(doc)).toBe(5);
+    doc.generatedSections[0]!.bodyMarkdown = "word ".repeat(851);
+    expect(validatePurposeStory(doc, [])).toContain(
+      "purpose_story:charter_word_budget:851/850",
+    );
+  });
+  it("classifies a hypothetical invalidation without declaring an actual gap", () => {
+    expect(
+      classifyPurposeClaims(
+        "The rationale weakens if source conflicts cannot be resolved.",
+        [],
+      ).every((c) => c.supported),
+    ).toBe(true);
+    expect(
+      classifyPurposeClaims("Source conflicts cannot be resolved.", [])[0]
+        ?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims(
+        "The rationale weakens if source conflicts cannot be resolved, and no records were ever collected.",
+        [],
+      ).some((c) => !c.supported),
+    ).toBe(true);
+  });
+  it("distinguishes an acceptance condition from a historical assertion", () => {
+    expect(
+      classifyPurposeClaims(
+        "No mechanism is confirmed until its named test is run.",
+        [],
+      )[0]?.classification,
+    ).toBe("decision_condition");
+    expect(
+      classifyPurposeClaims("No mechanism is confirmed.", [])[0]?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims(
+        "No mechanism was confirmed until last year.",
+        [],
+      )[0]?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims(
+        "No mechanism is confirmed until its named test is run, and no evidence was collected.",
+        [],
+      ).some((c) => !c.supported),
+    ).toBe(true);
+  });
+  it("keeps a page's scope contrast separate from an attached absence claim", () => {
+    const text = "Shows proposed owner roles; not confirmed assignments.";
+    expect(
+      classifyPurposeClaims(text, [], { textRole: "scope" }).every(
+        (c) => c.supported,
+      ),
+    ).toBe(true);
+    expect(classifyPurposeClaims(text, []).some((c) => !c.supported)).toBe(
+      true,
+    );
+    expect(
+      classifyPurposeClaims(
+        "Shows candidate causes; no evidence was ever collected.",
+        [],
+        { textRole: "scope" },
+      ).some((c) => !c.supported),
+    ).toBe(true);
+    expect(
+      classifyPurposeClaims(
+        "Shows proposed roles; not confirmed assignments, and no evidence was collected.",
+        [],
+        { textRole: "scope" },
+      ).some((c) => !c.supported),
+    ).toBe(true);
+  });
+  it("separates a short semantic label from its cited claim, never from a missing source", () => {
+    const evidence = [
+      {
+        citationNumber: 1,
+        statement:
+          "No stale or conflicting knowledge presented as authoritative.",
+      },
+    ];
+    const text =
+      "Knowledge authority: no stale or conflicting knowledge presented as authoritative [1].";
+    expect(classifyPurposeClaims(text, evidence)[0]?.supported).toBe(true);
+    expect(classifyPurposeClaims(text, [])[0]?.supported).toBe(false);
+    expect(
+      classifyPurposeClaims(
+        "No approval exists: no stale knowledge presented as authoritative [1].",
+        evidence,
+      ).some((c) => !c.supported),
+    ).toBe(true);
+  });
+  it("keeps a scalar period independent of a broader cohort window", () => {
+    const sources = [
+      {
+        citationNumber: 1,
+        statement:
+          "Trailing year through Q2. Cohort window covers eight quarters.",
+      },
+    ];
+    const period = {
+      label: "Trailing year through Q2",
+      sourceCitation: 1,
+      sourceQuote: "Trailing year through Q2.",
+    };
+    expect(() =>
+      validatePurposeMeasurementPeriod(period, sources),
+    ).not.toThrow();
+    expect(() =>
+      validatePurposeMeasurementPeriod(undefined, sources),
+    ).not.toThrow();
+    expect(() =>
+      validatePurposeMeasurementPeriod(
+        { ...period, sourceCitation: 2 },
+        sources,
+      ),
+    ).toThrow("unsupported_measurement_period");
+    expect(() =>
+      validatePurposeMeasurementPeriod(
+        { ...period, label: "eight quarters" },
+        sources,
+      ),
+    ).toThrow("unsupported_measurement_period");
+    expect(() =>
+      validatePurposeMeasurementPeriod(
+        { ...period, sourceQuote: "Trailing year through Q2 plus next year." },
+        sources,
+      ),
+    ).toThrow("unsupported_measurement_period");
+  });
+  it("requires declared locatable upstream references instead of inferred corroboration", () => {
+    const source = {
+      citationNumber: 1,
+      referenceId: "S1",
+      label: "Summary",
+      confidence: "low" as const,
+      evidenceFamily: "Inputs",
+    };
+    expect(() =>
+      purposeSourceGroups([
+        {
+          ...source,
+          upstreamReferences: [
+            {
+              id: "session-a",
+              locator: "minutes 10 to 15",
+              availability: "not_supplied",
+            },
+          ],
+        },
+      ]),
+    ).not.toThrow();
+    expect(() =>
+      purposeSourceGroups([
+        {
+          ...source,
+          upstreamReferences: [
+            {
+              id: "session-a",
+              locator: "minutes 10 to 15",
+              availability: "supplied",
+              sourceReferenceId: "S2",
+            },
+          ],
+        },
+      ]),
+    ).toThrow("upstream_reference_invalid");
+    expect(() =>
+      purposeSourceGroups([
+        {
+          ...source,
+          upstreamReferences: [
+            { id: "session-a", locator: "", availability: "not_supplied" },
+          ],
+        },
+      ]),
+    ).toThrow("upstream_reference_invalid");
+    expect(() =>
+      purposeSourceGroups([
+        {
+          ...source,
+          upstreamReferences: [
+            {
+              id: "session-a",
+              locator: "minutes 10 to 15",
+              availability: "supplied",
+              sourceReferenceId: "S2",
+            },
+          ],
+        },
+        { ...source, citationNumber: 2, referenceId: "S2" },
+      ]),
+    ).not.toThrow();
+  });
+  it("retains structured citation scope across sentences without using unrelated evidence", () => {
+    const evidence = [
+      { citationNumber: 1, statement: "No approved baseline exists." },
+      { citationNumber: 2, statement: "An approved baseline exists." },
+    ];
+    const text =
+      "No approved baseline exists. Review the baseline before funding.";
+    expect(
+      classifyPurposeClaims(text, evidence, { sourceIds: [1] })[0]?.supported,
+    ).toBe(true);
+    expect(
+      classifyPurposeClaims(text, evidence, { sourceIds: [2] })[0]?.supported,
+    ).toBe(false);
+    expect(classifyPurposeClaims(text, evidence)[0]?.supported).toBe(false);
+  });
+  it("checks the factual premise of a compound proposed decision independently", () => {
+    const evidence = [
+      { citationNumber: 1, statement: "No approved baseline exists." },
+    ];
+    const text =
+      "Proposed direction: hold funding because no approved baseline exists [1].";
+    expect(
+      classifyPurposeClaims(text, evidence).every((c) => c.supported),
+    ).toBe(true);
+    expect(classifyPurposeClaims(text, []).some((c) => !c.supported)).toBe(
+      true,
+    );
+    expect(
+      classifyPurposeClaims(
+        "No approved baseline exists, so no responses were ever received [1].",
+        evidence,
+      ).some((c) => !c.supported),
+    ).toBe(true);
+  });
   it("does not give the offline writer limits that contradict the phase contract", () => {
     const harness = readFileSync(
       "scripts/deliverables/proof/purpose-fresh-source.ts",
@@ -42,6 +530,11 @@ describe("R4 claim and export controls", () => {
     );
     expect(harness).not.toContain("assertion under ninety characters");
     expect(harness).not.toContain("under one hundred and forty characters");
+    expect(harness).not.toContain("Use a flow only for a short single path");
+    expect(harness).not.toContain("followed by three short Markdown bullets");
+    expect(harness).toContain(
+      "Independent source cases keep separate entries and timings",
+    );
   });
   it("classifies rendered recommendation bullets rather than Markdown delimiters", () => {
     const doc = purposeFixture();
@@ -647,7 +1140,48 @@ describe("R4 claim and export controls", () => {
           p.scope.includes("R2: Owner review pending"),
       ),
     ).toBe(true);
-    expect(pages.every((p) => p.columnWeights![1]! >= 4.8)).toBe(true);
+    expect(
+      pages.every(
+        (p) => p.columnWeights![0]! >= 1.15 && p.columnWeights![1]! >= 3.6,
+      ),
+    ).toBe(true);
+  });
+  it("keeps a large traceability register in named evidence families without dropping sources", () => {
+    const doc = purposeFixture();
+    doc.sourceRegister = Array.from({ length: 17 }, (_, i) => ({
+      citationNumber: i + 1,
+      referenceId: `E${i + 1}`,
+      label: "Evidence input with recorded owner and disposition",
+      evidenceFamily:
+        i < 6 ? "Decision inputs" : i < 12 ? "Diagnostic evidence" : "Controls",
+      confidence: "low" as const,
+      reviewStatus: "Owner review pending",
+      useAndLimitation:
+        "Supports the recorded decision boundary and its stated limitations.",
+      ...(i % 5 === 0
+        ? {
+            upstreamReferences: [
+              {
+                id: "source-session",
+                locator: "section A, 31:00-36:00",
+                availability: "not_supplied" as const,
+              },
+            ],
+          }
+        : {}),
+    }));
+    const pages = planPurposePages(doc).filter((p) => p.sourceRegister);
+    const ids = pages
+      .flatMap((p) => p.rows!)
+      .filter((r) => r[0])
+      .map((r) => r[0]);
+    expect(ids).toEqual(doc.sourceRegister.map((s) => `[${s.referenceId}]`));
+    expect(new Set(ids).size).toBe(17);
+    expect(pages.every((p) => p.rows!.filter((r) => r[0]).length > 1)).toBe(
+      true,
+    );
+    expect(new Set(pages.map((p) => p.title)).size).toBe(pages.length);
+    expect(pages.every((p) => !/\d+\/\d+/.test(p.title))).toBe(true);
   });
   it.each(corpus)("classifies $sentence", (row) => {
     const result = classifyPurposeClaims(
@@ -1046,7 +1580,7 @@ describe("R4 claim and export controls", () => {
         key: "rows",
         title: "Evidence",
         columns: ["Finding"],
-        rows: Array.from({ length: 9 }, (_, i) => [`Recorded item ${i} [1]`]),
+        rows: Array.from({ length: 14 }, (_, i) => [`Recorded item ${i} [1]`]),
         targetFormat: "pptx",
       },
     ];
@@ -1063,7 +1597,7 @@ describe("R4 claim and export controls", () => {
     ];
     const pages = planPurposePages(doc).filter((p) => p.id.startsWith("rows"));
     expect(pages).toHaveLength(2);
-    expect(pages.map((p) => p.rows!.length).sort()).toEqual([4, 5]);
+    expect(pages.map((p) => p.rows!.length).sort()).toEqual([7, 7]);
     for (const p of pages) {
       const used =
         purposeTableHeaderHeight(p) +
@@ -1102,7 +1636,7 @@ describe("R4 claim and export controls", () => {
     expect(pages).toHaveLength(1);
     expect(pages[0]!.rows).toHaveLength(7);
     expect(pages[0]!.takeaway).toBe("Confirm each record.");
-    expect(purposeBodyHeight(pages[0]!)).toBeCloseTo(3.9);
+    expect(purposeBodyHeight(pages[0]!)).toBeCloseTo(4.33);
   });
   it("retains the input-approval guard without confusing an access prerequisite", () => {
     const doc = { deliverableType: "charter", sourceRegister: [] };

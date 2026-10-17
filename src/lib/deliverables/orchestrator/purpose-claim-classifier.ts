@@ -17,6 +17,8 @@ export interface PurposeClaimContext {
   /** Native document role, assigned by the renderer/parser, never inferred from prose. */
   textRole?: "body" | "scope" | "source" | "disclosure";
   syntheticInputBundle?: boolean;
+  /** Citations attached to this structured paragraph, table row or slide. */
+  sourceIds?: readonly number[];
 }
 export interface PurposeClaimVerdict {
   sentence: string;
@@ -99,7 +101,23 @@ function tokens(s: string): Set<string> {
 }
 
 function structuredProposalSupports(claim: string, statement: string): boolean {
-  const subject = claim.match(/^no (.+?) is proposed$/)?.[1];
+  const attributed = claim.match(
+    /^(?:the )?(?:origination|initial change hypothesis) hypothesi[sz]es no ([a-z -]+?)(?:, to confirm or correct)?$/,
+  )?.[1];
+  if (attributed)
+    return statement.split(/\n|(?<=[.!?])\s+/).some((line) => {
+      const assumed = clean(line).match(/\bno assumed (.+?)(?:[.;]|$)/)?.[1];
+      return Boolean(
+        assumed
+          ?.split(/\s+or\s+|,\s*/)
+          .some((subject) => subject === attributed),
+      );
+    });
+  const explicitHypothesis = claim.match(
+    /(?:^|,\s*)([^,]+?) (?:hypothesised|hypothesized|proposed) as none$/,
+  )?.[1];
+  const subject =
+    claim.match(/^no (.+?) is proposed$/)?.[1] || explicitHypothesis;
   if (!subject) return false;
   const rows: string[][] = [];
   for (const line of statement.split("\n")) {
@@ -124,12 +142,18 @@ function structuredProposalSupports(claim: string, statement: string): boolean {
   const statusColumn = header.indexOf("status");
   if ([subjectColumn, valueColumn, statusColumn].some((index) => index < 0))
     return false;
-  const wanted = [...tokens(subject)].sort().join(" ");
+  const wanted = tokens(subject);
+  if (wanted.size < 2) return false;
   return rows
     .slice(1)
     .some(
       (row) =>
-        [...tokens(row[subjectColumn] || "")].sort().join(" ") === wanted &&
+        (explicitHypothesis
+          ? [...wanted].every((term) =>
+              tokens(row[subjectColumn] || "").has(term),
+            )
+          : [...tokens(row[subjectColumn] || "")].sort().join(" ") ===
+            [...wanted].sort().join(" ")) &&
         clean(row[valueColumn] || "") === "none" &&
         /^proposed(?: not confirmed| not approved)?$/.test(
           clean(row[statusColumn] || ""),
@@ -165,13 +189,57 @@ function citedHypothesisSupports(
   );
 }
 
+function labelledEvidenceRows(statement: string): string[] {
+  let header: string[] | null = null;
+  const rows: string[] = [];
+  for (const line of statement.split("\n")) {
+    const match = line.match(/^row (\d+): (\[.*\])$/);
+    if (!match) continue;
+    try {
+      const cells: unknown = JSON.parse(match[2]!);
+      if (
+        !Array.isArray(cells) ||
+        !cells.every((cell) => typeof cell === "string")
+      )
+        continue;
+      if (match[1] === "1") {
+        header = cells;
+        continue;
+      }
+      if (
+        !header ||
+        header.length !== cells.length ||
+        !cells.some((cell) => purposeNegativeClaim.test(cell))
+      )
+        continue;
+      // Column labels describe these values only; never borrow a different row's status.
+      const fields = Object.fromEntries(
+        header
+          .map((label, i) => [label, cells[i]])
+          .filter(([, value]) => value.trim()),
+      );
+      rows.push(`row ${match[1]}: ${JSON.stringify(fields)}`);
+    } catch {
+      header = null;
+    }
+  }
+  return rows;
+}
+
 /** Textual support is local to a cited sentence or extract row, not a whole file. */
 function purposeClaimHasSupport(
   claim: string,
   sources: readonly PurposeClaimEvidence[],
   ids: number[],
 ): boolean {
-  const normalized = clean(claim).replace(
+  const unlabelled = clean(claim).match(/^([^:]{1,50}):\s*(.+)$/);
+  const factualText =
+    unlabelled &&
+    !purposeNegativeClaim.test(unlabelled[1]!) &&
+    unlabelled[1]!.split(/\s+/).length <= 6
+      ? unlabelled[2]!
+      : clean(claim);
+  const normalized = factualText.replace(
     /^(?:source states|recorded change position):\s*/,
     "",
   );
@@ -193,7 +261,15 @@ function purposeClaimHasSupport(
   )?.[1];
   const qualifiedGap = /\b(?:may|might|could) (?:lack\b|be missing\b)/i;
   const permitsStrength = (line: string) =>
-    !qualifiedGap.test(line) || qualifiedGap.test(normalized);
+    (!qualifiedGap.test(line) || qualifiedGap.test(normalized)) &&
+    (!/\b(?:hypothesis:|no assumed)\b/.test(clean(line)) ||
+      /\b(?:hypothes\w*|assum\w*)\b/.test(normalized)) &&
+    (!(
+      /^row \d+:/.test(line) &&
+      /"none"/i.test(line) &&
+      /proposed/i.test(line)
+    ) ||
+      /\b(?:hypothesised|hypothesized|proposed|assumed)\b/.test(normalized));
   return sources.some(
     (source) =>
       ids.includes(source.citationNumber) &&
@@ -215,26 +291,27 @@ function purposeClaimHasSupport(
                   clean(line).split(/ (?:is|are) approved/)[0]!,
                 ),
             )) ||
-        source.statement
-          .split(/\n|(?<=[.!?])\s+|;\s+|\s+but\s+/)
-          .some((line) => {
-            if (
-              !permitsStrength(line) ||
-              !purposeNegativeClaim.test(line) ||
-              terms.size < 2
-            )
-              return false;
-            const available = tokens(line);
-            const localTargets = negativeTargets(line);
-            if (absentSubject && !clean(line).includes(`no ${absentSubject}`))
-              return false;
-            return (
-              (!/^no\b/.test(normalized) ||
-                (targets.length > 0 &&
-                  targets.every((target) => localTargets.includes(target)))) &&
-              [...terms].every((term) => available.has(term))
-            );
-          })),
+        [
+          ...source.statement.split(/\n|(?<=[.!?])\s+|;\s+|\s+but\s+/),
+          ...labelledEvidenceRows(source.statement),
+        ].some((line) => {
+          if (
+            !permitsStrength(line) ||
+            !purposeNegativeClaim.test(line) ||
+            terms.size < 2
+          )
+            return false;
+          const available = tokens(line);
+          const localTargets = negativeTargets(line);
+          if (absentSubject && !clean(line).includes(`no ${absentSubject}`))
+            return false;
+          return (
+            (!/^no\b/.test(normalized) ||
+              (targets.length > 0 &&
+                targets.every((target) => localTargets.includes(target)))) &&
+            [...terms].every((term) => available.has(term))
+          );
+        })),
   );
 }
 
@@ -337,14 +414,30 @@ export function classifyPurposeClaims(
     .map((s) => s.trim())
     .filter(Boolean);
   return sentences.flatMap((sentence) => {
-    const ids = purposeCitationIds(sentence);
+    const ids = [
+      ...new Set([
+        ...purposeCitationIds(sentence),
+        ...(context.sourceIds || []),
+      ]),
+    ];
     const decisionLimit =
-      /\b(?:this (?:draft|charter|document|decision|readout|page)|it) (?:commits?|approves?|authori[sz]es?|grants?|seeks?|states?) no\b/.test(
+      /\b(?:this (?:draft|charter|document|decision|readout|page)|it) (?:commits?|approves?|authori[sz]es?|grants?|seeks?|states?|asserts?|selects?) no\b/.test(
         clean(sentence),
       );
-    const clauses = splitOutsideQuotes(
+    const causalParts = splitOutsideQuotes(
       sentence,
-      /;|,\s+and\s+(?=(?:that\s+)?[\w -]{1,60}\b(?:cannot|lacks?|has no|have no|is not|are not)\b)|(?:,\s+(?:with\s+)?|\s+and\s+)(?=(?:and )?(?:no|none|missing|absent)\b)/i,
+      /,?\s+(?:because|so|whereas)\s+/i,
+    );
+    // A permitted negative rule must not detach from an unsupported negative premise.
+    const independentParts =
+      causalParts.filter((part) => purposeNegativeClaim.test(part)).length <= 1
+        ? causalParts
+        : [sentence];
+    const clauses = independentParts.flatMap((part) =>
+      splitOutsideQuotes(
+        part,
+        /;|,\s+and\s+(?=(?:that\s+)?[\w -]{1,60}\b(?:cannot|lacks?|has no|have no|is not|are not)\b)|(?:,\s+(?:with\s+)?|\s+and\s+)(?=(?:and )?(?:no|none|missing|absent)\b)/i,
+      ),
     );
     return clauses
       .flatMap((clause) => {
@@ -380,6 +473,17 @@ export function classifyPurposeClaims(
         const ifLast = value.match(
           /^(?:proceed|hold|stop|pause|revise|request|return|reconsider)\b([^;.!?]*?) if (.+)$/,
         );
+        const conditionalPremise = value.match(/^(.+?)\s+if\s+(.+)$/);
+        if (
+          conditionalPremise &&
+          !purposeNegativeClaim.test(conditionalPremise[1]!) &&
+          purposeNegativeClaim.test(conditionalPremise[2]!)
+        )
+          return result(
+            "decision_condition",
+            true,
+            "The negative premise is explicitly conditional, not asserted as a fact",
+          );
         if (
           (ifFirst &&
             purposeNegativeClaim.test(ifFirst[1]!) &&
@@ -400,6 +504,19 @@ export function classifyPurposeClaims(
             "decision_condition",
             true,
             "Prospective counting rule; the subordinate clause names its required evidence",
+          );
+        if (
+          /^no [a-z -]+ (?:is|may be|can be) (?:confirmed|accepted|approved|selected|verified) (?:until|unless)\b/.test(
+            value,
+          ) &&
+          !historical.test(value) &&
+          [...value.matchAll(new RegExp(purposeNegativeClaim.source, "gi"))]
+            .length === 1
+        )
+          return result(
+            "decision_condition",
+            true,
+            "A present-tense acceptance rule names the evidence required before confirmation",
           );
         if (
           /^this (?:draft|document|readout)\b/.test(value) &&
@@ -502,6 +619,19 @@ export function classifyPurposeClaims(
           );
         if (
           context.textRole === "scope" &&
+          /^shows\b/.test(clean(sentence)) &&
+          /^not (?:(?:yet|independently) )?(?:confirmed|validated|verified|approved|accepted|selected|measured|established) [a-z -]+$/.test(
+            value,
+          ) &&
+          !historical.test(value)
+        )
+          return result(
+            "draft_status",
+            true,
+            "A noun-phrase scope contrast limits this page, not the business's evidence history",
+          );
+        if (
+          context.textRole === "scope" &&
           !historical.test(value) &&
           (/^(?:and )?none is (?:yet )?confirmed (?:here|by this page)$/.test(
             value,
@@ -564,7 +694,7 @@ export function classifyPurposeClaims(
         if (
           !historical.test(value) &&
           decisionLimit &&
-          /\bno (?:implementation |production )?(?:funding|spend|spending|build|execution|baseline|target|benefit|blended value|pilot cohort|interface access)\b/.test(
+          /\bno (?:implementation |production )?(?:funding|spend|spending|build|execution|baseline|target|benefit|blended value|pilot cohort|interface access|priced estimate|architecture)\b/.test(
             value,
           )
         )
