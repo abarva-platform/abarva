@@ -222,6 +222,19 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
   const calculated = (label: string): string => caseBody?.status === "evaluated" && economics ? label : GAP;
   const caseCost = inputs.edition === "investment" ? dollars("case_cost_base", costCents?.base) : null;
   const threeTotal = dollars("three_year_credited_earned", credited?.totalCents);
+  // Investment economics, bound to the same sources and displays as their slots.
+  const economicsBase = (key: string): unknown => obj(economics?.[key])?.base;
+  const npvBase = economicsBase("npvCents");
+  const npv = inputs.edition === "investment" && typeof npvBase === "number" && Number.isSafeInteger(npvBase)
+    ? bind("engine:npv_base", "Value engine: npv base", money(npvBase)) : null;
+  const paybackBase = economicsBase("paybackMonth");
+  const payback: ReferenceCell | null = inputs.edition !== "investment" || !economics ? null
+    : typeof paybackBase === "number" && Number.isInteger(paybackBase) && paybackBase > 0
+      ? bind("engine:payback_month_base", "Value engine: payback month base", monthsText(paybackBase))
+      : paybackBase === null ? "Not within horizon" : null;
+  const realisationBase = economicsBase("breakevenRealisation");
+  const realisation = inputs.edition === "investment" && typeof realisationBase === "number" && Number.isFinite(realisationBase) && realisationBase > 0
+    ? bind("engine:breakeven_realisation_base", "Value engine: breakeven realisation base", percent(realisationBase)) : null;
   const roi = (basisKey: string): ReferenceFigure | null => {
     if (inputs.edition !== "investment") return null;
     const value = basis(basisKey)?.roi;
@@ -506,10 +519,19 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
         : [gapPanel("Working assumptions still need to be agreed",
         "No working assumption is recorded for this case yet.",
         "Agree the assumptions that could change the decision, with an owner for each.")];
-      case "value_ledger": return [table(["Basis", "Earned", "Paid", "Counted", "Source", "Review"], [
+      case "value_ledger": {
+        const ledger: ReferenceBlock[] = [table(["Basis", "Earned", "Paid", "Counted", "Source", "Review"], [
         ["Credited", valueCell(dollars("credited_earned_total", credited?.totalCents)), valueCell(dollars("credited_paid_total", creditedPaid?.totalCents)), calculated("Calculated case"), calculated("Case model"), "Check timing"],
         ["Program", valueCell(dollars("program_earned_total", programEarned?.totalCents)), valueCell(dollars("program_paid_total", programPaid?.totalCents)), calculated("Calculated case"), calculated("Case model"), "Check attribution"],
       ])];
+        // The investment case reads its economics beside the ledger it is computed from.
+        if (inputs.edition === "investment" && (npv || payback || realisation)) ledger.push(metrics([
+          { label: "Net present value", value: valueCell(npv), meaning: "Credited cash received" },
+          { label: "Payback", value: payback ?? valueCell(null), meaning: "Cash covers the investment" },
+          { label: "Breakeven realisation", value: valueCell(realisation), meaning: "Share of modelled value" },
+        ]));
+        return ledger;
+      }
       case "users_decisions": return acceptedOwners.length ? [table(["Decision", "Named owner", "Right", "Source", "Status"],
         acceptedOwners.length ? acceptedOwners.slice(0, 4).map((row) => [
           safeRead(row.name), safeRead(row.owner?.name),
