@@ -504,6 +504,12 @@ describe("MovesStepPage", () => {
       container.querySelectorAll("nav[aria-label='Design steps'] li"),
     );
     expect(items[0].textContent).toBe("01Root cause → design· open");
+    // Name and status share one column, so a two-line name keeps its status beneath it.
+    const label = items[0].querySelector('[class*="step-label"]');
+    expect(Array.from(label?.children ?? []).map((child) => child.className)).toEqual([
+      expect.stringContaining("step-title"), expect.stringContaining("step-depth"),
+    ]);
+    expect(items[2].querySelector('[class*="step-label"] > [class*="step-depth"]')?.textContent).toBe("· Light");
     expect(items[0].querySelector("a")?.getAttribute("href")).toBe("/s1");
     expect(items[1].textContent).toContain("✓");
   });
