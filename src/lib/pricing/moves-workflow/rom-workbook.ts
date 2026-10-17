@@ -45,6 +45,8 @@ export const ROM_WORKBOOK_SHEETS = {
   pod: "Pod & Rates",
   releases: "Releases",
   assumptions: "Assumptions",
+  /** Added only when the ROM carries an AI-assisted scenario. */
+  aiAssisted: "AI-Assisted Scenario",
 } as const;
 
 export const ROM_WORKBOOK_CONTENT_TYPE =
@@ -77,6 +79,16 @@ export interface RomWorkbookLayout {
     highCents: string;
     naiveSumCents: string | null;
   };
+  /** Addresses on the AI-Assisted Scenario sheet, when the ROM carries one. */
+  aiAssisted: {
+    hours: string;
+    weeks: string;
+    toolCostCents: string;
+    lowCents: string;
+    planCents: string;
+    highCents: string;
+    versusEstimatePlanCents: string;
+  } | null;
 }
 
 /** Excel treats =, +, -, @ as formula prefixes in typed input; keep caller text literal. */
@@ -230,9 +242,9 @@ export function buildRomWorkbook(rom: RomResult): {
   asm.addRow(["Pod", text(rom.pod.podCode), "", text(rom.pod.source), ""]);
   asm.addRow([
     "AI productivity credit",
-    "none applied",
+    rom.aiAssisted ? "none in the estimate; see the AI-Assisted Scenario sheet" : "none applied",
     "",
-    "ROM policy: no credit unless explicitly requested",
+    "ROM policy: no credit in the estimate; a sourced scenario is priced beside it",
     "",
   ]);
   asm.addRow([
@@ -427,6 +439,7 @@ export function buildRomWorkbook(rom: RomResult): {
     ...(rom.foundation ? [rom.foundation.hours] : []),
   ];
   const lineRange = new Map<string, { first: number; last: number }>();
+  const countCell = new Map<string, string>();
   for (const block of allHoursBlocks) {
     let first = 0;
     for (const line of block.lines) {
@@ -443,6 +456,7 @@ export function buildRomWorkbook(rom: RomResult): {
         line.unitHours.confidence,
       ]).number;
       if (first === 0) first = row;
+      countCell.set(`${block.kind}:${block.code}:${line.driver}`, sheetRef(ROM_WORKBOOK_SHEETS.estimate, `$E$${row}`));
       const libRef = sheetRef(
         ROM_WORKBOOK_SHEETS.library,
         libraryCell.get(line.driver) as string,
@@ -791,6 +805,20 @@ export function buildRomWorkbook(rom: RomResult): {
     naiveCell = `K${naiveRow}`;
   }
 
+  const aiLayout = rom.aiAssisted
+    ? writeAiAssistedSheet(wb, rom, {
+        libraryCell,
+        countCell,
+        podRows,
+        totalFte: TOTAL_FTE,
+        friction: A(FRICTION),
+        share: A(SHARE),
+        hpw: A(HPW),
+        rangeCells: new Map([...rangeCells].map(([k, v]) => [k, { low: A(v.low), high: A(v.high) }])),
+        estimatePlan: sheetRef(ROM_WORKBOOK_SHEETS.releases, `$H$${totalRow}`),
+      })
+    : null;
+
   for (const ws of [est, lib, podWs, rel, asm]) {
     ws.columns.forEach((col) => {
       col.width = 18;
@@ -822,7 +850,177 @@ export function buildRomWorkbook(rom: RomResult): {
         highCents: `I${totalRow}`,
         naiveSumCents: naiveCell,
       },
+      aiAssisted: aiLayout,
     },
+  };
+}
+
+/** Whole periods with the engine's float tolerance (`wholePeriods`): IF(ratio is within 1E-9 of N, N, CEILING). */
+function wholePeriodsFormula(ratio: string): string {
+  return `IF(ABS(${ratio}-ROUND(${ratio},0))<=1E-9,ROUND(${ratio},0),CEILING(${ratio},1))`;
+}
+
+/**
+ * The AI-assisted scenario as live formulas: each driver's unit hours reduced
+ * by its sourced factor, the same counts, friction, pod and rates as the
+ * estimate, and each tool charged per seat per whole month of every block.
+ * Every cell references the estimate's own inputs, so editing a count, a unit
+ * hour, a reduction or a seat recomputes the scenario — never the estimate.
+ */
+function writeAiAssistedSheet(
+  wb: ExcelJS.Workbook,
+  rom: RomResult,
+  refs: {
+    libraryCell: Map<string, string>;
+    countCell: Map<string, string>;
+    podRows: { fte: string; rate: string }[];
+    totalFte: string;
+    friction: string;
+    share: string;
+    hpw: string;
+    rangeCells: Map<string, { low: string; high: string }>;
+    estimatePlan: string;
+  },
+): NonNullable<RomWorkbookLayout["aiAssisted"]> {
+  const ai = rom.aiAssisted as NonNullable<RomResult["aiAssisted"]>;
+  const ws = wb.addWorksheet(ROM_WORKBOOK_SHEETS.aiAssisted);
+  ws.addRow([`AI-assisted scenario — ${text(ai.label)}`]).font = { bold: true, size: 14 };
+  ws.addRow([
+    "Scenario only: the Estimate, Releases and Assumptions sheets are the estimate and are unchanged. " +
+      "Scenario unit hours = estimate unit hours × (1 − hours reduction). Tools are charged per seat per whole month of each block. Money in cents.",
+  ]);
+  ws.addRow([]);
+
+  // Factors: one row per driver the estimate has unit hours for.
+  styleHeader(ws.addRow(["Driver", "Label", "Estimate unit hours", "Hours reduction", "Scenario unit hours", "Reduction source", "Confidence"]));
+  const scenarioUnit = new Map<string, string>();
+  for (const driver of ROM_DRIVERS) {
+    const libRef = refs.libraryCell.get(driver);
+    if (!libRef) continue;
+    const factor = ai.factors.find((f) => f.driver === driver);
+    const base = rom.structure.unitHours[driver]?.value ?? 0;
+    const reduction = factor?.hoursReduction ?? 0;
+    const row = ws.addRow([
+      driver,
+      ROM_DRIVER_LABELS[driver],
+      null,
+      reduction,
+      null,
+      text(factor ? factor.source : "No reduction assumed"),
+      factor ? factor.confidence : "",
+    ]).number;
+    setFormula(ws, `C${row}`, sheetRef(ROM_WORKBOOK_SHEETS.library, libRef), base);
+    setFormula(ws, `E${row}`, `ROUND(C${row}*(1-D${row}),4)`, ai.structure.unitHours[driver]?.value ?? base);
+    scenarioUnit.set(driver, `$E$${row}`);
+  }
+
+  ws.addRow([]);
+  styleHeader(ws.addRow(["Tool", "Seats", "Monthly cost per seat (cents)", "Source"]));
+  const toolRows: { seats: string; cost: string }[] = [];
+  for (const tool of ai.structure.aiAssist?.tools ?? []) {
+    const row = ws.addRow([text(tool.label), tool.seats, tool.monthlyCostCents, text(tool.source)]).number;
+    toolRows.push({ seats: `$B$${row}`, cost: `$C$${row}` });
+  }
+  if (toolRows.length === 0) ws.addRow(["No tools assumed"]);
+
+  // Blocks: hours from the reduced unit hours, then the estimate's pod and rates.
+  const blocks = [
+    ...ai.releases.map((r) => ({ block: r.own, hoursBlocks: r.useCases })),
+    ...(ai.foundation ? [{ block: ai.foundation.priced, hoursBlocks: [ai.foundation.hours] }] : []),
+  ];
+  const blockTotals: { hours: string; weeks: string; tools: string; low: string; plan: string; high: string }[] = [];
+  for (const { block, hoursBlocks } of blocks) {
+    ws.addRow([]);
+    styleHeader(ws.addRow([`Scenario — ${blockLabel(block)}`, text(block.name), block.designStatus]));
+    const hoursCells: string[] = [];
+    for (const hb of hoursBlocks) {
+      const lineCells: string[] = [];
+      for (const line of hb.lines) {
+        const row = ws.addRow([`${text(hb.code)} ${line.driver}`, null, null, null, null]).number;
+        setFormula(ws, `B${row}`, refs.countCell.get(`${hb.kind}:${hb.code}:${line.driver}`) as string, line.count);
+        setFormula(ws, `C${row}`, scenarioUnit.get(line.driver) as string, line.unitHours.value);
+        setFormula(ws, `D${row}`, refs.friction, line.friction);
+        setFormula(
+          ws,
+          `E${row}`,
+          hoursFormulaFromTerms(line.formulaTerms, (term) =>
+            term.cellRole === "count" ? `B${row}` : term.cellRole === "unit_hours" ? `C${row}` : term.cellRole === "factor" ? `D${row}` : null,
+          ),
+          line.hours,
+        );
+        lineCells.push(`E${row}`);
+      }
+      const row = ws.addRow([`${text(hb.code)} hours`]).number;
+      setFormula(ws, `E${row}`, `ROUND(${lineCells.length ? lineCells.join("+") : "0"},4)`, hb.hours);
+      hoursCells.push(`E${row}`);
+    }
+    const hoursRow = ws.addRow(["Adjusted hours"]).number;
+    setFormula(ws, `B${hoursRow}`, `ROUND(${hoursCells.join("+")},4)`, block.hours);
+    const phwRow = ws.addRow(["Productive hours per pod-week"]).number;
+    setFormula(ws, `B${phwRow}`, `ROUND(${refs.totalFte}*${refs.hpw}*${refs.share},4)`, block.pod.productiveHoursPerWeek);
+    const weeksRow = ws.addRow(["Weeks (whole pod-weeks)"]).number;
+    setFormula(ws, `B${weeksRow}`, wholePeriodsFormula(`B${hoursRow}/B${phwRow}`), block.weeks);
+    const memberCells: string[] = [];
+    block.pod.memberLines.forEach((line, i) => {
+      const row = ws.addRow([`Member ${i + 1} ${text(line.member.roleCode)}`, null, null, null, null, null]).number;
+      setFormula(ws, `B${row}`, refs.podRows[i].fte, line.member.fte);
+      setFormula(ws, `C${row}`, `$B$${weeksRow}`, block.weeks);
+      setFormula(ws, `D${row}`, refs.hpw, block.pod.hoursPerFteWeek);
+      const memberRefs = [`B${row}`, `C${row}`, `D${row}`];
+      setFormula(ws, `E${row}`, hoursFormulaFromTerms(line.formulaTerms, (_t, idx) => memberRefs[idx] ?? null), line.paidHours);
+      setFormula(ws, `F${row}`, `ROUND(E${row}*${refs.podRows[i].rate},0)`, line.costCents);
+      memberCells.push(`F${row}`);
+    });
+    const toolCells: string[] = [];
+    block.pod.toolLicenceLines.forEach((line, i) => {
+      const tr = toolRows[i];
+      const row = ws.addRow([`Tool ${text(line.licence.label)}`, null, null, null, null, null]).number;
+      setFormula(ws, `B${row}`, wholePeriodsFormula(`$B$${weeksRow}/(52/12)`), line.periods);
+      setFormula(ws, `C${row}`, `ROUND(B${row}*${tr.seats},4)`, Math.round(line.periods * line.licence.quantity * 10000) / 10000);
+      setFormula(ws, `F${row}`, `ROUND(C${row}*${tr.cost},0)`, line.costCents);
+      toolCells.push(`F${row}`);
+    });
+    const toolRow = ws.addRow(["Tool cost (cents)"]).number;
+    setFormula(ws, `B${toolRow}`, toolCells.length ? toolCells.join("+") : "0", block.pod.toolLicenceCostCents);
+    const planRow = ws.addRow(["Plan cost (cents)"]).number;
+    setFormula(ws, `B${planRow}`, `${memberCells.join("+")}+B${toolRow}`, block.pod.totalCostCents);
+    const bands = refs.rangeCells.get(`${block.kind}:${block.code}`) as { low: string; high: string };
+    const lowRow = ws.addRow(["Low (cents)"]).number;
+    setFormula(ws, `B${lowRow}`, `ROUND(B${planRow}*${bands.low},0)`, block.range.lowCents);
+    const highRow = ws.addRow(["High (cents)"]).number;
+    setFormula(ws, `B${highRow}`, `ROUND(B${planRow}*${bands.high},0)`, block.range.highCents);
+    blockTotals.push({ hours: `B${hoursRow}`, weeks: `B${weeksRow}`, tools: `B${toolRow}`, low: `B${lowRow}`, plan: `B${planRow}`, high: `B${highRow}` });
+  }
+
+  ws.addRow([]);
+  styleHeader(ws.addRow(["Scenario total", "", "releases + foundation once"]));
+  const sum = (key: keyof (typeof blockTotals)[number]) => blockTotals.map((b) => b[key]).join("+");
+  const totalHours = ws.addRow(["Hours"]).number;
+  setFormula(ws, `B${totalHours}`, `ROUND(${sum("hours")},4)`, ai.total.hours);
+  const totalWeeks = ws.addRow(["Weeks"]).number;
+  setFormula(ws, `B${totalWeeks}`, sum("weeks"), ai.total.weeks);
+  const totalTools = ws.addRow(["Tool cost (cents)"]).number;
+  setFormula(ws, `B${totalTools}`, sum("tools"), ai.toolCostCents);
+  const totalLow = ws.addRow(["Low (cents)"]).number;
+  setFormula(ws, `B${totalLow}`, sum("low"), ai.total.lowCents);
+  const totalPlan = ws.addRow(["Plan (cents)"]).number;
+  setFormula(ws, `B${totalPlan}`, sum("plan"), ai.total.planCents);
+  const totalHigh = ws.addRow(["High (cents)"]).number;
+  setFormula(ws, `B${totalHigh}`, sum("high"), ai.total.highCents);
+  const versus = ws.addRow(["Plan versus the estimate (cents)", "", "scenario − estimate (Releases sheet total)"]).number;
+  setFormula(ws, `B${versus}`, `B${totalPlan}-${refs.estimatePlan}`, ai.versusEstimate.planCents);
+  ws.getColumn(1).width = 42;
+  for (const c of [2, 3, 4, 5]) ws.getColumn(c).width = 18;
+  ws.getColumn(6).width = 60;
+
+  return {
+    hours: `B${totalHours}`,
+    weeks: `B${totalWeeks}`,
+    toolCostCents: `B${totalTools}`,
+    lowCents: `B${totalLow}`,
+    planCents: `B${totalPlan}`,
+    highCents: `B${totalHigh}`,
+    versusEstimatePlanCents: `B${versus}`,
   };
 }
 

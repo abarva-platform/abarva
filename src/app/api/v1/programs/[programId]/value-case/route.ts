@@ -49,9 +49,12 @@ import { readValueModel } from "@/lib/programs/value-model-capture";
 import { evaluateValueCase } from "@/lib/programs/value-engine";
 import { loadRegisterInputs } from "@/lib/programs/value-engine/register-inputs";
 import {
+  COST_BASIS_CURRENCY,
   loadCostBasis,
+  resolveCostBasis,
   withCostBasis,
 } from "@/lib/programs/value-engine/cost-basis";
+import type { RomApprovedAiScenario } from "@/lib/programs/rom-estimate";
 import {
   VALUE_CASE_DELIVERY_PARAM,
   VALUE_CASE_REFUSAL,
@@ -127,6 +130,10 @@ export async function GET(
       programId,
       listAssumptions,
     });
+    // The approved AI-assisted scenario, captured from the same approval read
+    // as the funded cost. It is evaluated beside the case, never as its cost.
+    let approvedScenario: RomApprovedAiScenario | null = null;
+    let approvedSnapshotId: string | null = null;
     const costBasis = await loadCostBasis({
       estimateCapture: captureValue(modules, ESTIMATE_SECTION_KEY),
       deliveryModel: delivery,
@@ -142,6 +149,8 @@ export async function GET(
         });
         if (approval.status !== "approved") return null;
         const snapshot = approval.snapshot;
+        approvedScenario = snapshot.result.aiAssisted ?? null;
+        approvedSnapshotId = snapshot.id;
         if (model.cost.kind !== "rom" ||
             (model.cost.snapshotId !== "pending-current-approved-p3-rom" &&
               model.cost.snapshotId !== snapshot.id)) return null;
@@ -154,6 +163,30 @@ export async function GET(
     const result = evaluateValueCase(withCostBasis(model, costBasis), {
       resolver: registerInputs.resolver,
     });
+    const scenario = approvedScenario as RomApprovedAiScenario | null;
+    const aiAssisted =
+      scenario && costBasis.status === "resolved"
+        ? (() => {
+            const basis = resolveCostBasis({
+              romSnapshot: {
+                snapshotId: `${approvedSnapshotId}:ai-assisted`,
+                currency: COST_BASIS_CURRENCY,
+                lowCents: scenario.figures.lowCents,
+                baseCents: scenario.figures.planCents,
+                highCents: scenario.figures.highCents,
+              },
+              requireRomSnapshot: true,
+              estimateCapture: "",
+            });
+            return {
+              label: scenario.spec.label,
+              costBasis: basis,
+              result: evaluateValueCase(withCostBasis(model, basis), { resolver: registerInputs.resolver }),
+              toolCostCents: scenario.toolCostCents,
+              versusEstimate: scenario.versusEstimate,
+            };
+          })()
+        : null;
     return Response.json(
       valueCaseForViewer(
         {
@@ -161,6 +194,7 @@ export async function GET(
           result,
           costBasis,
           registerInputs: registerInputs.resolutions,
+          aiAssisted,
         },
         { seesFigures: seesRegisterFigures(policy, programId) },
       ),

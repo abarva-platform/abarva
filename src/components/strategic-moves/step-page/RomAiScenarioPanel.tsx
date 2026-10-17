@@ -17,6 +17,7 @@ import {
   formatRomMoney,
   formatRomWeeks,
   resolveRomUnitHours,
+  romAiScenarioCarry,
   ROM_DRIVER_LABELS,
   setRomAiAssistPlan,
   type RomAiAssistPlan,
@@ -34,6 +35,19 @@ const cx = (...names: Array<string | false | null | undefined>) =>
     .join(" ");
 
 type Edit = ReturnType<typeof setRomAiAssistPlan>;
+
+/** What P4 shows, in one sentence per state. */
+const CARRY_SENTENCE: Record<ReturnType<typeof romAiScenarioCarry>, (approved: boolean) => string> = {
+  none: () => "",
+  carried: () => "Approved with the estimate: P4 shows this scenario as a comparison, never as the funding basis.",
+  not_approved: (approved) =>
+    approved
+      ? "Not in P4 yet: reopen and approve the estimate to carry this scenario to P4 as a comparison."
+      : "Approving the estimate carries this scenario to P4 as a comparison.",
+  provisional: () => "Provisional scenarios are shown here only; confirm their register rows to carry one to P4.",
+  changed_since_approval: () =>
+    "Changed since the estimate was approved: P4 still shows the approved scenario until the estimate is approved again.",
+};
 
 export interface RomAiScenarioPanelProps {
   record: RomEstimate;
@@ -249,6 +263,9 @@ export function RomAiScenarioPanel({ record, register, rom, hiddenMoney, onEdit 
           Provisional until {build.provisionalBecause.join(", ")} {build.provisionalBecause.length > 1 ? "are" : "is"} confirmed.
         </p>
       ) : null}
+      <p className={cx("item-note")} data-testid="rom-ai-carry">
+        {CARRY_SENTENCE[romAiScenarioCarry(record, register)](Boolean(record.approval))}
+      </p>
 
       {scenario && rom ? (
         // Narrow layouts show these cards; the design system shows the table instead at ≥680px.

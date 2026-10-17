@@ -169,6 +169,19 @@ export interface RomSnapshot {
    * number. Absent (approvals before rate cards were wired) = reference rates.
    */
   rateCard?: RomResolvedRateCardPin;
+  /**
+   * The AI-assisted scenario priced beside it, recorded only when every one
+   * of its register rows was confirmed at approval. It is never the funding
+   * basis: P4 shows it as a comparison and recomputes it from `spec`.
+   */
+  aiAssisted?: RomApprovedAiScenario;
+}
+
+export interface RomApprovedAiScenario {
+  spec: RomAiAssistSpec;
+  figures: Omit<RomBlockFigures, "code" | "name">;
+  toolCostCents: number;
+  versusEstimate: { hours: number; weeks: number; planCents: number };
 }
 
 /**
@@ -527,6 +540,29 @@ function parseSnapshot(v: unknown): RomSnapshot | null {
       highCents: combined.highCents,
     },
     ...(parseRateCardPin(v.rateCard) ? { rateCard: parseRateCardPin(v.rateCard) as RomResolvedRateCardPin } : {}),
+    ...(parseApprovedAiScenario(v.aiAssisted) ? { aiAssisted: parseApprovedAiScenario(v.aiAssisted) as RomApprovedAiScenario } : {}),
+  };
+}
+
+function parseApprovedAiScenario(v: unknown): RomApprovedAiScenario | null {
+  if (!isObj(v) || !isObj(v.spec) || !isObj(v.figures) || !isObj(v.versusEstimate)) return null;
+  const figures = parseFigures({ ...v.figures, code: "ai", name: "ai" });
+  const spec = v.spec;
+  if (!figures || !text(spec.label) || !isObj(spec.factors) || !Array.isArray(spec.tools)) return null;
+  if (!Number.isSafeInteger(v.toolCostCents) || (v.toolCostCents as number) < 0) return null;
+  const vs = v.versusEstimate;
+  if (!finite(vs.hours) || !finite(vs.weeks) || !Number.isSafeInteger(vs.planCents)) return null;
+  return {
+    spec: spec as unknown as RomAiAssistSpec,
+    figures: {
+      hours: figures.hours,
+      weeks: figures.weeks,
+      lowCents: figures.lowCents,
+      planCents: figures.planCents,
+      highCents: figures.highCents,
+    },
+    toolCostCents: v.toolCostCents as number,
+    versusEstimate: { hours: vs.hours, weeks: vs.weeks, planCents: vs.planCents as number },
   };
 }
 
@@ -1813,8 +1849,52 @@ export function approveRomEstimate(
       unitHours: build.unitHoursUsed,
       ...romResultFigures(rom),
       rateCard: pricedOn ?? { mode: "reference" },
+      ...(approvedAiScenario(record, register, rom) ?? {}),
     },
   });
+}
+
+/**
+ * The scenario to record with an approval: only when the plan resolves from
+ * confirmed register rows alone and is exactly the scenario that was priced.
+ * A provisional scenario is still shown in P3, but is not carried to P4.
+ */
+function approvedAiScenario(
+  record: RomEstimate,
+  register: readonly RomRegisterRow[] | null,
+  rom: RomResult,
+): { aiAssisted: RomApprovedAiScenario } | null {
+  const ai = rom.aiAssisted;
+  if (!ai || !rom.structure.aiAssist) return null;
+  const built = buildRomAiAssist(record, register);
+  if (built.status !== "ready" || canonical(built.spec) !== canonical(rom.structure.aiAssist)) return null;
+  return {
+    aiAssisted: {
+      spec: built.spec,
+      figures: {
+        hours: ai.total.hours,
+        weeks: ai.total.weeks,
+        lowCents: ai.total.lowCents,
+        planCents: ai.total.planCents,
+        highCents: ai.total.highCents,
+      },
+      toolCostCents: ai.toolCostCents,
+      versusEstimate: ai.versusEstimate,
+    },
+  };
+}
+
+/** Why the current scenario is or is not what P4 shows, for the P3 panel. */
+export function romAiScenarioCarry(
+  record: RomEstimate,
+  register: readonly RomRegisterRow[] | null,
+): "none" | "carried" | "not_approved" | "provisional" | "changed_since_approval" {
+  const built = buildRomAiAssist(record, register);
+  if (built.status === "none") return record.approval?.aiAssisted ? "changed_since_approval" : "none";
+  const approved = record.approval?.aiAssisted;
+  if (approved && built.status !== "incomplete" && canonical(approved.spec) === canonical(built.spec)) return "carried";
+  if (built.status !== "ready") return "provisional";
+  return approved ? "changed_since_approval" : "not_approved";
 }
 
 /**

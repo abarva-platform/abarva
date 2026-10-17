@@ -8,6 +8,7 @@ import type { RomResult } from "../rom-service";
 import {
   previewMatchesApproval,
   readApprovedRomSnapshot,
+  previewScenarioMatchesApproval,
 } from "../approved-rom-snapshot";
 
 const MOVE_ID = "synthetic-move";
@@ -155,6 +156,33 @@ describe("approved P3 ROM read for P4", () => {
     expect(read.status).toBe("approved");
     if (read.status !== "approved") return;
     expect(read.snapshot.workbookStructure.rateCard).toEqual(pin);
+  });
+
+  it("recomputes with the AI scenario approved beside it, never today's plan", async () => {
+    const record = approvedRecord();
+    const spec = { label: "AI coding agents", factors: {}, tools: [] };
+    const aiAssisted = {
+      spec,
+      figures: { hours: 10, weeks: 1, lowCents: 75_000, planCents: 100_000, highCents: 150_000 },
+      toolCostCents: 0,
+      versusEstimate: { hours: -1, weeks: 0, planCents: -5_000 },
+    };
+    mockReads({ ...record, approval: { ...record.approval!, aiAssisted } });
+    const read = await readApprovedRomSnapshot(MOVE_ID);
+    expect(read.status).toBe("approved");
+    if (read.status !== "approved") return;
+    expect(read.snapshot.workbookStructure.aiAssist).toEqual(spec);
+    const matching = { aiAssisted: { total: { hours: 10, weeks: 1, lowCents: 75_000, planCents: 100_000, highCents: 150_000 }, toolCostCents: 0 } } as unknown as RomResult;
+    expect(previewScenarioMatchesApproval(matching, read.snapshot.result)).toBe(true);
+    const drifted = { aiAssisted: { total: { hours: 10, weeks: 1, lowCents: 75_000, planCents: 100_001, highCents: 150_000 }, toolCostCents: 0 } } as unknown as RomResult;
+    expect(previewScenarioMatchesApproval(drifted, read.snapshot.result)).toBe(false);
+    expect(previewScenarioMatchesApproval({} as RomResult, read.snapshot.result)).toBe(false);
+  });
+
+  it("matches a preview with no scenario only when none was approved", () => {
+    const approval = approvedRecord().approval!;
+    expect(previewScenarioMatchesApproval({} as RomResult, approval)).toBe(true);
+    expect(previewScenarioMatchesApproval({ aiAssisted: { total: {} } } as unknown as RomResult, approval)).toBe(false);
   });
 
   it("distinguishes a saved but unapproved estimate from an unreadable capture", async () => {

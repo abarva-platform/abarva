@@ -39,6 +39,7 @@ jest.mock("../StepEvidence", () => ({
 jest.mock("@/lib/pricing/moves-workflow/approved-rom-snapshot", () => ({
   readApprovedRomSnapshot: jest.fn(),
   previewMatchesApproval: jest.fn().mockReturnValue(true),
+  previewScenarioMatchesApproval: jest.fn().mockReturnValue(true),
 }));
 
 function host(
@@ -918,6 +919,7 @@ describe("P4 and P5 step pages", () => {
       redacted?: boolean;
       blocked?: boolean;
       provisional?: boolean;
+      ai?: boolean;
     } = {},
   ) {
     const model = readValueModel(valuePlan);
@@ -932,8 +934,25 @@ describe("P4 and P5 step pages", () => {
       : resolved;
     const result = evaluateValueCase(withCostBasis(model.model.case, basis));
     if (options.provisional) result.mustValidate = ["L1.attribution"];
+    const aiBasis: CostBasis = {
+      status: "resolved",
+      basis: "rom_snapshot",
+      source: "rom:v2:ai-assisted",
+      deliveryModel: null,
+      cents: { low: 8_000_000, base: 8_000_000, high: 8_000_000 },
+      planningBenchmark: null,
+    };
+    const aiAssisted = options.ai
+      ? {
+          label: "AI coding agents",
+          costBasis: aiBasis,
+          result: evaluateValueCase(withCostBasis(model.model.case, aiBasis)),
+          toolCostCents: 1_064_000,
+          versusEstimate: { hours: -134, weeks: -1, planCents: -2_000_000 },
+        }
+      : null;
     return valueCaseForViewer(
-      { programId: "move-1", result, costBasis: basis, registerInputs: [] },
+      { programId: "move-1", result, costBasis: basis, registerInputs: [], aiAssisted },
       { seesFigures: !options.redacted },
     );
   }
@@ -942,6 +961,31 @@ describe("P4 and P5 step pages", () => {
       .fn()
       .mockResolvedValue({ ok: true, json: async () => body });
   }
+
+  it("shows the approved AI scenario as a comparison only, never as the funded figures", async () => {
+    mockBody(realBody({ ai: true }));
+    render(page(P4_STEP_PAGES, "p4-value", host(4, { value_plan: valuePlan, funding_governance: "Finance review" })));
+    const block = await screen.findByTestId("p4-ai-scenario");
+    expect(block.textContent).toContain("AI coding agents · comparison only, not the funding basis");
+    expect(block.textContent).toContain("Build 1 week shorter; cost at plan $20.0K lower than the estimate, including $10.6K of tool cost.");
+    expect(block.textContent).toMatch(/NPV · plan .+ \(funded estimate .+\)/);
+    expect(block.textContent).toContain("A comparison only: the case is funded on the approved estimate.");
+  });
+
+  it("withholds the scenario's figures from a viewer who may not see them", async () => {
+    mockBody(realBody({ ai: true, redacted: true }));
+    render(page(P4_STEP_PAGES, "p4-value", host(4, { value_plan: valuePlan, funding_governance: "Finance review" })));
+    const block = await screen.findByTestId("p4-ai-scenario");
+    expect(block.textContent).toContain("Figures are withheld");
+    expect(block.textContent).not.toMatch(/\$/);
+  });
+
+  it("shows no scenario when none was approved", async () => {
+    mockBody(realBody());
+    render(page(P4_STEP_PAGES, "p4-value", host(4, { value_plan: valuePlan, funding_governance: "Finance review" })));
+    await screen.findByText(/Engine status/);
+    expect(screen.queryByTestId("p4-ai-scenario")).toBeNull();
+  });
 
   it("waits for the value capture save before reading and invalidates figures on edit", async () => {
     mockBody(realBody());

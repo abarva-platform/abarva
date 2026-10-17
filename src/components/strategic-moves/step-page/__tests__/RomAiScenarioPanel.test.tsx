@@ -136,6 +136,14 @@ describe("RomAiScenarioPanel", () => {
     expect(lastPlan()?.tools).toEqual([expect.objectContaining({ label: "Agent seats", seats: 3, cost: { kind: "register", registerId: "TC1" } })]);
   });
 
+  it("says whether P4 will show the scenario", () => {
+    const fresh = setup(PLAN);
+    expect(fresh.getByTestId("rom-ai-carry").textContent).toBe("Approving the estimate carries this scenario to P4 as a comparison.");
+    fresh.unmount();
+    const provisional = setup({ ...PLAN, factors: { design_row_count: { kind: "register", registerId: "AI2" } } });
+    expect(provisional.getByTestId("rom-ai-carry").textContent).toContain("shown here only");
+  });
+
   it("removes the scenario", () => {
     const { getByRole, onEdit } = setup(PLAN);
     fireEvent.click(getByRole("button", { name: "Remove the scenario" }));
