@@ -37,6 +37,7 @@ import {
   type FigureLineagePolicy,
 } from "./numeric-lineage-tokens";
 import { citationsCarriedBySections } from "./rendered-section-citations";
+import { preserveRootCauseTable } from "./root-cause-table";
 
 /** Bounded-concurrency map that preserves input order. */
 export async function mapWithConcurrency<T, R>(
@@ -1037,6 +1038,7 @@ export function assembleDeliverable(
     delete safeTable.valueUnits;
     return repairStructuredTable(safeTable, lineage);
   });
+  preserveRootCauseTable(req.deliverableType, finalSections, tables);
   if (openInputs && !tables.some((t) => t.key === openInputs.key)) {
     tables.push(openInputs);
   }
