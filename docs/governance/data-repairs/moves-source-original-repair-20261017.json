@@ -1,0 +1,15 @@
+{
+  "repair_id": "moves-source-original-repair-20261017",
+  "input_sha256": "a84f432a58b153f5c396eaf5249dfb3e91878e84c432255ee369953a69dda145",
+  "release_record": "docs/releases/records/2026-10-17-moves-source-original-repair.md",
+  "actor": "Codex delegated operator",
+  "human_authorization": {
+    "thread_id": "01a149d8-2194-71c2-b3e8-7c8e081fb02d",
+    "message_id": "01a14a34-5b6d-77e0-b2b7-55a8b304bb1d",
+    "basis": "Explicit user instruction to fix the blocked completion after delegated completion authorization; private transcript retained with execution evidence."
+  },
+  "expires_at": "2026-10-19T00:00:00Z",
+  "independent_human_attestation": false,
+  "independent_finance_attestation": false,
+  "scope": "Restore exact previously authorized synthetic source bytes and source bindings, reset affected reviews to pending, preserve prior reviews in private proof. No readiness, indexing, phase or gate writes."
+}
