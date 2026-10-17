@@ -57,26 +57,52 @@ release. Original responses, rejected attempts and prior reviews are retained.
 - Source-bound chart measurement comparisons, alongside computed endpoint messages.
 - Audited editorial revision mode for the offline proof harness. This is not
   production generation wiring or a substitute for independent acceptance.
+- Distinguishes reporting conditions, double-counting restrictions and hypothetical
+  consequences from asserted absence, with counterexample tests. Bundle-wide
+  approval disclosures require the explicit state of every supplied input.
+- Prevents measure-column headings from leaking into outcome rows; short charter
+  condition lists stay together and governance notes stay with their tables.
+- Removes redundant status prefixes and single-source table citation noise while
+  retaining mixed-source row citations. Line-chart bounds are computed and disclosed.
+- Preserves date-token roles so source month/day fragments cannot masquerade as
+  years or quantities. Exact source-declared version references remain identifiers.
+- Rebalances two-page tables across alternate readable column widths before
+  rejecting a sparse continuation; the new fallback has a killed mutation test.
+- Charter recommendations preserve native labelled decision bullets rather than
+  flattening the recommendation into one paragraph.
+- Tries readable 15/14-point compact tables before splitting, preserving every
+  row and the reserved conclusion band. A five-row table now fits on one page.
+- Requires explicit calendar units to remain attached to source-bound figures
+  and reserves chart-caption height for unit, period and axis-bound disclosures.
+- Distinguishes a page's coordinated non-approval limits and prospective value
+  recognition from claims about historical collection or absent records.
 
 ## QA / Validation
 
-- PASS: 76 orchestrator suites, 1,192 tests, including the labelled claim corpus,
+- PASS: 76 orchestrator suites, 1,225 tests, including the labelled claim corpus,
   contradictory bundle gaps, authorization mutations, citation scope and logos.
 - PASS: Node 24 typecheck with 8 GiB heap; changed-file ESLint; diff whitespace.
 - PASS: release check, 11 of 11. Private review HTML checked at 1440 px and 390 px:
-  all 39 images and local links load, no console errors or horizontal overflow.
+  full-page renders and golden comparisons load with local links; no console
+  errors or horizontal overflow.
 - PASS: native golden P1/P2 text, 432 blocks, zero claim-policy flags.
 - LIMITED: the text oracle is not an authoring-schema pass. Native Office text
   does not contain the current authoring keys. The frozen narrative now renders
   through the page and geometry checks with explicit source-bound measurement
   metadata; it does not authorize arbitrary narrative over a chart.
 - PASS: four fresh-writing outputs render at 150 dpi, with 39 total pages.
-  Re-extraction verifies 67 source-slot bindings and 24 chart points against input
+  Re-extraction verifies 130 source-slot bindings and 24 chart points against input
   hashes and row/line locators. This proves provenance, not that every citation supports
   its surrounding interpretation, nor financial validation.
-- NOT ACCEPTED: independent automated Claude page scores are below 85 in all four
-  cases. Reviewed image hashes match the delivered pages. This is not human sign-off.
+- NOT ACCEPTED: independent automated Claude page scores are 74, 73, 72 and 72,
+  below 85 in all four cases. Reviewed image hashes match the delivered pages.
+  This is not human sign-off, first-attempt generation success or a claim that
+  successive editorial revisions improve monotonically.
 - NOT RUN: live product generation, signed-in export acceptance or runtime proof.
+- Verification continued on 2026-10-17. A date-role mutation and a disabled
+  pagination fallback were both rejected; unchanged valid responses still render.
+  Disabling the compact-font fallback also fails the five-row single-page assertion.
+- The broad Jest run emits an existing MaxListenersExceededWarning; all suites pass.
 
 ## Rollout Plan
 
@@ -114,6 +140,9 @@ branding changes through a reviewed PR if they are later merged and regress.
 - Writing still repeats conditions and leaves sparse or uneven pages. Review also
   found proposed owner assignments and evidence-status interpretations requiring
   correction. A sourced figure alone does not establish its claimed business use.
+- Required improvements include route classification, explicit next decisions,
+  source-use limitations and measurement-period clarity. The transfer readout
+  still splits its cohort trend across pages and overuses a single table layout.
 - Textual claim support is conservative, not general semantic entailment.
   Bundle completeness is explicit in offline tests; it is not inferred for live inputs.
 - Native text validation does not establish every structural/page-policy oracle.

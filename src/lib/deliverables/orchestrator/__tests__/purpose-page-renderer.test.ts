@@ -19,6 +19,91 @@ import {
 } from "../purpose-page-plan";
 
 describe("purpose page rendered objects", () => {
+  it("reserves room for a bounded-axis disclosure beside two native charts", async () => {
+    const doc = purposeFixture();
+    doc.tables = [];
+    doc.exhibits = [];
+    doc.nextActions = [];
+    const chart = purposeChartFixture();
+    chart.unit = "Percent of eligible contacts";
+    chart.period = "July 2025 to June 2026";
+    chart.points = [74.8, 72.9, 75.7].map((value, i) => ({
+      label: `Month ${i}`,
+      value,
+      sourceRow: `row ${i}`,
+    }));
+    const second = { ...chart, key: "second" };
+    doc.deckSlides = [
+      {
+        key: "trend",
+        governingMessage: purposeChartHeadline([chart, second]),
+        pageIntent: {
+          question: "What changed?",
+          scopeNote: chart.interpretation,
+          chartKeys: [chart.key, second.key],
+        },
+      },
+    ];
+    const inspection = await inspectDeck(
+      await renderPurposeDeck(doc, [chart, second]),
+    );
+    const caption = inspection.slides[1]!.purposeText!.find(
+      (box) => box.name === "purpose:annotation:chart-unit:1",
+    )!;
+    expect(caption.text).toContain("axis starts at");
+    expect(caption.heightIn).toBeGreaterThan(0.44);
+    expect(caption.fontSize).toBe(13);
+  });
+  it("keeps a page-sized control list together instead of opening on unlabelled continuation bullets", async () => {
+    const doc = purposeFixture();
+    doc.deliverableType = "charter";
+    doc.exhibits = [];
+    doc.tables = [];
+    doc.generatedSections = [
+      {
+        key: "authorization_conditions",
+        title: "Proposed controls",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+        bodyMarkdown: Array.from(
+          { length: 6 },
+          (_, i) =>
+            `- **Control ${i}:** Keep the stated decision boundary and its permitted alternative explicit; the responsible role reviews the evidence before any implementation. Preserve the original restriction and its scope [1].`,
+        ).join("\n"),
+      },
+    ];
+    const zip = await JSZip.loadAsync(
+      await Packer.toBuffer(renderDeliverableDocx(doc)),
+    );
+    const xml = await zip.file("word/document.xml")!.async("string");
+    const bullets = [...xml.matchAll(/<w:p[ >][\s\S]*?<\/w:p>/g)]
+      .map((m) => m[0])
+      .filter((p) => /Control [0-5]:/.test(p));
+    expect(bullets).toHaveLength(6);
+    for (const bullet of bullets.slice(0, -1))
+      expect(bullet).toContain("<w:keepNext/>");
+    expect(bullets.at(-1)).toContain('<w:keepNext w:val="false"/>');
+  });
+  it("names the actual charter sections each source supports", async () => {
+    const doc = purposeFixture();
+    doc.deliverableType = "charter";
+    doc.exhibits = [];
+    doc.tables = [];
+    doc.generatedSections = [
+      {
+        key: "scope",
+        title: "Scope boundary",
+        bodyMarkdown: "The planned review covers service handoffs [1].",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+      },
+    ];
+    const zip = await JSZip.loadAsync(
+      await Packer.toBuffer(renderDeliverableDocx(doc)),
+    );
+    const xml = await zip.file("word/document.xml")!.async("string");
+    expect(xml).toContain("Used in: Scope boundary.");
+  });
   it("compacts status statements into one native table while retaining their semantic colour and labels", async () => {
     const doc = purposeFixture();
     doc.exhibits = [];
@@ -68,6 +153,41 @@ describe("purpose page rendered objects", () => {
     const xml = await zip.file("ppt/slides/slide2.xml")!.async("string");
     expect(xml).toContain('val="AE3547"');
     expect(xml).toContain('val="9C650E"');
+    for (const row of doc.tables[0]!.rows)
+      expect(xml).toContain(row[1].replace(" [1]", ""));
+    const inspection = await inspectDeck(await renderPurposeDeck(doc));
+    expect(inspection.slides[1].namedText?.["purpose:sources"]).toBe("[1]");
+  });
+  it("keeps row-level attribution when a table mixes sources", async () => {
+    const doc = purposeFixture();
+    doc.exhibits = [];
+    doc.nextActions = [];
+    doc.tables = [
+      {
+        key: "sources",
+        title: "Evidence",
+        targetFormat: "pptx",
+        columns: ["Finding", "Basis"],
+        rows: [
+          ["Workflow", "Recorded handoff [1]."],
+          ["Definition", "Recorded definition [1]."],
+          ["Comparison", "Separate observation [2]."],
+        ],
+      },
+    ];
+    doc.deckSlides = [
+      {
+        key: "sources",
+        governingMessage: "Separate findings retain their source",
+        pageIntent: {
+          question: "What supports the findings?",
+          scopeNote: "Recorded observations only.",
+          tableKey: "sources",
+        },
+      },
+    ];
+    const zip = await JSZip.loadAsync(await renderPurposeDeck(doc));
+    const xml = await zip.file("ppt/slides/slide2.xml")!.async("string");
     for (const row of doc.tables[0]!.rows) expect(xml).toContain(row[1]);
   });
   it("reserves a readable second scope line without moving short-note pages", async () => {
@@ -106,6 +226,28 @@ describe("purpose page rendered objects", () => {
     expect(() => validatePurposeInspection(damaged, pages)).toThrow(
       "text_does_not_fit",
     );
+  });
+  it("preserves decision labels and native bullets in a structured charter recommendation", async () => {
+    const doc = purposeFixture();
+    doc.deliverableType = "charter";
+    doc.purposePageDesign = true;
+    doc.exhibits = [];
+    doc.tables = [];
+    doc.recommendation =
+      "Review the next decision.\n\n- **Proceed:** when evidence is reviewed [1].\n- **Hold:** if access remains unresolved.\n- **Revise:** if the scope changes.";
+    const zip = await JSZip.loadAsync(
+      await Packer.toBuffer(renderDeliverableDocx(doc)),
+    );
+    const xml = await zip.file("word/document.xml")!.async("string");
+    const paragraphs = [...xml.matchAll(/<w:p[ >][\s\S]*?<\/w:p>/g)].map(
+      (match) => match[0],
+    );
+    for (const label of ["Proceed:", "Hold:", "Revise:"]) {
+      const paragraph = paragraphs.find((p) => p.includes(`>${label}<`));
+      expect(paragraph).toContain("<w:numPr>");
+      expect(paragraph).toContain("<w:b/>");
+    }
+    expect(xml).not.toContain("**Proceed");
   });
   it("uses native bullets and keeps a compact seven-role table together", async () => {
     const doc = purposeFixture();
@@ -150,6 +292,12 @@ describe("purpose page rendered objects", () => {
       expect(bullet).toContain("<w:numPr>");
       expect(bullet).not.toContain(">- </w:t>");
     }
+    expect(paragraphs.find((p) => p.includes(">Review:<"))).toContain(
+      "<w:keepNext/>",
+    );
+    expect(paragraphs.find((p) => p.includes(">Evidence:<"))).toContain(
+      '<w:keepNext w:val="false"/>',
+    );
     const table = [...xml.matchAll(/<w:tbl>[\s\S]*?<\/w:tbl>/g)]
       .map((x) => x[0])
       .find((x) => x.includes(">Role 7<"))!;
@@ -161,6 +309,73 @@ describe("purpose page rendered objects", () => {
       true,
     );
     expect(rows.at(-1)).toMatch(/<w:keepNext w:val="false"\/>/);
+  });
+  it("keeps a governance table's closing paragraph attached to its last row", async () => {
+    const doc = purposeFixture();
+    doc.deliverableType = "charter";
+    doc.exhibits = [];
+    doc.tables = [];
+    doc.generatedSections = [
+      {
+        key: "sponsorship_governance",
+        title: "Governance",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+        bodyMarkdown:
+          "| Role | Responsibility |\n| --- | --- |\n| Sponsor | Review the scope [1]. |\n\nThe sponsor confirms the review cadence.",
+      },
+    ];
+    const zip = await JSZip.loadAsync(
+      await Packer.toBuffer(renderDeliverableDocx(doc)),
+    );
+    const xml = await zip.file("word/document.xml")!.async("string");
+    const table = [...xml.matchAll(/<w:tbl>[\s\S]*?<\/w:tbl>/g)]
+      .map((x) => x[0])
+      .find((x) => x.includes("Review the scope"))!;
+    const row = [...table.matchAll(/<w:tr>[\s\S]*?<\/w:tr>/g)].at(-1)![0];
+    expect(row).toContain("<w:keepNext/>");
+    const after = xml.slice(xml.indexOf(table) + table.length);
+    expect(after.match(/<w:p[ >][\s\S]*?<\/w:p>/)?.[0]).toContain(
+      "<w:keepNext/>",
+    );
+  });
+  it("lets a substantial charter table flow while retaining its first and last pair", async () => {
+    const doc = purposeFixture();
+    doc.deliverableType = "charter";
+    doc.exhibits = [];
+    doc.tables = [];
+    doc.generatedSections = [
+      {
+        key: "scope",
+        title: "Scope boundaries",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+        bodyMarkdown:
+          "| In scope | Out of scope |\n| --- | --- |\n" +
+          Array.from(
+            { length: 6 },
+            (_, i) =>
+              `| Scope ${i}: ${"A recorded boundary with a material qualification. ".repeat(3)} | Subject to a separate decision [1]. |`,
+          ).join("\n"),
+      },
+    ];
+    const zip = await JSZip.loadAsync(
+      await Packer.toBuffer(renderDeliverableDocx(doc)),
+    );
+    const xml = await zip.file("word/document.xml")!.async("string");
+    const table = [...xml.matchAll(/<w:tbl>[\s\S]*?<\/w:tbl>/g)].find((m) =>
+      m[0].includes("Scope 0:"),
+    )![0];
+    const rows = [...table.matchAll(/<w:tr>[\s\S]*?<\/w:tr>/g)].map(
+      (m) => m[0],
+    );
+    expect(rows).toHaveLength(7);
+    expect(rows[0]).toContain("<w:keepNext/>");
+    expect(rows[1]).toContain("<w:keepNext/>");
+    expect(rows[3]).toContain('<w:keepNext w:val="false"/>');
+    expect(rows[5]).toContain("<w:keepNext/>");
+    expect(rows[6]).toContain('<w:keepNext w:val="false"/>');
+    expect(rows.every((row) => row.includes("<w:cantSplit/>"))).toBe(true);
   });
   it("lets charter sources follow the decision record without a forced blank continuation", async () => {
     const doc = purposeFixture();
@@ -412,14 +627,14 @@ describe("purpose page rendered objects", () => {
       inspection.slides[1]!.namedText?.["purpose:annotation:takeaway"],
     ).toContain("[C01]");
     expect(inspection.slides[1]!.namedText?.["purpose:section"]).toBe(
-      "WHAT  /  DISCOVERY",
+      "WHAT  /  P2 DISCOVERY",
     );
     expect(inspection.slides[0]!.namedText?.["purpose:edition"]).toContain(
       "16 October 2026",
     );
     expect(inspection.slides.find((s) => s.chartCount === 2)).toBeDefined();
     for (const [from, error] of [
-      ["WHAT  /  DISCOVERY", "section_missing"],
+      ["WHAT  /  P2 DISCOVERY", "section_missing"],
       [
         "The scope is a proposal; the owner must decide [C01].",
         "takeaway_missing",
@@ -567,6 +782,29 @@ describe("purpose page rendered objects", () => {
     ).toEqual([5040, 5040]);
     expect(scopeTable).toContain("In Scope [1]");
     expect(scopeTable).toContain("Out of Scope [1]");
+  });
+  it("discloses a bounded line axis in the caption and native chart XML", async () => {
+    const chart = purposeChartFixture();
+    chart.points = [72.9, 74, 75.7].map((value, i) => ({
+      label: `M${i}`,
+      value,
+      sourceRow: `row ${i}`,
+    }));
+    chart.axisMin = undefined;
+    chart.axisMax = undefined;
+    const bytes = await renderPurposeDeck(purposeFixture(), [chart]);
+    const inspection = await inspectDeck(bytes);
+    const caption = inspection.slides.find((s) => s.chartCount)?.namedText?.[
+      "purpose:annotation:chart-unit:0"
+    ];
+    expect(caption).toContain("axis starts at 72");
+    const zip = await JSZip.loadAsync(bytes);
+    const path = Object.keys(zip.files).find((name) =>
+      /^ppt\/charts\/chart\d+\.xml$/.test(name),
+    )!;
+    const xml = await zip.file(path)!.async("string");
+    expect(xml).toContain('<c:min val="72"/>');
+    expect(xml).toContain('<c:max val="76"/>');
   });
   it("keeps native charts, data workbooks, tables, notes and source references", async () => {
     const doc = purposeFixture(),

@@ -25,6 +25,7 @@ import {
   purposeSourceGroups,
 } from "./purpose-page-plan";
 import { purposeBrand } from "./purpose-page-brand";
+import { purposeCitationIds } from "./purpose-citations";
 import {
   layoutReferenceTable,
   referenceCellTextHeight,
@@ -76,6 +77,7 @@ function table(
   rows: string[][],
   columnWeights?: number[],
   keepNext = false,
+  keepFollowingParagraph = false,
 ): Table {
   if (!columns.length || rows.some((row) => row.length !== columns.length))
     throw new PurposePageError("table_shape", "charter");
@@ -119,7 +121,7 @@ function table(
       ),
     0,
   );
-  const compactTable = rows.length <= 8 && estimatedLines <= 14;
+  const compactTable = rows.length <= 8 && estimatedLines <= 8;
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     columnWidths: weights.map((w) => Math.round(w * 1440)),
@@ -148,8 +150,9 @@ function table(
                     spacing: { after: 30, line: 240 },
                     keepNext:
                       keepNext ||
+                      (keepFollowingParagraph && i === rows.length) ||
                       (i < rows.length &&
-                        (compactTable || i === 0 || i === rows.length - 1)),
+                        (compactTable || i < 2 || i === rows.length - 1)),
                     children: [
                       new TextRun({
                         text,
@@ -194,6 +197,7 @@ function plain(nodes: PhrasingContent[]): string {
 function blocks(
   node: RootContent,
   keepWithTable = false,
+  keepFollowingParagraph = false,
 ): (Paragraph | Table)[] {
   switch (node.type) {
     case "heading":
@@ -212,16 +216,38 @@ function blocks(
         row.children.map((cell) => plain(cell.children)),
       );
       return [
-        table(rows[0]!, rows.slice(1)),
+        table(
+          rows[0]!,
+          rows.slice(1),
+          undefined,
+          false,
+          keepFollowingParagraph,
+        ),
         new Paragraph({
           children: [new TextRun({ text: "", size: 2 })],
+          keepNext: keepFollowingParagraph,
           spacing: { line: 20, after: 80 },
         }),
       ];
     }
-    case "list":
+    case "list": {
+      const shortList =
+        node.children.length <= 6 &&
+        node.children.reduce(
+          (sum, item) =>
+            sum +
+            item.children.reduce(
+              (lines, child) =>
+                lines +
+                (child.type === "paragraph"
+                  ? Math.ceil(plain(child.children).length / 85)
+                  : 20),
+              0,
+            ),
+          0,
+        ) <= 24;
       return node.children.flatMap((item, i) =>
-        item.children.flatMap((child) => {
+        item.children.flatMap((child, childIndex) => {
           if (child.type !== "paragraph") return blocks(child as RootContent);
           return [
             new Paragraph({
@@ -231,11 +257,16 @@ function blocks(
               bullet: node.ordered ? undefined : { level: 0 },
               indent: { left: 240, hanging: 180 },
               keepLines: true,
+              keepNext:
+                (shortList || i === 0) &&
+                (i < node.children.length - 1 ||
+                  childIndex < item.children.length - 1),
               spacing: { after: 100, line: 260 },
             }),
           ];
         }),
       );
+    }
     case "blockquote":
       return node.children.flatMap((child, index) =>
         blocks(child, node.children[index + 1]?.type === "table"),
@@ -272,7 +303,7 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
         new TextRun({
           text:
             doc.presentationCover?.eyebrow ||
-            `P1 CHARTER / ${doc.clientDisplayName.toUpperCase()}`,
+            doc.clientDisplayName.toUpperCase(),
           font: FONT,
           size: 20,
           color: MUTED,
@@ -328,7 +359,22 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
     });
     children.push(
       ...tree.children.flatMap((node, index) =>
-        blocks(node, tree.children[index + 1]?.type === "table"),
+        blocks(
+          node,
+          tree.children[index + 1]?.type === "table" ||
+            tree.children[index + 1]?.type === "list",
+          node.type === "table" &&
+            tree.children[index + 1]?.type === "paragraph" &&
+            plain(
+              (
+                tree.children[index + 1] as Extract<
+                  RootContent,
+                  { type: "paragraph" }
+                >
+              ).children,
+            ).length <= 140 &&
+            tree.children[index + 2]?.type !== "table",
+        ),
       ),
     );
     for (const item of doc.tables.filter(
@@ -380,16 +426,23 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
     );
   children.push(
     heading("Next decision and review"),
-    para(
-      cite(doc.recommendation),
-      Boolean(doc.actionRegister?.length || doc.nextActions.length),
+    ...fromMarkdown(cite(doc.recommendation), {
+      extensions: [gfm()],
+      mdastExtensions: [gfmFromMarkdown()],
+    }).children.flatMap((node) =>
+      blocks(
+        node,
+        node.type === "paragraph" &&
+          plain(node.children).length <= 140 &&
+          Boolean(doc.actionRegister?.length || doc.nextActions.length),
+      ),
     ),
   );
   if (doc.actionRegister?.length)
     children.push(
       heading("Next actions", 2),
       table(
-        ["Owner", "Action", "Evidence"],
+        ["Proposed owner", "Next action", "Proposed completion evidence"],
         doc.actionRegister.map((a) => [
           a.owner,
           cite(a.action),
@@ -403,12 +456,9 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       ...doc.nextActions.map((a) => para(cite(a))),
     );
   children.push(
-    new Paragraph({
-      children: [new TextRun({ text: "", size: 2 })],
-      spacing: { line: 20, after: 120 },
-    }),
+    heading("Decision record"),
     para(
-      "This draft does not authorize Discovery, funding or implementation. Only the authorized reviewer can record the decision, its scope and any conditions below.",
+      "This draft does not authorize Discovery, funding or implementation. The authorized reviewer records the decision and its limits below.",
       true,
     ),
     table(
@@ -416,10 +466,10 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       [
         ["Decision", "Authorize with conditions / Request revision / Hold"],
         ["Approver and role", "Record the authorized reviewer and their role."],
-        ["Date", "Record the date of the decision."],
+        ["Date", "Record the decision date."],
         [
           "Scope and resources",
-          "State the boundary and resources authorized; do not imply build funding.",
+          "State the authorized boundary and resources, excluding unapproved build funding.",
         ],
         [
           "Conditions or exclusions",
@@ -427,7 +477,7 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
         ],
       ],
     ),
-    heading("Source register", 2),
+    heading("Source register"),
   );
   const commonReview =
     new Set(doc.sourceRegister.map((s) => s.reviewStatus)).size === 1
@@ -443,9 +493,30 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
   const sourceUse = (value: string | undefined) =>
     value?.replace(/;?\s*human approval remains separate\.?/gi, "") ||
     "Use and limitations not recorded; confirm before relying on this source.";
-  for (const { family, entries } of purposeSourceGroups(doc.sourceRegister)) {
+  const sourceGroups = purposeSourceGroups(doc.sourceRegister);
+  const usedFor = (citation: number) => {
+    const titles = sections
+      .filter((section) =>
+        purposeCitationIds(section.bodyMarkdown).includes(citation),
+      )
+      .map((section) => section.title);
+    if (purposeCitationIds(doc.recommendation).includes(citation))
+      titles.push("Next decision");
+    if (
+      doc.actionRegister?.some((action) =>
+        purposeCitationIds(
+          `${action.owner} ${action.action} ${action.evidence}`,
+        ).includes(citation),
+      )
+    )
+      titles.push("Next actions");
+    return titles.length
+      ? `Used in: ${titles.slice(0, 3).join("; ")}${titles.length > 3 ? `; ${titles.length - 3} further sections` : ""}. `
+      : "";
+  };
+  for (const { family, entries } of sourceGroups) {
     children.push(
-      heading(family, 2),
+      ...(sourceGroups.length > 1 ? [heading(family, 2)] : []),
       table(
         [
           "ID",
@@ -455,7 +526,7 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
         entries.map((s) => [
           `[${s.referenceId || s.citationNumber}]`,
           `${s.label}${commonReview ? "" : `\n${s.reviewStatus || `${s.confidence} confidence`}`}${s.asOf ? ` / ${s.asOf}` : ""}`,
-          sourceUse(s.useAndLimitation),
+          `${usedFor(s.citationNumber)}${sourceUse(s.useAndLimitation)}`,
         ]),
         [0.6, 2.0, 4.4],
       ),

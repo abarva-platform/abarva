@@ -11,6 +11,11 @@ import {
   purposeStatementHeight,
   purposePlainText,
   purposeChartHeadline,
+  purposeChartAxis,
+  purposeStatusLabel,
+  purposeBodyHeight,
+  purposeRowHeight,
+  purposeTableHeaderHeight,
 } from "../purpose-page-plan";
 import {
   formatPurposeNumber,
@@ -19,6 +24,167 @@ import {
 import { formatConsultantCents } from "@/lib/programs/value-engine/format-money";
 
 describe("purpose page planning", () => {
+  it("keeps note-only references out of the visible page footer", () => {
+    const doc = purposeFixture();
+    doc.tables = [];
+    doc.exhibits = [];
+    doc.nextActions = [];
+    doc.deckSlides = [
+      {
+        key: "finding",
+        governingMessage: "The recorded workflow keeps a human review",
+        points: ["Review remains part of the recorded workflow [1]."],
+        citationsUsed: [1, 2],
+        speakerNotes:
+          "A separate operational observation [2] informs later work.",
+        pageIntent: {
+          question: "What is recorded?",
+          scopeNote: "This page does not establish improvement.",
+        },
+      },
+    ];
+    const page = planPurposePages(doc).find((p) => p.id.startsWith("finding"))!;
+    expect(page.sources).toEqual([1]);
+    expect(page.notes).toContain("observation [2]");
+    doc.deckSlides[0]!.speakerNotes = "An unknown note source [99].";
+    expect(() => planPurposePages(doc)).toThrow("unknown_source");
+  });
+  it("compacts a measures table before splitting and balances a longer continuation", () => {
+    const doc = purposeFixture();
+    doc.exhibits = [];
+    doc.nextActions = [];
+    doc.tables = [
+      {
+        key: "measures",
+        title: "Recorded measures and hypotheses",
+        columns: [
+          "Measure",
+          "Recorded trailing year",
+          "Proposed hypothesis",
+          "Basis",
+        ],
+        rows: [
+          [
+            "Initial exception rate",
+            "15.0% [1]",
+            "Target 11.0% [1]",
+            "First exception only, original submissions [1]",
+          ],
+          [
+            "Unrecovered balance",
+            "$40.0M [1]",
+            "Prevent 18.0% of exposure [1]",
+            "Quarter schedule; recorded allowed exposure [1]",
+          ],
+          [
+            "Recovered cash on rejected items",
+            "$120.0M [1]",
+            "Credit incremental cash only, against a matched comparator [1]",
+            "Collected receipts from previously rejected allowed amounts [1]",
+          ],
+          [
+            "Rework hours",
+            "80,000.0 hr [1]",
+            "Reduce by 20.0% [1]",
+            "Capacity until a role or contract release is recorded [1]",
+          ],
+          [
+            "Days in accounts receivable",
+            "60 days [1]",
+            "Target 50 days [1]",
+            "Timing only; engine uses a conservative lag of 2 [1]",
+          ],
+        ],
+        pageShape: "register",
+        targetFormat: "pptx",
+      },
+    ];
+    doc.deckSlides = [
+      {
+        key: "measures",
+        governingMessage:
+          "Recorded measures and proposed targets require different evidence",
+        pageIntent: {
+          question: "What is recorded?",
+          scopeNote:
+            "Recorded measures do not establish that the proposed targets are achievable.",
+          tableKey: "measures",
+          takeaway: "Review the counting basis before approving any target.",
+        },
+      },
+    ];
+    const compact = planPurposePages(doc).filter((page) =>
+      page.id.startsWith("measures"),
+    );
+    expect(compact).toHaveLength(1);
+    expect(compact[0]!.tableFontSize).toBe(15);
+    expect(compact[0]!.rows).toEqual(doc.tables[0]!.rows);
+    doc.tables[0]!.rows.push(...doc.tables[0]!.rows.slice(0, 3));
+    const pages = planPurposePages(doc).filter((page) =>
+      page.id.startsWith("measures"),
+    );
+    expect(pages).toHaveLength(2);
+    expect(pages.flatMap((page) => page.rows!)).toEqual(doc.tables[0]!.rows);
+    for (const page of pages) {
+      const used =
+        purposeTableHeaderHeight(page) +
+        page.rows!.reduce((sum, row) => sum + purposeRowHeight(page, row), 0);
+      expect(page.rows!.length).toBeGreaterThanOrEqual(2);
+      expect(used).toBeGreaterThanOrEqual(purposeBodyHeight(page) * 0.55);
+      expect(used).toBeLessThanOrEqual(purposeBodyHeight(page) + 0.001);
+    }
+  });
+  it("labels status once without losing the authored distinction", () => {
+    expect(purposeStatusLabel("condition", "Condition:")).toBe("CONDITION");
+    expect(purposeStatusLabel("later", "Later")).toBe("LATER");
+    expect(purposeStatusLabel("risk", "Access boundary")).toBe(
+      "RISK / Access boundary",
+    );
+  });
+  it("bounds line axes around the recorded range and respects explicit bounds", () => {
+    const chart = purposeChartFixture();
+    chart.points = [72.9, 74, 75.7].map((value, i) => ({
+      label: `Month ${i}`,
+      value,
+      sourceRow: `row ${i}`,
+    }));
+    const axis = purposeChartAxis(chart);
+    expect(axis.min).toBeLessThanOrEqual(72.9);
+    expect(axis.min).toBeGreaterThan(0);
+    expect(axis.max).toBeGreaterThanOrEqual(75.7);
+    expect(axis.max! - axis.min!).toBeLessThan(10);
+    expect(purposeChartAxis({ ...chart, axisMin: 0, axisMax: 100 })).toEqual({
+      min: 0,
+      max: 100,
+    });
+    expect(
+      purposeChartAxis({
+        ...chart,
+        points: chart.points.map((p) => ({ ...p, value: 4 })),
+      }),
+    ).toEqual({});
+  });
+  it("does not add a constant handoff column to unlabelled workflow edges", () => {
+    const doc = purposeFixture();
+    doc.exhibits[0]!.data = {
+      kind: "flow",
+      nodes: [
+        { id: "a", label: "Review" },
+        { id: "b", label: "Accept" },
+        { id: "c", label: "Return" },
+      ],
+      edges: [
+        { from: "a", to: "b" },
+        { from: "a", to: "c" },
+      ],
+    };
+    const page = planPurposePages(doc).find((p) => p.id === "workflow:1")!;
+    expect(page.columns).toEqual(["From", "To"]);
+    expect(page.rows).toEqual([
+      ["Review", "Accept"],
+      ["Review", "Return"],
+    ]);
+  });
   it("tries compact row padding before leaving one table row on a continuation", () => {
     const doc = purposeFixture();
     doc.exhibits = [];
@@ -339,7 +505,11 @@ describe("purpose page planning", () => {
       p.id.startsWith("next-actions"),
     );
     expect(pages).toHaveLength(1);
-    expect(pages[0]!.columns).toEqual(["Owner", "Action", "Evidence"]);
+    expect(pages[0]!.columns).toEqual([
+      "Proposed owner",
+      "Next action",
+      "Proposed evidence",
+    ]);
     expect(pages[0]!.rows).toHaveLength(5);
   });
   it("rejects mixed big-number units and adjacent duplicate titles", () => {

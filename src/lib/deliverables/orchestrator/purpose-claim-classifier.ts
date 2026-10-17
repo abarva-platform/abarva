@@ -27,7 +27,7 @@ export interface PurposeClaimVerdict {
 }
 
 const purposeNegativeClaim =
-  /\b(?:no(?!-double-count)|none|missing|absent|unavailable|unrecorded|uncollected|lacks?|cannot|not\s+(?:yet\s+)?(?:collected|received|available|recorded|provided|loaded|supplied|established|approved|confirmed))\b/i;
+  /\b(?:no(?!-double-count)|none|missing|absent|unavailable|unrecorded|uncollected|lacks?|cannot|never\s+(?:been\s+)?(?:collected|received|provided|recorded|approved)|not\s+(?:yet\s+)?(?:collected|received|available|recorded|provided|loaded|supplied|established|approved|confirmed))\b/i;
 const clean = (s: string) =>
   s
     .replace(/\[(?:\d+)(?:\s*[-–,]\s*\d+)*\]|[*"“”]/g, "")
@@ -37,13 +37,14 @@ const clean = (s: string) =>
     .replace(/[.!?]+$/, "")
     .trim()
     .toLowerCase();
-const request = /^(?:confirm|check|test|review|validate|determine) whether\b/i;
+const request =
+  /^(?:(?:confirm|check|test|review|validate|determine) )?whether\b/i;
 const bounded =
   /\b(?:in|from|across|against|within) (?:the |these |this |our )?(?:(?:supplied|provided|loaded|current|available|p[01](?: or p[01])?) )?(?:inputs|evidence|sources|context bundle|source bundle|bundle|records|brief|package)\b/i;
 const status =
   /\b(?:this|the) (?:(?:revised|current) )?(?:draft|document|charter|readout|page|slide|inventory)\b|\b(?:here|on this page|proposed decision|draft decision|(?:in|at) p[01])\b/i;
 const authority =
-  /\b(?:approval|approved|signature|authoriz\w*|selected|route|funding|benefit|value|savings|statement|cause|baseline|target|roadmap|business case|operating.model|execution plan|role reduction|role elimination|role accountability|accountability assumptions|connection is proven)\b/i;
+  /\b(?:approval|approved|signature|access grant|authoriz\w*|selected|route|funding|build|spend|implementation|benefit|value|savings|statement|cause|baseline|target|roadmap|business case|operating.model|execution plan|role reduction|role elimination|role accountability|accountability assumptions|connection is proven)\b/i;
 const historical =
   /\b(?:ever|historically|previously|collected|received|arrived|exists?|existed|missing|absent|unavailable)\b/i;
 const conditional =
@@ -136,6 +137,34 @@ function structuredProposalSupports(claim: string, statement: string): boolean {
     );
 }
 
+function citedHypothesisSupports(
+  claim: string,
+  evidence: readonly PurposeClaimEvidence[],
+  ids: readonly number[],
+): boolean {
+  const normalize = (text: string) =>
+    tokens(
+      text
+        .replace(/\b(?:may|might|could)\b/gi, "")
+        .replace(/\bwithout\b/gi, "missing"),
+    );
+  const terms = normalize(claim);
+  return (
+    terms.size >= 2 &&
+    evidence.some(
+      (entry) =>
+        ids.includes(entry.citationNumber) &&
+        entry.statement
+          .split(/\n|(?<=[.!?])\s+/)
+          .some(
+            (line) =>
+              (purposeNegativeClaim.test(line) || /\bwithout\b/i.test(line)) &&
+              [...terms].every((term) => normalize(line).has(term)),
+          ),
+    )
+  );
+}
+
 /** Textual support is local to a cited sentence or extract row, not a whole file. */
 function purposeClaimHasSupport(
   claim: string,
@@ -162,10 +191,17 @@ function purposeClaimHasSupport(
   const unapproved = normalized.match(
     /^no approved (target|benefit|baseline)(?:\b|$)/,
   )?.[1];
+  const qualifiedGap = /\b(?:may|might|could) (?:lack\b|be missing\b)/i;
+  const permitsStrength = (line: string) =>
+    !qualifiedGap.test(line) || qualifiedGap.test(normalized);
   return sources.some(
     (source) =>
       ids.includes(source.citationNumber) &&
-      (clean(source.statement).includes(normalized) ||
+      (source.statement
+        .split(/\n|(?<=[.!?])\s+/)
+        .some(
+          (line) => permitsStrength(line) && clean(line).includes(normalized),
+        ) ||
         structuredProposalSupports(normalized, source.statement) ||
         (unapproved !== undefined &&
           source.statement
@@ -182,7 +218,11 @@ function purposeClaimHasSupport(
         source.statement
           .split(/\n|(?<=[.!?])\s+|;\s+|\s+but\s+/)
           .some((line) => {
-            if (!purposeNegativeClaim.test(line) || terms.size < 2)
+            if (
+              !permitsStrength(line) ||
+              !purposeNegativeClaim.test(line) ||
+              terms.size < 2
+            )
               return false;
             const available = tokens(line);
             const localTargets = negativeTargets(line);
@@ -201,6 +241,9 @@ function purposeClaimHasSupport(
 function gapSubjects(sentence: string): string[] {
   const value = clean(sentence);
   const lead =
+    value.match(
+      /^(?:(?:the|this|supplied) )?(?:brief|input bundle|source bundle|context bundle|package) (?:records?|states?|contains?|provides?) no (.+?)(?:,|;|$)/,
+    )?.[1] ||
     value.match(
       /^no\s+(.+?)\s+(?:(?:is|are) )?(?:stated|recorded|provided|supplied)\s+(?:in|from)\b/,
     )?.[1] ||
@@ -225,7 +268,7 @@ function bundleHasSubject(
   if (/approval/.test(subject))
     return evidence.some((e) => e.approvalState === "approved");
   const aliases = /meeting rhythm|cadence/.test(subject)
-    ? /\b(?:cadence|weekly|monthly|fortnightly|meeting rhythm)\b/i
+    ? /\b(?:cadence|meeting rhythm)\s*[:=-]\s*\S|\b(?:weekly|monthly|fortnightly|daily|quarterly)\b.{0,60}\b(?:review|meeting|forum|checkpoint|governance)\b|\b(?:review|meeting|forum|checkpoint|governance|cadence)\b.{0,60}\b(?:weekly|monthly|fortnightly|daily|quarterly)\b/i
     : /individual names|named individuals/.test(subject)
       ? /\b(?:name|named individual|attendee|participant)\s*[:=,]\s*[A-Z][a-z]+/
       : /funding amount/.test(subject)
@@ -296,7 +339,7 @@ export function classifyPurposeClaims(
   return sentences.flatMap((sentence) => {
     const ids = purposeCitationIds(sentence);
     const decisionLimit =
-      /\b(?:this (?:draft|charter|document|decision|page)|it) (?:commits?|authori[sz]es?|grants?|seeks?|states?) no\b/.test(
+      /\b(?:this (?:draft|charter|document|decision|readout|page)|it) (?:commits?|approves?|authori[sz]es?|grants?|seeks?|states?) no\b/.test(
         clean(sentence),
       );
     const clauses = splitOutsideQuotes(
@@ -330,16 +373,115 @@ export function classifyPurposeClaims(
           reason,
           sourceIds: ids,
         });
+        const conditionalRisk = value.match(
+          /\b(?:could|may|might) (?:make|render)\b.{1,120}\b(?:wrong|unreliable|unavailable|missing)\b/,
+        );
+        const ifFirst = value.match(/^if ([^,;]+)(?:, (.*))?$/);
+        const ifLast = value.match(
+          /^(?:proceed|hold|stop|pause|revise|request|return|reconsider)\b([^;.!?]*?) if (.+)$/,
+        );
+        if (
+          (ifFirst &&
+            purposeNegativeClaim.test(ifFirst[1]!) &&
+            !purposeNegativeClaim.test(ifFirst[2] || "")) ||
+          (ifLast && !purposeNegativeClaim.test(ifLast[1]!))
+        )
+          return result(
+            "decision_condition",
+            true,
+            "An explicit if-condition or conditional instruction does not assert its premise",
+          );
+        if (
+          /^no (?:benefit|savings|value) (?:counts|may be counted|can be claimed) (?:until|unless)\b/.test(
+            value,
+          )
+        )
+          return result(
+            "decision_condition",
+            true,
+            "Prospective counting rule; the subordinate clause names its required evidence",
+          );
+        if (
+          /^this (?:draft|document|readout)\b/.test(value) &&
+          /\bcredits? no (?:benefit|savings|value) (?:before|until)\b/.test(
+            value,
+          ) &&
+          !/\b(?:ever|historically|previously)\b/.test(value) &&
+          [...value.matchAll(new RegExp(purposeNegativeClaim.source, "gi"))]
+            .length === 1
+        )
+          return result(
+            "decision_condition",
+            true,
+            "This document conditions value recognition on later evidence; it does not assert that collection occurred",
+          );
+        if (
+          conditionalRisk &&
+          !purposeNegativeClaim.test(value.slice(0, conditionalRisk.index))
+        )
+          return result(
+            "decision_condition",
+            true,
+            "Hypothetical consequence, with no independent absence claim in the premise",
+          );
         if (request.test(value))
           return result(
             "decision_condition",
             true,
             "Question to validate, not an asserted absence",
           );
+        if (/\b(?:may|might|could) (?:lack\b|be missing\b)/.test(value))
+          return result(
+            "decision_condition",
+            citedHypothesisSupports(value, evidence, ids),
+            "A proposed gap hypothesis requires local support in its cited source",
+          );
+        if (
+          /^(?:report|claim|publish|count|state) no\b/.test(value) &&
+          /\b(?:until|unless|without)\b/.test(value) &&
+          !historical.test(value)
+        )
+          return result(
+            "decision_condition",
+            true,
+            "Imperative reporting condition, not a historical assertion of absence",
+          );
+        if (
+          !historical.test(value) &&
+          /^(?:(?:proposed|decision|action|knowledge|data|financial) )?(?:restriction|condition|boundary|rule): no\b/.test(
+            value,
+          ) &&
+          /\b(?:without|until|unless|permitted|presented as|treated as)\b/.test(
+            value,
+          )
+        )
+          return result(
+            "decision_condition",
+            true,
+            "Explicit prescriptive limit, not an assertion about past behavior",
+          );
+        if (
+          /^all inputs in (?:this|the supplied) bundle\b/.test(value) &&
+          /\b(?:pending owner review|proposed)\b/.test(value) &&
+          /\bnot approved$/.test(value)
+        )
+          return result(
+            "draft_status",
+            Boolean(
+              context.completeInputBundle &&
+              evidence.length &&
+              evidence.every(
+                (entry) =>
+                  entry.approvalState === "pending" ||
+                  entry.approvalState === "proposed",
+              ),
+            ),
+            "A bundle-wide approval disclosure requires every input's explicit state",
+          );
         if (
           !historical.test(value) &&
           /\b(?:measures?|definitions?|baselines?)\b/.test(value) &&
-          /\bcannot (?:be (?:blended|combined|averaged)|form (?:one|a single) baseline)\b/.test(
+          /\bcannot (?:be (?:blended|combined|averaged|compared)|form (?:one|a single) baseline)\b/.test(
             value,
           )
         )
@@ -347,6 +489,34 @@ export function classifyPurposeClaims(
             "decision_condition",
             true,
             "Restriction on combining measures, not a claim about evidence availability",
+          );
+        if (
+          !historical.test(value) &&
+          /\b(?:receipts|benefits|savings|revenue|value)\b/.test(value) &&
+          /\bcannot be counted again\b/.test(value)
+        )
+          return result(
+            "decision_condition",
+            true,
+            "A prohibition on double counting, not a claim that double counting occurred",
+          );
+        if (
+          context.textRole === "scope" &&
+          !historical.test(value) &&
+          (/^(?:and )?none is (?:yet )?confirmed (?:here|by this page)$/.test(
+            value,
+          ) ||
+            /^(?:this (?:page|readout|document)|it) (?:isolates no cause|measures no intervention)\b/.test(
+              value,
+            ) ||
+            /^(?:this (?:page|readout|document)|it) (?:(?:selects|costs|approves)(?:, | and ))*(?:selects|costs|approves) none of them$/.test(
+              value,
+            ))
+        )
+          return result(
+            "draft_status",
+            true,
+            "Explicit limit on the current page's conclusion or decision, not on the enterprise's history",
           );
         if (
           context.textRole === "scope" &&
@@ -360,8 +530,10 @@ export function classifyPurposeClaims(
             "This page declines to confirm its candidates",
           );
         if (
-          /^none selected$/.test(value) &&
-          /^routes compared,? none selected/.test(clean(sentence))
+          /^none (?:is )?selected$/.test(value) &&
+          /^(?:routes compared,? none selected|(?:[a-z]+ )?routes are offered for comparison and none is selected)$/.test(
+            clean(sentence),
+          )
         )
           return result(
             "draft_status",
@@ -392,7 +564,7 @@ export function classifyPurposeClaims(
         if (
           !historical.test(value) &&
           decisionLimit &&
-          /\bno (?:implementation |production )?(?:funding|spending|build|execution|baseline|target|benefit|blended value|pilot cohort|interface access)\b/.test(
+          /\bno (?:implementation |production )?(?:funding|spend|spending|build|execution|baseline|target|benefit|blended value|pilot cohort|interface access)\b/.test(
             value,
           )
         )
@@ -443,7 +615,7 @@ export function classifyPurposeClaims(
         if (
           context.textRole === "scope" &&
           !historical.test(value) &&
-          /\b(?:(?:records?|establishes?|asserts?|proves?|demonstrates?|attributes?|validates?|evidences?|scores?|confirms?) no|no .+ (?:is|are) (?:sought|claimed|asserted))\b/.test(
+          /\b(?:(?:records?|reports?|establishes?|asserts?|proves?|demonstrates?|attributes?|validates?|evidences?|scores?|confirms?) no|no .+ (?:is|are) (?:sought|claimed|asserted))\b/.test(
             value,
           )
         )
@@ -452,7 +624,26 @@ export function classifyPurposeClaims(
             true,
             "Declared scope note limits what this page establishes",
           );
-        if (/\bproposed,? (?:and )?not (?:yet )?confirmed\b/.test(value))
+        if (
+          context.textRole === "scope" &&
+          /\b(?:this (?:page|readout|document|draft)|it) (?:records?|reports?|asserts?) no\b/.test(
+            clean(sentence),
+          ) &&
+          /^no (?:selected route|approved architecture|priced estimate|access grant|selection)$/.test(
+            value,
+          )
+        )
+          return result(
+            "draft_status",
+            true,
+            "Coordinated decision limit inherits the page subject, not an enterprise-wide absence",
+          );
+        if (
+          !historical.test(value) &&
+          /\b(?:proposed|proposal),? (?:and )?not (?:yet )?confirmed\b/.test(
+            value,
+          )
+        )
           return result(
             "draft_status",
             ids.length > 0 &&
@@ -463,6 +654,18 @@ export function classifyPurposeClaims(
                 return state === "pending" || state === "proposed";
               }),
             "Pending status must match each cited input's approval state",
+          );
+        if (
+          !historical.test(value) &&
+          /\bno role[ -]elimination assumption\b/.test(value) &&
+          /^(?:required:|(?:proposed|keep|retain)\b)/.test(value) &&
+          [...value.matchAll(new RegExp(purposeNegativeClaim.source, "gi"))]
+            .length === 1
+        )
+          return result(
+            "decision_condition",
+            true,
+            "A proposed planning constraint, not an assertion about workforce history",
           );
         if (
           /\bno (?:savings|benefit) commitment exists until\b/.test(value) &&
@@ -530,7 +733,12 @@ export function classifyPurposeClaims(
             ),
             "Review status must be explicit for every supplied input",
           );
-        if (bounded.test(value)) {
+        if (
+          bounded.test(value) ||
+          /^(?:(?:the|this|supplied) )?(?:brief|input bundle|source bundle|context bundle|package) (?:records?|states?|contains?|provides?) no\b/.test(
+            value,
+          )
+        ) {
           const subjects = gapSubjects(value);
           const contradicted = subjects.some((subject) =>
             bundleHasSubject(subject, evidence),

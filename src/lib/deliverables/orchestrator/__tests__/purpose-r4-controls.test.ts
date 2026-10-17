@@ -10,6 +10,13 @@ import {
   purposeCitationIds,
 } from "../purpose-citations";
 import { balancedPurposeTitle } from "../purpose-page-renderer";
+import {
+  assertPurposeDateSlotUse,
+  purposeSourceTrailingUnit,
+  assertPurposeUnitSlotUse,
+  purposeSourceDatePart,
+  stripPurposeSourceVersionReferences,
+} from "../purpose-number-display";
 import { purposeFixture } from "../__fixtures__/purpose-pages";
 import {
   planPurposePages,
@@ -23,6 +30,489 @@ import {
 } from "../purpose-story-contract";
 
 describe("R4 claim and export controls", () => {
+  it("checks proposal confirmation against approval state without allowing an independent gap", () => {
+    const text =
+      "The change record contains a proposal, not yet confirmed, that business owns adoption [1].";
+    const pending: PurposeClaimEvidence[] = [
+      {
+        citationNumber: 1,
+        label: "Proposed changes",
+        approvalState: "pending",
+        statement: "Adoption ownership is proposed.",
+      },
+    ];
+    expect(
+      classifyPurposeClaims(text, pending).every((claim) => claim.supported),
+    ).toBe(true);
+    expect(
+      classifyPurposeClaims(text, [
+        { ...pending[0]!, approvalState: "approved" },
+      ]).some((claim) => !claim.supported),
+    ).toBe(true);
+    expect(
+      classifyPurposeClaims(
+        "The sources are missing and the proposal, not yet confirmed, names an owner [1].",
+        pending,
+      ).some((claim) => !claim.supported),
+    ).toBe(true);
+  });
+  it("distinguishes a required workforce assumption from a historical assertion", () => {
+    expect(
+      classifyPurposeClaims(
+        "Required: decision-rights record keeping no role-elimination assumption [1].",
+        [],
+      ).every((claim) => claim.supported),
+    ).toBe(true);
+    expect(
+      classifyPurposeClaims(
+        "No role elimination occurred previously [1].",
+        [],
+      ).some((claim) => !claim.supported),
+    ).toBe(true);
+    expect(
+      classifyPurposeClaims(
+        "Required: no baseline and no role-elimination assumption [1].",
+        [],
+      ).some((claim) => !claim.supported),
+    ).toBe(true);
+  });
+  it("keeps an explicit calendar-duration unit attached to its source slot", () => {
+    const line = "The calculation uses 2 whole months of lag.";
+    expect(purposeSourceTrailingUnit(line, line.indexOf("2"), "2")).toBe(
+      "month",
+    );
+    expect(
+      purposeSourceTrailingUnit("2 records in six months", 0, "2"),
+    ).toBeUndefined();
+    const slots = { lag: { trailingUnit: "month" } };
+    for (const text of ["Lag: {lag} whole months [1].", "Months: {lag} [1]."])
+      expect(() => assertPurposeUnitSlotUse(text, slots)).not.toThrow();
+    for (const text of [
+      "Lag: {lag} [1].",
+      "Lag: {lag} days [1].",
+      "A monthly review uses lag {lag} [1].",
+    ])
+      expect(() => assertPurposeUnitSlotUse(text, slots)).toThrow(
+        "unit_missing",
+      );
+  });
+  it("allows scoped non-conclusions without asserting enterprise absence", () => {
+    for (const text of [
+      "No access grant is recorded here.",
+      "It isolates no cause and measures no intervention.",
+      "The proposals await review and none is confirmed here.",
+      "None is confirmed by this page.",
+      "This page compares routes; it reports no access grant, no selected route and no approved architecture.",
+      "This page compares routes; it selects, costs and approves none of them.",
+    ]) {
+      const claims = classifyPurposeClaims(text, [], { textRole: "scope" });
+      expect(claims.length).toBeGreaterThan(0);
+      expect(
+        claims.every(
+          (claim) => claim.classification === "draft_status" && claim.supported,
+        ),
+      ).toBe(true);
+    }
+    for (const text of [
+      "No access grant was ever recorded here.",
+      "The organization approves none of them.",
+      "This page isolates no cause; source records are missing.",
+      "This page reports no access grant; source teams have no access grant.",
+      "No approved architecture.",
+    ])
+      expect(
+        classifyPurposeClaims(text, [], { textRole: "scope" }).some(
+          (claim) => !claim.supported,
+        ),
+      ).toBe(true);
+    expect(
+      classifyPurposeClaims("None is confirmed here.", [])[0]?.supported,
+    ).toBe(false);
+  });
+  it("separates prospective value recognition from an assertion about collection history", () => {
+    expect(
+      classifyPurposeClaims(
+        "This draft does not authorize a build and credits no benefit before incremental cash is collected against a matched comparator.",
+        [],
+      )[0],
+    ).toMatchObject({ classification: "decision_condition", supported: true });
+    for (const text of [
+      "This draft credits no benefit because cash was never collected.",
+      "This draft credits no benefit until cash is collected; receipts are missing.",
+      "This draft previously credited no benefit before cash was collected.",
+    ])
+      expect(
+        classifyPurposeClaims(text, []).some((claim) => !claim.supported),
+      ).toBe(true);
+  });
+  it("exempts only exact source-declared version identifiers from the figure check", () => {
+    const sources = ["Use the delivery-model-v1.2 reference for assumptions."];
+    expect(
+      stripPurposeSourceVersionReferences(
+        "delivery-model-v1.2 costs $250.",
+        sources,
+      ),
+    ).toBe(" costs $250.");
+    for (const text of [
+      "delivery-model-v1.3",
+      "delivery-model-v1.20",
+      "budget-250",
+      "250",
+      "x.delivery-model-v1.2",
+      "delivery-model-v1.2-extra",
+    ])
+      expect(stripPurposeSourceVersionReferences(text, sources)).toBe(text);
+    expect(stripPurposeSourceVersionReferences("delivery-model-v1.2", [])).toBe(
+      "delivery-model-v1.2",
+    );
+  });
+  it("recognizes measurement comparison restrictions without excusing missing-source claims", () => {
+    expect(
+      classifyPurposeClaims(
+        "Two measures use different definitions and cannot be compared [1].",
+        [],
+      )[0],
+    ).toMatchObject({ classification: "decision_condition", supported: true });
+    for (const text of [
+      "Two measures cannot be compared because source records are missing.",
+      "The source team cannot provide the measures.",
+      "The measures were never collected.",
+    ])
+      expect(classifyPurposeClaims(text, [])[0]?.supported).toBe(false);
+  });
+  it("treats an offered route comparison as non-selection, not evidence about past decisions", () => {
+    expect(
+      classifyPurposeClaims(
+        "Three routes are offered for comparison and none is selected [1].",
+        [],
+      )[0],
+    ).toMatchObject({ classification: "draft_status", supported: true });
+    expect(
+      classifyPurposeClaims(
+        "The organization has reviewed three routes and none is selected [1].",
+        [],
+      )[0]?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims("None is selected [1].", [])[0]?.supported,
+    ).toBe(false);
+  });
+  it("separates explicit decision instruments and if-conditions from actual business history", () => {
+    expect(
+      classifyPurposeClaims("This readout approves no build and no spend.", []),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          classification: "draft_status",
+          supported: true,
+        }),
+      ]),
+    );
+    expect(
+      classifyPurposeClaims(
+        "This readout approves no build and no spend.",
+        [],
+      ).every((c) => c.supported),
+    ).toBe(true);
+    for (const text of [
+      "Revise the direction if claim versions cannot be joined.",
+      "If source access is unavailable, hold the decision.",
+    ])
+      expect(classifyPurposeClaims(text, [])[0]).toMatchObject({
+        classification: "decision_condition",
+        supported: true,
+      });
+    for (const text of [
+      "No build has ever been approved.",
+      "Claim versions cannot be joined, so revise the direction.",
+      "The source is unavailable if the team asks today.",
+    ])
+      expect(classifyPurposeClaims(text, [])[0]?.supported).toBe(false);
+  });
+  it("binds date components to their source role, not merely a matching number", () => {
+    const line = "Period,2028-02-29,12";
+    const slots = {
+      year: { datePart: purposeSourceDatePart(line, 7, "source:1") },
+      month: { datePart: purposeSourceDatePart(line, 12, "source:1") },
+      day: { datePart: purposeSourceDatePart(line, 15, "source:1") },
+      otherYear: { datePart: purposeSourceDatePart(line, 7, "source:2") },
+    };
+    expect(slots.month.datePart?.part).toBe("month");
+    expect(purposeSourceDatePart("2027-02-29", 0, "source:1")).toBeUndefined();
+    expect(purposeSourceDatePart("REF-2028-02", 4, "source:1")).toBeUndefined();
+    expect(purposeSourceDatePart("2028-02", 5, "source:1")?.part).toBe("month");
+    expect(() =>
+      assertPurposeDateSlotUse("{year}-{month}-{day}", slots),
+    ).not.toThrow();
+    expect(() =>
+      assertPurposeDateSlotUse("February {year}", slots),
+    ).not.toThrow();
+    for (const text of [
+      "February {month}",
+      "{day} calls",
+      "{otherYear}-{month}",
+      "{month}-{day}",
+    ])
+      expect(() => assertPurposeDateSlotUse(text, slots)).toThrow(
+        "date_part_misused",
+      );
+  });
+  it("recognizes a prospective counting rule without discarding historical claims", () => {
+    expect(
+      classifyPurposeClaims(
+        "No benefit counts until incremental cash is collected against a matched comparator [1].",
+        [],
+      )[0],
+    ).toMatchObject({ classification: "decision_condition", supported: true });
+    expect(
+      classifyPurposeClaims(
+        "No benefit counted last year until cash was collected [1].",
+        [],
+      )[0]?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims("No benefit was collected [1].", [])[0]?.supported,
+    ).toBe(false);
+  });
+  it("recognizes direct whether questions but still checks asserted inability", () => {
+    expect(
+      classifyPurposeClaims(
+        "Whether both hold, or the evidence cannot yet classify the work [1].",
+        [],
+      )[0],
+    ).toMatchObject({ classification: "decision_condition", supported: true });
+    expect(
+      classifyPurposeClaims(
+        "The evidence cannot yet classify the work [1].",
+        [],
+      )[0]?.supported,
+    ).toBe(false);
+  });
+  it("checks a brief-bounded absence against the complete input bundle", () => {
+    const claim =
+      "The brief records no governance cadence, so the proposed sponsor sets a review rhythm [1].";
+    const inputs = [
+      { citationNumber: 1, statement: "Proposed sponsor: operations lead." },
+    ];
+    expect(
+      classifyPurposeClaims(claim, inputs, { completeInputBundle: true })[0],
+    ).toMatchObject({ classification: "evidence_gap", supported: true });
+    expect(
+      classifyPurposeClaims(
+        claim,
+        [
+          {
+            citationNumber: 1,
+            statement:
+              "The monthly calculation engine uses recorded cash flows.",
+          },
+        ],
+        { completeInputBundle: true },
+      )[0]?.supported,
+    ).toBe(true);
+    expect(classifyPurposeClaims(claim, inputs)[0]?.supported).toBe(false);
+    expect(
+      classifyPurposeClaims(
+        claim,
+        [{ citationNumber: 1, statement: "Weekly sponsor review." }],
+        { completeInputBundle: true },
+      )[0]?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims(
+        claim.replace("The brief records", "The organization has"),
+        inputs,
+        { completeInputBundle: true },
+      )[0]?.supported,
+    ).toBe(false);
+  });
+  it("requires local cited support for a proposed gap hypothesis", () => {
+    const inputs = [
+      {
+        citationNumber: 1,
+        statement:
+          "Inconsistent category mapping leaves queues without a shared routing rule.",
+      },
+    ];
+    const claim = "Category mapping may lack a shared routing rule [1].";
+    expect(classifyPurposeClaims(claim, inputs)[0]).toMatchObject({
+      classification: "decision_condition",
+      supported: true,
+    });
+    expect(classifyPurposeClaims(claim, [])[0]?.supported).toBe(false);
+    expect(
+      classifyPurposeClaims(claim.replace("[1]", "[2]"), inputs)[0]?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims(claim, [
+        {
+          ...inputs[0]!,
+          statement: "Category mapping uses a shared routing rule.",
+        },
+      ])[0]?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims(
+        claim.replace("routing rule", "approval ledger"),
+        inputs,
+      )[0]?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims(
+        "Category mapping lacks a shared routing rule [1].",
+        [
+          {
+            citationNumber: 1,
+            statement: "Category mapping may lack a shared routing rule.",
+          },
+        ],
+      )[0]?.supported,
+    ).toBe(false);
+  });
+  it("recognizes a conditional risk without excusing an absent-evidence premise", () => {
+    expect(
+      classifyPurposeClaims(
+        "A metadata mismatch could make missing-document status wrong [1].",
+        [],
+      )[0],
+    ).toMatchObject({ classification: "decision_condition", supported: true });
+    expect(
+      classifyPurposeClaims(
+        "Missing timestamps could make document status wrong [1].",
+        [],
+      )[0]?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims("Missing-document status is wrong [1].", [])[0]
+        ?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims(
+        "No metadata exists and this could make document status wrong [1].",
+        [],
+      )[0]?.supported,
+    ).toBe(false);
+  });
+  it("allows a measure heading but rejects it copied into a body cell", () => {
+    const doc = purposeFixture();
+    doc.deliverableType = "charter";
+    doc.tables = [];
+    doc.generatedSections = [
+      {
+        key: "success_measures",
+        title: "Measures",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+        bodyMarkdown:
+          "| Outcome | Measure and definition work | Validation |\n| --- | --- | --- |\n| Service experience | Proposed: agree a repeat-contact definition. | Sponsor reviews the proposed definition [1]. |",
+      },
+    ];
+    const error = "purpose_story:measure_cell_is_column_heading";
+    expect(validatePurposeStory(doc, [])).not.toContain(error);
+    doc.generatedSections[0]!.bodyMarkdown =
+      doc.generatedSections[0]!.bodyMarkdown.replace(
+        "Proposed: agree a repeat-contact definition.",
+        "**Measure and definition work** [1]",
+      );
+    expect(validatePurposeStory(doc, [])).toContain(error);
+    doc.generatedSections = [];
+    doc.tables = [
+      {
+        key: "success_measures",
+        title: "Measures",
+        targetFormat: "docx",
+        columns: ["Outcome", "Measure"],
+        rows: [["Service experience", "Measure and target [1]"]],
+      },
+    ];
+    expect(validatePurposeStory(doc, [])).toContain(error);
+  });
+  it("recognizes an imperative reporting condition without excusing factual absence", () => {
+    expect(
+      classifyPurposeClaims(
+        "Report no rate until claim versions join back to the original claim [1].",
+        [],
+      )[0],
+    ).toMatchObject({ classification: "decision_condition", supported: true });
+    expect(
+      classifyPurposeClaims(
+        "Records show no rate until claim versions join back to the original claim [1].",
+        [],
+      )[0]?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims(
+        "No rates were reported until claim versions joined back to the original claim [1].",
+        [],
+      )[0]?.supported,
+    ).toBe(false);
+  });
+  it("separates a double-counting restriction from a historical financial assertion", () => {
+    expect(
+      classifyPurposeClaims(
+        "Financial baseline: existing recovered receipts cannot be counted again [1].",
+        [],
+      )[0],
+    ).toMatchObject({ classification: "decision_condition", supported: true });
+    expect(
+      classifyPurposeClaims(
+        "Recovered receipts historically cannot be counted again [1].",
+        [],
+      )[0]?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims("Recovered receipts cannot be found [1].", [])[0]
+        ?.supported,
+    ).toBe(false);
+  });
+  it("checks a bundle-wide pending disclosure against every input approval", () => {
+    const sentence =
+      "All inputs in this bundle, including the restrictions below, are recorded as pending owner review and proposed, not approved [1].";
+    const inputs = [
+      {
+        citationNumber: 1,
+        statement: "Proposed scope",
+        approvalState: "pending" as const,
+      },
+      {
+        citationNumber: 2,
+        statement: "Proposed limits",
+        approvalState: "proposed" as const,
+      },
+    ];
+    expect(
+      classifyPurposeClaims(sentence, inputs, { completeInputBundle: true })[0],
+    ).toMatchObject({ classification: "draft_status", supported: true });
+    for (const approvalState of ["approved", "unknown"] as const)
+      expect(
+        classifyPurposeClaims(
+          sentence,
+          [inputs[0]!, { ...inputs[1]!, approvalState }],
+          { completeInputBundle: true },
+        )[0]?.supported,
+      ).toBe(false);
+    expect(classifyPurposeClaims(sentence, inputs)[0]?.supported).toBe(false);
+  });
+  it("distinguishes a prescriptive restriction from a historical assertion", () => {
+    expect(
+      classifyPurposeClaims(
+        "Knowledge restriction: no stale or conflicting knowledge presented as authoritative [1].",
+        [],
+      )[0],
+    ).toMatchObject({ classification: "decision_condition", supported: true });
+    expect(
+      classifyPurposeClaims(
+        "Knowledge restriction: no stale knowledge was ever presented as authoritative [1].",
+        [],
+      )[0]?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims(
+        "Knowledge restriction: no stale knowledge exists in the enterprise [1].",
+        [],
+      )[0]?.supported,
+    ).toBe(false);
+  });
   it("checks a structured no-change proposal against its own value and status", () => {
     const statement = [
       'row 1: ["question","synthetic_hypothesis","status"]',

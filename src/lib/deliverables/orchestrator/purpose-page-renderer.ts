@@ -14,6 +14,8 @@ import {
   purposeBodyHeight,
   purposeTableHeaderHeight,
   purposeScopeLayout,
+  purposeChartAxis,
+  purposeStatusLabel,
   type PurposeChart,
   type PurposePage,
 } from "./purpose-page-plan";
@@ -53,6 +55,8 @@ const reference = (page: PurposePage, id: number) =>
   `[${page.referenceLabels?.[id] || id}]`;
 const copy = (page: PurposePage, value: string) =>
   purposeCitations(value, page.referenceLabels || {});
+const titleCopy = (page: PurposePage) =>
+  copy(page, page.title.replace(/\[\d+(?:\s*[-–,]\s*\d+)*\]/g, "")).trim();
 const sourceLine = (page: PurposePage) => {
   let count = Math.min(5, page.sources.length);
   while (count) {
@@ -144,7 +148,7 @@ function frame(
   }
   text(
     slide,
-    `${page.section || (page.family === "cover" ? "CONTEXT" : "VALIDATE")}  /  DISCOVERY`,
+    `${cover ? "MOVES" : page.section || "VALIDATE"}  /  P2 DISCOVERY`,
     8.7,
     0.22,
     4,
@@ -158,9 +162,9 @@ function frame(
   );
   text(
     slide,
-    balancedPurposeTitle(copy(page, page.title)),
+    balancedPurposeTitle(titleCopy(page)),
     X,
-    cover ? 4.1 : 0.55,
+    cover ? 3.65 : 0.55,
     W,
     cover ? 0.9 : 1.1,
     cover ? 26 : 30,
@@ -177,7 +181,7 @@ function frame(
     slide,
     copy(page, page.scope),
     X,
-    cover ? 5.0 : 1.65,
+    cover ? 4.65 : 1.65,
     W,
     scopeLayout.height,
     scopeLayout.fontSize,
@@ -197,7 +201,7 @@ function frame(
     slide,
     `${page.classification ? `${page.classification}. ` : ""}AI-generated working draft. Human approval required.`,
     X,
-    6.98,
+    6.94,
     7.6,
     0.22,
     10,
@@ -217,7 +221,15 @@ function frame(
     `${copy(page, page.notes)}\nScope: ${page.scope}\nEvidence: ${page.sources.map((id) => reference(page, id)).join(" ") || "Document framing / source register"}\nLayout: ${page.family}; ${purposeDensity(page).variant}`,
   );
   if (page.takeaway) {
-    rule(pptx, slide, X, 6.35, 0.12, C.navy, 3);
+    const takeawayText = copy(page, page.takeaway);
+    slide.addShape(pptx.ShapeType.line, {
+      x: X,
+      y: 6.23,
+      w: 0,
+      h: 0.5,
+      line: { color: C.navy, width: 2 },
+      objectName: "purpose:annotation:takeaway-rule",
+    });
     const labelW = page.takeawayLabel ? 2.55 : 0;
     if (page.takeawayLabel)
       text(slide, page.takeawayLabel, X + 0.25, 6.23, labelW - 0.15, 0.58, 16, {
@@ -227,12 +239,14 @@ function frame(
       });
     text(
       slide,
-      copy(page, page.takeaway),
+      takeawayText,
       X + 0.25 + labelW,
       6.23,
       W - 0.25 - labelW,
       0.58,
-      16,
+      referenceCellTextHeight(takeawayText, W - 0.25 - labelW, 16) > 0.36
+        ? 15
+        : 16,
       {
         color: C.deckMuted,
         objectName: "purpose:annotation:takeaway",
@@ -263,7 +277,7 @@ function labelledStatements(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
     });
     text(
       slide,
-      `${item.tone!.toUpperCase()} / ${item.label}`,
+      purposeStatusLabel(item.tone!, item.label),
       X + 0.25,
       y + inset,
       labelWidth,
@@ -558,11 +572,11 @@ function renderPage(
   const TOP = purposeScopeLayout(page).bodyTop;
   const H = purposeBodyHeight(page);
   if (page.family === "cover") {
-    text(slide, page.items[0]!.label, X, 1.35, W, 0.5, 22, {
+    text(slide, page.items[0]!.label, X, 1.15, W, 0.5, 22, {
       color: C.deckCoverMuted,
       bold: true,
     });
-    text(slide, page.items[0]!.detail, X, 2.15, W, 1.6, 44, {
+    text(slide, page.items[0]!.detail, X, 1.95, W, 1.5, 44, {
       fontFace: "Georgia",
       color: C.white,
     });
@@ -589,6 +603,20 @@ function renderPage(
     const height = heights.reduce((sum, h) => sum + h, 0);
     if (height > H + 0.001)
       throw new PurposePageError("table_text_needs_split", page.id);
+    const groups = rows.flatMap((row) =>
+      row.flatMap(
+        (cell) => copy(page, cell).match(/\[[A-Za-z0-9,\s–-]+\]/g) || [],
+      ),
+    );
+    // Repeated identical attribution is stated once in the visible page footer.
+    const sharedCitation =
+      !page.sourceRegister &&
+      page.sources.length === 1 &&
+      groups.length > 2 &&
+      new Set(groups).size === 1 &&
+      groups[0] === sourceLine(page)
+        ? groups[0]
+        : undefined;
     slide.addTable(
       [
         columns.map((cell) => ({
@@ -597,7 +625,14 @@ function renderPage(
         })),
         ...rows.map((row, i) =>
           row.map((cell, column) => ({
-            text: copy(page, cell),
+            text: sharedCitation
+              ? copy(page, cell)
+                  .split(sharedCitation)
+                  .join("")
+                  .replace(/\s+([.,;:!?])/g, "$1")
+                  .replace(/ {2,}/g, " ")
+                  .trim()
+              : copy(page, cell),
             options: {
               bold: Boolean(
                 (page.sourceRegister && !row[0]) ||
@@ -627,12 +662,12 @@ function renderPage(
       ],
       {
         x: X,
-        y: TOP + Math.max(0, (H - height) / 2),
+        y: TOP + Math.min(0.22, Math.max(0, (H - height) / 2)),
         w: W,
         colW: weights.map((w) => W * w),
         rowH: heights,
         fontFace: "Arial",
-        fontSize: 16,
+        fontSize: page.tableFontSize || 16,
         color: C.deckInk,
         margin: page.sourceRegister
           ? 0.025
@@ -649,22 +684,20 @@ function renderPage(
   } else if (page.family === "trend") {
     const charts = page.charts || [page.chart!];
     charts.forEach((chart, index) => {
+      const axis = purposeChartAxis(chart);
       const width = (W - (charts.length - 1) * 0.45) / charts.length;
       const x = X + index * (width + 0.45);
-      text(slide, chart.metric, x, TOP, width, 0.65, 22, { bold: true });
-      text(
-        slide,
-        `${chart.unit} / ${chart.period}`,
-        x,
-        TOP + 0.67,
-        width,
-        0.32,
-        14,
-        {
-          color: C.deckMuted,
-          objectName: `purpose:annotation:chart-unit:${index}`,
-        },
+      const caption = `${chart.unit} / ${chart.period}${axis.min !== undefined && axis.min !== 0 ? ` / axis starts at ${axis.min}` : ""}`;
+      const captionHeight = Math.max(
+        0.44,
+        referenceCellTextHeight(caption, width, 13) + 0.06,
       );
+      const chartTop = 0.67 + captionHeight + 0.1;
+      text(slide, chart.metric, x, TOP, width, 0.65, 22, { bold: true });
+      text(slide, caption, x, TOP + 0.67, width, captionHeight, 13, {
+        color: C.deckMuted,
+        objectName: `purpose:annotation:chart-unit:${index}`,
+      });
       slide.addChart(
         pptx.ChartType.line,
         [
@@ -681,9 +714,9 @@ function renderPage(
         ],
         {
           x,
-          y: TOP + 1.08,
+          y: TOP + chartTop,
           w: width,
-          h: H - 1.25,
+          h: H - chartTop - 0.17,
           showLegend: false,
           showTitle: false,
           showValue: charts.length === 1,
@@ -696,8 +729,8 @@ function renderPage(
           lineDataSymbol: "circle",
           lineDataSymbolSize: 5,
           chartColors: [C.navy],
-          valAxisMinVal: chart.axisMin,
-          valAxisMaxVal: chart.axisMax,
+          valAxisMinVal: axis.min,
+          valAxisMaxVal: axis.max,
           dataLabelFormatCode: "0.##",
           dataLabelPosition: "t",
           dataLabelColor: C.deckInk,
@@ -826,7 +859,7 @@ export function validatePurposeInspection(
   for (const [i, slide] of inspection.slides.entries()) {
     const page = pages[i]!;
     if (
-      slide.namedText?.["purpose:title"] !== copy(page, page.title) ||
+      slide.namedText?.["purpose:title"] !== titleCopy(page) ||
       slide.namedText?.["purpose:scope"] !== copy(page, page.scope) ||
       !slide.namedText?.["purpose:status"]?.includes("Human approval required")
     )
@@ -852,7 +885,7 @@ export function validatePurposeInspection(
       page.items.forEach((item, n) => {
         if (
           slide.namedText?.[`purpose:statement-label:${n}`] !==
-            `${item.tone!.toUpperCase()} / ${item.label}` ||
+            purposeStatusLabel(item.tone!, item.label) ||
           !slide.objectNames?.includes(
             `purpose:statement-tone:${n}:${item.tone}`,
           )

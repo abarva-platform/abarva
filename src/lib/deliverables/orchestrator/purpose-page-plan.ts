@@ -64,6 +64,13 @@ export type PurposeFamily =
   | "big_numbers"
   | "trend";
 export type PurposeTone = "candidate" | "condition" | "later" | "risk";
+
+export function purposeStatusLabel(tone: PurposeTone, label: string): string {
+  const normalized = label.trim().replace(/:$/, "");
+  return normalized.toLowerCase() === tone
+    ? tone.toUpperCase()
+    : `${tone.toUpperCase()} / ${normalized}`;
+}
 export interface PageIntent {
   question: string;
   scopeNote: string;
@@ -90,6 +97,26 @@ export interface PurposeChart {
   population?: string;
   axisMin?: number;
   axisMax?: number;
+}
+
+/** Line charts may use a bounded axis, which the renderer must label explicitly. */
+export function purposeChartAxis(chart: PurposeChart) {
+  if (chart.axisMin !== undefined || chart.axisMax !== undefined)
+    return { min: chart.axisMin, max: chart.axisMax };
+  const values = chart.points.map((point) => point.value);
+  const low = Math.min(...values),
+    high = Math.max(...values);
+  const span = high - low;
+  if (!Number.isFinite(span) || span === 0) return {};
+  const rough = span / 4;
+  const power = 10 ** Math.floor(Math.log10(rough));
+  const step = [1, 2, 5, 10].find((n) => n * power >= rough)! * power;
+  const min = Math.floor((low - span * 0.1) / step) * step;
+  const max = Math.ceil((high + span * 0.1) / step) * step;
+  return {
+    min: Number((low >= 0 ? Math.max(0, min) : min).toPrecision(12)),
+    max: Number(max.toPrecision(12)),
+  };
 }
 
 export const PURPOSE_LAYOUTS = {
@@ -126,6 +153,7 @@ export interface PurposePage {
   sourceRegister?: boolean;
   semanticStatusColumn?: boolean;
   compactTableRows?: boolean;
+  tableFontSize?: 14 | 15;
   rows?: string[][];
   chart?: PurposeChart;
   charts?: PurposeChart[];
@@ -177,7 +205,7 @@ export const purposeTableHeaderHeight = (page: PurposePage) =>
               referenceCellTextHeight(
                 cell,
                 12.05 * purposeTableWidths(page)[i]! - 0.16,
-                16,
+                page.tableFontSize || 16,
               ) + 0.06,
           ),
         )
@@ -258,7 +286,7 @@ export function purposeRowHeight(page: PurposePage, row: string[]): number {
         referenceCellTextHeight(
           purposeCitations(cell, page.referenceLabels || {}),
           widths[i]!,
-          16,
+          page.tableFontSize || 16,
         ) + (page.sourceRegister ? 0.04 : page.compactTableRows ? 0.02 : 0.06),
     ),
   );
@@ -339,6 +367,22 @@ function normalizePage(input: PurposePage): PurposePage {
   };
 }
 
+function columnAllocations(count: number, remaining: number): number[][] {
+  return count === 1
+    ? remaining >= 3
+      ? [[remaining]]
+      : []
+    : Array.from(
+        { length: Math.max(0, remaining - 3 * (count - 1) - 2) },
+        (_, i) => i + 3,
+      ).flatMap((width) =>
+        columnAllocations(count - 1, remaining - width).map((rest) => [
+          width,
+          ...rest,
+        ]),
+      );
+}
+
 function paginateRawContent(input: PurposePage): PurposePage[] {
   let page = normalizePage(input);
   if (page.columns && page.rows && !page.columnWeights) {
@@ -358,22 +402,8 @@ function paginateRawContent(input: PurposePage): PurposePage[] {
     ) {
       // Try readable column allocations before creating a continuation. Long
       // handoff labels often need width that a short status column does not.
-      const allocations = (count: number, remaining: number): number[][] =>
-        count === 1
-          ? remaining >= 3
-            ? [[remaining]]
-            : []
-          : Array.from(
-              { length: Math.max(0, remaining - 3 * (count - 1) - 2) },
-              (_, i) => i + 3,
-            ).flatMap((width) =>
-              allocations(count - 1, remaining - width).map((rest) => [
-                width,
-                ...rest,
-              ]),
-            );
       let best = total(page) + purposeTableHeaderHeight(page);
-      for (const columnWeights of allocations(page.columns!.length, 24)) {
+      for (const columnWeights of columnAllocations(page.columns!.length, 24)) {
         const candidate = { ...page, columnWeights };
         const height = total(candidate) + purposeTableHeaderHeight(candidate);
         if (height < best - 0.001) {
@@ -396,6 +426,22 @@ function paginateRawContent(input: PurposePage): PurposePage[] {
       height(compact) <= purposeBodyHeight(compact) + 0.001
     )
       page = compact;
+    if (height(page) > purposeBodyHeight(page)) {
+      for (const tableFontSize of [15, 14] as const) {
+        let best = { ...compact, tableFontSize };
+        for (const columnWeights of columnAllocations(
+          page.columns!.length,
+          24,
+        )) {
+          const candidate = { ...best, columnWeights };
+          if (height(candidate) < height(best)) best = candidate;
+        }
+        if (height(best) <= purposeBodyHeight(best) + 0.001) {
+          page = best;
+          break;
+        }
+      }
+    }
   }
   const bodyHeight = purposeBodyHeight(page);
   const headerHeight = purposeTableHeaderHeight(page);
@@ -426,9 +472,9 @@ function paginateRawContent(input: PurposePage): PurposePage[] {
     if (group.length) groups.push(group);
     if (groups.length === 2) {
       const rows = groups.flat();
-      const height = (rs: string[][]) =>
-        headerHeight +
-        rs.reduce((sum, row) => sum + purposeRowHeight(page, row), 0);
+      const height = (rs: string[][], candidate = page) =>
+        purposeTableHeaderHeight(candidate) +
+        rs.reduce((sum, row) => sum + purposeRowHeight(candidate, row), 0);
       const tail = (at: number) => {
         const slice = rows.slice(at);
         const previousHeader =
@@ -439,24 +485,52 @@ function paginateRawContent(input: PurposePage): PurposePage[] {
           ? [["", `${previousHeader[1]} (continued)`, ""], ...slice]
           : slice;
       };
-      const cuts = Array.from(
-        { length: Math.max(0, rows.length - 3) },
-        (_, i) => i + 2,
-      )
-        .map((at) => ({
-          at,
-          a: height(rows.slice(0, at)),
-          b: height(tail(at)),
-        }))
-        .filter(
-          (c) =>
-            (!page.sourceRegister || Boolean(rows[c.at - 1]?.[0])) &&
-            c.a <= bodyHeight + 0.001 &&
-            c.b <= bodyHeight + 0.001 &&
-            c.a >= bodyHeight * 0.55 &&
-            c.b >= bodyHeight * 0.55,
-        )
-        .sort((a, b) => Math.abs(a.a - a.b) - Math.abs(b.a - b.b));
+      const cutsFor = (candidate: PurposePage) =>
+        Array.from({ length: Math.max(0, rows.length - 3) }, (_, i) => i + 2)
+          .map((at) => ({
+            at,
+            a: height(rows.slice(0, at), candidate),
+            b: height(tail(at), candidate),
+          }))
+          .filter(
+            (c) =>
+              (!page.sourceRegister || Boolean(rows[c.at - 1]?.[0])) &&
+              c.a <= bodyHeight + 0.001 &&
+              c.b <= bodyHeight + 0.001 &&
+              c.a >= bodyHeight * 0.55 &&
+              c.b >= bodyHeight * 0.55,
+          )
+          .sort((a, b) => Math.abs(a.a - a.b) - Math.abs(b.a - b.b));
+      let cuts = cutsFor(page);
+      // The shortest total table is not always the best two-page split. Try
+      // other readable widths before rejecting a continuation with a thin tail.
+      if (
+        !cuts.length &&
+        !page.sourceRegister &&
+        height(rows) > bodyHeight + 0.001
+      ) {
+        for (const columnWeights of columnAllocations(
+          page.columns.length,
+          24,
+        )) {
+          const candidate = { ...page, columnWeights };
+          const widths = purposeTableWidths(candidate).map((w) =>
+            Math.floor(100 * w),
+          );
+          if (
+            candidate.columns!.some(
+              (cell, i) => estimatedLines(cell, widths[i]!) > 2,
+            )
+          )
+            continue;
+          const possible = cutsFor(candidate);
+          if (possible.length) {
+            page = candidate;
+            cuts = possible;
+            break;
+          }
+        }
+      }
       if (height(rows) <= bodyHeight + 0.001) groups.splice(0, 2, rows);
       else if (cuts[0])
         groups.splice(0, 2, rows.slice(0, cuts[0].at), tail(cuts[0].at));
@@ -587,7 +661,7 @@ function paginateContent(page: PurposePage): PurposePage[] {
         (i) =>
           Math.max(
             referenceCellTextHeight(
-              `${i.tone!.toUpperCase()} / ${i.label}`,
+              purposeStatusLabel(i.tone!, i.label),
               width,
               18,
             ),
@@ -610,7 +684,7 @@ function paginateContent(page: PurposePage): PurposePage[] {
       columns: ["Status and statement", "Evidence or condition"],
       semanticStatusColumn: true,
       rows: page.items.map((item) => [
-        `${item.tone!.toUpperCase()} / ${item.label}`,
+        purposeStatusLabel(item.tone!, item.label),
         item.detail,
       ]),
       items: [],
@@ -1062,17 +1136,23 @@ export function planPurposePages(
         page = {
           ...page,
           family: "register",
-          columns: ["From", "To", "Handoff"],
+          columns: data.edges.some((edge) => edge.label)
+            ? ["From", "To", "Handoff"]
+            : ["From", "To"],
           rows: [
             ...data.edges.map((edge) => [
               nodeLabel(edge.from),
               nodeLabel(edge.to),
-              edge.label || "Declared connection",
+              ...(data.edges.some((item) => item.label)
+                ? [edge.label || "Unlabelled connection"]
+                : []),
             ]),
             ...unconnected.map((node) => [
               nodeLabel(node.id),
               "Not connected",
-              "No edge declared",
+              ...(data.edges.some((item) => item.label)
+                ? ["No edge declared"]
+                : []),
             ]),
           ],
           items: [],
@@ -1218,13 +1298,13 @@ export function planPurposePages(
       ...paginate({
         id: "next-actions",
         family: "register",
-        title: "Owners close the evidence needed for the next decision",
+        title: "Proposed actions prepare the evidence for the next decision",
         question: "Who acts next?",
         scope: "Proposed actions for owner review.",
+        section: "HOW",
         sources: [],
         notes: doc.recommendation,
-        columns: ["Owner", "Action", "Evidence"],
-        columnWeights: [2.6, 5.2, 4.25],
+        columns: ["Proposed owner", "Next action", "Proposed evidence"],
         rows: doc.actionRegister.map((a) => [a.owner, a.action, a.evidence]),
         items: [],
       }),
@@ -1280,10 +1360,9 @@ export function planPurposePages(
         ...group.entries.map((source) => [
           `[${source.referenceId || source.citationNumber}]`,
           `${name(source.label)}${!commonReview && source.reviewStatus ? ` (${keyedReview ? reviewKey(source.reviewStatus) : source.reviewStatus})` : ""}`,
-          source.useAndLimitation?.replace(
-            /;?\s*human approval remains separate\.?/gi,
-            "",
-          ) ||
+          source.useAndLimitation
+            ?.replace(/;?\s*human approval remains separate\.?/gi, "")
+            .replace(/^\s*[a-z]/, (letter) => letter.toUpperCase()) ||
             "Use and limitations not recorded; confirm before relying on this source.",
         ]),
       ]),
@@ -1312,25 +1391,30 @@ export function planPurposePages(
         source.referenceId || String(source.citationNumber),
       ]),
     );
+    for (const id of [...page.sources, ...sourceIds(page.notes)])
+      if (!known.has(id)) throw new PurposePageError("unknown_source", page.id);
+    const visibleSources = sourceIds(
+      [
+        page.title,
+        page.scope,
+        page.takeaway || "",
+        page.takeawayLabel || "",
+        ...page.items.flatMap((item) => [
+          item.label,
+          item.detail,
+          item.value || "",
+        ]),
+        ...(page.columns ?? []),
+        ...(page.rows ?? []).flat(),
+      ].join("\n"),
+    );
+    // Notes retain their references, but a page footer describes visible evidence.
     page.sources = [
       ...new Set([
-        ...page.sources,
-        ...sourceIds(
-          [
-            page.title,
-            page.scope,
-            page.takeaway || "",
-            page.takeawayLabel || "",
-            page.notes,
-            ...page.items.flatMap((item) => [
-              item.label,
-              item.detail,
-              item.value || "",
-            ]),
-            ...(page.columns ?? []),
-            ...(page.rows ?? []).flat(),
-          ].join("\n"),
-        ),
+        ...(visibleSources.length && page.family !== "trend"
+          ? []
+          : page.sources),
+        ...visibleSources,
       ]),
     ];
     validateFrame(page, known);
