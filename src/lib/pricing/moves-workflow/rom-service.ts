@@ -27,6 +27,10 @@
  * - Pod members are priced only through `createReferencePodRateResolver`
  *   (role × level × location × provider class from the cost foundation),
  *   each rate with its provenance. No bare hourly number is accepted.
+ * - The structure's `rateCard` pin says whose rates: the committed reference
+ *   rates, or one exact version of the tenant's approved rate card, whose
+ *   lines the caller pre-loads (`loadClientRateCard`). A client pin whose card
+ *   is not loaded is refused — never re-priced on reference rates.
  * - No AI productivity credit and no tool licence is applied here.
  *
  * Pure and deterministic: all reference data arrives through the injected
@@ -154,7 +158,34 @@ export interface RomPodSpec {
   rateBasis: PodRateBasis;
 }
 
+/**
+ * Which rates price the pod. `reference` (also the meaning of an absent pin)
+ * is the committed cost foundation only — the global starter bands. `client`
+ * is one exact, immutable version of the tenant's approved rate card, so an
+ * approved estimate recomputes on the rates it was approved on. A route may
+ * accept `client_current` and resolve it to an exact version before pricing;
+ * the engine itself never prices an unresolved pin.
+ */
+export type RomRateCardPin =
+  | { mode: "reference" }
+  | { mode: "client"; cardVersionId: string; cardCode?: string; version?: number }
+  | { mode: "client_current" };
+
+/** A pin the engine can price: never `client_current`. */
+export type RomResolvedRateCardPin = Exclude<RomRateCardPin, { mode: "client_current" }>;
+
+export const REFERENCE_RATE_CARD_PIN: RomResolvedRateCardPin = { mode: "reference" };
+
+/** The lines of one client rate-card version, plus the roles that resolve band-grain lines. */
+export interface RomClientRateCard {
+  cardVersionId: string;
+  roles: NonNullable<PodRateReference["rateCard"]>["roles"];
+  lines: NonNullable<PodRateReference["rateCard"]>["clientLines"];
+}
+
 export interface RomStructure {
+  /** Absent = `reference`. */
+  rateCard?: RomRateCardPin;
   useCases: readonly RomUseCase[];
   unitHours: Partial<Record<RomDriver, RomUnitHours>>;
   releases: readonly RomRelease[];
@@ -168,6 +199,8 @@ export interface RomStructure {
 /** Reference data the service reads. Synchronous and side-effect free for a given call. */
 export interface RomReferenceLoaders {
   loadRateReference(): Omit<PodRateReference, "basis">;
+  /** The pinned client card version's lines, loaded by the caller before pricing; absent or null = not available. */
+  loadClientRateCard?(cardVersionId: string): RomClientRateCard | null;
   loadPodLibrary(): PodTemplateLibrary;
   loadRangePolicies(): readonly Pick<
     PricingRangePolicyRow,
@@ -314,7 +347,10 @@ export type RomRefusalCode =
   | "no_matching_range_policy"
   | "invalid_pod"
   | "pod_template_refused"
-  | "pod_pricing_refused";
+  | "pod_pricing_refused"
+  | "invalid_rate_card_pin"
+  | "rate_card_unresolved"
+  | "rate_card_unavailable";
 
 export interface RomRefusal {
   ok: false;
@@ -431,6 +467,28 @@ function checkRangeInputs(
 }
 
 /** Shape and semantic checks. Returns the input typed as a structure, or the first refusal. */
+function checkRateCardPin(pin: unknown): RomRefusal | null {
+  if (pin === undefined) return null;
+  if (!isRecord(pin))
+    return refuse("invalid_rate_card_pin", "rateCard must be an object naming the rates to use.");
+  if (pin.mode === "reference") return null;
+  if (pin.mode === "client_current") {
+    return refuse(
+      "rate_card_unresolved",
+      "The estimate asks for the client's current rate card, but no exact card version was resolved before pricing. Price it through the ROM preview route.",
+    );
+  }
+  if (pin.mode === "client") {
+    return isNonBlank(pin.cardVersionId)
+      ? null
+      : refuse("invalid_rate_card_pin", "A client rate-card pin needs the card version id it was priced on.");
+  }
+  return refuse(
+    "invalid_rate_card_pin",
+    `rateCard mode '${String(pin.mode)}' is not one of reference, client or client_current.`,
+  );
+}
+
 export function validateRomStructure(
   input: unknown,
 ): { ok: true; structure: RomStructure } | RomRefusal {
@@ -698,6 +756,8 @@ export function validateRomStructure(
       }
     }
   }
+  const pinRefusal = checkRateCardPin(input.rateCard);
+  if (pinRefusal) return pinRefusal;
   return { ok: true, structure: input as unknown as RomStructure };
 }
 
@@ -955,8 +1015,22 @@ export function computeRom(
 
   const pod = resolvePod(structure, loaders);
   if ("ok" in pod) return pod;
+  const rateReference = loaders.loadRateReference();
+  const pin = structure.rateCard ?? REFERENCE_RATE_CARD_PIN;
+  let rateCard: PodRateReference["rateCard"] = undefined;
+  if (pin.mode === "client") {
+    const card = loaders.loadClientRateCard?.(pin.cardVersionId) ?? null;
+    if (!card || card.cardVersionId !== pin.cardVersionId) {
+      return refuse(
+        "rate_card_unavailable",
+        `Rate-card version '${pin.cardVersionId}' could not be read for this estimate, so nothing was priced. Reload it, or reopen the approval and re-price on the current card.`,
+      );
+    }
+    rateCard = { roles: card.roles, clientLines: card.lines, globalLines: [] };
+  }
   const rateResolver = createReferencePodRateResolver({
-    ...loaders.loadRateReference(),
+    ...rateReference,
+    ...(rateCard ? { rateCard } : {}),
     basis: structure.pod.rateBasis,
   });
 

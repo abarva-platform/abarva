@@ -11,6 +11,7 @@ import { buildReferenceWorkbook } from "@/lib/deliverables/orchestrator/referenc
 import { ROM_WORKBOOK_CONTENT_TYPE } from "@/lib/pricing/moves-workflow/rom-workbook";
 import { ReferenceDeckLineageRefusal, type ReferenceEdition } from "@/lib/deliverables/orchestrator/reference-deck-model";
 import { tenancyOrNamedErrorResponse } from "@/lib/programs/tenancy-catch-response";
+import { canonicalTenantKey } from "@/lib/tenant/aliases";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,7 +42,7 @@ export async function GET(
     const inputs = await assembleEditionInputs(programId, edition);
     const sequence = edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
     const spec = buildReferenceEdition(inputs, unavailableEditionWords(edition, sequence));
-    const workbook = await buildReferenceWorkbook(inputs, spec);
+    const workbook = await buildReferenceWorkbook(inputs, spec, canonicalTenantKey(ctx.clientKey) ?? "");
     const figureHash = createHash("sha256").update(JSON.stringify(spec.figureLedger)).digest("hex");
     return new Response(Uint8Array.from(workbook), { headers: {
       "Content-Type": ROM_WORKBOOK_CONTENT_TYPE,

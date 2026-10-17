@@ -47,6 +47,7 @@ import {
   type RomCountBlock,
   type RomDriver,
   type RomEdit,
+  romPreviewBody,
   type RomEstimate,
   type RomRegisterRow,
   type RomPodMember,
@@ -159,8 +160,21 @@ type RegisterRead =
     }
   | { status: "error"; detail: string };
 
+/** Which client rate card priced the estimate, and the workspace's current one (from the preview route). */
+interface RateCardSummaryRead {
+  cardVersionId: string;
+  cardCode: string;
+  version: number;
+  approvedAt: string | null;
+}
+interface RateCardsRead {
+  used: RateCardSummaryRead | null;
+  current: RateCardSummaryRead | null;
+  currentKnown: boolean;
+}
+
 type PreviewRead = { key: string } & (
-  | { status: "ok"; rom: RomResult }
+  | { status: "ok"; rom: RomResult; rateCards?: RateCardsRead }
   | { status: "refused" | "error"; detail: string }
 );
 
@@ -354,7 +368,9 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
 
   // ── The estimate, computed by the ROM service only ───────────────────────
   const build = buildRomStructure(record, register);
-  const previewKey = build.ok ? JSON.stringify(build.structure) : "";
+  const previewKey = build.ok
+    ? JSON.stringify(romPreviewBody(record, build.structure, register))
+    : "";
   const [preview, setPreview] = useState<PreviewRead | null>(null);
   useEffect(() => {
     if (!previewKey) return;
@@ -381,11 +397,11 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
             }
             return;
           }
-          const body = (await res.json()) as { rom?: RomResult };
+          const body = (await res.json()) as { rom?: RomResult; rateCards?: RateCardsRead };
           if (!live) return;
           setPreview(
             body.rom?.ok
-              ? { key: previewKey, status: "ok", rom: body.rom }
+              ? { key: previewKey, status: "ok", rom: body.rom, rateCards: body.rateCards }
               : {
                   key: previewKey,
                   status: "error",
@@ -413,11 +429,21 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
   const shown =
     current ?? (build.ok && preview?.status === "ok" ? preview : null);
   const rom = shown?.status === "ok" ? shown.rom : null;
+  const rateCards = shown?.status === "ok" ? shown.rateCards : undefined;
+  // undefined = the route did not say (older response); null = reference rates.
+  const ratesUsed = rateCards ? rateCards.used : undefined;
+  const newerCard =
+    rateCards?.current && rateCards.current.cardVersionId !== rateCards.used?.cardVersionId
+      ? rateCards.current
+      : null;
 
   const optionBodies = (props.deliveryOptionsEnabled && !hiddenMoney ? record.deliveryOptions ?? [] : [])
     .map((option) => {
       const candidate = buildRomStructure({ ...record, pod: option.pod }, register);
-      return { code: option.code, body: candidate.ok ? JSON.stringify(candidate.structure) : "" };
+      return {
+        code: option.code,
+        body: candidate.ok ? JSON.stringify(romPreviewBody(record, candidate.structure, register)) : "",
+      };
     });
   const optionsKey = JSON.stringify(optionBodies);
   useEffect(() => {
@@ -1964,6 +1990,20 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
             Snapshot v{approval.version} was approved on{" "}
             {shortDate(approval.approvedAt)}; its inputs have changed since.
             Approve again for P4.
+          </p>
+        ) : null}
+        {ratesUsed !== undefined ? (
+          <span className={cx("item-note")} data-testid="rom-rates-source">
+            {ratesUsed
+              ? `Rates: your rate card v${ratesUsed.version}${ratesUsed.approvedAt ? `, approved ${shortDate(ratesUsed.approvedAt)}` : ""}.`
+              : "Rates: AbarVa reference rates. No client rate card is loaded for this workspace."}
+          </span>
+        ) : null}
+        {approvalCurrent && newerCard ? (
+          <p className={cx("lead-line")} data-testid="rom-rates-newer">
+            Your rate card v{newerCard.version} is newer than the rates this
+            estimate was approved on. The approved figures stay as they are;
+            reopen the approval to re-price on the new card.
           </p>
         ) : null}
         {downloadError ? (

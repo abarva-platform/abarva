@@ -73,6 +73,19 @@ function once<T>(load: () => T): () => T {
   };
 }
 
+/**
+ * Roles from the committed pack, for resolving a client card line written at
+ * rate-band grain (`role_or_band_ref` = the role's default rate band).
+ */
+export function loadCommittedRomRoles(
+  dir: string = path.join(process.cwd(), ROM_REFERENCE_PACK_RELATIVE_DIR),
+): { role_code: string; default_rate_band_code: string | null }[] {
+  return readCsv(dir, "pricing_roles.csv").map((r) => ({
+    role_code: r.role_code,
+    default_rate_band_code: r.default_rate_band_code || null,
+  }));
+}
+
 /** Loaders over the committed pack at `dir` (default: `<cwd>/datasets/reference/pricing-engine-v1`). */
 export function createCommittedRomReferenceLoaders(
   dir: string = path.join(process.cwd(), ROM_REFERENCE_PACK_RELATIVE_DIR),

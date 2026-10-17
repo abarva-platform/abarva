@@ -11,6 +11,8 @@ import {
 import type {
   RomConfidence,
   RomDesignStatus,
+  RomRateCardPin,
+  RomResolvedRateCardPin,
   RomResult,
   RomStructure,
   RomUnitHours,
@@ -160,6 +162,12 @@ export interface RomSnapshot {
   releases: RomBlockFigures[];
   foundation: (RomBlockFigures & { releaseCode: string }) | null;
   combined: Omit<RomBlockFigures, "code" | "name">;
+  /**
+   * The rates it was priced on. Every recompute of this approval uses exactly
+   * these rates, so approving a newer client card never moves an approved
+   * number. Absent (approvals before rate cards were wired) = reference rates.
+   */
+  rateCard?: RomResolvedRateCardPin;
 }
 
 export interface RomEstimate {
@@ -495,7 +503,22 @@ function parseSnapshot(v: unknown): RomSnapshot | null {
       planCents: combined.planCents,
       highCents: combined.highCents,
     },
+    ...(parseRateCardPin(v.rateCard) ? { rateCard: parseRateCardPin(v.rateCard) as RomResolvedRateCardPin } : {}),
   };
+}
+
+function parseRateCardPin(v: unknown): RomResolvedRateCardPin | null {
+  if (!isObj(v)) return null;
+  if (v.mode === "reference") return { mode: "reference" };
+  if (v.mode === "client" && text(v.cardVersionId)) {
+    return {
+      mode: "client",
+      cardVersionId: text(v.cardVersionId) as string,
+      ...(text(v.cardCode) ? { cardCode: text(v.cardCode) as string } : {}),
+      ...(finite(v.version) ? { version: v.version } : {}),
+    };
+  }
+  return null;
 }
 
 export function parseRomEstimate(
@@ -1499,15 +1522,21 @@ export function selectRomDeliveryOption(record: RomEstimate, register: readonly 
     return { ok: false, reason: "Save and price both delivery options before choosing one." };
   }
   const comparison: RomDeliverySelection["comparison"] = [];
+  const pricedOn = new Set<string>();
   for (const option of record.deliveryOptions) {
     const preview = previews[option.code];
     const build = buildRomStructure({ ...record, pod: option.pod }, register);
+    const priced = preview ? withoutRatePin(preview.structure) : null;
     if (!preview || !build.ok || build.workingFigureDrivers.length ||
-      canonical(build.structure) !== canonical(preview.structure)) {
+      canonical(build.structure) !== canonical(priced)) {
       return { ok: false, reason: "Both options need current cost-foundation previews from the same confirmed inputs." };
     }
+    pricedOn.add(canonical(preview.structure.rateCard ?? { mode: "reference" }));
     comparison.push({ code: option.code, structureFingerprint: stableFingerprint(build.structure), podFingerprint: stableFingerprint(option.pod),
       figures: romResultFigures(preview).combined });
+  }
+  if (pricedOn.size > 1) {
+    return { ok: false, reason: "The two options were priced on different rate cards. Wait for both to update, then choose." };
   }
   if (comparison[0].figures.hours !== comparison[1].figures.hours) {
     return { ok: false, reason: "The delivery options must keep the same scope and effort hours." };
@@ -1705,12 +1734,16 @@ export function approveRomEstimate(
       reason: "The estimate was not computed from confirmed inputs.",
     };
   }
-  if (canonical(build.structure) !== canonical(rom.structure)) {
+  const pricedOn = rom.structure.rateCard;
+  if (canonical(build.structure) !== canonical(withoutRatePin(rom.structure))) {
     return {
       ok: false,
       reason:
         "The inputs changed after this estimate was computed. Wait for it to update, then approve.",
     };
+  }
+  if (pricedOn?.mode === "client_current") {
+    return { ok: false, reason: "The estimate was not priced on an exact rate card. Wait for it to update, then approve." };
   }
   if (record.deliverySelection) {
     const selected = record.deliverySelection.comparison.find((option) => option.code === record.deliverySelection?.code);
@@ -1730,8 +1763,41 @@ export function approveRomEstimate(
       ...(record.deliverySelection ? { selectedDeliveryOptionCode: record.deliverySelection.code } : {}),
       unitHours: build.unitHoursUsed,
       ...romResultFigures(rom),
+      rateCard: pricedOn ?? { mode: "reference" },
     },
   });
+}
+
+/**
+ * The rates a preview of this record should be priced on. While the approval
+ * stands, the approval's own rates (reference for approvals made before rate
+ * cards were wired), so the approved figures keep reproducing. Otherwise the
+ * tenant's current approved card, resolved by the preview route.
+ */
+/** The priced structure without the rates it was priced on: what the inputs alone determine. */
+function withoutRatePin(structure: RomStructure): Omit<RomStructure, "rateCard"> {
+  const rest = { ...structure };
+  delete rest.rateCard;
+  return rest;
+}
+
+export function romPreviewRateCardPin(
+  record: RomEstimate,
+  register?: readonly RomRegisterRow[] | null,
+): RomRateCardPin {
+  if (record.approval && isRomApprovalCurrent(record, register)) {
+    return record.approval.rateCard ?? { mode: "reference" };
+  }
+  return { mode: "client_current" };
+}
+
+/** The ROM preview request body for this record: its structure plus the rates to price it on. */
+export function romPreviewBody(
+  record: RomEstimate,
+  structure: RomStructure,
+  register?: readonly RomRegisterRow[] | null,
+): RomStructure {
+  return { ...structure, rateCard: romPreviewRateCardPin(record, register) };
 }
 
 export function reopenRomApproval(record: RomEstimate): RomEstimate {

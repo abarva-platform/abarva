@@ -229,7 +229,15 @@ function settledRecord(): RomEstimate {
 }
 
 /** A result shaped like the ROM service's for a posted structure. Its figures are fixtures. */
-function fakeRom(structure: unknown): RomResult {
+// Like the preview route: an unresolved "current card" pin is resolved before
+// pricing. This workspace has no client card, so it prices on reference rates.
+function resolvedPin(structure: unknown): unknown {
+  const pin = (structure as { rateCard?: { mode?: string } }).rateCard;
+  return pin?.mode === "client_current" ? { ...(structure as object), rateCard: { mode: "reference" } } : structure;
+}
+
+function fakeRom(posted: unknown): RomResult {
+  const structure = resolvedPin(posted);
   const lines = [24500, 9500, 8500].map((cents, index) => ({
     member: { roleCode: ["ROL-DA", "ROL-DE", "ROL-AE"][index], levelCode: "LVL-08", locationCode: "LOC-NEAR", providerClassCode: "SI-T2", fte: 1 },
     rate: { hourlyRateCents: cents, ...(index === 2 ? {
@@ -689,10 +697,11 @@ describe("RomEstimateStep", () => {
     expect(url).toBe("/api/v1/programs/move-1/rom/preview");
     expect(init.method).toBe("POST");
     const posted = JSON.parse(String(init.body));
-    expect(posted).toEqual(
-      (buildRomStructure(fixture(), REGISTER) as { structure: unknown })
-        .structure,
-    );
+    // The structure, plus "price on the workspace's current card" (no approval yet).
+    expect(posted).toEqual({
+      ...(buildRomStructure(fixture(), REGISTER) as { structure: object }).structure,
+      rateCard: { mode: "client_current" },
+    });
     expect(posted.unitHours.dashboard_view_count).toEqual({
       value: 20,
       source: "[A:DL3] open · working figure, provisional",
@@ -805,6 +814,8 @@ describe("RomEstimateStep", () => {
       version: 1,
       approvedBy: "me",
       approvedAt: AT,
+      // The exact rates it was priced on travel with the approval.
+      rateCard: { mode: "reference" },
     });
     expect(approval.combined).toEqual({
       hours: 1230.4,
@@ -831,6 +842,45 @@ describe("RomEstimateStep", () => {
     );
     expect(last().approval).toBeNull();
     expect(last().snapshotsIssued).toBe(1);
+  });
+
+  it("re-prices an approval on its own card and says when a newer card exists", async () => {
+    const record = settledRecord();
+    const posted = (buildRomStructure(record, REGISTER_ANSWERED) as { structure: object }).structure;
+    const pin = { mode: "client", cardVersionId: "card-v3", cardCode: "ENTERPRISE", version: 3 };
+    const approved = ok(
+      approveRomEstimate(record, REGISTER_ANSWERED, fakeRom({ ...posted, rateCard: pin }), "me", AT),
+    );
+    const summary = (id: string, version: number) => ({ cardVersionId: id, cardCode: "ENTERPRISE", version, approvedAt: AT });
+    mockFetch({
+      register: REGISTER_ANSWERED,
+      preview: (_u, init) => ({
+        status: 200,
+        body: {
+          ok: true,
+          writes: false,
+          rom: fakeRom(JSON.parse(String(init?.body))),
+          rateCards: { used: summary("card-v3", 3), current: summary("card-v4", 4), currentKnown: true },
+        },
+      }),
+    });
+    const { getByTestId } = render(<Harness initial={serializeRomEstimate(approved)} />);
+    await waitFor(() => expect(getByTestId("rom-rates-newer").textContent).toContain("Your rate card v4 is newer"));
+    expect(getByTestId("rom-rates-source").textContent).toMatch(/^Rates: your rate card v3/);
+    expect(JSON.parse(String(previewCalls()[0][1].body)).rateCard).toEqual(pin);
+  });
+
+  it("says when an estimate is priced on reference rates because no client card is loaded", async () => {
+    mockFetch({
+      preview: (_u, init) => ({
+        status: 200,
+        body: { ok: true, writes: false, rom: fakeRom(JSON.parse(String(init?.body))), rateCards: { used: null, current: null, currentKnown: true } },
+      }),
+    });
+    const { container, getByTestId, queryByTestId } = render(<Harness />);
+    await estimateReady(container);
+    await waitFor(() => expect(getByTestId("rom-rates-source").textContent).toContain("AbarVa reference rates"));
+    expect(queryByTestId("rom-rates-newer")).toBeNull();
   });
 
   it("shows the approved snapshot itself, even when the live estimate cannot be read", async () => {
