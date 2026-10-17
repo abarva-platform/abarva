@@ -1535,6 +1535,51 @@ describe("buildViewModel numeric coercion", () => {
     expect(refsText).not.toContain("finance_confirmation_state");
   });
 
+  it("keeps document coaching on extracted facts when page-text coverage is zero", () => {
+    const vm = buildVm({
+      impact: {
+        ...IMPACT,
+        evidenceCoverage: [
+          { contract_id: "c1", document_page_text_rows: 0 } as never,
+        ],
+      },
+    });
+    vm.state.sel = { kind: "contract", id: "c1" };
+    vm.state.contractDetail.c1 = {
+      contract: CONTRACTS[0],
+      financialExposure: null,
+      operationalPerformance: null,
+      initiativeDependencies: [],
+      scopeTiers: {
+        explicit: [],
+        reviewed: [],
+        vendorInferred: [],
+        unresolved: [],
+        totalCount: 0,
+      },
+      towerObservations: [],
+      towerValueClaims: [],
+      hasTowerOverlay: false,
+      docExtractions: [
+        { extraction_id: "extraction-1", concept_ref: "contract_clause" } as never,
+        { extraction_id: "extraction-2", concept_ref: "renewal_clause" } as never,
+      ],
+      optimizationEvidence: null,
+      evidenceOverview: null,
+      evidenceScope: [],
+      evidencePricing: [],
+      evidencePerformance: null,
+      performancePeriods: [],
+      spendMonths: [],
+      optimizationOpportunitySet: null,
+    };
+
+    const built = buildViewModel(vm);
+    expect(built.contractEducation?.basis.join(" ")).toContain(
+      "2 document rows",
+    );
+  });
+
   it("exposes Source v4 proof cards with governed period and exposure labels", () => {
     const vm = buildVm();
     const built = buildViewModel(vm) as {
