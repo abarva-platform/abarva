@@ -12,6 +12,10 @@
  *   payback month          the first month whose cumulative cash ≥ cost
  *   three-year bases       year sums of credited and program value, earned and paid
  *
+ * Sensitivity and Breakeven carry the engine's own results as values, each with
+ * its basis stated. Sources lists where every input came from, and names any
+ * input counted from an open register row.
+ *
  * A scenario switch (Low / Base / High) selects every input at once. A Check
  * sheet compares the workbook with the engine's figures for the chosen
  * scenario. Before writing, the builder recomputes the base curves itself and
@@ -26,6 +30,7 @@ import { npvWithTerms, paybackMonth as enginePayback } from "./economics";
 import { productOfTerms, roundWhole } from "./formula-terms";
 import { monthlyCashCents, monthlyEarnedCents } from "./timing";
 import type {
+  BreakevenStatus,
   CaseEconomics,
   Cents,
   LeverResult,
@@ -42,6 +47,8 @@ export const FINANCIAL_MODEL_SHEETS = {
   schedule: "Monthly Schedule",
   economics: "Economics",
   sensitivity: "Sensitivity",
+  breakeven: "Breakeven",
+  sources: "Sources",
   check: "Check",
 } as const;
 
@@ -99,6 +106,23 @@ const BOX: Partial<ExcelJS.Borders> = {
 const CENTS = '#,##0;(#,##0);"–"';
 const SCENARIOS: Scenario[] = ["low", "base", "high"];
 const NOT_WITHIN = "Not within horizon";
+
+/** Each engine breakeven outcome in client words. */
+const BREAKEVEN_OUTCOME: Record<BreakevenStatus, string> = {
+  solved: "Breaks even at the driver change shown",
+  met_without_lever: "The rest of the case covers the investment without this lever",
+  never_within_bounds: "Does not break even within the driver's bounds",
+  not_applicable: "Not applicable: this lever's driver does not move cash",
+};
+
+/** What a term's recorded source is, read from its prefix (see `ValueFormulaTerm.source`). */
+function sourceKind(source: string): string {
+  if (source.startsWith("register:")) return "Assumptions register row";
+  if (source.startsWith("evidence:")) return "Approved evidence";
+  if (source.startsWith("rom:")) return "Approved delivery estimate";
+  if (source.startsWith("literal:")) return "Stated in the value plan";
+  return "Recorded source";
+}
 
 type Cached = string | number;
 
@@ -209,7 +233,8 @@ export function buildFinancialModelWorkbook(input: FinancialModelInputs): {
     ["Credited and program value", "Credited value is after the declared attribution share; program value is before it. Both keep the probability. Earned is when value is created; paid is when the cash arrives."],
     ["Checks", "Check compares every key figure with the value engine for the chosen scenario. It reads YES when the workbook and the engine agree."],
     ["Cost", `The one-time investment is incurred at month 0: ${input.costBasis}. A low-value scenario uses the high cost, and a high-value scenario the low cost.`],
-    ["Not live", "Sensitivity is the engine's one-at-a-time result, shown as values. Change an input here and re-run the case in the product to refresh it."],
+    ["Not live", "Sensitivity and Breakeven are the engine's results, shown as values. Change an input here and re-run the case in the product to refresh them."],
+    ["Sources", "Sources lists where every input came from and which lever terms use it. It names any input counted from an open register row, which must be validated before approval."],
     ...(ai ? [["AI-assisted scenario", `${ai.label} is priced beside the estimate. Economics shows its NPV and payback on the same value at its own build cost, as a comparison. The case is funded on the estimate.`]] : []),
   ].forEach(([label, value], i) => {
     readme.getCell(4 + i, 1).value = label;
@@ -495,6 +520,53 @@ export function buildFinancialModelWorkbook(input: FinancialModelInputs): {
       .forEach((value, j) => { const cell = put(sens, at, 1 + j, value); if (j >= 4 && j <= 5) cell.numFmt = CENTS; });
   });
   [16, 44, 8, 14, 18, 18, 16].forEach((width, i) => { sens.getColumn(i + 1).width = width; });
+
+  // ── Breakeven (engine values) ─────────────────────────────────────────
+  const even = wb.addWorksheet(FINANCIAL_MODEL_SHEETS.breakeven);
+  title(even, "Breakeven", "The engine's breakeven for each lever's driver, every other input at base: where steady-state annual cash × horizon years equals the investment. It is not timed or discounted, so it is not where NPV reaches zero.");
+  head(even, 4, ["Lever", "Name", "Outcome", "Driver change at breakeven", "Driver value at breakeven", "Driver bounds", "Method"]);
+  const leverName = new Map(result.levers.map((lever) => [lever.leverId, lever.name]));
+  result.breakeven.forEach((entry, i) => {
+    const at = 5 + i;
+    const solved = entry.status === "solved";
+    [entry.leverId, leverName.get(entry.leverId) ?? entry.leverId, BREAKEVEN_OUTCOME[entry.status],
+      solved ? entry.breakevenDelta : "—", solved ? entry.breakevenTarget : "—",
+      entry.bounds ? `${entry.bounds.min} to ${entry.bounds.max}` : "—",
+      entry.method === "closed_form" ? "Closed form" : entry.method === "bisection" ? "Bisection" : "—",
+    ].forEach((value, j) => {
+      const cell = put(even, at, 1 + j, value ?? "—", j === 0 ? BOLD : BODY);
+      if (typeof value === "number") cell.numFmt = "#,##0.0000";
+    });
+  });
+  [10, 28, 52, 20, 20, 18, 14].forEach((width, i) => { even.getColumn(i + 1).width = width; });
+
+  // ── Sources ───────────────────────────────────────────────────────────
+  const sources = wb.addWorksheet(FINANCIAL_MODEL_SHEETS.sources);
+  title(sources, "Sources", "Where every input came from, and the lever terms that use it. Terms the engine computes (unit conversions, exclusions, release gates) are not inputs and are not listed.");
+  const usedBy = new Map<string, string[]>();
+  const recordUse = (source: string, what: string) => {
+    for (const part of source.split(" → ").map((piece) => piece.trim()).filter(Boolean)) {
+      const list = usedBy.get(part) ?? [];
+      if (!list.includes(what)) list.push(what);
+      usedBy.set(part, list);
+    }
+  };
+  recordUse(input.costBasis, "One-time investment");
+  for (const lever of result.levers)
+    for (const term of inputsOf(lever.terms.base))
+      if (term.source !== "engine") recordUse(term.source, `${lever.leverId} ${lever.name}: ${term.label}`);
+  put(sources, 4, 1, "Open register inputs", BOLD);
+  put(sources, 4, 2, result.mustValidate.length
+    ? `Counted from an open register row, so validate before approval: ${result.mustValidate.join(", ")}`
+    : "None: no input comes from an open register row.");
+  head(sources, 6, ["Source", "What it is", "Used for"]);
+  [...usedBy.entries()].forEach(([source, uses], i) => {
+    const at = 7 + i;
+    put(sources, at, 1, source, BOLD);
+    put(sources, at, 2, source === input.costBasis ? "Investment basis" : sourceKind(source));
+    put(sources, at, 3, uses.join("; ")).alignment = { wrapText: true, vertical: "top" };
+  });
+  [34, 30, 90].forEach((width, i) => { sources.getColumn(i + 1).width = width; });
 
   // ── Check ─────────────────────────────────────────────────────────────
   const check = wb.addWorksheet(FINANCIAL_MODEL_SHEETS.check);

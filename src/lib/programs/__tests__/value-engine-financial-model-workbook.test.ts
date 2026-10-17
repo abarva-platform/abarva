@@ -149,6 +149,76 @@ describe("buildFinancialModelWorkbook", () => {
     });
   });
 
+  it("shows the engine's breakeven for every lever, with its basis and each outcome in words", () => {
+    const input = inputs();
+    const { workbook } = buildFinancialModelWorkbook(input);
+    const even = workbook.getWorksheet(FINANCIAL_MODEL_SHEETS.breakeven)!;
+    expect(String(even.getCell("A2").value)).toMatch(/steady-state annual cash × horizon years equals the investment.*not where NPV reaches zero/);
+    const rows = input.result.breakeven.map((_, i) => even.getRow(5 + i).values as unknown[]);
+    // [, lever, name, outcome, delta, target, bounds, method]: ExcelJS row values are 1-based.
+    expect(rows.map((row) => row.slice(1))).toEqual([
+      ["L1", "Premium labour", "Breaks even at the driver change shown", input.result.breakeven[0]!.breakevenDelta, input.result.breakeven[0]!.breakevenTarget, "0 to 0.24", "Closed form"],
+      ["L2", "Length of stay", "Breaks even at the driver change shown", input.result.breakeven[1]!.breakevenDelta, input.result.breakeven[1]!.breakevenTarget, "0 to 5", "Bisection"],
+      ["L3", "ED boarding", "The rest of the case covers the investment without this lever", "—", "—", "0 to 30000", "Bisection"],
+      ["L4", "Documentation hours", "Not applicable: this lever's driver does not move cash", "—", "—", "—", "—"],
+    ]);
+    expect(input.result.breakeven.map((entry) => entry.status)).toEqual(["solved", "solved", "met_without_lever", "not_applicable"]);
+    expect(even.getCell(5 + input.result.breakeven.length, 1).value).toBeNull();
+    expect([even.getCell("D5").numFmt, even.getCell("E5").numFmt]).toEqual(["#,##0.0000", "#,##0.0000"]);
+  });
+
+  it("names a breakeven that is never reached within the driver's bounds", () => {
+    const input = inputs();
+    const entry = { ...input.result.breakeven[0]!, status: "never_within_bounds" as const, breakevenDelta: null, breakevenTarget: null };
+    const { workbook } = buildFinancialModelWorkbook({ ...input, result: { ...input.result, breakeven: [entry] } });
+    const row = workbook.getWorksheet(FINANCIAL_MODEL_SHEETS.breakeven)!.getRow(5).values as unknown[];
+    expect(row.slice(1)).toEqual(["L1", "Premium labour", "Does not break even within the driver's bounds", "—", "—", "0 to 0.24", "Closed form"]);
+  });
+
+  it("lists every input's source with the lever terms that use it, and no engine-computed term", () => {
+    const input = inputs();
+    const { workbook } = buildFinancialModelWorkbook(input);
+    const sources = workbook.getWorksheet(FINANCIAL_MODEL_SHEETS.sources)!;
+    expect(sources.getCell("B4").value).toBe("None: no input comes from an open register row.");
+    const listed: unknown[][] = [];
+    for (let at = 7; sources.getCell(at, 1).value !== null; at += 1)
+      listed.push([sources.getCell(at, 1).value, sources.getCell(at, 2).value, sources.getCell(at, 3).value]);
+    expect(listed.map(([source, kind]) => [source, kind])).toEqual([
+      ["estimate model, synthetic", "Investment basis"],
+      ["literal:synthetic", "Stated in the value plan"],
+    ]);
+    expect(listed[0]![2]).toBe("One-time investment");
+    const uses = String(listed[1]![2]).split("; ");
+    // A baseline → target source counts once, and every non-engine input term of every lever is listed.
+    const expected = input.result.levers.flatMap((lever) => lever.terms.base
+      .filter((term) => term.cellRole !== "result" && term.source !== "engine")
+      .map((term) => `${lever.leverId} ${lever.name}: ${term.label}`));
+    expect(uses).toEqual(expected);
+    expect(uses).toContain("L1 Premium labour: share of premium spend no longer bought");
+    expect(uses.some((use) => /dollars → cents|release path|overlap group/.test(use))).toBe(false);
+  });
+
+  it("names each source kind and every input counted from an open register row", () => {
+    const input = inputs();
+    const lever = input.result.levers[0]!;
+    const sourced = (source: string, i: number) => ({ ...lever.terms.base[i]!, source });
+    const terms = [sourced("register:A3", 0), sourced("evidence:E2 → rom:R1", 1), sourced("public:S4", 2), ...lever.terms.base.slice(3)];
+    const result = { ...input.result, mustValidate: ["L1.baseline", "L1.term[1]"],
+      levers: [{ ...lever, terms: { ...lever.terms, base: terms } }, ...input.result.levers.slice(1)] };
+    const { workbook } = buildFinancialModelWorkbook({ ...input, result });
+    const sources = workbook.getWorksheet(FINANCIAL_MODEL_SHEETS.sources)!;
+    expect(sources.getCell("B4").value).toBe("Counted from an open register row, so validate before approval: L1.baseline, L1.term[1]");
+    const kinds = new Map<unknown, unknown>();
+    for (let at = 7; sources.getCell(at, 1).value !== null; at += 1) kinds.set(sources.getCell(at, 1).value, sources.getCell(at, 2).value);
+    expect(Object.fromEntries(kinds)).toMatchObject({
+      "register:A3": "Assumptions register row",
+      "evidence:E2": "Approved evidence",
+      "rom:R1": "Approved delivery estimate",
+      "public:S4": "Recorded source",
+      "literal:synthetic": "Stated in the value plan",
+    });
+  });
+
   it("refuses a saved model whose timing no longer reproduces the evaluated case", () => {
     const input = inputs();
     input.model.levers[0]!.timing = { ...input.model.levers[0]!.timing, startMonth: input.model.levers[0]!.timing.startMonth + 1 };
