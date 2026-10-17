@@ -18,8 +18,12 @@
  * WHAT THIS GENERATES
  *
  * Routing is deterministic and driven by RECORDED fields -- the flow's business domain and the
- * source system's category -- never by a random draw. Running it twice produces identical output,
- * and a reviewer can check any single edge by reading the two columns it came from.
+ * source system's category -- never by a random draw, and a reviewer can check any single edge by
+ * reading the two columns it came from.
+ *
+ * Running it twice leaves the FILE byte-identical, which is a stronger claim than the one this
+ * header used to make. "Identical output" was true of the generated set and not of the file it was
+ * appended to, so a second --apply duplicated every generated row (item D-515).
  *
  * Every generated row is labelled `synthetic_modeled` with the generator version, so no downstream
  * reader can mistake a modelled edge for one a client stated.
@@ -28,6 +32,8 @@ import fs from "node:fs";
 import path from "node:path";
 
 const GENERATOR_VERSION = "analytics-topology/v1";
+/** Stamped on every generated row, and read back on a later run to recognise its own work. */
+const GENERATED_SOURCE_FILE = "generated:analytics-topology";
 const ROOT = process.cwd();
 const APPLY = process.argv.includes("--apply");
 const tenantKey = process.argv[process.argv.indexOf("--tenant") + 1];
@@ -46,12 +52,19 @@ function parseCsv(text) {
   return rows;
 }
 const esc = (v) => (/[",\n\r]/.test(v) ? `"${String(v).replace(/"/g, '""')}"` : String(v));
-const toCsv = (headers, rows) =>
-  [headers.map(esc).join(","), ...rows.map((r) => headers.map((h) => esc(r[h] ?? "")).join(","))].join("\n") + "\n";
+const toCsv = (headers, rows, newline) =>
+  [headers.map(esc).join(","), ...rows.map((r) => headers.map((h) => esc(r[h] ?? "")).join(","))].join(newline) + newline;
 function load(p) {
-  const raw = parseCsv(fs.readFileSync(p, "utf8"));
+  const text = fs.readFileSync(p, "utf8");
+  const raw = parseCsv(text);
   const headers = (raw.shift() ?? []).map((h) => h.trim());
-  return { headers, rows: raw.filter((r) => r.some((v) => v.trim())).map((r) => Object.fromEntries(headers.map((h, i) => [h, (r[i] ?? "").trim()]))) };
+  // Write back with the terminator the file arrived with, which the owning minter has done since
+  // D-501 (`scripts/data/assign-stable-identity.mjs`). Rewriting a CRLF intake LF-only makes every
+  // later diff of that file a whole-file diff, and the count decides it so a mixed file resolves
+  // to its majority rather than to whichever line happened to be read first.
+  const crlf = (text.match(/\r\n/g) ?? []).length;
+  const newline = crlf > (text.match(/\n/g) ?? []).length - crlf ? "\r\n" : "\n";
+  return { headers, newline, rows: raw.filter((r) => r.some((v) => v.trim())).map((r) => Object.fromEntries(headers.map((h, i) => [h, (r[i] ?? "").trim()]))) };
 }
 
 const root = path.join(ROOT, "datasets/tenant-inputs/active", tenantKey, "current");
@@ -168,7 +181,7 @@ const generated = [...feeds.values(), ...servings].map((f) => {
   row.quality_status = "partially_governed";
   row.regulated_data_flag = f.regulated || "false";
   row.analytics_usage = "enterprise_reporting";
-  row.source_file = "generated:analytics-topology";
+  row.source_file = GENERATED_SOURCE_FILE;
   row.source_date = stamp;
   row.confidence = "synthetic_modeled";
   row.known_gaps = `Modelled analytics edge, not client-stated. Generator ${GENERATOR_VERSION}; routed from recorded data_domain and system_category.`;
@@ -180,7 +193,20 @@ const generated = [...feeds.values(), ...servings].map((f) => {
   return row;
 });
 
-const all = [...five.rows, ...generated];
+// A row an earlier --apply already wrote is kept exactly as it stands, not regenerated. Until
+// D-515 the generated set was appended to everything already in the file -- including the rows an
+// earlier run of this generator put there -- so a second --apply emitted a second copy of every
+// feed and serving hop, and the ledger gate then refused the file for duplicate ids.
+//
+// Identity here is `data_asset_name`, which is what the template ontology declares as the key
+// column for a data_asset and what the minter keys its ledger on. Keeping the existing row rather
+// than rebuilding it is the point: a rebuilt row carries a blank `data_asset_id`, and blanking an
+// id the ledger has already declared is a lost object, not a no-op.
+const alreadyWritten = new Set(
+  five.rows.filter((r) => r.source_file === GENERATED_SOURCE_FILE).map((r) => r.data_asset_name),
+);
+const fresh = generated.filter((r) => !alreadyWritten.has(r.data_asset_name));
+const all = [...five.rows, ...fresh];
 const fanIn = new Map();
 for (const r of all) {
   const t = r.target_system, s = r.source_system;
@@ -191,9 +217,11 @@ for (const r of all) {
 const counts = [...fanIn.values()].map((s) => s.size).sort((a, b) => b - a);
 
 console.log(`tenant: ${tenantKey}  generator: ${GENERATOR_VERSION}`);
-console.log(`  existing operational flows: ${five.rows.length}   (kept, unchanged)`);
+console.log(`  rows already in the file:   ${five.rows.length}   (kept, unchanged; ${alreadyWritten.size} from an earlier run of this generator)`);
 console.log(`  generated analytics feeds:  ${feeds.size}`);
 console.log(`  generated serving hops:     ${servings.length}`);
+console.log(`  of those, already present:  ${generated.length - fresh.length}   (kept as written, not regenerated)`);
+console.log(`  newly appended:             ${fresh.length}`);
 console.log(`  total flows after:          ${all.length}`);
 console.log(`  distinct targets:           ${fanIn.size}`);
 console.log(`  fan-in max/p50/singletons:  ${counts[0]} / ${counts[Math.floor(counts.length / 2)]} / ${counts.filter((c) => c === 1).length}`);
@@ -203,6 +231,6 @@ for (const [t, s] of [...fanIn].sort((a, b) => b[1].size - a[1].size).slice(0, 8
 }
 
 if (!APPLY) { console.log(`\n(dry run — pass --apply to write)`); process.exit(0); }
-fs.writeFileSync(fivePath, toCsv(headers, all), "utf8");
+fs.writeFileSync(fivePath, toCsv(headers, all, five.newline), "utf8");
 console.log(`\nwrote ${path.relative(ROOT, fivePath)}`);
 console.log(`next: node scripts/data/assign-stable-identity.mjs --tenant ${tenantKey}  (mints and records the ids of the generated rows)`);
