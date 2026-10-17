@@ -76,8 +76,10 @@ export function buildReferenceSlotTable(inputs: EditionInputs): ReferenceSlotTab
     "npv_base", typeof npvCents === "number" && Number.isSafeInteger(npvCents) ? formatConsultantCents(npvCents) : null, investment);
   const payback = scenarioBase("paybackMonth");
   add({
-    key: "value.payback.plan", meaning: "the month in which cumulative credited cash received first covers the one-time investment, on the value-engine base",
-    display: typeof payback === "number" && Number.isInteger(payback) && payback > 0 ? `month ${payback}` : null,
+    key: "value.payback.plan", meaning: "months until cumulative credited cash received first covers the one-time investment, on the value-engine base",
+    // The same words the AI-scenario comparison binds for this source: "14 months".
+    display: typeof payback === "number" && Number.isInteger(payback) && payback > 0
+      ? `${payback.toLocaleString("en-US")} ${payback === 1 ? "month" : "months"}` : null,
     sourceId: typeof payback === "number" && payback > 0 ? "engine:payback_month_base" : "gap:value_payback_plan",
     sourceLabel: typeof payback === "number" && payback > 0 ? "Value engine: payback month base" : valueMissing,
     // An evaluated case that never repays within its horizon is a finding, not a missing input.

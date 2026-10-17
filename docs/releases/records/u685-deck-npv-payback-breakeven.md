@@ -20,7 +20,7 @@ The investment deck now carries them:
   - Breakeven realisation (the share of modelled value at which NPV is zero, from #9571).
 - **Governed slots:** `value.npv.plan`, `value.payback.plan` and `value.breakeven.realisation`. Titles and answers can state these figures. Each slot is bound to the same source and display as the exhibit, so a title and the metrics read the same figure.
 
-A payback that the engine says is never reached within the horizon reads "Not within the horizon": a finding, not a gap. The slot carries the matching phrase. A negative NPV reads in accounting form, for example `$(0.12)M`. The validation edition stays free of investment economics, by the edition rule. The three-year slide keeps its year-by-year chart, which the reference standard requires.
+A payback that the engine says is never reached within the horizon reads "Not within horizon": a finding, not a gap. Payback reads in months, for example "13 months". These are the same words the AI-scenario comparison already uses for the same source, so the figure reads the same on both slides. The slot carries the matching phrase. A negative NPV reads in accounting form, for example `$(0.12)M`. The validation edition stays free of investment economics, by the edition rule. The three-year slide keeps its year-by-year chart, which the reference standard requires.
 
 ## Layer Impact
 
@@ -44,13 +44,14 @@ Release lane: `global-control-lane`.
   - figures, sources and one display per source;
   - render and judge with no finding on the slide;
   - a payback never reached and a negative NPV;
+  - NPV and payback bound once for both the scenario comparison and the ledger;
   - the validation edition free of all three;
   - no row when the case carries none.
 
 ## QA / Validation
 
 - Deck suites (orchestrator plus decks routes): pass, 78 suites, 1240 tests.
-- Mutation testing: 7 / 7 killed:
+- Mutation testing: 8 / 8 killed, including payback words that differ from the comparison's:
   - row removed;
   - "not within the horizon" finding dropped;
   - NPV allowed into validation;

@@ -403,14 +403,14 @@ describe("live-input reference edition", () => {
       const metricsBlock = ledger(spec).blocks.find((block) => block.kind === "metrics");
       expect(metricsBlock && metricsBlock.kind === "metrics" ? metricsBlock.items.map((item) => [item.label, item.value]) : null).toEqual([
         ["Net present value", { display: "$6.81M", sourceId: "engine:npv_base", workbookCell: expect.any(String) }],
-        ["Payback", { display: "month 13", sourceId: "engine:payback_month_base", workbookCell: expect.any(String) }],
+        ["Payback", { display: "13 months", sourceId: "engine:payback_month_base", workbookCell: expect.any(String) }],
         ["Breakeven realisation", { display: "7%", sourceId: "engine:breakeven_realisation_base", workbookCell: expect.any(String) }],
       ]);
       // The three-year slide keeps its year-by-year chart.
       expect(spec.slides.find((slide) => slide.archetype === "three_year_value")!.blocks.some((block) => block.kind === "bars")).toBe(true);
       const slots = buildReferenceSlotTable(inputs);
       expect(["value.npv.plan", "value.payback.plan", "value.breakeven.realisation"].map((key) => [slots[key]!.display, slots[key]!.sourceId])).toEqual([
-        ["$6.81M", "engine:npv_base"], ["month 13", "engine:payback_month_base"], ["7%", "engine:breakeven_realisation_base"],
+        ["$6.81M", "engine:npv_base"], ["13 months", "engine:payback_month_base"], ["7%", "engine:breakeven_realisation_base"],
       ]);
       const displays = new Map<string, Set<string>>();
       for (const figure of spec.figureLedger) displays.set(figure.sourceId, (displays.get(figure.sourceId) ?? new Set()).add(figure.display));
@@ -427,7 +427,7 @@ describe("live-input reference edition", () => {
       const spec = buildReferenceEdition(inputs, words(INVESTMENT_SEQUENCE.length));
       const metricsBlock = ledger(spec).blocks.find((block) => block.kind === "metrics");
       expect(metricsBlock && metricsBlock.kind === "metrics" ? metricsBlock.items.map((item) => typeof item.value === "string" ? item.value : item.value.display) : null)
-        .toEqual(["$(0.12)M", "Not within the horizon", "110%"]);
+        .toEqual(["$(0.12)M", "Not within horizon", "110%"]);
       const payback = buildReferenceSlotTable(inputs)["value.payback.plan"]!;
       expect([payback.display, payback.missingPhrase]).toEqual([null, "not reached within the horizon"]);
     });
@@ -930,6 +930,15 @@ describe("the AI-assisted scenario on the delivery-hours slide", () => {
     const inputs = scenarioInputs();
     if (inputs.valueCase.status === "ready") ((inputs.valueCase.value.aiAssisted as Record<string, unknown>).economics as Record<string, unknown>).paybackMonth = { base: null };
     expect(comparisonRows(build(inputs))?.[5]).toEqual(["Payback", "14 months", "Not within horizon", "Not comparable"]);
+  });
+
+  it("binds the funded NPV and payback once, for the comparison and the value ledger alike", () => {
+    const spec = buildReferenceEdition(scenarioInputs(), words(INVESTMENT_SEQUENCE.length));
+    const displays = (id: string) => new Set(spec.figureLedger.filter((figure) => figure.sourceId === id).map((figure) => figure.display));
+    expect(displays("engine:npv_base").size).toBe(1);
+    expect([...displays("engine:payback_month_base")]).toEqual([expect.stringMatching(/^\d+ months?$/)]);
+    const ledger = spec.slides.find((slide) => slide.archetype === "value_ledger")!.blocks.find((block) => block.kind === "metrics");
+    expect(ledger?.kind === "metrics" ? ledger.items.map((item) => item.label) : null).toEqual(["Net present value", "Payback", "Breakeven realisation"]);
   });
 
   it("offers the slide words only the savings the scenario makes", () => {

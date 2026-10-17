@@ -218,8 +218,8 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
   const paybackBase = economicsBase("paybackMonth");
   const payback: ReferenceCell | null = inputs.edition !== "investment" || !economics ? null
     : typeof paybackBase === "number" && Number.isInteger(paybackBase) && paybackBase > 0
-      ? bind("engine:payback_month_base", "Value engine: payback month base", `month ${paybackBase}`)
-      : paybackBase === null ? "Not within the horizon" : null;
+      ? bind("engine:payback_month_base", "Value engine: payback month base", monthsText(paybackBase))
+      : paybackBase === null ? "Not within horizon" : null;
   const realisationBase = economicsBase("breakevenRealisation");
   const realisation = inputs.edition === "investment" && typeof realisationBase === "number" && Number.isFinite(realisationBase) && realisationBase > 0
     ? bind("engine:breakeven_realisation_base", "Value engine: breakeven realisation base", percent(realisationBase)) : null;
