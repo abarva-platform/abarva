@@ -10,12 +10,12 @@ import { ExactSourceCohortSchema, type ExactSourceCohort, type ExactSourceSnapsh
 export interface ExactSourceQuery {
   query(sql:string,values:unknown[]): Promise<{ rows: NativeSourceRow[] }>;
 }
-export async function readExactSourceSnapshot(db: ExactSourceQuery, raw: unknown, download = downloadArtifactOutcome): Promise<ExactSourceSnapshot> {
+export async function readExactSourceSnapshot(db: ExactSourceQuery, raw: unknown, download = downloadArtifactOutcome, verifyActor?: (person:NativeSourceRow)=>Promise<boolean>): Promise<ExactSourceSnapshot> {
   const cohort = ExactSourceCohortSchema.parse(raw);
   const { rows:moves } = await db.query("SELECT id,client_id,current_phase,deleted_at,archived_at FROM public.engagements WHERE id=$1::uuid AND client_id::text=$2::uuid::text",[cohort.moveId,cohort.clientId]);
   if (moves.length!==1 || moves[0].current_phase!==cohort.expectedCurrentPhase || moves[0].deleted_at!==null || moves[0].archived_at!==null) throw new Error("source_move_changed");
-  const { rows:people } = await db.query("SELECT id,graph_node_id FROM public.persons WHERE id=$1::uuid",[cohort.operatorPersonId]);
-  if (people.length!==1 || people[0].graph_node_id!==`clerk:${cohort.operatorClerkId}`) throw new Error("source_actor_unbound");
+  const { rows:people } = await db.query("SELECT id,graph_node_id,email FROM public.persons WHERE id=$1::uuid",[cohort.operatorPersonId]);
+  if (people.length!==1 || (people[0].graph_node_id!==`clerk:${cohort.operatorClerkId}` && !(await verifyActor?.(people[0])))) throw new Error("source_actor_unbound");
   const { rows } = await db.query(`SELECT row_to_json(e) AS evidence,row_to_json(r) AS review,row_to_json(a) AS artifact,r.updated_at::text AS review_updated_at_db_text
     FROM public.program_evidence_items e
     LEFT JOIN public.program_evidence_reviews r ON r.evidence_id::text=e.id::text AND r.program_id::text=$1::uuid::text AND r.tenant_key=ANY($3::text[])
@@ -41,7 +41,7 @@ export async function readExactSourceSnapshot(db: ExactSourceQuery, raw: unknown
     if (originalBlobSha256!==expected.sourceSha256) throw new Error("source_original_blob_changed");
     sources.push({ evidence:evidence!,review,artifact,reviewUpdatedAtDbText:String(row.review_updated_at_db_text),originalBlobSha256 });
   }
-  return { move:moves[0],person:people[0],rows:sources,history,readiness,readComplete:true };
+  return { move:moves[0],person:people[0],rows:sources,history,readiness,readComplete:true,authenticatedActor:{personId:cohort.operatorPersonId,clerkId:cohort.operatorClerkId} };
 }
 
 /** Build a single-source proof request from authenticated native identity. */

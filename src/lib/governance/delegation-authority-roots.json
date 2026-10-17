@@ -16,10 +16,39 @@
         "text_sha256": "f903f7c80edf662f7b27fac96f1a41a85aaa6641157f183a0a3cb025c8194162"
       },
       "authority_sha256": "e4fefd276e57c09d8742084005793b37ace90dc9167e17a46e2ae5f3076b5136",
-      "allowed_operations": ["load", "serve", "review"],
-      "allowed_serving_surfaces": ["home", "tower"],
+      "allowed_operations": [
+        "load",
+        "serve",
+        "review"
+      ],
+      "allowed_serving_surfaces": [
+        "home",
+        "tower"
+      ],
       "tenant_scope": "declared_synthetic",
       "expires_at": null
+    },
+    {
+      "authority_id": "moves-source-completion-20261017",
+      "status": "active",
+      "authorizer": "Anand Sundaram",
+      "actor": {
+        "kind": "delegated_agent",
+        "identity": "Codex Moves source operator",
+        "session_id": "01a149d8-2194-71c2-b3e8-7c8e081fb02d"
+      },
+      "human_authorization_reference": {
+        "thread_id": "01a149d8-2194-71c2-b3e8-7c8e081fb02d",
+        "message_id": "01a14a34-5b6d-77e0-b2b7-55a8b304bb1d",
+        "text_sha256": "5641499142d222fb6c4693732de1031e56a0032a74d890b67334aa03afd4fa53"
+      },
+      "authority_sha256": "13d99e2f8ebc27ace54ae0bebf4929e4356b0629da74ae995e5fbb53860e371f",
+      "allowed_operations": [
+        "load"
+      ],
+      "allowed_serving_surfaces": [],
+      "tenant_scope": "declared_synthetic",
+      "expires_at": "2026-10-19T00:00:00Z"
     }
   ]
 }

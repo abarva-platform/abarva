@@ -10,6 +10,7 @@ import type { DatasetManifest } from "@/lib/governance/dataset-manifest";
 import { prepareExactSourcePlan,reviewedLedgerDigest,losslessReviewTimestamp,renderSourceCitationProof,verifyExactIndexedDocuments,isDeclaredSyntheticSourceTenant,type ExactSourceCohort,type ExactSourceSnapshot } from "../evidence-readiness/exact-source-preparation";
 import { readExactSourceSnapshot } from "../evidence-readiness/exact-source-reader";
 import { applyApprovedExactSourceIndex,scopedIndexRowDiff } from "@/scripts/moves-exact-source-index-adapter";
+import { buildExactSourceReadinessRows } from "../evidence-readiness/exact-source-readiness";
 
 const uuid=(n:number)=>`00000000-0000-4000-8000-${String(n).padStart(12,"0")}`;
 const clientKey=CANONICAL_TENANT_KEYS[0];
@@ -122,8 +123,57 @@ describe("exact source preparation",()=>{
     const approved={...manifest,expected_object_count:3,load_approval:{approved_by:"Taylor Morgan",approved_at:"2026-10-12",assessment_id:f.cohort.moveId,move_id:f.cohort.moveId,source_set_hash:plan.sourceSetHash,release_record:record}} satisfies DatasetManifest;
     const upload=jest.fn(async(docs:typeof plan.documents)=>({value:docs.map(doc=>({key:doc.id,status:true,statusCode:200}))}));
     const replan=jest.fn(async()=>plan),readBefore=jest.fn(async()=>[]);
-    await expect(applyApprovedExactSourceIndex({plan,manifest:approved,releaseRecord:record,replan,readBefore,upload})).rejects.toThrow("source_index_write_capability_unreleased");
+    await expect(applyApprovedExactSourceIndex({plan,manifest:approved,releaseRecord:record,replan,readBefore,upload})).rejects.toThrow("source_index_serialized_writer_required");
     expect(replan).not.toHaveBeenCalled();expect(readBefore).not.toHaveBeenCalled();expect(upload).not.toHaveBeenCalled();expect(plan.rollback.ownedIndexIds).toEqual([]);
+  });
+  it.each(["success","collision","changed-plan","partial","existing"])("serializes and verifies index creation: %s",async kind=>{
+    const f=fixture();const plan=prepareExactSourcePlan(f.cohort,f.snapshot,manifest),record="docs/releases/records/2026-10-17-moves-source-readiness.md";
+    const approved={...manifest,expected_object_count:3,load_approval:{approved_by:"Taylor Morgan",approved_at:"2026-10-12",assessment_id:f.cohort.moveId,move_id:f.cohort.moveId,source_set_hash:plan.sourceSetHash,release_record:record}} satisfies DatasetManifest;
+    let stored=kind==="existing"?plan.documents:[];
+    const upload=jest.fn(async(docs:typeof plan.documents)=>{stored=docs;return {value:docs.slice(kind==="partial"?1:0).map(doc=>({key:doc.id,status:true,statusCode:kind==="collision"?200:201}))};});
+    const auditUpload=jest.fn(async()=>{}),serialized=jest.fn();
+    const serialize=async<T,>(work:()=>Promise<T>)=>{serialized();return work();};
+    const run=()=>applyApprovedExactSourceIndex({plan,manifest:approved,releaseRecord:record,replan:async()=>kind==="changed-plan"?{...plan,sourceSetHash:"f".repeat(64)}:plan,readBefore:async()=>stored,upload,serialize,auditUpload});
+    if(["success","existing"].includes(kind)) {
+      const result=await run();expect(result.createdIds).toHaveLength(kind==="existing"?0:plan.documents.length);expect(result.readinessWrites).toBe(0);expect(result.deleteAllowed).toBe(false);
+    } else await expect(run()).rejects.toThrow();
+    expect(serialized).toHaveBeenCalledTimes(1);
+    if(kind==="changed-plan" || kind==="existing")expect(upload).not.toHaveBeenCalled();
+    else expect(auditUpload).toHaveBeenCalledTimes(1);
+  });
+  it.each(["valid","missing","duplicate","revision","quote","locator","blob","url","timestamp","index","screenshot"])("requires independent rendered citation proof: %s",kind=>{
+    const f=fixture();const plan=prepareExactSourcePlan(f.cohort,f.snapshot,manifest);
+    const receipts=plan.sources.filter(s=>s.eligible).map(s=>({objectId:s.expected.evidenceId,sourceRevision:s.admissionSource.binding.source_revision_sha256,indexDocumentId:s.citationDocumentId,
+      proofUrl:`https://app.abarva.ai/api/v1/programs/${f.cohort.moveId}/source-citation-proof?evidenceId=${s.expected.evidenceId}&revision=${s.admissionSource.binding.source_revision_sha256}`,
+      renderedQuote:s.quote,renderedLocator:s.locator,downloadPath:s.downloadPath,downloadSha256:s.expected.sourceSha256,downloadStatus:200,observedAt:"2026-10-12T10:02:00.000Z",rendered:true,screenshotSha256:"a".repeat(64)}));
+    if(kind==="missing")receipts.pop();
+    if(kind==="duplicate")receipts[1]=receipts[0];
+    if(kind==="revision")receipts[0].sourceRevision="f".repeat(64);
+    if(kind==="quote")receipts[0].renderedQuote="Different passage";
+    if(kind==="locator")receipts[0].renderedLocator="Different page";
+    if(kind==="blob")receipts[0].downloadSha256="f".repeat(64);
+    if(kind==="url")receipts[0].proofUrl="https://other.example/";
+    if(kind==="timestamp")receipts[0].observedAt="2026-10-12T10:00:00.000Z";
+    if(kind==="screenshot")receipts[0].screenshotSha256="";
+    const run=()=>buildExactSourceReadinessRows({plan,manifest,receipts,indexed:kind==="index"?plan.documents.slice(1):plan.documents,indexedAt:"2026-10-12T10:01:00.000Z",now:"2026-10-12T10:03:00.000Z",runId:"test",proofUri:"https://example.blob.core.windows.net/private/run/receipts.json",proofSha256:"b".repeat(64)});
+    if(kind==="valid") {const rows=run();expect(rows).toHaveLength(3);expect(rows.every(r=>r.agent_readiness_status==="agent_ready" && r.confidence_level==="unverified" && r.provenance.client_attested===false)).toBe(true);}
+    else expect(run).toThrow();
+  });
+  it("inspects existing readiness only when it binds the exact same native source",()=>{
+    const f=fixture();const plan=prepareExactSourcePlan(f.cohort,f.snapshot,manifest),s=plan.sources[0].admissionSource;
+    f.snapshot.readiness=[{object_table:s.objectTable,object_id:s.objectId,client_key:s.clientKey,tenant_id:s.tenantId,provenance:{move_source_binding:s.binding}}];
+    expect(()=>prepareExactSourcePlan(f.cohort,f.snapshot,manifest)).toThrow("source_before_state_changed");
+    expect(prepareExactSourcePlan(f.cohort,f.snapshot,manifest,{inspectBoundReadiness:true}).sourceSetHash).toBe(plan.sourceSetHash);
+    f.snapshot.readiness[0].provenance={move_source_binding:{...s.binding,source_revision_sha256:"f".repeat(64)}};
+    expect(()=>prepareExactSourcePlan(f.cohort,f.snapshot,manifest,{inspectBoundReadiness:true})).toThrow("source_readiness_binding_changed");
+  });
+  it("requires authenticated actor proof for legacy person records",()=>{
+    const f=fixture();f.snapshot.person.graph_node_id="legacy-person";
+    expect(()=>prepareExactSourcePlan(f.cohort,f.snapshot,manifest)).toThrow("source_actor_unbound");
+    f.snapshot.authenticatedActor={personId:f.cohort.operatorPersonId,clerkId:f.cohort.operatorClerkId};
+    expect(()=>prepareExactSourcePlan(f.cohort,f.snapshot,manifest)).not.toThrow();
+    f.snapshot.authenticatedActor.clerkId="user_other";
+    expect(()=>prepareExactSourcePlan(f.cohort,f.snapshot,manifest)).toThrow("source_actor_unbound");
   });
   it("reads an exact scoped snapshot and hashes original bytes, propagating failed reads",async()=>{
     const f=fixture();const responses=[{rows:[f.snapshot.move]},{rows:[f.snapshot.person]},{rows:f.snapshot.rows.map(row=>({evidence:row.evidence,review:row.review,artifact:row.artifact,review_updated_at_db_text:row.reviewUpdatedAtDbText}))},{rows:f.snapshot.history},{rows:[]}];

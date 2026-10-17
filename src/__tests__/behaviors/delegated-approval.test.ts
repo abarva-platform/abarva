@@ -27,6 +27,7 @@ function fixture(
     revoked?: boolean;
     untrusted?: boolean;
     dual?: boolean;
+    assessmentIds?: string[];
   } = {},
 ) {
   const actor = {
@@ -71,6 +72,7 @@ function fixture(
     scope: {
       allowed_operations: ["load", "serve", "review"],
       allowed_serving_surfaces: ["home", "tower"],
+      ...(options.assessmentIds ? { assessment_ids: options.assessmentIds } : {}),
     },
   };
   const declarationFields = {
@@ -209,6 +211,12 @@ afterEach(() => {
 });
 
 describe("explicit delegated approvals", () => {
+  test("a scoped authority cannot authorize another assessment", async () => {
+    const f = fixture({assessmentIds:["different-assessment"]});
+    await expect(f.api.verifyDelegationProofBytes(f.declaration,f.authorityBytes,f.decisionBytes)).rejects.toThrow("exceeds");
+    const allowed=fixture({assessmentIds:["test-assessment"]});
+    await expect(allowed.api.verifyDelegationProofBytes(allowed.declaration,allowed.authorityBytes,allowed.decisionBytes)).resolves.toBeDefined();
+  });
   test("separate delegated load and serving operations retain distinct run records and observations", async () => {
     const f = fixture({ dual: true });
     const manifest = {

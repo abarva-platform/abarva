@@ -23,7 +23,7 @@ export const ExactSourceCohortSchema = z.object({
   clientKey: z.string().min(1), nativeTenantKey: z.string().min(1), clientId: z.string().uuid(),
   moveId: z.string().uuid(), expectedCurrentPhase: z.number().int().min(0).max(5),
   operatorPersonId: z.string().uuid(), operatorClerkId: z.string().min(1),
-  expectedReadiness: z.literal("absent"), sources: z.array(ExactSourceSchema).min(1).max(8),
+  expectedReadiness: z.literal("absent"), sources: z.array(ExactSourceSchema).min(1).max(32),
 }).strict();
 export type ExactSourceCohort = z.infer<typeof ExactSourceCohortSchema>;
 export function isDeclaredSyntheticSourceTenant(registry:unknown,clientKey:string):boolean {
@@ -37,6 +37,7 @@ export interface ExactSourceSnapshot {
   rows: Array<{ evidence: NativeSourceRow; review: NativeSourceRow; artifact: NativeSourceRow; reviewUpdatedAtDbText: string; originalBlobSha256: string }>;
   history: NativeSourceRow[]; readiness: NativeSourceRow[];
   readComplete: true;
+  authenticatedActor?: { personId:string;clerkId:string };
 }
 export interface PreparedSource {
   expected: z.infer<typeof ExactSourceSchema>; admissionSource: MoveAdmissionSource;
@@ -83,15 +84,15 @@ export function reviewedLedgerDigest(value: unknown): string {
   return createHash("sha256").update(ascii,"utf8").digest("hex");
 }
 
-export function prepareExactSourcePlan(raw: unknown, snapshot: ExactSourceSnapshot, manifest: DatasetManifest): ExactSourcePlan {
+export function prepareExactSourcePlan(raw: unknown, snapshot: ExactSourceSnapshot, manifest: DatasetManifest, options: { inspectBoundReadiness?:boolean } = {}): ExactSourcePlan {
   const cohort = ExactSourceCohortSchema.parse(raw);
   const canonical = canonicalTenantKey(cohort.clientKey);
   if (canonical !== cohort.clientKey || !isCanonicalClientKey(canonical) || canonicalTenantKey(cohort.nativeTenantKey)!==canonical) throw new Error("source_tenant_unbound");
   if (!validateManifest(manifest).ok || manifest.dataset_id!==cohort.datasetId || manifest.tenant_scope!=="move_registry" || manifest.client_key!==null || manifest.classification!=="internal" || manifest.source_layer!=="uploaded_evidence" || manifest.retrieval_plan!=="azure_ai_search" || !manifest.retrieval_proof_required) throw new Error("source_manifest_unbound");
   if (!snapshot.readComplete || snapshot.move.id!==cohort.moveId || snapshot.move.client_id!==cohort.clientId || snapshot.move.current_phase!==cohort.expectedCurrentPhase || snapshot.move.deleted_at!==null || snapshot.move.archived_at!==null) throw new Error("source_move_changed");
-  if (snapshot.person.id!==cohort.operatorPersonId || snapshot.person.graph_node_id!==`clerk:${cohort.operatorClerkId}`) throw new Error("source_actor_unbound");
+  if (snapshot.person.id!==cohort.operatorPersonId || (snapshot.person.graph_node_id!==`clerk:${cohort.operatorClerkId}` && !(snapshot.authenticatedActor?.personId===cohort.operatorPersonId && snapshot.authenticatedActor.clerkId===cohort.operatorClerkId))) throw new Error("source_actor_unbound");
   for (const key of ["evidenceId","artifactId","reviewId","filename"] as const) if (new Set(cohort.sources.map(s=>s[key])).size!==cohort.sources.length) throw new Error("source_identity_duplicate");
-  if (snapshot.rows.length!==cohort.sources.length || snapshot.history.length!==cohort.sources.length || snapshot.readiness.length!==0) throw new Error("source_before_state_changed");
+  if (snapshot.rows.length!==cohort.sources.length || snapshot.history.length!==cohort.sources.length || (!options.inspectBoundReadiness && snapshot.readiness.length!==0)) throw new Error("source_before_state_changed");
   const sources = cohort.sources.map(expected => {
     const matches = snapshot.rows.filter(row=>row.evidence.id===expected.evidenceId);
     if (matches.length!==1) throw new Error("source_row_missing_or_duplicate");
@@ -127,7 +128,15 @@ export function prepareExactSourcePlan(raw: unknown, snapshot: ExactSourceSnapsh
     return { expected,admissionSource:source,eligible:expected.phase<=cohort.expectedCurrentPhase,documents,quote:citation.quote,locator:citation.locator,citationDocumentId:documents.at(-1)!.id,downloadPath };
   });
   const documents = sources.filter(source=>source.eligible).flatMap(source=>source.documents);
-  if (!documents.length || new Set(documents.map(doc=>doc.id)).size!==documents.length) throw new Error("source_index_plan_empty_or_duplicate");
+  if (options.inspectBoundReadiness) {
+    const seen=new Set<string>();
+    for(const row of snapshot.readiness) {
+      const source=sources.find(s=>s.admissionSource.objectId===row.object_id)?.admissionSource;
+      if(!source || seen.has(source.objectId) || row.object_table!==source.objectTable || row.client_key!==source.clientKey || row.tenant_id!==source.tenantId || moveSourceRevision(object(row.provenance).move_source_binding)!==moveSourceRevision(source.binding)) throw new Error("source_readiness_binding_changed");
+      seen.add(source.objectId);
+    }
+  }
+  if (!documents.length || documents.length>1000 || new Set(documents.map(doc=>doc.id)).size!==documents.length) throw new Error("source_index_plan_empty_or_duplicate");
   return { version:1,datasetId:cohort.datasetId,cohort,sourceSetHash:moveSourceRevision({ cohort,sources:sources.map(s=>s.admissionSource.binding),documents }),sources,documents,beforeReadiness:snapshot.readiness,readinessWrites:[],rollback:{ plannedIndexIdsNotOwned:documents.map(doc=>doc.id),ownedIndexIds:[],sourceAndReadinessWrites:false },modelCalls:0,phaseWrites:0,mode:"plan" };
 }
 

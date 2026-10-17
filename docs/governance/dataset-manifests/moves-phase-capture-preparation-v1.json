@@ -1,0 +1,20 @@
+{
+  "dataset_id": "moves_phase_capture_preparation_v1",
+  "title": "Exact synthetic Move phase capture preparation",
+  "client_key": null,
+  "tenant_scope": "move_registry",
+  "source_layer": "move",
+  "classification": "internal",
+  "owner": "AbarVa Moves product team",
+  "source_basis": "Exact saved synthetic Move design answers and labelled planning estimates, reviewed under delegated operator authority; not independent client or Finance attestation.",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "azure_ai_search",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": null,
+  "expected_object_count": null,
+  "approved_by": "Delegated source preparation candidate",
+  "approved_at": "2026-10-17",
+  "load_approval": null,
+  "serving_approval": null,
+  "notes": "Declaration only. Exact scoped load authority is required separately for each native source revision. Indexing does not approve a phase or grant readiness. Canonical readiness requires exact index readback and signed-in citation plus original snapshot verification."
+}
