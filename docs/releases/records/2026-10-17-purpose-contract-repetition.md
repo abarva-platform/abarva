@@ -91,6 +91,8 @@ Revert the commit. The contract returns to its previous wording.
 - **Unmeasured.** This removes the cause of the most frequent finding on the charter. It does not
   address uneven page density, missing decision-risk and condition-rationale content, measurement
   period clarity, or source-register traceability, and it is not expected to reach 85 on its own.
-- Per-cell citation stamping remains. Hoisting a citation shared by every row of a table to a
-  single table-level attribution is consistent with the existing rule never to move a source across
-  claims, but it is a renderer change and was not made without the ability to render and inspect it.
+- Per-cell citation stamping remains. The agreed design for it is a narrow per-row `Source`
+  column with no codes in titles or caveat lines, specified in the round-5 brief and enforced by a
+  validator. This change does not propose an alternative to it.
+- This is one input to the round-5 work, not a substitute for it. The round-5 rules are
+  validator-backed and remain unimplemented on the calibration branch.
