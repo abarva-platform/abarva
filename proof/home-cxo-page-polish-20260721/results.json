@@ -1,0 +1,41 @@
+{
+  "timestamp": "2026-07-21T22:40:08.861Z",
+  "base": "https://app.abarva.ai/home?client=meridian-health",
+  "checks": {
+    "enterpriseTitle": "Meridian Health System\nDEMO",
+    "enterpriseBriefVisible": 1,
+    "enterpriseScrollWidth": {
+      "sw": 1840,
+      "cw": 1840
+    },
+    "usecases": {
+      "chartBox": {
+        "x": 292,
+        "y": 444.3125,
+        "width": 1520,
+        "height": 346
+      },
+      "firstCardBox": {
+        "x": 292,
+        "y": 832.3125,
+        "width": 292.796875,
+        "height": 406.9375
+      },
+      "tableBox": {
+        "x": 292,
+        "y": 1281.25,
+        "width": 1520,
+        "height": 500.25
+      },
+      "chartCardOverlap": false,
+      "chartTableOverlap": false,
+      "horizontalOverflow": false,
+      "overflow": {
+        "sw": 1840,
+        "cw": 1840
+      },
+      "cardCount": 5,
+      "chartCount": 1
+    }
+  }
+}
