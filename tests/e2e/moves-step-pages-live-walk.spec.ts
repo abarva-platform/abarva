@@ -663,8 +663,12 @@ test("files a later phase as held when its route redirects to an earlier one", (
   const move = "/strategic-moves/move-1";
   expect(heldAtEarlierPhase(`${move}/phase/2?step=p2-baseline`, 3)).toBe(2);
   expect(heldAtEarlierPhase(`${move}/phase/2`, 3)).toBe(2);
-  expect(heldAtEarlierPhase(`${move}/phase/3?step=architecture-options`, 3)).toBeNull();
-  expect(heldAtEarlierPhase(`${move}/phase/4?step=p4-milestones`, 3)).toBeNull();
+  expect(
+    heldAtEarlierPhase(`${move}/phase/3?step=architecture-options`, 3),
+  ).toBeNull();
+  expect(
+    heldAtEarlierPhase(`${move}/phase/4?step=p4-milestones`, 3),
+  ).toBeNull();
   expect(heldAtEarlierPhase("/sign-in?redirect_url=x", 3)).toBeNull();
 });
 
