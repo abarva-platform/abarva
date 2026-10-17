@@ -12,8 +12,8 @@
   "counts": {
     "routes": 425,
     "fenced": 234,
-    "fencedDirect": 110,
-    "fencedIndirect": 124,
+    "fencedDirect": 108,
+    "fencedIndirect": 126,
     "unfenced": 191,
     "unfencedButReachesFenceModule": 105,
     "behavioral": 90,
@@ -1531,12 +1531,15 @@
     },
     {
       "route": "src/app/api/admin/pricing/rate-cards/[id]/approve/route.ts",
-      "fence": "direct",
+      "fence": "indirect",
       "fenceSymbols": [
+        "canManageRateCards",
         "requireTenancy",
         "tenancyErrorResponse"
       ],
-      "fenceVia": [],
+      "fenceVia": [
+        "src/lib/pricing/governed-load/rate-card-authority.ts"
+      ],
       "reachesFenceModule": true,
       "coverage": "behavioral",
       "suites": {
@@ -1548,12 +1551,15 @@
     },
     {
       "route": "src/app/api/admin/pricing/rate-cards/import/route.ts",
-      "fence": "direct",
+      "fence": "indirect",
       "fenceSymbols": [
+        "canManageRateCards",
         "requireTenancy",
         "tenancyErrorResponse"
       ],
-      "fenceVia": [],
+      "fenceVia": [
+        "src/lib/pricing/governed-load/rate-card-authority.ts"
+      ],
       "reachesFenceModule": true,
       "coverage": "behavioral",
       "suites": {

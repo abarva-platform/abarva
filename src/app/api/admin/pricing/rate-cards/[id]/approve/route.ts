@@ -23,6 +23,7 @@ import { NextResponse } from "next/server";
 
 import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
+import { canManageRateCards, RATE_CARD_ADMIN_REQUIRED } from "@/lib/pricing/governed-load/rate-card-authority";
 import { commitClientRateCardImport } from "@/lib/pricing/governed-load/rate-card-import";
 import type { NewRateCardLineInput } from "@/lib/pricing/rate-card-repository";
 
@@ -53,6 +54,9 @@ export async function POST(
   }
   if (!tenancy.clientKey) {
     return NextResponse.json({ error: "tenant_key_required" }, { status: 403 });
+  }
+  if (!(await canManageRateCards(tenancy))) {
+    return NextResponse.json({ ok: false, ...RATE_CARD_ADMIN_REQUIRED }, { status: 403 });
   }
 
   const { id: cardCode } = await context.params;

@@ -3,6 +3,16 @@ import { NextRequest } from "next/server";
 const mockRequireTenancy = jest.fn();
 const mockPreviewClientRateCardImport = jest.fn();
 
+const mockRequireTenantAdmin = jest.fn();
+const mockHasTenantAdminAccess = jest.fn();
+// The real rate-card authority runs; only the two role lookups under it are mocked.
+jest.mock("@/lib/auth/tenant-roles", () => ({
+  requireTenantAdmin: (...args: unknown[]) => mockRequireTenantAdmin(...args),
+}));
+jest.mock("@/lib/admin/tenant-admin-access", () => ({
+  hasTenantAdminAccess: (...args: unknown[]) => mockHasTenantAdminAccess(...args),
+}));
+
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: (...args: unknown[]) => mockRequireTenancy(...args),
   tenancyErrorResponse: () => new Response(JSON.stringify({ error: "unauthenticated" }), { status: 401 }),
@@ -25,7 +35,26 @@ describe("POST /api/admin/pricing/rate-cards/import", () => {
   beforeEach(() => {
     mockRequireTenancy.mockReset();
     mockPreviewClientRateCardImport.mockReset();
-    mockRequireTenancy.mockResolvedValue({ clientId: "c1", clientKey: "apexretail", userId: "user-1" });
+    mockRequireTenancy.mockResolvedValue({ clientId: "c1", clientKey: "apexretail", userId: "user-1", clerkUserId: "clerk-1" });
+    mockRequireTenantAdmin.mockReset().mockResolvedValue(undefined);
+    mockHasTenantAdminAccess.mockReset().mockResolvedValue(false);
+  });
+
+  it("refuses a member who is not a workspace admin before reading the file", async () => {
+    mockRequireTenantAdmin.mockRejectedValue(new Error("forbidden_tenant_admin_required"));
+    const formData = new FormData();
+    formData.set("file", new File(["role_or_band_ref\n"], "card.csv", { type: "text/csv" }));
+    const response = await POST(multipartRequest(formData));
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({ error: "rate_card_admin_required", detail: expect.stringContaining("workspace admin") });
+    expect(mockPreviewClientRateCardImport).not.toHaveBeenCalled();
+  });
+
+  it("admits a user whose access policy lets them administer the workspace", async () => {
+    mockRequireTenantAdmin.mockRejectedValue(new Error("forbidden_tenant_admin_required"));
+    mockHasTenantAdminAccess.mockResolvedValue(true);
+    const response = await POST(multipartRequest(new FormData()));
+    expect(response.status).toBe(400); // past the gate, refused only for the missing file
   });
 
   it("400s when no file is provided", async () => {

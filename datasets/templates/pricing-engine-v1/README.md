@@ -41,14 +41,29 @@ ROL-037,LVL-04,,LOC-US-EAST,onshore_si_t1_benchmark,hour,410.00,USD,2026-08-01,
 | --- | --- | --- |
 | `role_or_band_ref` | yes | A canonical `pricing_roles.role_code` (e.g. `ROL-037`) or `pricing_rate_bands.rate_band_code` (e.g. `ROL-037-LVL-04`) from the global taxonomy. Must resolve to a real row — this is checked during upload. |
 | `level` | no | A canonical `pricing_seniority_levels.level_code` (e.g. `LVL-04`). Leave blank if `role_or_band_ref` already names a specific level (a rate-band code). |
-| `provider_ref` | no | Reserved for a named delivery provider/vendor. Leave blank for a role-level rate. |
-| `location_ref` | no | A canonical `pricing_delivery_locations.location_code`. Leave blank for a location-agnostic rate. |
+| `provider_ref` | no | A provider class, so one card can hold different rates for the same role: `SI-T1` (global systems integrator), `CONS-T1` (premium strategy/advisory), `ENG-B` (engineering boutique), `SI-T2` (industrialized offshore), `AI-B` (AI-native provider), or `INTERNAL` for your own staff. Leave blank for a rate that applies to any provider. Checked during upload. |
+| `location_ref` | no | A canonical `pricing_delivery_locations.location_code`. Leave blank for a location-agnostic rate. Checked during upload. |
 | `rate_basis` | yes | Free-text label for how this rate was derived (e.g. `client_negotiated`, `client_msa_rate_card`). |
-| `unit` | yes | `hour`, `day`, or `year` — must match how `rate_value` is denominated. |
+| `unit` | yes | `hour`, `day`, or `year` — must match how `rate_value` is denominated. **Moves estimates price only `hour` lines** and never convert a day or year rate; a role you price only per day or year is shown as an unpriced gap in the estimate until you add an hourly line. |
 | `rate_value` | yes | The numeric rate, in `currency`. |
 | `currency` | no (defaults `USD`) | ISO currency code. |
 | `valid_from` | yes | `YYYY-MM-DD` — the date this rate becomes effective. |
 | `valid_to` | no | `YYYY-MM-DD` — leave blank for open-ended. |
+
+**Which line applies.** For each pod member, the most specific line that
+fits wins: a line naming the member's provider class outranks one naming its
+location, which outranks one naming its level. A line at another level is
+never used. If the member's provider class is not known and the card has
+competing provider lines for that role (with no generic line), the estimate
+shows a gap instead of picking one. `INTERNAL` rates come only from your card,
+never from a global default.
+
+**Loading and approving.** A workspace admin loads the card in Setup → Rate
+cards (`/admin/rate-cards`): download this template, upload the CSV, review
+every problem row and the change against the current version, then approve
+with a reason. Each approval creates a new immutable version. A Moves
+estimate approved on one version keeps those rates until it is reopened and
+approved again.
 
 **A client does NOT need to populate all 326 roles.** Upload only the roles
 you have a real, committed rate for. Every role you omit keeps resolving

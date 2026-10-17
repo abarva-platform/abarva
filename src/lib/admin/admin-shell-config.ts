@@ -4,6 +4,7 @@ export type AdminSubSectionId =
   | "overview"
   | "data-loads"
   | "templates"
+  | "rate-cards"
   | "data-layer-explorer"
   | "data-trust"
   | "connectors"
@@ -67,6 +68,12 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     label: "Templates",
     subtitle: "Dimensions, formats, and owners",
     href: "/admin/templates",
+  },
+  {
+    id: "rate-cards",
+    label: "Rate cards",
+    subtitle: "Your rates for Moves estimates",
+    href: "/admin/rate-cards",
   },
   {
     id: "data-layer-explorer",

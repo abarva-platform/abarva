@@ -34,6 +34,14 @@ describe("proxy active admin subroutes", () => {
     expect(isActiveAdminSubroute("/admin/data-loads")).toBe(false);
   });
 
+  it("allows Rate cards to render instead of collapsing to setup", () => {
+    const request = new NextRequest("https://app.abarva.ai/admin/rate-cards");
+
+    expect(isAuthRequiredRoute(request)).toBe(true);
+    expect(isPublicRoute(request)).toBe(false);
+    expect(isActiveAdminSubroute(request.nextUrl.pathname)).toBe(true);
+  });
+
   it("allows the Context Approval Queue to render instead of collapsing to setup", () => {
     const request = new NextRequest(
       "https://app.abarva.ai/admin/context-layer/approval-queue",
