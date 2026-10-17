@@ -23,7 +23,7 @@ import {
   type CostBasis,
 } from "@/lib/programs/value-engine/cost-basis";
 import { stepPageHref } from "@/lib/programs/step-page-views";
-import { P4_STEP_PAGES } from "../p4-step-pages";
+import { FINANCIAL_MODEL_FALLBACK_ERROR, P4_STEP_PAGES } from "../p4-step-pages";
 import { P5_STEP_PAGES } from "../p5-step-pages";
 import type { StepPageHostProps } from "../phase-step-pages";
 import { P5TowerHandoff, P5TowerPublicationReadback } from "../P5TowerHandoff";
@@ -985,6 +985,58 @@ describe("P4 and P5 step pages", () => {
     render(page(P4_STEP_PAGES, "p4-value", host(4, { value_plan: valuePlan, funding_governance: "Finance review" })));
     await screen.findByText(/Engine status/);
     expect(screen.queryByTestId("p4-ai-scenario")).toBeNull();
+  });
+
+  describe("financial model download", () => {
+    const saved = () => {
+      const props = host(4, { value_plan: valuePlan, funding_governance: "Finance review" });
+      props.captureSaved = { value_plan: true, funding_governance: true };
+      return props;
+    };
+    const routed = (body: Record<string, unknown>, model: Record<string, unknown>) => {
+      global.fetch = jest.fn().mockImplementation(async (url: string) =>
+        String(url).includes("/financial-model") ? model : { ok: true, json: async () => body });
+    };
+    const offer = () => screen.findByRole("button", { name: "Download financial model (.xlsx)" });
+
+    it("offers the model beside an evaluated case and downloads it", async () => {
+      const blob = new Blob(["xlsx"]);
+      routed(realBody(), { ok: true, blob: async () => blob });
+      const created = jest.fn().mockReturnValue("blob:model");
+      Object.defineProperty(URL, "createObjectURL", { configurable: true, value: created });
+      Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: jest.fn() });
+      const click = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+      render(page(P4_STEP_PAGES, "p4-value", saved()));
+      fireEvent.click(await offer());
+      await waitFor(() => expect(created).toHaveBeenCalledWith(blob));
+      expect(global.fetch).toHaveBeenCalledWith(`/api/v1/programs/${saved().move.id}/financial-model`, { credentials: "include" });
+      expect(click).toHaveBeenCalledTimes(1);
+      click.mockRestore();
+    });
+
+    it("is not offered when figures are withheld or the case is blocked", async () => {
+      for (const body of [realBody({ redacted: true }), realBody({ blocked: true })]) {
+        routed(body, { ok: true });
+        const view = render(page(P4_STEP_PAGES, "p4-value", saved()));
+        await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+        await act(async () => { await Promise.resolve(); });
+        expect(screen.queryByRole("button", { name: "Download financial model (.xlsx)" })).toBeNull();
+        view.unmount();
+      }
+    });
+
+    it("shows the route's own sentence when it refuses, or says nothing changed", async () => {
+      const detail = "The value model changed while the workbook was being built. Download it again.";
+      routed(realBody(), { ok: false, status: 409, json: async () => ({ error: "model_changed", detail }) });
+      const first = render(page(P4_STEP_PAGES, "p4-value", saved()));
+      fireEvent.click(await offer());
+      expect(await screen.findByRole("alert")).toHaveTextContent(detail);
+      first.unmount();
+      routed(realBody(), { ok: false, status: 500, json: async () => { throw new Error("not json"); } });
+      render(page(P4_STEP_PAGES, "p4-value", saved()));
+      fireEvent.click(await offer());
+      expect(await screen.findByRole("alert")).toHaveTextContent(FINANCIAL_MODEL_FALLBACK_ERROR);
+    });
   });
 
   it("waits for the value capture save before reading and invalidates figures on edit", async () => {

@@ -1,4 +1,4 @@
-// Setup → Rate cards. A workspace admin loads and approves the workspace's own
+// Admin → Rate cards. A workspace admin loads and approves the workspace's own
 // rate card here, once, before any Move; every Moves estimate then prices on
 // it. The /admin layout already restricts this tree to platform admins and
 // workspace admins; the import and approve routes re-check the same rule.
@@ -12,7 +12,7 @@ import { listRateCardLines, listRateCardVersions } from "@/lib/pricing/rate-card
 import { loadCommittedRateCardCodes } from "@/lib/pricing/moves-workflow/rom-reference";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
 
-export const metadata = { title: "Rate cards | AbarVa Setup" };
+export const metadata = { title: "Rate cards | AbarVa Admin" };
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
