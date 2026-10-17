@@ -56,15 +56,15 @@ const predicate = <const F extends readonly EcPrivateType[], const T extends rea
   relationship_type: string | null, from_types: F, to_types: T, reverse = false,
 ) => ({ relationship_type, from_types, to_types, reverse });
 
-/** Null means retain the assertion and report a gap, never substitute a similar verb. */
+/** Null retains document evidence sidecar lineage without creating a graph edge. */
 export const EC_PRIVATE_PREDICATE_MAP = {
   "design:has_segment": predicate("HAS_SEGMENT", ["design:enterprise"], ["design:segment"]),
   "design:has_function": predicate("HAS_FUNCTION", ["design:enterprise"], ["design:function"]),
   "design:belongs_to_segment": predicate("BELONGS_TO_SEGMENT", ["design:function", "design:org_unit"], ["design:segment"]),
-  "design:part_of_unit": predicate(null, ["design:function"], ["design:org_unit"]),
+  "design:part_of_unit": predicate("PART_OF_UNIT", ["design:function"], ["design:org_unit"]),
   "design:accountable_to": predicate("ACCOUNTABLE_TO", ["design:function", "design:process", "design:application", "design:platform", "design:program", "design:initiative", "design:service", "design:risk", "design:control", "design:strategic_priority"], ["design:role"]),
-  "design:performs": predicate(null, ["design:function"], ["design:process"]),
-  "design:realizes": predicate(null, ["design:process"], ["design:capability"]),
+  "design:performs": predicate("PERFORMS", ["design:function"], ["design:process"]),
+  "design:realizes": predicate("REALIZES", ["design:process"], ["design:capability"]),
   "design:supports_process": predicate("SUPPORTS", ["design:application"], ["design:process"]),
   "design:module_of": predicate("MODULE_OF", ["design:application_module"], ["design:application"]),
   "design:deployment_of": predicate("DEPLOYMENT_OF", ["design:deployment"], ["design:application"]),
@@ -72,13 +72,13 @@ export const EC_PRIVATE_PREDICATE_MAP = {
   "design:feeds": predicate("FEEDS", ["design:application", "design:etl_job", "design:data_asset"], ["design:data_asset"]),
   "design:supplied_by": predicate("SUPPLIED_BY", ["design:application", "design:contract", "design:service", "design:ai_tool"], ["design:supplier"]),
   "design:covered_by": predicate("COVERED_BY", ["design:application", "design:service"], ["design:contract"]),
-  "design:implements": predicate(null, ["design:initiative"], ["design:capability"]),
-  "design:part_of_program": predicate(null, ["design:initiative"], ["design:program"]),
+  "design:implements": predicate("IMPLEMENTS_CAPABILITY", ["design:initiative"], ["design:capability"]),
+  "design:part_of_program": predicate("PART_OF_PROGRAM", ["design:initiative"], ["design:program"]),
   "design:advances": predicate("ADVANCES_PRIORITY", ["design:program", "design:initiative"], ["design:strategic_priority"]),
   "design:applies_to": predicate("APPLIES_TO", ["design:risk"], ["design:application", "design:process", "design:data_asset", "design:service"]),
   "design:mitigated_by": predicate("MITIGATES", ["design:risk"], ["design:control"], true),
   "design:uses_tool": predicate("USES", ["design:ai_use_case"], ["design:ai_tool"]),
-  "design:assists_process": predicate(null, ["design:ai_use_case"], ["design:process"]),
+  "design:assists_process": predicate("ASSISTS_PROCESS", ["design:ai_use_case"], ["design:process"]),
   "design:works_in": predicate("WORKS_IN", ["design:workforce_cohort"], ["design:function"]),
   "design:requests_evidence_for": predicate("EVIDENCE_REQUESTED_FOR", ["design:evidence_request"], ["design:risk", "design:control", "design:program", "design:initiative", "design:metric_definition"]),
   "design:cites_document": predicate(null, ["design:evidence_item"], ["design:source_document"]),

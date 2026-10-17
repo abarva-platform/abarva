@@ -6,14 +6,43 @@ import { adaptEcPrivateCandidateV0 } from "../adapt_ec_private_candidate_v0";
 import {
   EC_PRIVATE_TYPE_MAP, EC_PRIVATE_PREDICATE_MAP,
   ecPrivateCanonicalJson, ecPrivateSha256,
-  type EcPrivateCandidateInput,
+  type EcCandidateHolds, type EcPrivateCandidateInput,
 } from "../ec_private_candidate_types";
+import { planEcSliceV6Shadow } from "../ec_slice_v6_shadow";
 import { makeEcPrivateCandidateFixture } from "./ec_private_candidate_fixture";
 
 type Row = Record<string, unknown>;
 const rows = (values: unknown[]) => values as Row[];
 const adapt = (fixture = makeEcPrivateCandidateFixture()) => adaptEcPrivateCandidateV0(fixture.input, fixture.binding);
 const byType = (input: EcPrivateCandidateInput, type: string) => rows(input.entities).find(row => row.type === type)!;
+
+const businessPredicates = [
+  ["design:part_of_unit", "PART_OF_UNIT", "function", "org_unit", "hierarchy"],
+  ["design:performs", "PERFORMS", "function", "process", "operating_model"],
+  ["design:realizes", "REALIZES", "process", "capability", "capability"],
+  ["design:implements", "IMPLEMENTS_CAPABILITY", "initiative", "capability", "transformation"],
+  ["design:part_of_program", "PART_OF_PROGRAM", "initiative", "program", "hierarchy"],
+  ["design:assists_process", "ASSISTS_PROCESS", "ai_use_case", "process", "usage"],
+] as const;
+const businessVerbs = new Set<string>(businessPredicates.map(([, verb]) => verb));
+
+function declaredEdge(input: EcPrivateCandidateInput, predicate: string): Row {
+  const edge = rows(input.edges).find(row => row.predicate === predicate);
+  assert(edge, `Shared fixture must declare ${predicate}`);
+  return edge;
+}
+
+function assertCandidateHolds(row: EcCandidateHolds): void {
+  assert.equal(row.synthetic, true);
+  assert.equal(row.fact_authority, "fictional_fixture_not_tenant_actuals");
+  assert.equal(row.review_state, "not_reviewed");
+  assert.equal(row.index_state, "not_indexed");
+  assert.equal(row.agent_readiness_status, "blocked");
+  assert.equal(row.downstream_context_policy, "exclude");
+  assert.equal(row.independent_verification, "not_performed");
+  assert.deepEqual(row.approvals, { declaration: "not_granted", load: "not_granted",
+    serving: "not_granted", finance: "not_granted", approved_by: null, approved_at: null });
+}
 
 // Reconstruct changed raw bytes and their source-version locators before semantic mutations.
 function changeCsv(input: EcPrivateCandidateInput, file: string, edit: (rows: Record<string, string>[]) => void): void {
@@ -41,15 +70,142 @@ function changeCsv(input: EcPrivateCandidateInput, file: string, edit: (rows: Re
   }
 }
 
+// Keep the raw assertion consistent so rejection exercises tuple/qualifier semantics.
+function changeEdge(input: EcPrivateCandidateInput, edge: Row, edit: (edge: Row) => void): void {
+  edit(edge);
+  const locator = edge.source_locator as Row;
+  const from = rows(input.entities).find(row => row.id === edge.from_id)!;
+  const to = rows(input.entities).find(row => row.id === edge.to_id)!;
+  changeCsv(input, String(locator.file_path), records => {
+    Object.assign(records[Number(locator.row_number) - 2], {
+      from_ref: from.native_ref, to_ref: to.native_ref, predicate: edge.predicate,
+      qualifiers: JSON.stringify(edge.qualifiers), valid_from: edge.valid_from, valid_to: edge.valid_to ?? "",
+    });
+  });
+  edge.semantic_key = ecPrivateSha256(ecPrivateCanonicalJson([
+    edge.predicate, edge.from_id, edge.to_id, edge.qualifiers, edge.valid_from, edge.valid_to,
+  ]));
+}
+
 test("exports the complete explicit maps and only declared canonical directions", () => {
   assert.equal(Object.keys(EC_PRIVATE_TYPE_MAP).length, 32);
   assert.equal(Object.keys(EC_PRIVATE_PREDICATE_MAP).length, 27);
-  assert.equal(Object.values(EC_PRIVATE_PREDICATE_MAP).filter(row => row.relationship_type === null).length, 7);
+  assert.equal(Object.values(EC_PRIVATE_PREDICATE_MAP).filter(row => row.relationship_type !== null).length, 26);
+  assert.deepEqual(Object.entries(EC_PRIVATE_PREDICATE_MAP).filter(([, row]) => row.relationship_type === null)
+    .map(([predicate]) => predicate), ["design:cites_document"]);
   assert.equal(EC_PRIVATE_TYPE_MAP["design:role"], "persona");
   assert.equal(EC_PRIVATE_TYPE_MAP["design:capability"], "capability");
   assert.equal(EC_PRIVATE_TYPE_MAP["design:initiative"], "initiative");
   assert.equal(EC_PRIVATE_PREDICATE_MAP["design:supports_process"].relationship_type, "SUPPORTS");
   assert.equal(EC_PRIVATE_PREDICATE_MAP["design:uses_tool"].relationship_type, "USES");
+  for (const [predicate, verb, from, to] of businessPredicates) {
+    assert.deepEqual(EC_PRIVATE_PREDICATE_MAP[predicate], { relationship_type: verb,
+      from_types: [`design:${from}`], to_types: [`design:${to}`], reverse: false });
+  }
+});
+
+for (const [predicate, verb, from, to] of businessPredicates) {
+  test(`${predicate} emits exactly its declared endpoints, direction and source lineage under candidate holds`, () => {
+    const fixture = makeEcPrivateCandidateFixture();
+    const edge = declaredEdge(fixture.input, predicate);
+    const out = adapt(fixture);
+    const emitted = out.relationship.filter(row => (row.attributes_json.raw_candidate as Row).id === edge.id);
+    assert.equal(emitted.length, 1);
+    const relation = emitted[0];
+    const fromObject = out.object.find(row => (row.attributes_json.raw_candidate as Row).id === edge.from_id)!;
+    const toObject = out.object.find(row => (row.attributes_json.raw_candidate as Row).id === edge.to_id)!;
+    assert.equal(fromObject.canonical_semantic_type, from);
+    assert.equal(toObject.canonical_semantic_type, to);
+    assert.equal(relation.relationship_type, verb);
+    assert.equal(relation.from_object_id, fromObject.id);
+    assert.equal(relation.to_object_id, toObject.id);
+    assert.deepEqual(relation.attributes_json.raw_candidate, edge);
+    assert.deepEqual(relation.source_locator, edge.source_locator);
+    assert.equal(relation.source_version, (edge.source_locator as Row).source_version_id);
+    assert.equal(relation.valid_from, edge.valid_from);
+    assert.equal(relation.valid_to, edge.valid_to);
+    assert.equal(relation.known_at, edge.known_at);
+    const source = out.source_record.find(row => row.id === relation.source_record_id)!;
+    assert.equal((source.payload_json as Row).predicate, predicate);
+    assert.equal((source.payload_json as Row).from_ref, (fromObject.attributes_json.raw_candidate as Row).native_ref);
+    assert.equal((source.payload_json as Row).to_ref, (toObject.attributes_json.raw_candidate as Row).native_ref);
+    assert.deepEqual(relation.qualifiers_json, {});
+    assert.equal(relation.basis, "source_recorded");
+    assert.equal(relation.value_state, "unknown");
+    assertCandidateHolds(relation);
+    assert(!out.gaps.some(row => row.candidate_id === edge.id));
+  });
+
+  test(`${predicate} rejects reversed, invalid endpoint and self-loop tuples even when raw bytes match`, () => {
+    for (const edit of [
+      (row: Row) => { [row.from_id, row.to_id] = [row.to_id, row.from_id]; },
+      (row: Row, input: EcPrivateCandidateInput) => { row.from_id = byType(input, "design:application").id; },
+      (row: Row, input: EcPrivateCandidateInput) => { row.to_id = byType(input, "design:role").id; },
+      (row: Row) => { row.to_id = row.from_id; },
+    ]) {
+      const fixture = makeEcPrivateCandidateFixture();
+      const edge = declaredEdge(fixture.input, predicate);
+      changeEdge(fixture.input, edge, row => edit(row, fixture.input));
+      assert.throws(() => adapt(fixture), /wrong edge direction\/endpoint type or self-loop/);
+    }
+  });
+
+  test(`${predicate} rejects undeclared owner, maturity, approval and benefit qualifiers`, () => {
+    for (const qualifiers of [{ owner_ref: "objects/role-a" }, { maturity: "verified" },
+      { approved: true }, { realized_benefit: 42 }]) {
+      const fixture = makeEcPrivateCandidateFixture();
+      const edge = declaredEdge(fixture.input, predicate);
+      changeEdge(fixture.input, edge, row => { row.qualifiers = qualifiers; });
+      assert.throws(() => adapt(fixture), /unexpected edge qualifier/);
+    }
+  });
+}
+
+test("business predicate admission adds only declared relations without inferring owners, maturity or benefit", () => {
+  const fixture = makeEcPrivateCandidateFixture();
+  const out = adapt(fixture);
+  const predicates = new Set<string>(businessPredicates.map(([predicate]) => predicate));
+  const withoutBusinessRelations = adapt({ ...fixture, input: { ...fixture.input,
+    edges: rows(fixture.input.edges).filter(row => !predicates.has(String(row.predicate))) } });
+  for (const table of ["object", "assertion", "measure", "document", "evidence_item"] as const) {
+    assert.deepEqual(out[table], withoutBusinessRelations[table]);
+  }
+  assert.equal(out.relationship.filter(row => businessVerbs.has(row.relationship_type)).length, 6);
+  assert.deepEqual(out.relationship.filter(row => !businessVerbs.has(row.relationship_type)), withoutBusinessRelations.relationship);
+  assert(!out.gaps.some(row => row.reason === "predicate_not_admitted"));
+});
+
+test("all six business relations stay blocked and excluded after matching shadow planning", () => {
+  const out = adapt();
+  const relationships = out.relationship.filter(row => businessVerbs.has(row.relationship_type));
+  assert.equal(relationships.length, 6);
+  const endpointIds = new Set(relationships.flatMap(row => [row.from_object_id, row.to_object_id]));
+  const objects = out.object.filter(row => endpointIds.has(row.id));
+  const readerSlice = { tenantKey: out.binding.tenant_key, assessmentId: out.binding.assessment_id,
+    objects, relationships };
+  const plan = planEcSliceV6Shadow({ ...readerSlice, readerSlice,
+    dictionary: businessPredicates.map(([, verb, from, to, category]) => ({
+      relationship_type: verb, relationship_category: category, directionality: "directed",
+      active: true, allowed_from_object_families: [from], allowed_to_object_families: [to],
+    })) });
+  assert.deepEqual(plan.issues, []);
+  assert.equal(plan.comparison.status, "match");
+  assert.equal(plan.graph_nodes.length, endpointIds.size);
+  assert.equal(plan.graph_edges.length, 6);
+  assert.deepEqual(new Set(plan.graph_edges.map(row => row.relationship_type)), businessVerbs);
+  assert(plan.graph_nodes.every(row => row.confidence === "unknown"));
+  assert(plan.graph_edges.every(row => row.relationship_confidence === "unknown"));
+  assert(plan.graph_quality_reports.every(row => row.inferred_node_count === 0 && row.high_confidence_edge_count === 0));
+  for (const state of [plan, ...plan.graph_nodes.map(row => row.metadata),
+    ...plan.graph_edges.map(row => row.metadata), ...plan.graph_quality_reports.map(row => row.metadata)]) {
+    assert.equal(state.quality_status, "not_ready");
+    assert.equal(state.governance_status, "blocked");
+    assert.equal(state.agent_ready, false);
+    assert.equal(state.serving_eligible, false);
+    assert.equal(state.executive_safe, false);
+    assert.equal(state.adoption_state, "excluded");
+  }
+  for (const row of [out, ...objects, ...relationships]) assertCandidateHolds(row);
 });
 
 test("pure deterministic mapping retains the three application grains and every source row", () => {
@@ -157,20 +313,49 @@ test("canonical predicates preserve direction and mitigation reverses exactly on
   assert.equal(uses.from_object_id, object("ai_use_case"));
   assert.equal(uses.to_object_id, object("ai_tool"));
   assert(!out.relationship.some(row => ["SUPPORTED_BY", "USED_BY"].includes(row.relationship_type)));
-  assert(out.gaps.some(row => row.semantic_type === "design:part_of_unit"));
-  assert(out.source_record.some(row => (row.attributes_json.retained_edge as Row | undefined)?.predicate === "design:part_of_unit"));
+  assert(out.relationship.some(row => row.relationship_type === "PART_OF_UNIT"));
+  assert(!out.gaps.some(row => row.reason === "predicate_not_admitted"));
 });
 
 test("document revisions and evidence spans retain exact sources without promoting requests", () => {
-  const out = adapt();
+  const fixture = makeEcPrivateCandidateFixture();
+  const out = adapt(fixture);
   assert.equal(out.document.length, 2);
   assert.equal(out.evidence_item.length, 2);
   assert.equal(out.document[0].logical_source_id, out.document[1].logical_source_id);
   assert.notEqual(out.document[0].document_source_version, out.document[1].document_source_version);
   assert.notEqual(out.evidence_item[0].evidence_locator.excerpt_sha256, out.evidence_item[1].evidence_locator.excerpt_sha256);
   assert.equal(out.evidence_item[0].document_id, out.document[0].id);
+  assert.equal(out.evidence_item[1].document_id, out.document[1].id);
+  const sidecarIds = new Set([...out.document, ...out.evidence_item].map(row => row.id));
+  assert(!out.object.some(row => sidecarIds.has(row.id)));
+  assert(!out.object.some(row => ["source_document", "evidence_item"].includes(row.canonical_semantic_type)));
+  assert(!out.relationship.some(row => sidecarIds.has(row.from_object_id) || sidecarIds.has(row.to_object_id)));
+  assert(!out.gaps.some(row => row.semantic_type === "design:cites_document"));
+  for (const edge of rows(fixture.input.edges).filter(row => row.predicate === "design:cites_document")) {
+    const locator = edge.source_locator as Row;
+    const source = out.source_record.find(row => row.source_locator.source_version_id === locator.source_version_id &&
+      row.source_locator.row_key === locator.row_key)!;
+    assert.equal((source.payload_json as Row).predicate, "design:cites_document");
+    const evidence = out.evidence_item.find(row => (row.attributes_json.raw_candidate as Row).id === edge.from_id)!;
+    const document = out.document.find(row => (row.attributes_json.raw_candidate as Row).id === edge.to_id)!;
+    const link = source.attributes_json.evidence_link as Row;
+    assert.equal(link.evidence_item_id, evidence.id);
+    assert.equal(link.document_id, document.id);
+    assert.equal(evidence.document_id, document.id);
+    assert.deepEqual(link.source_locator, locator);
+    assertCandidateHolds(source);
+  }
   assert(out.relationship.some(row => row.relationship_type === "EVIDENCE_REQUESTED_FOR"));
-  assert(!out.relationship.some(row => row.relationship_type === "GROUNDED_IN"));
+  assert(!out.relationship.some(row => ["GROUNDED_IN", "CITES_DOCUMENT"].includes(row.relationship_type)));
+});
+
+test("document evidence sidecars reject a different canonical document revision even when raw edge bytes match", () => {
+  const fixture = makeEcPrivateCandidateFixture();
+  const edge = declaredEdge(fixture.input, "design:cites_document");
+  const otherDocument = rows(fixture.input.entities).find(row => row.type === "design:source_document" && row.id !== edge.to_id)!;
+  changeEdge(fixture.input, edge, row => { row.to_id = otherDocument.id; });
+  assert.throws(() => adapt(fixture), /citation|document/);
 });
 
 test("every candidate stays blocked/excluded; absent assertion access is unknown and denied", () => {
@@ -179,10 +364,7 @@ test("every candidate stays blocked/excluded; absent assertion access is unknown
   const out = adapt(fixture);
   for (const row of [out, ...out.source_file, ...out.source_record, ...out.object, ...out.assertion,
     ...out.measure, ...out.relationship, ...out.document, ...out.evidence_item]) {
-    assert.equal(row.agent_readiness_status, "blocked");
-    assert.equal(row.downstream_context_policy, "exclude");
-    assert.equal(row.approvals.load, "not_granted");
-    assert.equal(row.approvals.serving, "not_granted");
+    assertCandidateHolds(row);
   }
   for (const row of out.assertion) {
     assert.equal(row.source_access_scope, "unknown");

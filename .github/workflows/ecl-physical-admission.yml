@@ -30,6 +30,7 @@ on:
       - "scripts/ecl/__tests__/ec-private-candidate-adapter.test.ts"
       - "scripts/ecl/__tests__/ec-slice-manifest-draft.test.ts"
       - "scripts/ecl/__tests__/ec-slice-envelope-policy.test.ts"
+      - "scripts/ecl/__tests__/ec-slice-source-access.test.ts"
       - "scripts/ecl/__tests__/ec-slice-physical.test.ts"
       - "scripts/ecl/__tests__/ec-slice-v6-shadow.test.ts"
       - "scripts/ecl/__tests__/ec_private_candidate_fixture.ts"
@@ -128,7 +129,7 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Prove pure identity, measurement and edge contracts
-        run: node --import tsx --test scripts/ecl/__tests__/ec-private-candidate-adapter.test.ts scripts/ecl/__tests__/ec-slice-manifest-draft.test.ts scripts/ecl/__tests__/ec-slice-envelope-policy.test.ts scripts/ecl/__tests__/ec-slice-v6-shadow.test.ts
+        run: node --import tsx --test scripts/ecl/__tests__/ec-private-candidate-adapter.test.ts scripts/ecl/__tests__/ec-slice-manifest-draft.test.ts scripts/ecl/__tests__/ec-slice-envelope-policy.test.ts scripts/ecl/__tests__/ec-slice-source-access.test.ts scripts/ecl/__tests__/ec-slice-v6-shadow.test.ts
       - name: Prove deterministic evaluation, invalidation and advisory exclusion
         run: node node_modules/jest/bin/jest.js --runInBand --runTestsByPath scripts/ecl/__tests__/ec-slice-rules.test.ts src/lib/governance/__tests__/ec-slice-advisory-readiness.test.ts
       - name: Rehearse schema and generic test fixtures only in disposable Postgres

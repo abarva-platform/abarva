@@ -576,7 +576,89 @@ test("is deterministic, leaves frozen inputs unchanged, and detaches output meta
   };
   attributes.nested.value = "changed output";
   assert.deepEqual(input, before);
-  assert.equal(compareEcSliceV6Shadow(plan, input.readerSlice).status, "match");
+  const comparison = compareEcSliceV6Shadow(plan, input.readerSlice);
+  assert.equal(comparison.status, "mismatch");
+  assert.equal(comparison.node_evidence?.equal, false);
+});
+
+test("valid microsecond intervals survive planning and exact reader comparison", () => {
+  const input = fixture();
+  input.relationships[0].valid_from = "2026-09-01T01:00:00.000001+01:00";
+  input.relationships[0].valid_to = "2026-09-01T00:00:00.000002Z";
+  input.readerSlice!.relationships = structuredClone(input.relationships);
+  const plan = planEcSliceV6Shadow(input);
+  assert.equal(plan.graph_edges.length, 1);
+  assert.equal(plan.comparison.status, "match");
+});
+
+test("shadow planning and reader comparison reject empty and reversed half-open validity intervals", () => {
+  for (const [from, to] of [
+    ["2026-09-01", "2026-09-01"],
+    ["2026-09-01T01:00:00+01:00", "2026-09-01T00:00:00Z"],
+    ["2026-09-01T01:00:00.000001+01:00", "2026-09-01T00:00:00.000001Z"],
+    ["2026-09-01T00:00:00.000002Z", "2026-09-01T00:00:00.000001Z"],
+  ]) {
+    const input = fixture();
+    input.relationships[0].valid_from = from;
+    input.relationships[0].valid_to = to;
+    const plan = planEcSliceV6Shadow(input);
+    assert.equal(plan.graph_edges.length, 0);
+    assert.ok(plan.issues.some(issue => issue.code === "invalid_validity_interval"));
+
+    const valid = fixture();
+    const validPlan = planEcSliceV6Shadow(valid);
+    valid.readerSlice!.relationships[0].valid_from = from;
+    valid.readerSlice!.relationships[0].valid_to = to;
+    assert.equal(compareEcSliceV6Shadow(validPlan, valid.readerSlice).status, "invalid_reader");
+  }
+});
+
+for (const [label, mutation] of [
+  ["qualifier", { qualifiers_json: { declared_scope: "different" } }],
+  ["valid_from", { valid_from: "2026-09-02" }],
+  ["valid_to", { valid_to: "2026-10-02" }],
+  ["source_record", { source_record_id: uid(999) }],
+  ["attributes", { attributes_json: { source_review_revision: "v2" } }],
+] as const) {
+  test(`same edge identity cannot hide ${label} evidence drift`, () => {
+    const input = fixture();
+    input.relationships[0].valid_from = "2026-09-01";
+    input.relationships[0].valid_to = "2026-10-01";
+    input.readerSlice!.relationships = structuredClone(input.relationships);
+    const plan = planEcSliceV6Shadow(input);
+    assert.equal(plan.comparison.status, "match");
+    Object.assign(input.readerSlice!.relationships[0], mutation);
+    const comparison = compareEcSliceV6Shadow(plan, input.readerSlice);
+    assert.equal(comparison.status, "mismatch");
+    assert.equal(comparison.edge_ids?.equal, true);
+    assert.equal(comparison.edge_set?.equal, true);
+    assert.equal(comparison.edge_evidence?.equal, false);
+  });
+}
+
+for (const [label, mutation] of [
+  ["name", { display_name: "Different declared name" }],
+  ["source_record", { source_record_id: uid(999) }],
+  ["attributes", { attributes_json: { source_review_revision: "v2" } }],
+] as const) {
+  test(`same node identity cannot hide ${label} evidence drift`, () => {
+    const input = fixture();
+    const plan = planEcSliceV6Shadow(input);
+    Object.assign(input.readerSlice!.objects[0], mutation);
+    const comparison = compareEcSliceV6Shadow(plan, input.readerSlice);
+    assert.equal(comparison.status, "mismatch");
+    assert.equal(comparison.node_ids?.equal, true);
+    assert.equal(comparison.node_evidence?.equal, false);
+  });
+}
+
+test("semantically equal JSON key order does not create evidence drift", () => {
+  const input = fixture();
+  input.objects[0].attributes_json = { one: 1, two: { three: 3, four: 4 } };
+  input.relationships[0].qualifiers_json = { one: 1, two: 2 };
+  input.readerSlice!.objects[0].attributes_json = { two: { four: 4, three: 3 }, one: 1 };
+  input.readerSlice!.relationships[0].qualifiers_json = { two: 2, one: 1 };
+  assert.equal(planEcSliceV6Shadow(input).comparison.status, "match");
 });
 
 test("invalid explicit scopes throw before planning; a valid empty slice stays blocked", () => {
@@ -620,7 +702,7 @@ test("text assessments survive planning, comparison, keys and metadata with exac
     assert.equal(plan.assessment_id, assessmentId);
     assert.equal(
       plan.contract_version,
-      `ec-slice-v6-shadow/v1/assessment/${assessmentId}`,
+      `ec-slice-v6-shadow/v2/assessment/${assessmentId}`,
     );
     assert.equal(plan.comparison.status, "match");
     assert.equal(plan.graph_nodes[0].metadata.assessment_id, assessmentId);

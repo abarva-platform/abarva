@@ -105,6 +105,7 @@ export async function writeIsolatedEnvelope(db: pg.Client, envelope: EcPrivateCa
       id:row.id,tenant_key,assessment_id,source_file_id:row.source_file_id,native_id:row.native_id,
       record_type:row.record_type,row_number:row.row_number,payload_json:row.payload_json,
       parse_state:row.parse_state,parse_notes:'Isolated fictional contract proof; not client-attested.',
+      attributes_json:{...row.attributes_json,candidate:row},
     });
     for (const row of envelope.object) await insertFixtureRow(db,'ecl_context.object', {
       id:row.id,tenant_key,assessment_id,object_key:row.object_key,object_type:row.object_type,
