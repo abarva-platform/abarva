@@ -2,7 +2,10 @@ import "server-only";
 
 import type PptxGenJS from "pptxgenjs";
 import { COLORS } from "@/lib/design/design-tokens";
-import { layoutReferenceArchitecture, layoutReferenceTable, REFERENCE_TABLE_PADDING_X, REFERENCE_TABLE_PADDING_Y } from "./reference-deck-layout";
+import {
+  layoutReferenceArchitecture, layoutReferenceTable, REFERENCE_BODY_BOTTOM, REFERENCE_BODY_TOP,
+  REFERENCE_TABLE_GAP, REFERENCE_TABLE_PADDING_X, REFERENCE_TABLE_PADDING_Y,
+} from "./reference-deck-layout";
 import {
   figuresOnSlide,
   referenceSourceLine,
@@ -178,7 +181,7 @@ function addBlock(slide: Slide, block: ReferenceBlock, y: number, sharedBody = f
         });
         yy += rowH;
       });
-      return y + layout.height + 0.12;
+      return y + layout.height + REFERENCE_TABLE_GAP;
     }
     case "metrics": {
       const count = block.items.length;
@@ -351,10 +354,10 @@ export async function renderReferenceDeck(spec: ReferenceDeckSpec): Promise<Buff
       content.section ? Math.max(1, SECTIONS.indexOf(content.section === "CONFIRM" ? "VALIDATE" : content.section) + 1) : 1);
     else {
       addChrome(slide, spec, content, index);
-      let y = 1.83;
+      let y = REFERENCE_BODY_TOP;
       for (const block of content.blocks) y = content.archetype === "contents" && block.kind === "table"
         ? addContents(slide, block, y) : addBlock(slide, block, y, content.blocks.length > 1);
-      if (y > 6.16) throw new Error(`reference_deck_body_overflow: slide ${index + 1}`);
+      if (y > REFERENCE_BODY_BOTTOM) throw new Error(`reference_deck_body_overflow: slide ${index + 1}`);
     }
     if (content.speakerNotes) {
       const lineage = (content.sourceIds ?? []).map((id) => {

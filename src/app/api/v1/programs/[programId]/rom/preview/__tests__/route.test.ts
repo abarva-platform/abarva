@@ -202,6 +202,7 @@ describe("POST .../rom/preview — success", () => {
       "Pod & Rates",
       "Releases",
       "Assumptions",
+      "Check",
     ]);
   });
 });

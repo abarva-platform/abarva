@@ -27,6 +27,17 @@ const ratio = (value: unknown): string | null =>
   typeof value === "number" && Number.isFinite(value) ? formatConsultantPercent(value) : null;
 const count = (value: number): string => value.toLocaleString("en-US");
 
+/** Slots for the AI-assisted delivery scenario. The model may use them only on the slide that shows it. */
+export const AI_SCENARIO_SLOTS = {
+  weeksSaved: "rom.ai.weeks_saved",
+  hoursSaved: "rom.ai.hours_saved",
+  costSaved: "rom.ai.cost_saved",
+  toolCost: "rom.ai.tool_cost",
+} as const;
+export const AI_SCENARIO_SLOT_PREFIX = "rom.ai.";
+/** The one slide whose exhibit sets the scenario beside the estimate. */
+export const AI_SCENARIO_ARCHETYPE: ReferenceArchetype = "rom_hours";
+
 /** Governed values stay server-side. Only keys and meanings enter the model prompt. */
 export function buildReferenceSlotTable(inputs: EditionInputs): ReferenceSlotTable {
   const caseBody = inputs.valueCase.status === "ready" && inputs.valueCase.value.figuresRedacted !== true
@@ -65,6 +76,29 @@ export function buildReferenceSlotTable(inputs: EditionInputs): ReferenceSlotTab
     sourceLabel: rom ? `Approved ROM ${rom.id}` : "Approved ROM snapshot unavailable",
     missingPhrase: "unavailable", editions: investment,
   });
+  // The AI-assisted scenario approved beside the estimate: a comparison, never
+  // the funding basis. Each slot is a saving, so it is present only when the
+  // scenario actually saves that much; otherwise the model may not use it.
+  const ai = rom?.result.aiAssisted ?? null;
+  const scenario = (key: string, meaning: string, sourceKey: string, magnitude: number | null, format: (value: number) => string | null) => {
+    const display = rom && ai && magnitude !== null && magnitude > 0 ? format(magnitude) : null;
+    add({
+      key, meaning, display,
+      sourceId: rom && display !== null ? `rom:${rom.id}:ai_assisted:${sourceKey}` : `gap:${key.replaceAll(".", "_")}`,
+      sourceLabel: rom && display !== null ? `Approved ROM ${rom.id}: AI-assisted scenario, comparison only`
+        : ai ? "The AI-assisted scenario does not reduce this figure" : "No AI-assisted scenario approved with the estimate",
+      missingPhrase: "not modelled", editions: investment,
+    });
+  };
+  const hours = (value: number) => value.toLocaleString("en-US", { maximumFractionDigits: 1 });
+  scenario(AI_SCENARIO_SLOTS.weeksSaved, "weeks an AI-assisted delivery scenario would take off the approved estimate; a comparison, not the funding basis",
+    "versus_weeks", ai ? -ai.versusEstimate.weeks : null, count);
+  scenario(AI_SCENARIO_SLOTS.hoursSaved, "delivery hours an AI-assisted delivery scenario would take off the approved estimate; a comparison, not the funding basis",
+    "versus_hours", ai ? -ai.versusEstimate.hours : null, hours);
+  scenario(AI_SCENARIO_SLOTS.costSaved, "how much lower an AI-assisted delivery scenario's cost at plan is than the approved estimate, its AI tool licences included; a comparison, not the funding basis",
+    "versus_plan", ai ? -ai.versusEstimate.planCents : null, cents);
+  scenario(AI_SCENARIO_SLOTS.toolCost, "the AI tool licence cost inside an AI-assisted delivery scenario",
+    "tool_cost", ai ? ai.toolCostCents : null, cents);
   const activeRows = inputs.register.status === "ready" && !inputs.register.value.figuresRedacted
     ? inputs.register.value.assumptions.filter((row) => ["open", "confirmed", "corrected"].includes(String(row.status))) : null;
   add({
@@ -125,6 +159,8 @@ export function buildReferenceNarrativeEvidence(table: ReferenceSlotTable, arche
   return {
     ...(valueKey ? { valueAvailable: available(valueKey) } : {}),
     ...(["releases", "shared_foundation", "rom_hours"].includes(archetype) ? { estimateAvailable: available("rom.total.plan") } : {}),
+    ...(archetype === AI_SCENARIO_ARCHETYPE && edition === "investment"
+      ? { aiScenarioAvailable: Object.values(AI_SCENARIO_SLOTS).some((key) => available(key) === true) } : {}),
     baselineAvailable: available("baseline.current"),
     acceptedOwnersAvailable: nonzero("owners.count.accepted"),
     publicSourcesAvailable: nonzero("sources.count.approved"),

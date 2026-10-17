@@ -31,7 +31,11 @@
  *   rates, or one exact version of the tenant's approved rate card, whose
  *   lines the caller pre-loads (`loadClientRateCard`). A client pin whose card
  *   is not loaded is refused — never re-priced on reference rates.
- * - No AI productivity credit and no tool licence is applied here.
+ * - The estimate carries no AI productivity credit and no tool licence. An
+ *   optional `aiAssist` spec prices a SEPARATE scenario (`aiAssisted`): each
+ *   sourced factor reduces one driver's unit hours (capped at
+ *   ROM_AI_MAX_HOURS_REDUCTION) and each sourced tool is a monthly per-seat
+ *   licence on every block. The estimate's own figures never change.
  *
  * Pure and deterministic: all reference data arrives through the injected
  * `RomReferenceLoaders`. Invalid input returns a typed refusal whose
@@ -41,6 +45,7 @@ import { closeHoursTerms } from "../effort-engine/formula-terms";
 import { roundHours, sumCents } from "../effort-engine/money";
 import {
   pricePod,
+  type PodToolLicence,
   type PodMember,
   type PodPricingResult,
   type PodRateBasis,
@@ -183,9 +188,45 @@ export interface RomClientRateCard {
   lines: NonNullable<PodRateReference["rateCard"]>["clientLines"];
 }
 
+/**
+ * An AI-assisted delivery scenario, priced BESIDE the estimate, never instead
+ * of it. Each factor removes a sourced share of one driver's hours (applied to
+ * its unit hours, so every formula stays traceable); each tool is a sourced
+ * monthly per-seat cost. Nothing here has a default: an absent factor means
+ * that driver's work is not assumed to speed up.
+ */
+export interface RomAiAssistFactor {
+  /** Share of the driver's hours removed, 0 to ROM_AI_MAX_HOURS_REDUCTION. */
+  hoursReduction: number;
+  source: string;
+  confidence: RomConfidence;
+}
+
+export interface RomAiTool {
+  code: string;
+  label: string;
+  /** Monthly cost of one seat, in cents. */
+  monthlyCostCents: number;
+  seats: number;
+  source: string;
+}
+
+export interface RomAiAssistSpec {
+  /** What the scenario is, e.g. "AI coding agents for pipeline build". */
+  label: string;
+  factors: Partial<Record<RomDriver, RomAiAssistFactor>>;
+  tools: readonly RomAiTool[];
+}
+
+/** A larger claimed reduction is refused: evidence a lower unit hour instead. */
+export const ROM_AI_MAX_HOURS_REDUCTION = 0.8;
+const WEEKS_PER_MONTH = 52 / 12;
+
 export interface RomStructure {
   /** Absent = `reference`. */
   rateCard?: RomRateCardPin;
+  /** Absent = no scenario. Never changes the estimate itself. */
+  aiAssist?: RomAiAssistSpec;
   useCases: readonly RomUseCase[];
   unitHours: Partial<Record<RomDriver, RomUnitHours>>;
   releases: readonly RomRelease[];
@@ -326,9 +367,22 @@ export interface RomResult {
     sharedByReleaseCodes: readonly string[];
   } | null;
   total: RomTotal;
-  /** No AI productivity credit is applied anywhere in a ROM. */
-  productivityCreditApplied: false;
+  /** False for the estimate itself; true only on its `aiAssisted` scenario. */
+  productivityCreditApplied: boolean;
+  /** The AI-assisted scenario, when the structure asks for one. Never folded into the figures above. */
+  aiAssisted?: RomAiAssistedResult | null;
 }
+
+/** The same estimate priced with the AI-assisted factors and tool costs. */
+export type RomAiAssistedResult = Omit<RomResult, "aiAssisted" | "productivityCreditApplied"> & {
+  productivityCreditApplied: true;
+  label: string;
+  factors: readonly ({ driver: RomDriver } & RomAiAssistFactor)[];
+  /** Tool cost across every priced block, included in the scenario's totals. */
+  toolCostCents: Cents;
+  /** Scenario minus estimate (negative = fewer). */
+  versusEstimate: { hours: number; weeks: number; planCents: number };
+};
 
 export type RomRefusalCode =
   | "invalid_structure"
@@ -350,7 +404,8 @@ export type RomRefusalCode =
   | "pod_pricing_refused"
   | "invalid_rate_card_pin"
   | "rate_card_unresolved"
-  | "rate_card_unavailable";
+  | "rate_card_unavailable"
+  | "invalid_ai_assist";
 
 export interface RomRefusal {
   ok: false;
@@ -467,6 +522,77 @@ function checkRangeInputs(
 }
 
 /** Shape and semantic checks. Returns the input typed as a structure, or the first refusal. */
+function checkAiAssist(spec: unknown, unitHours: Record<string, unknown>): RomRefusal | null {
+  if (spec === undefined) return null;
+  const bad = (message: string) => refuse("invalid_ai_assist", message);
+  if (!isRecord(spec)) return bad("aiAssist must be an object with a label, factors and tools.");
+  if (!isNonBlank(spec.label)) return bad("The AI-assisted scenario needs a label saying what it assumes.");
+  if (!isRecord(spec.factors) || Object.keys(spec.factors).length === 0) {
+    return bad("The AI-assisted scenario needs at least one factor: the share of one driver's hours it removes.");
+  }
+  for (const [driver, f] of Object.entries(spec.factors)) {
+    if (!(ROM_DRIVERS as readonly string[]).includes(driver)) {
+      return bad(`An AI factor names an unknown driver '${driver}'. Use one of: ${ROM_DRIVERS.join(", ")}.`);
+    }
+    if (unitHours[driver] === undefined || unitHours[driver] === null) {
+      return bad(`An AI factor names ${driver}, which this estimate has no unit hours for.`);
+    }
+    if (!isRecord(f) || !isFiniteNumber(f.hoursReduction) || f.hoursReduction < 0 || f.hoursReduction > ROM_AI_MAX_HOURS_REDUCTION) {
+      return bad(
+        `The AI factor for ${driver} must remove between 0 and ${ROM_AI_MAX_HOURS_REDUCTION * 100}% of its hours. A larger claim needs a lower, evidenced unit hour instead.`,
+      );
+    }
+    if (!isNonBlank(f.source)) return bad(`The AI factor for ${driver} needs a source saying where the reduction comes from.`);
+    if (!ROM_CONFIDENCES.includes(f.confidence as RomConfidence)) {
+      return bad(`The AI factor for ${driver} needs a confidence of low, medium or high.`);
+    }
+  }
+  if (!Array.isArray(spec.tools)) return bad("aiAssist.tools must be a list (it may be empty).");
+  for (const t of spec.tools) {
+    if (!isRecord(t) || !isNonBlank(t.code) || !isNonBlank(t.label)) return bad("Each AI tool needs a code and a label.");
+    if (!Number.isSafeInteger(t.monthlyCostCents) || (t.monthlyCostCents as number) < 0) {
+      return bad(`The AI tool '${String(t.label)}' needs a monthly cost per seat of 0 or more, in whole cents.`);
+    }
+    if (!isFiniteNumber(t.seats) || t.seats < 0) return bad(`The AI tool '${String(t.label)}' needs a number of seats of 0 or more.`);
+    if (!isNonBlank(t.source)) return bad(`The AI tool '${String(t.label)}' needs a source for its cost.`);
+  }
+  return null;
+}
+
+const CONFIDENCE_RANK: Record<RomConfidence, number> = { low: 0, medium: 1, high: 2 };
+const lowerConfidence = (a: RomConfidence, b: RomConfidence): RomConfidence =>
+  CONFIDENCE_RANK[a] <= CONFIDENCE_RANK[b] ? a : b;
+
+/** The estimate's structure with each factored driver's unit hours reduced, and its tools as licences. */
+function aiAssistedStructure(structure: RomStructure, spec: RomAiAssistSpec): {
+  structure: RomStructure;
+  toolLicences: PodToolLicence[];
+} {
+  const unitHours: RomStructure["unitHours"] = { ...structure.unitHours };
+  for (const driver of ROM_DRIVERS) {
+    const factor = spec.factors[driver];
+    const base = structure.unitHours[driver];
+    if (!factor || !base) continue;
+    unitHours[driver] = {
+      value: Math.round(base.value * (1 - factor.hoursReduction) * 10000) / 10000,
+      source: `${base.value} × (1 − ${factor.hoursReduction}) AI-assisted · unit hours: ${base.source} · reduction: ${factor.source}`,
+      confidence: lowerConfidence(base.confidence, factor.confidence),
+    };
+  }
+  return {
+    structure: { ...structure, unitHours },
+    toolLicences: spec.tools.map((t) => ({
+      code: t.code,
+      label: t.label,
+      per: "month",
+      quantity: t.seats,
+      costCentsPerUnit: t.monthlyCostCents,
+      weeksPerMonth: WEEKS_PER_MONTH,
+      source: t.source,
+    })),
+  };
+}
+
 function checkRateCardPin(pin: unknown): RomRefusal | null {
   if (pin === undefined) return null;
   if (!isRecord(pin))
@@ -758,6 +884,8 @@ export function validateRomStructure(
   }
   const pinRefusal = checkRateCardPin(input.rateCard);
   if (pinRefusal) return pinRefusal;
+  const aiRefusal = checkAiAssist(input.aiAssist, unitHours);
+  if (aiRefusal) return aiRefusal;
   return { ok: true, structure: input as unknown as RomStructure };
 }
 
@@ -927,6 +1055,7 @@ function priceBlock(
   structure: RomStructure,
   loaders: RomReferenceLoaders,
   rateResolver: ReturnType<typeof createReferencePodRateResolver>,
+  toolLicences: readonly PodToolLicence[] = [],
 ): RomPricedBlock | RomRefusal {
   const priced = pricePod({
     adjustedHours: hours,
@@ -934,6 +1063,7 @@ function priceBlock(
     hoursPerFteWeek: structure.hoursPerFteWeek.value,
     productiveShare: structure.productiveShare.value,
     rateResolver,
+    ...(toolLicences.length ? { toolLicences } : {}),
   });
   if (!priced.ok) {
     return refuse(
@@ -970,7 +1100,7 @@ function rollupLines(
   block: RomPricedBlock,
   sharedCostRef: string | null,
 ): EffortLineItem[] {
-  return block.pod.memberLines.map((line, i) => ({
+  const members: EffortLineItem[] = block.pod.memberLines.map((line, i) => ({
     archetypeCode: "rom",
     activityPackCode: `${block.kind}:${block.code}`,
     activityPackName: block.name,
@@ -995,6 +1125,33 @@ function rollupLines(
     formulaTrace: block.pod.formulaTrace,
     formulaTerms: line.formulaTerms,
   }));
+  // Tool licences ride along as non-labour cost on lines with no role.
+  const tools: EffortLineItem[] = block.pod.toolLicenceLines.map((tool, i) => ({
+    archetypeCode: "rom",
+    activityPackCode: `${block.kind}:${block.code}`,
+    activityPackName: block.name,
+    category: "technical" as const,
+    ruleCode: `tool-${i + 1}`,
+    operation: "fixed_hours" as const,
+    driverCode: null,
+    driverQuantity: null,
+    modelVersion: 0,
+    scenarioKey: "custom" as const,
+    classification: sharedCostRef ? ("shared_program" as const) : ("initiative_specific" as const),
+    sharedCostRef,
+    roleCode: null,
+    allocationPct: null,
+    moduleHours: null,
+    roleHours: null,
+    rate: null,
+    laborCostCents: null,
+    manualCostCents: tool.costCents,
+    gapReason: null,
+    overrideRationale: null,
+    formulaTrace: block.pod.formulaTrace,
+    formulaTerms: tool.formulaTerms,
+  }));
+  return [...members, ...tools];
 }
 
 export function foundationSharedCostRef(code: string): string {
@@ -1012,7 +1169,39 @@ export function computeRom(
   const validated = validateRomStructure(input);
   if (!validated.ok) return validated;
   const structure = validated.structure;
+  const estimate = priceStructure(structure, loaders, []);
+  if (!estimate.ok || !structure.aiAssist) return estimate;
 
+  const spec = structure.aiAssist;
+  const assisted = aiAssistedStructure(structure, spec);
+  const scenario = priceStructure(assisted.structure, loaders, assisted.toolLicences);
+  if (!scenario.ok) {
+    return refuse(scenario.code, `The AI-assisted scenario could not be priced: ${scenario.message}`);
+  }
+  const blocks = [...scenario.releases.map((r) => r.own), ...(scenario.foundation ? [scenario.foundation.priced] : [])];
+  return {
+    ...estimate,
+    aiAssisted: {
+      ...scenario,
+      productivityCreditApplied: true,
+      label: spec.label,
+      factors: ROM_DRIVERS.filter((d) => spec.factors[d]).map((d) => ({ driver: d, ...(spec.factors[d] as RomAiAssistFactor) })),
+      toolCostCents: sumCents(...blocks.map((b) => b.pod.toolLicenceCostCents)),
+      versusEstimate: {
+        hours: roundHours(scenario.total.hours - estimate.total.hours),
+        weeks: scenario.total.weeks - estimate.total.weeks,
+        planCents: scenario.total.planCents - estimate.total.planCents,
+      },
+    },
+  };
+}
+
+/** Price one validated structure; `toolLicences` are charged on every block. */
+function priceStructure(
+  structure: RomStructure,
+  loaders: RomReferenceLoaders,
+  toolLicences: readonly PodToolLicence[],
+): RomResult | RomRefusal {
   const pod = resolvePod(structure, loaders);
   if ("ok" in pod) return pod;
   const rateReference = loaders.loadRateReference();
@@ -1066,6 +1255,7 @@ export function computeRom(
       structure,
       loaders,
       rateResolver,
+      toolLicences,
     );
     if ("ok" in priced) return priced;
     foundation = {
@@ -1100,6 +1290,7 @@ export function computeRom(
       structure,
       loaders,
       rateResolver,
+      toolLicences,
     );
     if ("ok" in own) return own;
     const sharesFoundation = foundation !== null && sharedBy.has(release.code);
@@ -1150,9 +1341,11 @@ export function computeRom(
         totalLaborCostCents: sumCents(
           ...lineItems.map((l) => l.laborCostCents ?? 0),
         ),
-        totalManualCostCents: 0,
+        totalManualCostCents: sumCents(
+          ...lineItems.map((l) => l.manualCostCents ?? 0),
+        ),
         totalCostCents: sumCents(
-          ...lineItems.map((l) => l.laborCostCents ?? 0),
+          ...lineItems.map((l) => sumCents(l.laborCostCents ?? 0, l.manualCostCents ?? 0)),
         ),
         gapCount: 0,
       },

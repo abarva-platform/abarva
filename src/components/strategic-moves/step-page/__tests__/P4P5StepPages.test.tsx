@@ -24,7 +24,7 @@ import {
 } from "@/lib/programs/value-engine/cost-basis";
 import { stepPageHref } from "@/lib/programs/step-page-views";
 import { FINANCIAL_MODEL_FALLBACK_ERROR, P4_STEP_PAGES } from "../p4-step-pages";
-import { P5_STEP_PAGES } from "../p5-step-pages";
+import { MOBILIZATION_PLAN_FALLBACK_ERROR, P5_STEP_PAGES } from "../p5-step-pages";
 import type { StepPageHostProps } from "../phase-step-pages";
 import { P5TowerHandoff, P5TowerPublicationReadback } from "../P5TowerHandoff";
 import type { P5HandoffView } from "@/lib/programs/p5-measurement-plan";
@@ -39,6 +39,7 @@ jest.mock("../StepEvidence", () => ({
 jest.mock("@/lib/pricing/moves-workflow/approved-rom-snapshot", () => ({
   readApprovedRomSnapshot: jest.fn(),
   previewMatchesApproval: jest.fn().mockReturnValue(true),
+  previewScenarioMatchesApproval: jest.fn().mockReturnValue(true),
 }));
 
 function host(
@@ -918,6 +919,7 @@ describe("P4 and P5 step pages", () => {
       redacted?: boolean;
       blocked?: boolean;
       provisional?: boolean;
+      ai?: boolean;
     } = {},
   ) {
     const model = readValueModel(valuePlan);
@@ -932,8 +934,25 @@ describe("P4 and P5 step pages", () => {
       : resolved;
     const result = evaluateValueCase(withCostBasis(model.model.case, basis));
     if (options.provisional) result.mustValidate = ["L1.attribution"];
+    const aiBasis: CostBasis = {
+      status: "resolved",
+      basis: "rom_snapshot",
+      source: "rom:v2:ai-assisted",
+      deliveryModel: null,
+      cents: { low: 8_000_000, base: 8_000_000, high: 8_000_000 },
+      planningBenchmark: null,
+    };
+    const aiAssisted = options.ai
+      ? {
+          label: "AI coding agents",
+          costBasis: aiBasis,
+          result: evaluateValueCase(withCostBasis(model.model.case, aiBasis)),
+          toolCostCents: 1_064_000,
+          versusEstimate: { hours: -134, weeks: -1, planCents: -2_000_000 },
+        }
+      : null;
     return valueCaseForViewer(
-      { programId: "move-1", result, costBasis: basis, registerInputs: [] },
+      { programId: "move-1", result, costBasis: basis, registerInputs: [], aiAssisted },
       { seesFigures: !options.redacted },
     );
   }
@@ -942,6 +961,31 @@ describe("P4 and P5 step pages", () => {
       .fn()
       .mockResolvedValue({ ok: true, json: async () => body });
   }
+
+  it("shows the approved AI scenario as a comparison only, never as the funded figures", async () => {
+    mockBody(realBody({ ai: true }));
+    render(page(P4_STEP_PAGES, "p4-value", host(4, { value_plan: valuePlan, funding_governance: "Finance review" })));
+    const block = await screen.findByTestId("p4-ai-scenario");
+    expect(block.textContent).toContain("AI coding agents · comparison only, not the funding basis");
+    expect(block.textContent).toContain("Build 1 week shorter; cost at plan $20.0K lower than the estimate, including $10.6K of tool cost.");
+    expect(block.textContent).toMatch(/NPV · plan .+ \(funded estimate .+\)/);
+    expect(block.textContent).toContain("A comparison only: the case is funded on the approved estimate.");
+  });
+
+  it("withholds the scenario's figures from a viewer who may not see them", async () => {
+    mockBody(realBody({ ai: true, redacted: true }));
+    render(page(P4_STEP_PAGES, "p4-value", host(4, { value_plan: valuePlan, funding_governance: "Finance review" })));
+    const block = await screen.findByTestId("p4-ai-scenario");
+    expect(block.textContent).toContain("Figures are withheld");
+    expect(block.textContent).not.toMatch(/\$/);
+  });
+
+  it("shows no scenario when none was approved", async () => {
+    mockBody(realBody());
+    render(page(P4_STEP_PAGES, "p4-value", host(4, { value_plan: valuePlan, funding_governance: "Finance review" })));
+    await screen.findByText(/Engine status/);
+    expect(screen.queryByTestId("p4-ai-scenario")).toBeNull();
+  });
 
   describe("financial model download", () => {
     const saved = () => {
@@ -1560,5 +1604,48 @@ describe("P4 and P5 step pages", () => {
       "mobilization_plan",
       "Mobilization plan names the operations owner role for handoff.",
     );
+  });
+});
+
+describe("P5 mobilization plan download", () => {
+  const plan = () => screen.getByRole("button", { name: "Download mobilization plan (.xlsx)" });
+
+  it("offers the plan workbook on the first-90-days page and downloads it", async () => {
+    const blob = new Blob(["xlsx"]);
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, blob: async () => blob });
+    const created = jest.fn().mockReturnValue("blob:plan");
+    const revoked = jest.fn();
+    Object.defineProperty(URL, "createObjectURL", { configurable: true, value: created });
+    Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: revoked });
+    const click = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    render(page(P5_STEP_PAGES, "p5-first-90", host(5)));
+    fireEvent.click(plan());
+    await waitFor(() => expect(created).toHaveBeenCalledWith(blob));
+    expect(global.fetch).toHaveBeenCalledWith(`/api/v1/programs/${host(5).move.id}/mobilization-plan`, { credentials: "include" });
+    expect(click).toHaveBeenCalledTimes(1);
+    expect(revoked).toHaveBeenCalledWith("blob:plan");
+    expect(screen.queryByRole("alert")).toBeNull();
+    click.mockRestore();
+  });
+
+  it("shows the route's own sentence when it refuses", async () => {
+    const detail = "Approve the delivery estimate in P3 first. The plan's build weeks and cost come from it.";
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 409, json: async () => ({ error: "estimate_not_approved", detail }) });
+    render(page(P5_STEP_PAGES, "p5-first-90", host(5)));
+    fireEvent.click(plan());
+    expect(await screen.findByRole("alert")).toHaveTextContent(detail);
+    expect(plan()).not.toBeDisabled();
+  });
+
+  it("says nothing changed when the refusal has no sentence or the request fails", async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500, json: async () => { throw new Error("not json"); } });
+    const first = render(page(P5_STEP_PAGES, "p5-first-90", host(5)));
+    fireEvent.click(plan());
+    expect(await screen.findByRole("alert")).toHaveTextContent(MOBILIZATION_PLAN_FALLBACK_ERROR);
+    first.unmount();
+    global.fetch = jest.fn().mockRejectedValue(new Error("offline"));
+    render(page(P5_STEP_PAGES, "p5-first-90", host(5)));
+    fireEvent.click(plan());
+    expect(await screen.findByRole("alert")).toHaveTextContent(MOBILIZATION_PLAN_FALLBACK_ERROR);
   });
 });

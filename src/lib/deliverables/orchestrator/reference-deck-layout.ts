@@ -3,6 +3,11 @@ import type { ReferenceBlock, ReferenceCell } from "./reference-deck-model";
 type Table = Extract<ReferenceBlock, { kind: "table" }>;
 export const REFERENCE_TABLE_PADDING_X = 0.12;
 export const REFERENCE_TABLE_PADDING_Y = 0.09;
+/** The body the renderer fills between the action title and the answer bar, in inches. */
+export const REFERENCE_BODY_TOP = 1.83;
+export const REFERENCE_BODY_BOTTOM = 6.16;
+/** The space the renderer leaves below a table. */
+export const REFERENCE_TABLE_GAP = 0.12;
 
 const display = (cell: ReferenceCell): string => typeof cell === "string" ? cell : cell.display;
 

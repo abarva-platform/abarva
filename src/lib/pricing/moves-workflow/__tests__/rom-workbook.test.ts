@@ -440,7 +440,7 @@ describe("ROM workbook", () => {
   const rom = priced(golden());
   const { layout } = buildRomWorkbook(rom);
 
-  it("has the five tabs in order", async () => {
+  it("has the five tabs in order, then the Check", async () => {
     const wb = await readBack(rom);
     expect(wb.worksheets.map((w) => w.name)).toEqual([
       "Estimate",
@@ -448,7 +448,28 @@ describe("ROM workbook", () => {
       "Pod & Rates",
       "Releases",
       "Assumptions",
+      "Check",
     ]);
+  });
+
+  it("checks every block and total against the engine, and the differences sum to 0", async () => {
+    const wb = await readBack(rom);
+    const ev = new Evaluator(wb);
+    const C = ROM_WORKBOOK_SHEETS.check;
+    // Five figures per release and per foundation, four totals.
+    expect(layout.check.rows).toBe(5 * rom.releases.length + 5 + 4);
+    expect(ev.cell(C, layout.check.totalAbsoluteDifference)).toBe(0);
+    const check = wb.getWorksheet(C)!;
+    expect(check.getCell("A2").value).toBe(`'=Release one: hours`);
+    expect(check.getCell("B2").value).toBe(rom.releases[0]!.own.hours);
+    expect((check.getCell("C2").value as ExcelJS.CellFormulaValue).formula).toBe(`'Estimate'!${layout.releases.R1!.hours}`);
+  });
+
+  it("shows a difference on the Check when a workbook input is changed", async () => {
+    const wb = await readBack(rom);
+    wb.getWorksheet(ROM_WORKBOOK_SHEETS.estimate)!.getCell("E5").value = 9;
+    const ev = new Evaluator(wb);
+    expect(ev.cell(ROM_WORKBOOK_SHEETS.check, layout.check.totalAbsoluteDifference)).toBeGreaterThan(0);
   });
 
   it("every formula cell evaluates, from its formula, to its cached value", async () => {
@@ -667,5 +688,81 @@ describe("ROM workbook", () => {
       (c) => ev.cell(c.sheet, c.address) !== c.result,
     );
     expect(mismatches).toEqual([]);
+  });
+});
+
+describe("ROM workbook — the AI-assisted scenario sheet", () => {
+  const AI = ROM_WORKBOOK_SHEETS.aiAssisted;
+  const withAi = (reductions: { design: number; tables: number }, seats = 3): RomStructure => {
+    const s = golden();
+    return {
+      ...s,
+      aiAssist: {
+        label: "AI coding agents",
+        factors: {
+          design_row_count: { hoursReduction: reductions.design, source: "[A:AI1] confirmed · Engineering lead", confidence: "medium" },
+          source_table_count: { hoursReduction: reductions.tables, source: "[A:AI2] confirmed · Engineering lead", confidence: "medium" },
+        },
+        tools: [{ code: "T1", label: "Agent seats", monthlyCostCents: 19000, seats, source: "[A:TC1] confirmed · Finance partner" }],
+      },
+    };
+  };
+  const rom = priced(withAi({ design: 0.4, tables: 0.25 }));
+  const { layout } = buildRomWorkbook(rom);
+  const rowOf = (ws: ExcelJS.Worksheet, label: string) => {
+    let found = 0;
+    ws.eachRow((row) => {
+      if (!found && row.getCell(1).value === label) found = row.number;
+    });
+    return found;
+  };
+
+  it("is added only when the ROM carries a scenario, after the estimate's five tabs", async () => {
+    const wb = await readBack(rom);
+    expect(wb.worksheets.map((w) => w.name)).toEqual(["Estimate", "Component Library", "Pod & Rates", "Releases", "Assumptions", AI, "Check"]);
+    expect(buildRomWorkbook(priced(golden())).layout.aiAssisted).toBeNull();
+  });
+
+  it("checks the scenario's hours, weeks, tool cost and plan against the engine too", async () => {
+    const { layout: withScenario } = buildRomWorkbook(rom);
+    const plain = buildRomWorkbook(priced(golden())).layout;
+    expect(withScenario.check.rows).toBe(plain.check.rows + 4);
+    const ev = new Evaluator(await readBack(rom));
+    expect(ev.cell(ROM_WORKBOOK_SHEETS.check, withScenario.check.totalAbsoluteDifference)).toBe(0);
+  });
+
+  it("every formula cell, the scenario's included, evaluates to its cached value", async () => {
+    const wb = await readBack(rom);
+    const cells = formulaCells(wb);
+    expect(cells.filter((c) => c.sheet === AI).length).toBeGreaterThan(30);
+    const ev = new Evaluator(wb);
+    const mismatches = cells.map((c) => ({ ...c, evaluated: ev.cell(c.sheet, c.address) })).filter((c) => c.evaluated !== c.result);
+    expect(mismatches).toEqual([]);
+  });
+
+  it("evaluates to the engine's scenario, and leaves the estimate's totals as they were", async () => {
+    const wb = await readBack(rom);
+    const ev = new Evaluator(wb);
+    const ai = layout.aiAssisted!;
+    expect(ev.cell(AI, ai.planCents)).toBe(rom.aiAssisted!.total.planCents);
+    expect(ev.cell(AI, ai.hours)).toBe(rom.aiAssisted!.total.hours);
+    expect(ev.cell(AI, ai.weeks)).toBe(rom.aiAssisted!.total.weeks);
+    expect(ev.cell(AI, ai.toolCostCents)).toBe(rom.aiAssisted!.toolCostCents);
+    expect(ev.cell(AI, ai.versusEstimatePlanCents)).toBe(rom.aiAssisted!.versusEstimate.planCents);
+    expect(ev.cell(ROM_WORKBOOK_SHEETS.releases, layout.total.planCents)).toBe(rom.total.planCents);
+    expect(rom.aiAssisted!.toolCostCents).toBeGreaterThan(0);
+  });
+
+  it("is live: a new reduction or seat count recomputes the scenario to what the engine says, and only the scenario", async () => {
+    const wb = await readBack(rom);
+    const ws = wb.getWorksheet(AI)!;
+    ws.getCell(`D${rowOf(ws, "design_row_count")}`).value = 0.6;
+    ws.getCell(`B${rowOf(ws, "Agent seats")}`).value = 5;
+    const expected = priced(withAi({ design: 0.6, tables: 0.25 }, 5));
+    const ev = new Evaluator(wb);
+    expect(ev.cell(AI, layout.aiAssisted!.planCents)).toBe(expected.aiAssisted!.total.planCents);
+    expect(ev.cell(AI, layout.aiAssisted!.toolCostCents)).toBe(expected.aiAssisted!.toolCostCents);
+    expect(ev.cell(ROM_WORKBOOK_SHEETS.releases, layout.total.planCents)).toBe(rom.total.planCents);
+    expect(expected.aiAssisted!.total.planCents).not.toBe(rom.aiAssisted!.total.planCents);
   });
 });

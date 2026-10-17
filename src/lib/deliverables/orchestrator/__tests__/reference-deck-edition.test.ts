@@ -17,6 +17,9 @@ import fs from "node:fs";
 import type { EditionInputs } from "../reference-deck-inputs";
 import type { EditionWords } from "../reference-deck-words";
 import { unavailableEditionWords } from "../reference-deck-words";
+import type { ReferenceCell, ReferenceFigure } from "../reference-deck-model";
+import { AI_SCENARIO_NOT_FUNDING_DETAIL } from "@/lib/programs/value-engine/value-case-view";
+import { buildReferenceNarrativeEvidence, buildReferenceSlotTable } from "../reference-deck-slots";
 
 const basis = (values: number[]) => {
   const totalCents = values.reduce((sum, item) => sum + item, 0);
@@ -666,6 +669,252 @@ describe("live-input reference edition", () => {
     if (process.env.REFERENCE_DECK_VISUAL_OUTPUT)
       fs.writeFileSync(`${process.env.REFERENCE_DECK_VISUAL_OUTPUT}-${edition}.pdf`, Buffer.concat(chunks));
   }, 60_000);
+});
+
+describe("the AI-assisted scenario on the delivery-hours slide", () => {
+  const ROM_ID = "synthetic-approved-estimate";
+  const ROM_SLIDE = INVESTMENT_SEQUENCE.indexOf("rom_hours");
+  const LABEL = "Synthetic coding agents";
+
+  function scenarioInputs(opts: { scenario?: boolean; measured?: boolean; costedOn?: string } = {}): EditionInputs {
+    const inputs = fixture("investment");
+    const at = "2026-10-10T10:00:00Z";
+    const unitHours = {
+      data_source_count: { value: 8, source: "Synthetic unit-hour benchmark", confidence: "medium" as const },
+      source_table_count: { value: 12, source: "Synthetic table benchmark", confidence: "medium" as const },
+      design_row_count: { value: 2, source: "Synthetic design benchmark", confidence: "low" as const },
+    };
+    const releases = [{ code: "First delivery", name: "First delivery", hours: 1200, weeks: 15, lowCents: 45_000_000, planCents: 55_000_000, highCents: 70_000_000 }];
+    const aiAssisted = {
+      spec: { label: LABEL, factors: { design_row_count: { hoursReduction: 0.35, source: "[A:AI1]", confidence: "medium" as const } },
+        tools: [{ code: "T0", label: "Agent seats", seats: 3, monthlyCostCents: 19_000, source: "[A:TC1]", confidence: "medium" as const }] },
+      figures: { hours: 1000, weeks: 12, lowCents: 38_000_000, planCents: 47_000_000, highCents: 60_000_000 },
+      toolCostCents: 1_368_000,
+      versusEstimate: { hours: -200, weeks: -3, planCents: -8_000_000 },
+    };
+    inputs.rom = { status: "ready", value: { id: ROM_ID, approvedAt: at, workbookHref: "https://example.invalid/approved-estimate",
+      result: { version: 1, approvedBy: "synthetic-reviewer", approvedAt: at, inputsFingerprint: "synthetic-fingerprint", unitHours, releases, foundation: null,
+        combined: { hours: 1200, weeks: 15, lowCents: 45_000_000, planCents: 55_000_000, highCents: 70_000_000 },
+        ...(opts.scenario === false ? {} : { aiAssisted }) },
+      workbookStructure: { useCases: [{ code: "Case", name: "Synthetic scope", counts: { data_source_count: 1, source_table_count: 1, design_row_count: 40 } }], unitHours,
+        releases: releases.map((release) => ({ code: release.code, name: release.name, designStatus: "not_designed", useCaseCodes: ["Case"] })),
+        pod: { templateCode: "Synthetic pod", locationCode: "US", rateBasis: "loaded_cost" },
+        friction: { value: 1.1, source: "Synthetic workshop" }, productiveShare: { value: 0.7, source: "Synthetic workshop" }, hoursPerFteWeek: { value: 40, source: "Synthetic workshop" } },
+    } };
+    if (inputs.valueCase.status !== "ready") throw new Error("fixture value case");
+    const value = inputs.valueCase.value;
+    Object.assign((value.case as { economics: Record<string, unknown> }).economics, { npvCents: { base: 150_000_000 }, paybackMonth: { base: 14 } });
+    value.costBasis = { status: "resolved", basis: "rom_snapshot", source: opts.costedOn ?? `rom:${ROM_ID}` };
+    value.aiAssisted = opts.scenario === false || opts.measured === false ? null : {
+      label: LABEL, fundingBasis: false, status: "evaluated", detail: AI_SCENARIO_NOT_FUNDING_DETAIL,
+      costBasis: { status: "resolved", basis: "rom_snapshot", source: `rom:${ROM_ID}:ai-assisted` },
+      economics: { npvCents: { base: 158_000_000 }, paybackMonth: { base: 12 } },
+      toolCostCents: aiAssisted.toolCostCents, versusEstimate: aiAssisted.versusEstimate,
+    };
+    return inputs;
+  }
+  const build = (inputs: EditionInputs) => buildReferenceEdition(inputs, words(INVESTMENT_SEQUENCE.length));
+  type Table = Extract<ReferenceBlock, { kind: "table" }>;
+  const tablesOf = (spec: ReturnType<typeof build>) => spec.slides[ROM_SLIDE]!.blocks.filter((block): block is Table => block.kind === "table");
+  const shown = (row: ReferenceCell[]) => row.map((cell) => typeof cell === "string" ? cell : cell.display);
+  const comparisonOf = (spec: ReturnType<typeof build>) =>
+    tablesOf(spec).find((block) => block.rows[0]?.[0] === "Approved estimate · funding basis");
+  /** Each measure as [header, estimate, scenario, difference]. */
+  const comparisonRows = (spec: ReturnType<typeof build>) => {
+    const comparison = comparisonOf(spec);
+    return comparison ? comparison.columns.slice(1).map((header, index) =>
+      [header, ...comparison.rows.map((row) => shown([row[index + 1]!])[0]!)]) : null;
+  };
+
+  it("sets the approved scenario beside the estimate, every figure bound, the estimate named the funding basis", async () => {
+    const spec = build(scenarioInputs());
+    const [, comparison] = tablesOf(spec);
+    expect(comparison?.rows.map((row) => row[0])).toEqual(["Approved estimate · funding basis", "AI-assisted scenario · comparison", "Difference"]);
+    expect(comparison?.decisiveRows).toEqual([0]);
+    expect(comparisonRows(spec)).toEqual([
+      ["Effort", "1,200 h", "1,000 h", "\u2212200 h"],
+      ["Duration", "15 weeks", "12 weeks", "\u22123 weeks"],
+      ["Cost at plan", "$0.55M", "$0.47M", "\u2212$80.0K"],
+      ["AI tool licences", "None added", "$13.7K", "In scenario cost"],
+      ["NPV", "$1.50M", "$1.58M", "+$80.0K"],
+      ["Payback", "14 months", "12 months", "\u22122 months"],
+    ]);
+    const bound = comparison!.rows.flat().filter((cell): cell is ReferenceFigure => typeof cell !== "string");
+    expect(bound.map((figure) => figure.sourceId).sort()).toEqual([
+      `rom:${ROM_ID}:combined_hours`, `rom:${ROM_ID}:ai_assisted:hours`, `rom:${ROM_ID}:ai_assisted:versus_hours`,
+      `rom:${ROM_ID}:combined_weeks`, `rom:${ROM_ID}:ai_assisted:weeks`, `rom:${ROM_ID}:ai_assisted:versus_weeks`,
+      `rom:${ROM_ID}:combined_plan`, `rom:${ROM_ID}:ai_assisted:plan`, `rom:${ROM_ID}:ai_assisted:versus_plan`,
+      `rom:${ROM_ID}:ai_assisted:tool_cost`,
+      "engine:npv_base", "engine:ai_assisted_npv_base", "engine:ai_assisted_npv_versus_estimate",
+      "engine:payback_month_base", "engine:ai_assisted_payback_month_base", "engine:ai_assisted_payback_versus_estimate",
+    ].sort());
+    const ledger = new Set(spec.figureLedger.map((figure) => `${figure.sourceId}\u0000${figure.display}\u0000${figure.workbookCell}`));
+    for (const figure of bound) {
+      expect(ledger.has(`${figure.sourceId}\u0000${figure.display}\u0000${figure.workbookCell}`)).toBe(true);
+      expect(spec.slides[ROM_SLIDE]!.sourceIds).toContain(figure.sourceId);
+    }
+    // The funding basis everywhere else stays the estimate: the summary's delivery figure IS the comparison's estimate cell.
+    const summary = spec.slides[INVESTMENT_SEQUENCE.indexOf("one_page")]!.blocks[0]!;
+    const delivery = summary.kind === "metrics" ? summary.items.find((item) => item.label === "Delivery estimate")?.value : null;
+    expect(delivery).toBe(comparison!.rows[0]![3]);
+    expect(spec.slides[ROM_SLIDE]!.speakerNotes).toContain(`AI-assisted scenario: ${LABEL}. ${AI_SCENARIO_NOT_FUNDING_DETAIL}`);
+
+    const rendered = await inspectDeck(await renderReferenceDeck(spec));
+    expect(judgeRenderedDeck(rendered, { referenceDeck: spec }).findings.filter((finding) =>
+      ["reference_layout", "off_canvas", "reference_source", "reference_edition", "reference_client_copy"].includes(finding.kind))).toEqual([]);
+    expect(rendered.slides[ROM_SLIDE]?.textRuns).toEqual(expect.arrayContaining(["Approved estimate · funding basis", "AI-assisted scenario · comparison", "$0.47M"]));
+    expect(rendered.slides[ROM_SLIDE]?.notesText).toContain(`rom:${ROM_ID}:ai_assisted:plan`);
+    if (process.env.REFERENCE_DECK_VISUAL_OUTPUT) fs.writeFileSync(`${process.env.REFERENCE_DECK_VISUAL_OUTPUT}-ai-scenario.pptx`, await renderReferenceDeck(spec));
+  }, 60_000);
+
+  it("gives up driver rows, never comparison cells, to fit the slide, and binds only the drivers it shows", async () => {
+    expect(tablesOf(build(scenarioInputs()))[0]?.rows).toHaveLength(3);
+    // Long figures in every cell wrap the comparison; the driver table gives up its last row so the body still fits.
+    const crowded = scenarioInputs();
+    if (crowded.rom.status !== "ready" || !crowded.rom.value.result.aiAssisted || crowded.valueCase.status !== "ready") throw new Error("fixture");
+    const long = 1e10;
+    const rom = crowded.rom.value.result;
+    const ai = rom.aiAssisted!;
+    Object.assign(rom.combined, { hours: long + 0.5, weeks: long, planCents: long * 100 });
+    Object.assign(ai.figures, { hours: long + 0.5, weeks: long, planCents: long * 100 });
+    Object.assign(ai.versusEstimate, { hours: -long - 0.5, weeks: -long, planCents: -long * 100 });
+    ai.toolCostCents = long * 100;
+    const value = crowded.valueCase.value;
+    Object.assign((value.case as { economics: Record<string, unknown> }).economics, { npvCents: { base: long * 100 }, paybackMonth: { base: long } });
+    Object.assign((value.aiAssisted as { economics: Record<string, unknown> }).economics, { npvCents: { base: long * 300 }, paybackMonth: { base: long * 3 } });
+    const spec = build(crowded);
+    const [drivers, comparison] = tablesOf(spec);
+    expect(comparison?.columns).toHaveLength(7);
+    expect(comparisonRows(spec)?.[1]).toEqual(["Duration", "10,000,000,000 weeks", "10,000,000,000 weeks", "\u221210,000,000,000 weeks"]);
+    expect(drivers?.rows.map((row) => row[0])).toEqual(["Data sources", "Source tables"]);
+    expect(spec.figureLedger.some((figure) => figure.sourceId === `rom:${ROM_ID}:unit_hours:design_row_count`)).toBe(false);
+    await expect(renderReferenceDeck(spec)).resolves.toBeInstanceOf(Buffer);
+  }, 60_000);
+
+  it("shows a funded figure still to confirm in words, beside the scenario, and keeps every driver", () => {
+    const inputs = scenarioInputs();
+    if (inputs.valueCase.status !== "ready") throw new Error("fixture");
+    const economics = (inputs.valueCase.value.case as { economics: Record<string, unknown> }).economics;
+    delete economics.npvCents;
+    delete economics.paybackMonth;
+    const spec = build(inputs);
+    expect(comparisonRows(spec)?.slice(4).map((measure) => measure.slice(0, 2))).toEqual([["NPV", "To confirm"], ["Payback", "To confirm"]]);
+    expect(tablesOf(spec)[0]?.rows).toHaveLength(3);
+  });
+
+  it("leaves the slide as it was when no scenario was approved", () => {
+    const spec = build(scenarioInputs({ scenario: false }));
+    expect(tablesOf(spec)).toHaveLength(1);
+    expect(tablesOf(spec)[0]?.rows).toHaveLength(3);
+    expect(spec.slides[ROM_SLIDE]!.speakerNotes).not.toMatch(/AI-assisted/);
+    expect(spec.figureLedger.some((figure) => figure.sourceId.includes("ai_assisted"))).toBe(false);
+  });
+
+  it("says why the case's return is not compared, by cause", () => {
+    const notes = (spec: ReturnType<typeof build>) => spec.slides[ROM_SLIDE]!.speakerNotes ?? "";
+    const delivery = 4;
+
+    const otherBasis = build(scenarioInputs({ costedOn: "estimate_model:internal" }));
+    expect(comparisonRows(otherBasis)).toHaveLength(delivery);
+    expect(notes(otherBasis)).toContain("The value case is not costed on this approved estimate");
+
+    const unmeasured = build(scenarioInputs({ measured: false }));
+    expect(comparisonRows(unmeasured)?.slice(delivery)).toEqual([
+      ["NPV", "$1.50M", "Not measured", "Not comparable"],
+      ["Payback", "14 months", "Not measured", "Not comparable"],
+    ]);
+    expect(notes(unmeasured)).toContain("The value case has not been measured against this scenario.");
+
+    const failed = scenarioInputs();
+    failed.valueCase = { status: "failed", detail: "Value case could not be read." };
+    expect(comparisonRows(build(failed))).toHaveLength(delivery);
+    expect(notes(build(failed))).toContain("The value case is not available to this deck");
+
+    const redacted = scenarioInputs();
+    if (redacted.valueCase.status === "ready") redacted.valueCase.value.figuresRedacted = true;
+    expect(comparisonRows(build(redacted))).toHaveLength(delivery);
+    expect(notes(build(redacted))).toContain("The value case is not available to this deck");
+
+    const notEvaluated = scenarioInputs();
+    if (notEvaluated.valueCase.status === "ready") (notEvaluated.valueCase.value.case as Record<string, unknown>).economics = null;
+    expect(comparisonRows(build(notEvaluated))).toHaveLength(delivery);
+    expect(notes(build(notEvaluated))).toContain("The value case has no calculated return yet");
+  });
+
+  it("measures the scenario's return only from the value case that priced this same scenario", () => {
+    const scenarioCase = (inputs: EditionInputs) =>
+      (inputs.valueCase.status === "ready" ? inputs.valueCase.value.aiAssisted : null) as Record<string, unknown>;
+    const otherSnapshot = scenarioInputs();
+    scenarioCase(otherSnapshot).costBasis = { status: "resolved", basis: "rom_snapshot", source: "rom:other-estimate:ai-assisted" };
+    const funding = scenarioInputs();
+    scenarioCase(funding).fundingBasis = true;
+    const unevaluated = scenarioInputs();
+    scenarioCase(unevaluated).status = "blocked";
+    for (const inputs of [otherSnapshot, funding, unevaluated])
+      expect(comparisonRows(build(inputs))?.[4]).toEqual(["NPV", "$1.50M", "Not measured", "Not comparable"]);
+  });
+
+  it("states a payback outside the horizon in words and does not difference it", () => {
+    const inputs = scenarioInputs();
+    if (inputs.valueCase.status === "ready") ((inputs.valueCase.value.aiAssisted as Record<string, unknown>).economics as Record<string, unknown>).paybackMonth = { base: null };
+    expect(comparisonRows(build(inputs))?.[5]).toEqual(["Payback", "14 months", "Not within horizon", "Not comparable"]);
+  });
+
+  it("offers the slide words only the savings the scenario makes", () => {
+    const table = buildReferenceSlotTable(scenarioInputs());
+    expect(["rom.ai.weeks_saved", "rom.ai.hours_saved", "rom.ai.cost_saved", "rom.ai.tool_cost"].map((key) => [table[key]?.display, table[key]?.sourceId])).toEqual([
+      ["3", `rom:${ROM_ID}:ai_assisted:versus_weeks`],
+      ["200", `rom:${ROM_ID}:ai_assisted:versus_hours`],
+      ["$80,000", `rom:${ROM_ID}:ai_assisted:versus_plan`],
+      ["$13,680", `rom:${ROM_ID}:ai_assisted:tool_cost`],
+    ]);
+    expect(table["rom.ai.weeks_saved"]?.editions).toEqual(["investment"]);
+    expect(buildReferenceNarrativeEvidence(table, "rom_hours", "investment").aiScenarioAvailable).toBe(true);
+    expect(buildReferenceNarrativeEvidence(table, "releases", "investment")).not.toHaveProperty("aiScenarioAvailable");
+    expect(buildReferenceNarrativeEvidence(table, "rom_hours", "validation")).not.toHaveProperty("aiScenarioAvailable");
+
+    // A scenario that costs more saves no money: that slot is withheld, the others stand.
+    // Hours that rise, or weeks that do not move, are not savings either.
+    const dearer = scenarioInputs();
+    if (dearer.rom.status === "ready") Object.assign(dearer.rom.value.result.aiAssisted!.versusEstimate, { planCents: 2_000_000, hours: 50 });
+    const dearerTable = buildReferenceSlotTable(dearer);
+    expect(dearerTable["rom.ai.cost_saved"]).toMatchObject({ display: null, sourceId: "gap:rom_ai_cost_saved", sourceLabel: "The AI-assisted scenario does not reduce this figure" });
+    expect(dearerTable["rom.ai.hours_saved"]?.display).toBeNull();
+    expect(dearerTable["rom.ai.weeks_saved"]?.display).toBe("3");
+    const level = scenarioInputs();
+    if (level.rom.status === "ready") level.rom.value.result.aiAssisted!.versusEstimate.weeks = 0;
+    expect(buildReferenceSlotTable(level)["rom.ai.weeks_saved"]?.display).toBeNull();
+
+    const none = buildReferenceSlotTable(scenarioInputs({ scenario: false }));
+    expect(none["rom.ai.weeks_saved"]).toMatchObject({ display: null, sourceLabel: "No AI-assisted scenario approved with the estimate" });
+    expect(buildReferenceNarrativeEvidence(none, "rom_hours", "investment").aiScenarioAvailable).toBe(false);
+  });
+
+  it("binds a scenario saving the slide's answer cites, beside the comparison", async () => {
+    const authored = words(INVESTMENT_SEQUENCE.length);
+    authored[ROM_SLIDE] = {
+      title: "The delivery estimate is {rom.total.plan} across the work",
+      answer: "An AI-assisted scenario would take {rom.ai.weeks_saved} weeks off, as a comparison only.",
+      notes: "The point: the estimate funds the case. How to read: compare the scenario row with the estimate row.",
+    };
+    const spec = buildReferenceEdition(scenarioInputs(), authored);
+    const slide = spec.slides[ROM_SLIDE]!;
+    expect(slide.answer).toBe("An AI-assisted scenario would take 3 weeks off, as a comparison only.");
+    expect(slide.visibleNarrativeFigures).toContainEqual(expect.objectContaining({ display: "3", sourceId: `rom:${ROM_ID}:ai_assisted:versus_weeks` }));
+    expect(slide.sourceIds).toContain(`rom:${ROM_ID}:ai_assisted:versus_weeks`);
+    expect(validateReferenceDeck(spec).filter((finding) => finding.blocking)).toEqual([]);
+    const rendered = await inspectDeck(await renderReferenceDeck(spec));
+    expect(judgeRenderedDeck(rendered, { referenceDeck: spec }).findings.filter((finding) =>
+      ["reference_layout", "off_canvas", "reference_source", "reference_edition", "reference_client_copy"].includes(finding.kind))).toEqual([]);
+  }, 60_000);
+
+  it("never reaches the validation edition", () => {
+    const inputs = scenarioInputs();
+    inputs.edition = "validation";
+    const spec = buildReferenceEdition(inputs, words(VALIDATION_SEQUENCE.length));
+    expect(spec.figureLedger.some((figure) => figure.sourceId.includes("ai_assisted"))).toBe(false);
+    expect(spec.slides.some((slide) => /AI-assisted/.test(slide.speakerNotes ?? ""))).toBe(false);
+  });
 });
 
 describe("approvedRomLoaders — the deck workbook recomputes on the approval's own card", () => {

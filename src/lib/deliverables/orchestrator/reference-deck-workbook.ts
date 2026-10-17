@@ -8,7 +8,7 @@ import { createCommittedRomReferenceLoaders, loadCommittedRomRoles } from "@/lib
 import { resolveRomRateCard, withClientRateCard } from "@/lib/pricing/moves-workflow/rom-rate-card";
 import type { RomReferenceLoaders } from "@/lib/pricing/moves-workflow/rom-service";
 import { buildRomWorkbook } from "@/lib/pricing/moves-workflow/rom-workbook";
-import { previewMatchesApproval } from "@/lib/pricing/moves-workflow/approved-rom-snapshot";
+import { previewMatchesApproval, previewScenarioMatchesApproval } from "@/lib/pricing/moves-workflow/approved-rom-snapshot";
 
 const SHEET_FIGURES = "Deck Figures";
 const SHEET_VALUE = "Value Case";
@@ -46,7 +46,7 @@ export async function buildReferenceWorkbook(
   if (spec.edition === "investment" && inputs.rom.status === "ready") {
     const structure = inputs.rom.value.workbookStructure;
     const result = computeRom(structure, await approvedRomLoaders(tenantKey, structure.rateCard));
-    if (!result.ok || !previewMatchesApproval(result, inputs.rom.value.result)) {
+    if (!result.ok || !previewMatchesApproval(result, inputs.rom.value.result) || !previewScenarioMatchesApproval(result, inputs.rom.value.result)) {
       throw new Error("reference_rom_workbook_mismatch");
     }
     workbook = buildRomWorkbook(result).workbook;

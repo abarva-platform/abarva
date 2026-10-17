@@ -71,6 +71,60 @@ function MeasurementBaselines({ moveId }: { moveId: string }) {
   );
 }
 
+/** The sentence the download row shows when the route gives none. */
+export const MOBILIZATION_PLAN_FALLBACK_ERROR = "The plan could not be downloaded. Nothing was changed; try again.";
+
+/**
+ * Downloads the mobilization and execution plan workbook. Its build weeks and
+ * team cost come from the approved estimate, so the route refuses, with its own
+ * sentence, until an approved and current estimate exists.
+ */
+export function MobilizationPlanDownload({ moveId }: { moveId: string }) {
+  const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const download = async () => {
+    setDownloading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/v1/programs/${encodeURIComponent(moveId)}/mobilization-plan`, { credentials: "include" });
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { detail?: unknown } | null;
+        setError(typeof body?.detail === "string" && body.detail ? body.detail : MOBILIZATION_PLAN_FALLBACK_ERROR);
+        return;
+      }
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `mobilization-plan-${moveId}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError(MOBILIZATION_PLAN_FALLBACK_ERROR);
+    } finally {
+      setDownloading(false);
+    }
+  };
+  return (
+    <div>
+      <p className={styles.proposal}>
+        A live workbook the delivery owner runs from: build blocks and team cost by
+        week from the approved estimate, milestones from P4, owners from P3, and
+        the readiness and open items recorded here. Nothing is stored.
+      </p>
+      <button type="button" className={styles["btn-ink"]} disabled={downloading} onClick={() => void download()}>
+        {downloading ? "Building the plan…" : "Download mobilization plan (.xlsx)"}
+      </button>
+      {error && (
+        <p role="alert" className={styles["item-note"]}>
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export const P5_STEP_PAGES: PhaseStepPageMap = {
   "p5-owners": (host) => (
     <CaptureStepPage
@@ -179,6 +233,18 @@ export const P5_STEP_PAGES: PhaseStepPageMap = {
       title="Plan the first 90 days"
       intro="Record the handoff sequence and open items without claiming execution has started."
       checkIds={["p5_open_risks_recorded"]}
+      beforeRows={[
+        {
+          id: "PLAN_WORKBOOK",
+          rank: 0,
+          shortName: "plan workbook",
+          subject: "Mobilization and execution plan",
+          state: "settled",
+          wide: true,
+          middle: <MobilizationPlanDownload key={host.move.id} moveId={host.move.id} />,
+          facts: [{ kind: "est", text: "Durations and cost from the approved estimate; milestones from P4." }],
+        },
+      ]}
       fields={[
         field(
           "first_90_days",

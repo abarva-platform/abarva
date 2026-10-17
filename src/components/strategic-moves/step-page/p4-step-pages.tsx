@@ -5,6 +5,7 @@ import { EstimateModelEditor } from "@/components/strategic-moves/EstimateModelE
 import { CaptureNotesFill } from "@/components/strategic-moves/CaptureNotesFill";
 import {
   previewMatchesApproval,
+  previewScenarioMatchesApproval,
   readApprovedRomSnapshot,
   type ApprovedRomRead,
   type ApprovedRomSnapshot,
@@ -298,6 +299,68 @@ export function CaptureStepPage({
   });
 }
 
+/**
+ * The same value case measured against the AI-assisted scenario approved
+ * beside the P3 estimate. A comparison only; the funded figures above are the
+ * estimate's. Figures are withheld for viewers who may not see them.
+ */
+/** "Build 1 week shorter; cost at plan $29.7K lower than the estimate, including $10.6K of tool cost." */
+function versusSentence(versus: Record<string, unknown> | undefined, toolCostCents: unknown): string {
+  const weeks = typeof versus?.weeks === "number" ? versus.weeks : 0;
+  const cents = typeof versus?.planCents === "number" ? versus.planCents : 0;
+  const build =
+    weeks === 0 ? "Build the same length" : `Build ${Math.abs(weeks)} ${Math.abs(weeks) === 1 ? "week" : "weeks"} ${weeks < 0 ? "shorter" : "longer"}`;
+  const cost =
+    cents === 0
+      ? "cost at plan the same as the estimate"
+      : `cost at plan ${formatValueCents(Math.abs(cents))} ${cents < 0 ? "lower" : "higher"} than the estimate`;
+  return `${build}; ${cost}, including ${formatValueCents(toolCostCents)} of tool cost.`;
+}
+
+function AiScenarioComparison({
+  scenario,
+  fundedNpvBase,
+  fundedPaybackBase,
+}: {
+  scenario: Record<string, unknown> | null | undefined;
+  fundedNpvBase: unknown;
+  fundedPaybackBase: unknown;
+}) {
+  if (!scenario || typeof scenario !== "object") return null;
+  const label = String(scenario.label ?? "AI-assisted scenario");
+  const detail = String(scenario.detail ?? "");
+  if (scenario.figuresRedacted === true) {
+    return (
+      <p className={cx("item-note")} data-testid="p4-ai-scenario">
+        <strong>{label}</strong> · comparison only. Figures are withheld for your access level.
+      </p>
+    );
+  }
+  const economics = scenario.economics as Record<string, unknown> | null | undefined;
+  const npv = economics?.npvCents as Record<string, unknown> | undefined;
+  const payback = economics?.paybackMonth as Record<string, unknown> | undefined;
+  const versus = scenario.versusEstimate as Record<string, unknown> | undefined;
+  const paybackText = (value: unknown) =>
+    value === null ? "not reached" : value === undefined ? "unknown" : `${String(value)} months`;
+  return (
+    <div className={cx("proposal")} data-testid="p4-ai-scenario">
+      <strong>{label}</strong> · comparison only, not the funding basis
+      {scenario.status !== "evaluated" ? (
+        <p className={cx("item-note")}>The scenario could not be evaluated: {String(scenario.status)}.</p>
+      ) : (
+        <ul className={cx("items")}>
+          <li>NPV · plan {formatValueCents(npv?.base)} (funded estimate {formatValueCents(fundedNpvBase)})</li>
+          <li>
+            Payback · plan {paybackText(payback?.base)} (funded estimate {paybackText(fundedPaybackBase)})
+          </li>
+          <li>{versusSentence(versus, scenario.toolCostCents)}</li>
+        </ul>
+      )}
+      <p className={cx("item-note")}>{detail}</p>
+    </div>
+  );
+}
+
 function EstimateBasis({
   moveId,
   snapshot,
@@ -334,7 +397,7 @@ function EstimateBasis({
       const preview = await fetch(jsonHref, request);
       if (!preview.ok) throw new Error("The ROM preview could not be read.");
       const body = (await preview.json()) as { rom?: RomResult };
-      if (!body.rom?.ok || !previewMatchesApproval(body.rom, snapshot.result)) {
+      if (!body.rom?.ok || !previewMatchesApproval(body.rom, snapshot.result) || !previewScenarioMatchesApproval(body.rom, snapshot.result)) {
         throw new Error(
           "The cost reference changed since approval. Reapprove the estimate in P3 Step 4 before downloading a workbook.",
         );
@@ -642,6 +705,11 @@ function ValueCaseReadback({
           Three-year credited cash ROI is not available for this case.
         </p>
       ) : null}
+      <AiScenarioComparison
+        scenario={body?.aiAssisted as Record<string, unknown> | null | undefined}
+        fundedNpvBase={npv?.base}
+        fundedPaybackBase={payback?.base}
+      />
       {body?.figuresRedacted !== true &&
         model?.case.levers.map((lever) => (
           <p key={`${lever.id}-timing`} className={cx("item-note")}>
