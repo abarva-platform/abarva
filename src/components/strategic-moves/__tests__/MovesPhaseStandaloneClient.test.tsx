@@ -5716,6 +5716,20 @@ describe("MovesPhaseStandaloneClient", () => {
       });
     });
 
+    it.each([undefined, "Synthetic demo data"])("shows only the declared synthetic notice (%s)", (notice) => {
+      const props = {
+        captureV2Enabled: true, stepPagesV3Enabled: true, phaseStepPagesEnabled: true,
+        carriesForwardContent: [], evidenceNeedPackets: [],
+        move: makeMove({ currentPhase: 0, phaseLabel: "P0 Originate" }),
+        phaseNum: 0, phaseTallies: [...phaseTallies], syntheticNote: notice,
+      };
+      const step = render(<MovesPhaseStandaloneClient {...props} initialStepView="p0-signal" />);
+      expect(screen.queryByText("Synthetic demo data") !== null).toBe(Boolean(notice));
+      step.unmount();
+      render(<MovesPhaseStandaloneClient {...props} initialWorkspaceView="files" />);
+      expect(screen.queryByText("Synthetic demo data") !== null).toBe(Boolean(notice));
+    });
+
     it("autosaves the P0 gate recommendation before approval", async () => {
       render(
         <MovesPhaseStandaloneClient
@@ -6187,6 +6201,33 @@ describe("MovesPhaseStandaloneClient", () => {
       container.querySelector(
         'nav[aria-label="Design steps"] li',
       ) as HTMLElement;
+
+    it("keeps declared foundation options when the readiness report is unavailable", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          canApproveGates
+          captureV2Enabled
+          stepPagesV3Enabled
+          initialStepView="architecture-options"
+          priorPhaseCapture={{ gapsRootCauses: p2, baselineMetrics: "" }}
+          initialPhaseCaptureValues={{ design_traceability: trace }}
+          currentStateReadiness={null}
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({
+            currentPhase: 3,
+            phaseLabel: "P3 Design",
+            name: "Clinical and claims data foundation",
+            functionPackKey: "healthcare_member_services",
+            charter: { classification: { archetype: "governed_data_foundation" } },
+          })}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+      expect(screen.getAllByText("Certified semantic layer on the current platform").length).toBeGreaterThan(0);
+      expect(screen.queryByText("Governed agent-assist layer on current systems")).not.toBeInTheDocument();
+    });
 
     it("renders Step 2 in the dock, blocked, with Step 1 open in the step bar, while Step 1 is unsettled", () => {
       const { container } = render(

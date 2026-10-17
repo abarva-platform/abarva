@@ -278,6 +278,7 @@ import { evaluateEstimateModel } from "@/lib/programs/estimate-model";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
 import { summariseCapturedBrief } from "./originate-figure-labels";
 import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
+import { charterDeclaredArchetypeId, resolveDeclaredArchetypeId } from "@/lib/programs/archetypes/declared-archetype-precedence";
 import {
   assembleP3SolutionOptions,
   buildP3DesignInputsPackFromSignals,
@@ -405,6 +406,8 @@ interface MovesPhaseStandaloneClientProps {
   initialStageReadinessPreview?: StageReadinessWorkbookParsePreview | null;
   syntheticEvidencePackHref?: string | null;
   currentStateReadiness?: ReadinessReport | null;
+  /** Supplied from the authenticated tenant's declared data classification. */
+  syntheticNote?: string;
   initialSubstepKey?: SubstepKey;
   /** `moves_pricing_engine` feature flag, resolved server-side (tenant-gated, default OFF) — see the phase page. Gates the "Cost & Effort" workspace tab entirely; when false the button does not render at all. */
   pricingEngineEnabled?: boolean;
@@ -1145,6 +1148,7 @@ export function MovesPhaseStandaloneClient({
   initialStageReadinessPreview = null,
   syntheticEvidencePackHref = null,
   currentStateReadiness = null,
+  syntheticNote,
   initialSubstepKey,
   pricingEngineEnabled = false,
   riskAssessmentEnabled = false,
@@ -1652,6 +1656,10 @@ export function MovesPhaseStandaloneClient({
     () =>
       assembleP3SolutionOptions({
         archetype: move.archetype,
+        declaredArchetypeId: resolveDeclaredArchetypeId({
+          functionPackKey: move.functionPackKey,
+          charterClassificationArchetype: charterDeclaredArchetypeId(move.charter),
+        }),
         designInputs: p3DesignInputsPack,
         evidenceNeedPackets,
         industryCode: move.tenant.industryCode,
@@ -1666,6 +1674,8 @@ export function MovesPhaseStandaloneClient({
       currentStateReadiness,
       evidenceNeedPackets,
       move.archetype,
+      move.charter,
+      move.functionPackKey,
       move.id,
       displayMoveName,
       move.tenant.industryCode,
@@ -4271,7 +4281,7 @@ export function MovesPhaseStandaloneClient({
         <MovesWorkspacePage
           moveName={displayMoveName}
           clientDisplayName={move.tenant.name}
-          syntheticNote="Synthetic demo data"
+          syntheticNote={syntheticNote}
           tabs={chrome.tabs}
           phases={chrome.phases}
           title={workspaceView === "files" ? "Files & Evidence" : "Phase Intelligence"}
@@ -4317,6 +4327,7 @@ export function MovesPhaseStandaloneClient({
     const stepId = STEP_PAGE_VIEWS[initialStepView].stepId;
     return renderPhaseStepPage(initialStepView, {
       move,
+      syntheticNote,
       phase: phase.phase,
       values: phaseCaptureValues,
       setValue:

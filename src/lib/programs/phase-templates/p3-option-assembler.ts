@@ -112,6 +112,8 @@ export interface AssembleP3SolutionOptionsInput {
   tenantName?: string;
   industryCode?: string | null;
   archetype?: string | null;
+  /** Canonical declaration remains available when readiness cannot be read. */
+  declaredArchetypeId?: string | null;
   valueAtStake?: string | null;
   designInputs: P3DesignInputsPack;
   readiness?: P3OptionReadinessInput | null;
@@ -310,6 +312,7 @@ export function buildP3DesignInputsPackFromSignals({
 
 export function assembleP3SolutionOptions({
   archetype,
+  declaredArchetypeId,
   designInputs,
   evidenceNeedPackets = [],
   industryCode,
@@ -333,7 +336,7 @@ export function assembleP3SolutionOptions({
       readiness?.softGaps?.join(' '),
     ].join(' '),
   );
-  const useCasePattern = inferUseCasePattern(text, archetype, readiness?.archetypeId);
+  const useCasePattern = inferUseCasePattern(text, archetype, declaredArchetypeId, readiness?.archetypeId);
   const missingEvidence = unique([
     ...(designInputs.unresolvedQuestions ?? []),
     ...(designInputs.notReadyConditions ?? []),
@@ -950,19 +953,13 @@ function archetypeUseCaseKey(value: string | null | undefined): string {
 function inferUseCasePattern(
   text: string,
   archetype?: string | null,
+  declaredArchetypeId?: string | null,
   resolvedArchetypeId?: string | null,
 ): P3UseCasePattern {
-  // `resolvedArchetypeId` first, and this order is the whole point. `archetype`
-  // is the Move's `program_archetype` column, which a CHECK constraint limits to
-  // five coarse values (`strategic_transformation`, `workflow_automation`,
-  // `platform_modernization`, `ai_product_enablement`,
-  // `operational_optimization`) — none of them a key of the map below. Keyed off
-  // that column alone the declaration arm was unreachable in the product: a Move
-  // that declared the data-foundation archetype fell through to the keyword
-  // scan, and clinical/claims vocabulary in its own evidence ("claims",
-  // "clinical", "PHI") scored the member-service pattern, so the Move was
-  // offered four contact-centre options belonging to another archetype.
-  for (const candidate of [resolvedArchetypeId, archetype]) {
+  // The canonical Move declaration survives an unavailable readiness read.
+  // Readiness is the next identity source; the coarse legacy archetype and
+  // vocabulary inference remain fallbacks only when no known identity exists.
+  for (const candidate of [declaredArchetypeId, resolvedArchetypeId, archetype]) {
     const declared = ARCHETYPE_USE_CASE_PATTERNS[archetypeUseCaseKey(candidate)];
     if (declared) return declared;
   }
