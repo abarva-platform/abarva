@@ -83,7 +83,7 @@ Revert the squash commit and redeploy.
 
 ## Known Gaps
 
-- None known.
+- **The source rows name groups, not individual records.** A workshop row stands for that workshop's recorded answers. The exact source IDs stay in each slide's notes and in the companion workbook's figure ledger, as before.
 
 ## Audit Evidence
 
