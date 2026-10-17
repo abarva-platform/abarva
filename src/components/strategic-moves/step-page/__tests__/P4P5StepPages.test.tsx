@@ -830,6 +830,7 @@ describe("P4 and P5 step pages", () => {
             npvCents: { low: 84_000_000, base: 123_456_789, high: 150_000_000 },
             npvTerms: { base: [{ source: "register:V3", label: "Hours" }] },
             paybackMonth: { base: null },
+            breakevenRealisation: { low: 0.9, base: 0.4567, high: 0.3 },
           },
           breakeven: [{ leverId: "L1", status: "solved", breakevenDelta: 5 }],
           sensitivity: [
@@ -850,6 +851,9 @@ describe("P4 and P5 step pages", () => {
     expect(screen.getByText(/plan \$1.23M/)).toBeInTheDocument();
     expect(screen.getByText(/NPV \$0.84M/)).toBeInTheDocument();
     expect(screen.getByText(/driver delta 5 hours/)).toBeInTheDocument();
+    // The plan's share, never the low or high one.
+    expect(screen.getByText(/plan 45\.7% of the modelled value/)).toBeInTheDocument();
+    expect(screen.queryByText(/90% of the modelled value|30% of the modelled value/)).not.toBeInTheDocument();
     expect(screen.getAllByText(/register:V3/).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Estimate").length).toBeGreaterThan(0);
   });
@@ -1272,11 +1276,31 @@ describe("P4 and P5 step pages", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByText(/\$0: no release path/)).toBeInTheDocument();
+    // The engine's own share, through the real viewer projection.
+    const share = ((realBody().case as { economics: { breakevenRealisation: { base: number } } }).economics.breakevenRealisation.base * 100)
+      .toLocaleString("en-US", { maximumFractionDigits: 1 });
+    expect(screen.getByText(`plan ${share}% of the modelled value`, { exact: false })).toBeInTheDocument();
     expect(global.fetch).toHaveBeenCalledWith(
       "/api/v1/programs/move-1/value-case",
       expect.objectContaining({ cache: "no-store" }),
     );
     expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+  });
+
+  it.each([
+    ["no positive cash", null, "not reached: the case has no positive cash"],
+    ["an engine older than the field", undefined, null],
+  ])("states breakeven realisation honestly for %s", async (_, base, wording) => {
+    const body = realBody();
+    const economics = (body.case as { economics: Record<string, unknown> }).economics;
+    if (base === undefined) delete economics.breakevenRealisation;
+    else economics.breakevenRealisation = { low: null, base, high: null };
+    mockBody(body);
+    render(page(P4_STEP_PAGES, "p4-value", host(4, { value_plan: valuePlan, funding_governance: "Finance review" })));
+    await waitFor(() => expect(screen.getByText("Three-year credited cash ROI")).toBeInTheDocument());
+    if (wording) expect(screen.getByText(wording, { exact: false })).toBeInTheDocument();
+    else expect(screen.queryByText("Breakeven realisation")).not.toBeInTheDocument();
+    expect(screen.queryByText(/% of the modelled value/)).not.toBeInTheDocument();
   });
 
   it("preserves a named refusal and permits a read-only retry", async () => {
@@ -1335,6 +1359,7 @@ describe("P4 and P5 step pages", () => {
     );
     expect(screen.queryByText("NPV")).not.toBeInTheDocument();
     expect(screen.queryByText("Payback")).not.toBeInTheDocument();
+    expect(screen.queryByText("Breakeven realisation")).not.toBeInTheDocument();
     expect(
       screen.queryByText("Three-year credited cash ROI"),
     ).not.toBeInTheDocument();
@@ -1364,6 +1389,7 @@ describe("P4 and P5 step pages", () => {
     );
     expect(screen.queryByText("NPV")).not.toBeInTheDocument();
     expect(screen.queryByText(/plan 200%/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Breakeven realisation")).not.toBeInTheDocument();
     expect(screen.queryByText(/\$0: no release path/)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
   });

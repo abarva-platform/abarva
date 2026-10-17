@@ -17,6 +17,7 @@
 import { caseRuleViolations } from "./conversion-rules";
 import {
   annualTotalWithTerms,
+  breakevenRealisation,
   npvWithTerms,
   paybackMonth,
   sumCurves,
@@ -205,6 +206,7 @@ export interface ScenarioRun {
   discountRate: number;
   npv: { figure: Cents; terms: ValueFormulaTerm[] };
   paybackMonth: number | null;
+  breakevenRealisation: number | null;
 }
 
 export function runScenario(
@@ -308,5 +310,6 @@ export function runScenario(
     discountRate,
     npv: npvWithTerms(monthlyCash, costCents, discountRate, ready.horizonYears),
     paybackMonth: paybackMonth(monthlyCash, costCents),
+    breakevenRealisation: breakevenRealisation(monthlyCash, costCents, discountRate, ready.horizonYears),
   };
 }

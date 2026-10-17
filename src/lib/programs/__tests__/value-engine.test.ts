@@ -17,6 +17,7 @@ import {
   CONFIDENCE_5_BAND,
 } from "@/lib/programs/value-engine/resolve-inputs";
 import { earnedFraction } from "@/lib/programs/value-engine/timing";
+import { breakevenRealisation } from "@/lib/programs/value-engine/economics";
 import type {
   InputRange,
   Lever,
@@ -355,6 +356,27 @@ describe("value engine · golden synthetic case", () => {
       base: 240_000_000,
       high: 240_000_000,
     });
+  });
+
+  it("finds the share of modelled cash at which NPV is zero", () => {
+    const economics = result.economics!;
+    const present = BASE_CASH.reduce((sum, c, i) => sum + c / 1.08 ** ((i + 1) / 12), 0);
+    expect(economics.breakevenRealisation.base).toBe(Math.round((240_000_000 / present) * 10_000) / 10_000);
+    // The same schedule at that share has NPV zero, to the 4-decimal rounding.
+    const share = economics.breakevenRealisation.base!;
+    expect(Math.abs(npvByHand(BASE_CASH.map((c) => c * share), 0.08, 240_000_000))).toBeLessThan(present * 0.00005 + 1);
+    // Below 1 exactly when the scenario's NPV is positive.
+    for (const s of ["low", "base", "high"] as const)
+      expect(economics.breakevenRealisation[s]! < 1).toBe(economics.npvCents[s] > 0);
+    expect(economics.breakevenRealisation.low! > economics.breakevenRealisation.base!).toBe(true);
+    expect(economics.breakevenRealisation.high! < economics.breakevenRealisation.base!).toBe(true);
+  });
+
+  it("states breakeven realisation as 0 with no cost and unknown with no positive cash", () => {
+    expect(breakevenRealisation([100, 100], 0, 0.08, 1)).toBe(0);
+    expect(breakevenRealisation(Array(12).fill(0), 1_000, 0.08, 1)).toBeNull();
+    expect(breakevenRealisation(Array(12).fill(-5), 1_000, 0.08, 1)).toBeNull();
+    expect(breakevenRealisation(Array(12).fill(1_000), 1_000, 0, 1)).toBe(0.0833);
   });
 
   it("reconciles every figure exactly from its formula terms", () => {

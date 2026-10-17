@@ -10,6 +10,7 @@
  *   cash in month m        earned in month m − payment lag (0 before month 1)
  *   NPV                    ROUND(−cost + Σ years of Σ cash_m ÷ (1+r)^(m/12), 0)
  *   payback month          the first month whose cumulative cash ≥ cost
+ *   breakeven realisation  ROUND(cost ÷ Σ the same discounted year sums, 4)
  *   three-year bases       year sums of credited and program value, earned and paid
  *
  * Sensitivity and Breakeven carry the engine's own results as values, each with
@@ -82,7 +83,7 @@ export interface FinancialModelInputs {
 export interface FinancialModelLayout {
   scenarioCell: string;
   /** Economics addresses, for a reader or a test. */
-  economics: { annualCash: string; npv: string; payback: string; cost: string };
+  economics: { annualCash: string; npv: string; payback: string; cost: string; breakevenRealisation: string };
   /** Economics addresses for the AI-assisted scenario, when one is modelled. */
   aiScenario: { cost: string; npv: string; payback: string } | null;
   check: { overall: string; rows: number };
@@ -106,6 +107,7 @@ const BOX: Partial<ExcelJS.Borders> = {
 const CENTS = '#,##0;(#,##0);"–"';
 const SCENARIOS: Scenario[] = ["low", "base", "high"];
 const NOT_WITHIN = "Not within horizon";
+const NO_REALISATION = "No positive cash";
 
 /** Each engine breakeven outcome in client words. */
 const BREAKEVEN_OUTCOME: Record<BreakevenStatus, string> = {
@@ -228,7 +230,7 @@ export function buildFinancialModelWorkbook(input: FinancialModelInputs): {
   const readme = wb.addWorksheet(FINANCIAL_MODEL_SHEETS.readme);
   title(readme, `${input.moveName}: financial model`, "The Move's value case as live formulas. Computed by the value engine; checked on the Check sheet.");
   [
-    ["How to read", "Inputs holds every lever input at low, base and high; the blue scenario cell chooses which set every formula uses. Levers multiplies each lever's inputs into its annual value. Monthly Schedule spreads that over the horizon with each lever's start, ramp, phase-down and payment lag. Economics totals the cash and computes NPV, payback and the three-year bases."],
+    ["How to read", "Inputs holds every lever input at low, base and high; the blue scenario cell chooses which set every formula uses. Levers multiplies each lever's inputs into its annual value. Monthly Schedule spreads that over the horizon with each lever's start, ramp, phase-down and payment lag. Economics totals the cash and computes NPV, payback, the share of the modelled value at which NPV is zero, and the three-year bases."],
     ["Units", "Money is in whole cents, as the engine keeps it. Divide by 100 for dollars."],
     ["Credited and program value", "Credited value is after the declared attribution share; program value is before it. Both keep the probability. Earned is when value is created; paid is when the cash arrives."],
     ["Checks", "Check compares every key figure with the value engine for the chosen scenario. It reads YES when the workbook and the engine agree."],
@@ -471,7 +473,14 @@ export function buildFinancialModelWorkbook(input: FinancialModelInputs): {
   formula(econ, paybackRow, 2, `IF(B6<=0,0,IF(COUNT(${range("reached")})=0,"${NOT_WITHIN}",MIN(${range("reached")})))`,
     basePayback === null ? NOT_WITHIN : basePayback, BOLD);
   put(econ, paybackRow, 3, "First month whose cumulative cash covers the investment", NOTE);
-  const basesTop = paybackRow + 3;
+  const realisationRow = paybackRow + 1;
+  const presentValue = `(${yearRows.join("+")})`;
+  const baseRealisation = economics.breakevenRealisation.base;
+  put(econ, realisationRow, 1, "Breakeven realisation", BOLD);
+  formula(econ, realisationRow, 2, `IF(B6<=0,0,IF(${presentValue}<=0,"${NO_REALISATION}",ROUND(B6/${presentValue},4)))`,
+    baseRealisation ?? NO_REALISATION, BOLD).numFmt = "0.00%";
+  put(econ, realisationRow, 3, "Share of the modelled cash, on the same schedule, at which NPV is zero. Above 100%: the value does not cover the investment.", NOTE);
+  const basesTop = realisationRow + 3;
   const bases: [keyof typeof curves, string][] = [["earned", "Credited · earned"], ["cash", "Credited · paid"], ["program", "Program · earned"], ["programPaid", "Program · paid"]];
   const threeYear = result.horizonYears >= 3;
   if (threeYear) {
@@ -489,7 +498,7 @@ export function buildFinancialModelWorkbook(input: FinancialModelInputs): {
   }
   let aiCells: FinancialModelLayout["aiScenario"] = null;
   if (ai) {
-    const aiTop = (threeYear ? basesTop + 6 : paybackRow + 3);
+    const aiTop = (threeYear ? basesTop + 6 : realisationRow + 3);
     head(econ, aiTop, ["AI-assisted scenario (comparison only)", "Value", "How"]);
     put(econ, aiTop + 1, 1, "Investment", BOLD);
     formula(econ, aiTop + 1, 2, AI_COST, aiCostBase, BOLD).numFmt = CENTS;
@@ -573,10 +582,13 @@ export function buildFinancialModelWorkbook(input: FinancialModelInputs): {
   title(check, "Check", "The value engine's figures for each scenario beside the workbook's for the chosen one. YES means they agree.");
   head(check, 4, ["Figure", "Engine low", "Engine base", "Engine high", "Engine (chosen)", "Workbook", "Agrees"]);
   const payback = (s: Scenario) => economics.paybackMonth[s] ?? NOT_WITHIN;
+  const realisation = (s: Scenario) => economics.breakevenRealisation[s] ?? NO_REALISATION;
   const checks: { label: string; engine: Record<Scenario, Cached>; workbook: string; value: Cached }[] = [
     { label: "Annual cash", engine: economics.annualCashCents, workbook: `'${FINANCIAL_MODEL_SHEETS.economics}'!B5`, value: economics.annualCashCents.base },
     { label: "Net present value", engine: economics.npvCents, workbook: `'${FINANCIAL_MODEL_SHEETS.economics}'!B${npvRow}`, value: baseNpv },
     { label: "Payback month", engine: { low: payback("low"), base: payback("base"), high: payback("high") }, workbook: `'${FINANCIAL_MODEL_SHEETS.economics}'!B${paybackRow}`, value: payback("base") },
+    { label: "Breakeven realisation", engine: { low: realisation("low"), base: realisation("base"), high: realisation("high") },
+      workbook: `'${FINANCIAL_MODEL_SHEETS.economics}'!B${realisationRow}`, value: realisation("base") },
     ...(threeYear && economics.threeYearBases ? (["creditedEarned", "creditedPaid", "programEarned", "programPaid"] as const).map((key, i) => ({
       label: `Three-year ${bases[i]![1].toLowerCase()} total`,
       engine: { low: economics.threeYearBases!.low[key].totalCents, base: economics.threeYearBases!.base[key].totalCents, high: economics.threeYearBases!.high[key].totalCents },
@@ -615,7 +627,7 @@ export function buildFinancialModelWorkbook(input: FinancialModelInputs): {
     workbook: wb,
     layout: {
       scenarioCell: "Inputs!B4",
-      economics: { annualCash: "B5", npv: `B${npvRow}`, payback: `B${paybackRow}`, cost: "B6" },
+      economics: { annualCash: "B5", npv: `B${npvRow}`, payback: `B${paybackRow}`, cost: "B6", breakevenRealisation: `B${realisationRow}` },
       aiScenario: aiCells,
       check: { overall: `G${overallRow}`, rows: checks.length },
       base: { annualCashCents: economics.annualCashCents.base, npvCents: baseNpv, paybackMonth: basePayback },
