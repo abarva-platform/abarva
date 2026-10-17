@@ -19,6 +19,8 @@ So one figure could read "$3,600,000" in a slide's title and "$3.60M" in the tab
 
 Slots now use the same formatters as the exhibits. Each ledger source has exactly one display, and a test fails if any source gains a second.
 
+The same test also caught a split in the AI-assisted scenario added by #9560. The comparison exhibit shows a signed difference, for example `−3 weeks` and `−$80.0K`. The slot that the slide's words use shows the saving, for example `3` and `$80.0K`. Both were bound to one source ID. They are different figures, so the saving slots now carry their own IDs: `weeks_saved`, `hours_saved` and `cost_saved`.
+
 ## Layer Impact
 
 Release lane: `global-control-lane`.
@@ -35,15 +37,18 @@ Release lane: `global-control-lane`.
 
 ## Changes Included
 
-- `src/lib/deliverables/orchestrator/reference-deck-slots.ts`: the slot money and ratio formats use `formatConsultantCents` and `formatConsultantPercent`.
+- `src/lib/deliverables/orchestrator/reference-deck-slots.ts`: the slot money and ratio formats use `formatConsultantCents` and `formatConsultantPercent`. The AI-scenario saving slots have their own source IDs.
 - `src/lib/deliverables/orchestrator/__tests__/reference-deck-edition.test.ts`:
-  - new: every ledger source has one display, in both editions, including the approved estimate;
-  - two existing tests now expect the compact form.
+  - new: every ledger source has one display, in both editions, including the approved estimate and the AI scenario;
+  - existing tests now expect the compact form and the saving IDs.
 
 ## QA / Validation
 
-- Deck suites (orchestrator plus decks routes): pass, 78 suites, 1214 tests.
-- Mutation testing: 2 / 2 killed. Restoring the old money format splits annual value and three-year credited value. Restoring the old ratio format splits ROI.
+- Deck suites (orchestrator plus decks routes), after merging #9560: pass, 78 suites, 1239 tests.
+- Mutation testing: 3 / 3 killed:
+  - restoring the old money format splits annual value and three-year credited value;
+  - restoring the old ratio format splits ROI;
+  - restoring a shared scenario ID splits the scenario cost.
 - `npm run typecheck`: pass. ESLint: pass. `npm run release:check`: pass (exit 0).
 
 ## Rollout Plan

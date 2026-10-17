@@ -860,13 +860,20 @@ describe("the AI-assisted scenario on the delivery-hours slide", () => {
     expect(comparisonRows(build(inputs))?.[5]).toEqual(["Payback", "14 months", "Not within horizon", "Not comparable"]);
   });
 
+  it("gives every scenario figure one display, so the slot and the comparison exhibit agree", () => {
+    const spec = buildReferenceEdition(scenarioInputs(), words(INVESTMENT_SEQUENCE.length));
+    const displays = new Map<string, Set<string>>();
+    for (const figure of spec.figureLedger) displays.set(figure.sourceId, (displays.get(figure.sourceId) ?? new Set()).add(figure.display));
+    expect([...displays].filter(([, set]) => set.size > 1).map(([id, set]) => `${id}: ${[...set].join(" | ")}`)).toEqual([]);
+  });
+
   it("offers the slide words only the savings the scenario makes", () => {
     const table = buildReferenceSlotTable(scenarioInputs());
     expect(["rom.ai.weeks_saved", "rom.ai.hours_saved", "rom.ai.cost_saved", "rom.ai.tool_cost"].map((key) => [table[key]?.display, table[key]?.sourceId])).toEqual([
-      ["3", `rom:${ROM_ID}:ai_assisted:versus_weeks`],
-      ["200", `rom:${ROM_ID}:ai_assisted:versus_hours`],
-      ["$80,000", `rom:${ROM_ID}:ai_assisted:versus_plan`],
-      ["$13,680", `rom:${ROM_ID}:ai_assisted:tool_cost`],
+      ["3", `rom:${ROM_ID}:ai_assisted:weeks_saved`],
+      ["200", `rom:${ROM_ID}:ai_assisted:hours_saved`],
+      ["$80.0K", `rom:${ROM_ID}:ai_assisted:cost_saved`],
+      ["$13.7K", `rom:${ROM_ID}:ai_assisted:tool_cost`],
     ]);
     expect(table["rom.ai.weeks_saved"]?.editions).toEqual(["investment"]);
     expect(buildReferenceNarrativeEvidence(table, "rom_hours", "investment").aiScenarioAvailable).toBe(true);
@@ -900,8 +907,8 @@ describe("the AI-assisted scenario on the delivery-hours slide", () => {
     const spec = buildReferenceEdition(scenarioInputs(), authored);
     const slide = spec.slides[ROM_SLIDE]!;
     expect(slide.answer).toBe("An AI-assisted scenario would take 3 weeks off, as a comparison only.");
-    expect(slide.visibleNarrativeFigures).toContainEqual(expect.objectContaining({ display: "3", sourceId: `rom:${ROM_ID}:ai_assisted:versus_weeks` }));
-    expect(slide.sourceIds).toContain(`rom:${ROM_ID}:ai_assisted:versus_weeks`);
+    expect(slide.visibleNarrativeFigures).toContainEqual(expect.objectContaining({ display: "3", sourceId: `rom:${ROM_ID}:ai_assisted:weeks_saved` }));
+    expect(slide.sourceIds).toContain(`rom:${ROM_ID}:ai_assisted:weeks_saved`);
     expect(validateReferenceDeck(spec).filter((finding) => finding.blocking)).toEqual([]);
     const rendered = await inspectDeck(await renderReferenceDeck(spec));
     expect(judgeRenderedDeck(rendered, { referenceDeck: spec }).findings.filter((finding) =>
