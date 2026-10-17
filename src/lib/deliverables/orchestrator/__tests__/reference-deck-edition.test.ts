@@ -150,7 +150,7 @@ describe("live-input reference edition", () => {
 
   it("names each calculated basis when the case is evaluated", () => {
     const text = shown(buildReferenceEdition(fixture("investment"), words(INVESTMENT_SEQUENCE.length)));
-    for (const label of ["Calculated case", "Case model", "Calculated cost", "Calculated base"]) expect(text).toContain(label);
+    for (const label of ["Calculated case", "Case model", "Calculated cost"]) expect(text).toContain(label);
   });
 
   it("binds active and open assumption counts to distinct governed sources", () => {
@@ -435,6 +435,31 @@ describe("live-input reference edition", () => {
         .filter((finding) => "slide" in finding && finding.slide === slideNumber);
       expect(findings).toEqual([]);
     }, 60_000);
+
+    it("renders the summary with its breakeven tile and no judge finding on the slide", async () => {
+      const spec = buildReferenceEdition(withEconomics(ECONOMICS), words(INVESTMENT_SEQUENCE.length));
+      const slideNumber = spec.slides.findIndex((slide) => slide.archetype === "one_page") + 1;
+      const findings = judgeRenderedDeck(await inspectDeck(await renderReferenceDeck(spec)), { referenceDeck: spec }).findings
+        .filter((finding) => "slide" in finding && finding.slide === slideNumber);
+      expect(findings).toEqual([]);
+    }, 60_000);
+
+    it("leads the investment summary with breakeven, not a return on a build-only cost", () => {
+      const spec = buildReferenceEdition(withEconomics(ECONOMICS), words(INVESTMENT_SEQUENCE.length));
+      const summary = spec.slides.find((slide) => slide.archetype === "one_page")!.blocks.find((block) => block.kind === "metrics");
+      expect(summary?.kind === "metrics" ? summary.items.map((item) => [item.label, typeof item.value === "string" ? item.value : item.value.display]) : null).toEqual([
+        ["Annual value", "$1.20M"], ["Credited value", "$3.60M"], ["Delivery estimate", "To confirm"], ["Breakeven realisation", "7%"],
+      ]);
+      expect(summary).toBeDefined();
+      // The summary tile and the ledger row are one figure from one source.
+      expect(new Set(spec.figureLedger.filter((figure) => figure.sourceId === "engine:breakeven_realisation_base").map((figure) => figure.display))).toEqual(new Set(["7%"]));
+      // The return stays on the three-year slide, beside the bases it is computed from.
+      const threeYear = spec.slides.find((slide) => slide.archetype === "three_year_value")!.blocks[0];
+      expect(threeYear?.kind === "table" ? threeYear.columns.at(-1) : null).toBe("ROI");
+      const validation = buildReferenceEdition({ ...withEconomics(ECONOMICS), edition: "validation" }, words(VALIDATION_SEQUENCE.length));
+      const validationTiles = validation.slides.find((slide) => slide.archetype === "one_page")!.blocks.find((block) => block.kind === "metrics");
+      expect(validationTiles?.kind === "metrics" ? validationTiles.items.map((item) => item.label) : null).toEqual(["Annual value", "Credited value", "Working assumptions"]);
+    });
 
     it("states a payback that is never reached as a finding, and a negative NPV in accounting form", () => {
       const inputs = withEconomics({ npvCents: { base: -12_000_000 }, paybackMonth: { base: null }, breakevenRealisation: { base: 1.1016 } });
