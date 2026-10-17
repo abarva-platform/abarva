@@ -1189,6 +1189,8 @@ test("fetches both read-only reference-deck editions from the signed-in Move", a
     wordsRule: string | null;
     wordsSlide: number | null;
     fallbackCount: number | null;
+    /** "2:title_format,9:parse_failed": every fallback slide and why, names only. */
+    fallbackCauses: string | null;
     requestId: string | null;
     bytes: number;
     file: string | null;
@@ -1223,6 +1225,7 @@ test("fetches both read-only reference-deck editions from the signed-in Move", a
       wordsRule: null,
       wordsSlide: null,
       fallbackCount: null,
+      fallbackCauses: null,
       requestId: null,
       bytes: 0,
       file: path.basename(file),
@@ -1311,6 +1314,7 @@ test("fetches both read-only reference-deck editions from the signed-in Move", a
           wordsStatus: response.headers()["x-abarva-deck-words-status"] ?? null,
           wordsReason: response.headers()["x-abarva-deck-words-reason"] ?? null,
           wordsRule: response.headers()["x-abarva-deck-words-rule"] ?? null,
+          fallbackCauses: response.headers()["x-abarva-deck-fallback-causes"] ?? null,
           bytes: 0,
           file: path.basename(file),
           figureHash: null,
@@ -1350,9 +1354,13 @@ test("fetches both read-only reference-deck editions from the signed-in Move", a
         );
       if (score < 90)
         failures.push(`${edition} ${format}: fidelity ${score} is below 90`);
+      const fallbackCauses =
+        response.headers()["x-abarva-deck-fallback-causes"] ?? null;
+      if (wordsStatus === "unavailable")
+        expect(fallbackCauses?.split(",").length).toBe(fallbackCount);
       if (wordsStatus !== "ok" || fallbackCount !== 0)
         failures.push(
-          `${edition} ${format}: drafted words were unavailable on ${fallbackCount} slide(s)`,
+          `${edition} ${format}: drafted words were unavailable on ${fallbackCount} slide(s)${fallbackCauses ? ` (${fallbackCauses})` : ""}`,
         );
       if (edition === "investment" && titleFigureCount === 0)
         failures.push(
@@ -1403,6 +1411,7 @@ test("fetches both read-only reference-deck editions from the signed-in Move", a
         wordsRule,
         wordsSlide,
         fallbackCount,
+        fallbackCauses,
         requestId,
         bytes: bytes.length,
         file: path.basename(file),
@@ -1442,6 +1451,7 @@ test("fetches both read-only reference-deck editions from the signed-in Move", a
         wordsRule: null,
         wordsSlide: null,
         fallbackCount: null,
+        fallbackCauses: null,
         requestId: null,
         bytes: 0,
         file: path.basename(file),
@@ -1480,6 +1490,7 @@ test("fetches both read-only reference-deck editions from the signed-in Move", a
       wordsRule: null,
       wordsSlide: null,
       fallbackCount: null,
+      fallbackCauses: null,
       requestId: null,
       bytes: workbookBytes.length,
       file: path.basename(workbookFile),

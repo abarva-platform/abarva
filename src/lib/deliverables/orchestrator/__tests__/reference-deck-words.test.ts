@@ -395,12 +395,64 @@ describe("reference-deck words", () => {
     const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
     try {
       const result = await draftEditionWords({ ...input, edition: "investment", archetypes: Array(7).fill("one_page") });
-      expect(result).toMatchObject({ status: "unavailable", reason: "parse_failed", slide: 7, fallbackSlides: [7] });
+      expect(result).toMatchObject({ status: "unavailable", reason: "parse_failed", slide: 7, fallbackSlides: [7], fallbackCauses: [{ slide: 7, cause: "parse_failed" }] });
       expect(result.words.slice(0, 6)).toEqual(Array(6).fill(valid));
       expect(result.words[6]).toEqual(unavailableEditionWords("investment", ["one_page"])[0]);
     } finally {
       warn.mockRestore();
     }
+  });
+
+  describe("fallback causes and repair diagnostics", () => {
+    const two = { ...input, archetypes: ["one_page", "assumptions"] as Parameters<typeof draftEditionWords>[0]["archetypes"] };
+    const good = (title: string) => ({ title, answer: "Review the counted basis and its source.", notes: "The point: confirm the basis. How to read: inspect the source line." });
+    const literal = { ...good("The annual case counts twelve hundred on its current basis"), title: "The annual case counts $1,200 on its current basis" };
+    const badNotes = { ...good("The working assumptions decide what can be claimed"), notes: "Review the basis with the owner." };
+
+    it("names every fallback slide's cause, and logs the repair by rule and slide with no prose", async () => {
+      const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+      try {
+        const fixed = good("The annual case counts {value.annual.base} on its current basis");
+        const create = jest.fn()
+          .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [literal, badNotes] }) }] })
+          .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [fixed, badNotes] }) }] });
+        mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+        const result = await draftEditionWords(two);
+        expect(result).toMatchObject({ status: "unavailable", reason: "slide_rejected", rule: "notes_format", fallbackSlides: [2],
+          fallbackCauses: [{ slide: 2, cause: "notes_format" }] });
+        const repairLog = warn.mock.calls.find(([tag]) => tag === "[reference-deck-words-repair]")?.[1];
+        expect(repairLog).toEqual({ requestId: null, edition: "validation", attempted: 2, repaired: 1,
+          initialRules: [{ slide: 1, rule: "literal_figure" }, { slide: 2, rule: "notes_format" }],
+          stillRejected: [{ slide: 2, rule: "notes_format" }], callFailures: [] });
+        expect(JSON.stringify(repairLog)).not.toMatch(/annual case|counted basis|Review the basis/);
+      } finally {
+        warn.mockRestore();
+      }
+    });
+
+    it("records a repair call that failed, such as a timeout, against its slides", async () => {
+      const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+      try {
+        const timeout = Object.assign(new Error("Request timed out."), { name: "APIConnectionTimeoutError" });
+        const create = jest.fn()
+          .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [literal, badNotes] }) }] })
+          .mockRejectedValueOnce(timeout);
+        mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+        const result = await draftEditionWords(two);
+        expect(result).toMatchObject({ fallbackSlides: [1, 2], fallbackCauses: [{ slide: 1, cause: "literal_figure" }, { slide: 2, cause: "notes_format" }] });
+        const repairLog = warn.mock.calls.find(([tag]) => tag === "[reference-deck-words-repair]")?.[1] as { callFailures: unknown[]; repaired: number };
+        expect(repairLog.repaired).toBe(0);
+        expect(repairLog.callFailures).toEqual([{ slides: [1, 2], outcome: "call_failed", errorName: "APIConnectionTimeoutError", status: null }]);
+      } finally {
+        warn.mockRestore();
+      }
+    });
+
+    it("names the call that produced no words for a whole-deck failure", async () => {
+      mockPreflight.mockResolvedValueOnce({ ok: false });
+      expect(await draftEditionWords(two)).toMatchObject({ reason: "preflight_denied",
+        fallbackCauses: [{ slide: 1, cause: "preflight_denied" }, { slide: 2, cause: "preflight_denied" }] });
+    });
   });
 
   it("keeps reason-coded fallbacks for egress denial, parse failure and rejected slide", async () => {

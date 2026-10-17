@@ -31,6 +31,8 @@ const previewHeaders = (score?: number, words?: DraftEditionWordsResult, request
     "X-AbarVa-Deck-Words-Reason": words.reason,
     ...(words.rule ? { "X-AbarVa-Deck-Words-Rule": words.rule } : {}),
     ...(words.slide ? { "X-AbarVa-Deck-Words-Slide": String(words.slide) } : {}),
+    // Every fallback slide and why, by name only: "2:title_format,9:parse_failed".
+    ...(words.fallbackCauses.length ? { "X-AbarVa-Deck-Fallback-Causes": words.fallbackCauses.map(({ slide, cause }) => `${slide}:${cause}`).join(",") } : {}),
   }),
   ...(words === undefined ? {} : { "X-AbarVa-Deck-Fallback-Count": String(words.fallbackSlides.length) }),
 });
