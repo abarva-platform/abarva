@@ -3804,7 +3804,6 @@ export function MovesPhaseStandaloneClient({
   }) => (
     <MovesCaptureWorkspace
       moveId={move.id}
-      moveName={displayMoveName}
       phase={phase.phase}
       avaRole={phase.avaRole}
       avaThread={avaThread}
