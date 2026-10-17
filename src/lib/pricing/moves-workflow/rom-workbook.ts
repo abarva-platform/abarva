@@ -40,6 +40,8 @@ import {
 } from "./rom-service";
 
 export const ROM_WORKBOOK_SHEETS = {
+  /** How to read the workbook, first, as in the other Moves workbooks. */
+  readme: "README",
   estimate: "Estimate",
   library: "Component Library",
   pod: "Pod & Rates",
@@ -184,6 +186,32 @@ export function buildRomWorkbook(rom: RomResult): {
   wb.modified = new Date(0);
   wb.calcProperties.fullCalcOnLoad = true;
 
+  // Rates still on the unapproved global starter bands are planning rates.
+  const planningRates = (rom.foundation?.priced.pod.memberLines ?? rom.releases[0]?.own.pod.memberLines ?? [])
+    .some((line) => line.rate.notes.some((note) => note.includes("global_starter_unapproved")));
+  const readme = wb.addWorksheet(ROM_WORKBOOK_SHEETS.readme);
+  readme.getCell("A1").value = "Delivery estimate: how to read this workbook";
+  readme.getCell("A1").font = { bold: true, size: 14 };
+  [
+    ["What this is", "The delivery estimate as live formulas: hours from component counts and unit hours, weeks from the pod's productive capacity, and cost at low, plan and high from each role's rate."],
+    ["Sheets", `${ROM_WORKBOOK_SHEETS.estimate} shows each release and the shared foundation. ${ROM_WORKBOOK_SHEETS.library} holds every count and unit-hour input. ${ROM_WORKBOOK_SHEETS.pod} holds the roles, FTE and rates. ${ROM_WORKBOOK_SHEETS.releases} totals the case. ${ROM_WORKBOOK_SHEETS.assumptions} lists the program factors and where each came from.${rom.aiAssisted ? ` ${ROM_WORKBOOK_SHEETS.aiAssisted} prices a sourced AI-assisted scenario beside the estimate.` : ""} ${ROM_WORKBOOK_SHEETS.check} compares every figure with the ROM engine.`],
+    ["Units", "Hours are paid hours. Money is in whole cents; divide by 100 for dollars."],
+    ["Changing an input", `Every total is a formula, so a changed count, unit-hour value, FTE or rate recalculates the case. ${ROM_WORKBOOK_SHEETS.check} then shows how far the workbook has moved from the approved engine figures.`],
+    ["Rates", planningRates
+      ? "Planning rates, not approved: at least one role is priced on the starter rate bands. Review every role band and delivery mapping before relying on the cost."
+      : `Each rate's source and approval status is on ${ROM_WORKBOOK_SHEETS.pod}.`],
+    ["What it covers", `The delivery effort for the components listed on ${ROM_WORKBOOK_SHEETS.library}, priced at the rates on ${ROM_WORKBOOK_SHEETS.pod}. Anything not listed there, for example run cost after go-live, internal time or software licences, is not in this estimate.`],
+    ...(rom.aiAssisted ? [["AI-assisted scenario", "A comparison priced beside the estimate, with its own sourced speed-ups and tool licences. The estimate is the funding basis; the scenario is not."]] : []),
+  ].forEach(([label, body], index) => {
+    const row = readme.getRow(3 + index);
+    row.getCell(1).value = label;
+    row.getCell(1).font = { bold: true };
+    row.getCell(2).value = body;
+    row.getCell(2).alignment = { wrapText: true, vertical: "top" };
+  });
+  readme.getColumn(1).width = 24;
+  readme.getColumn(2).width = 110;
+
   const est = wb.addWorksheet(ROM_WORKBOOK_SHEETS.estimate);
   const lib = wb.addWorksheet(ROM_WORKBOOK_SHEETS.library);
   const podWs = wb.addWorksheet(ROM_WORKBOOK_SHEETS.pod);
@@ -253,9 +281,7 @@ export function buildRomWorkbook(rom: RomResult): {
   ]);
   asm.addRow([
     "Rate approval status",
-    (rom.foundation?.priced.pod.memberLines ?? rom.releases[0]?.own.pod.memberLines ?? [])
-      .some((line) => line.rate.notes.some((note) => note.includes("global_starter_unapproved")))
-      ? "planning rates, not approved" : "See each rate source and approval status",
+    planningRates ? "planning rates, not approved" : "See each rate source and approval status",
     "",
     "Review every role band and delivery mapping before estimate approval",
     "",
