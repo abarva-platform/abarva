@@ -96,6 +96,37 @@ describe("reference-deck words", () => {
       expect(result.status === "unavailable" ? result.fallbackCauses : null).toEqual([{ slide: 1, cause: "panel_only_exhibit_reference" }]);
     });
 
+    it("tells the writer what the Sources slide's table holds, on the draft and on a repair", async () => {
+      const sourcesWords = { title: "The case rests on recorded workshops and working assumptions", answer: "Confirm the published sources before relying on them.", notes: "The point: every source is listed. How to read: each row names a source." };
+      const create = jest.fn()
+        .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [{ ...safeWords.words[0]!, title: "Short" }, sourcesWords] }) }] })
+        .mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({ words: [safeWords.words[0]!] }) }] });
+      mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+      await draftEditionWords({ ...input, archetypes: ["one_page", "sources"] });
+      const sent = JSON.parse(create.mock.calls[0][0].messages[0].content);
+      expect(sent.slides[0]).not.toHaveProperty("exhibit");
+      expect(sent.slides[1].exhibit).toMatch(/^A table of every source this deck rests on: approved public citations/);
+      expect(create.mock.calls[0][0].system).toContain("A slide with an exhibit description shows that exhibit");
+      // A panel title wins: a Sources slide that renders only a panel is described as the panel.
+      create.mockClear();
+      create.mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({ words: [sourcesWords] }) }] });
+      await draftEditionWords({ ...input, archetypes: ["sources"], confirmationPanels: { 1: "Published evidence still needs to be confirmed" } });
+      const panelSlide = JSON.parse(create.mock.calls[0][0].messages[0].content).slides[0];
+      expect(panelSlide).toMatchObject({ confirmationPanelTitle: "Published evidence still needs to be confirmed" });
+      expect(panelSlide).not.toHaveProperty("exhibit");
+    });
+
+    it("carries the Sources exhibit description into a repair", async () => {
+      const rejected = { title: "Short", answer: "Review the sources.", notes: "The point: sources. How to read: rows." };
+      const create = jest.fn()
+        .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [rejected] }) }] })
+        .mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({ words: [rejected] }) }] });
+      mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+      await draftEditionWords({ ...input, archetypes: ["sources"] });
+      const retry = JSON.parse(create.mock.calls[1][0].messages[0].content);
+      expect(retry.rejectedSlides[0].exhibit).toMatch(/^A table of every source/);
+    });
+
     it("sends no panel title for a slide whose exhibit renders", async () => {
       const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify(safeWords) }] });
       mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
