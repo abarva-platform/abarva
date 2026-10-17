@@ -43,10 +43,11 @@ const order = [
 ];
 const run = (text: string, bold = false) =>
   new TextRun({ text, font: FONT, size: 22, color: INK, bold });
-const para = (text: string) =>
+const para = (text: string, keepNext = false) =>
   new Paragraph({
     children: [run(text)],
     keepLines: true,
+    keepNext,
     spacing: { after: 140, line: 260 },
   });
 const heading = (text: string, level: 1 | 2 = 1, pageBreakBefore = false) =>
@@ -70,6 +71,7 @@ function table(
   columns: string[],
   rows: string[][],
   columnWeights?: number[],
+  keepNext = false,
 ): Table {
   if (!columns.length || rows.some((row) => row.length !== columns.length))
     throw new PurposePageError("table_shape", "charter");
@@ -84,6 +86,9 @@ function table(
         : columns.length === 3
           ? [1.5, 3.5, 2]
           : columns.map(() => 7 / columns.length));
+  const compactTable =
+    rows.length <= 6 &&
+    rows.every((row) => row.every((cell) => cell.length < 240));
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     columnWidths: weights.map((w) => Math.round(w * 1440)),
@@ -110,6 +115,7 @@ function table(
                 children: [
                   new Paragraph({
                     spacing: { after: 30, line: 240 },
+                    keepNext: keepNext || (compactTable && i < rows.length),
                     children: [
                       new TextRun({
                         text,
@@ -167,7 +173,13 @@ function blocks(node: RootContent): (Paragraph | Table)[] {
       const rows = node.children.map((row) =>
         row.children.map((cell) => plain(cell.children)),
       );
-      return [table(rows[0]!, rows.slice(1)), para("")];
+      return [
+        table(rows[0]!, rows.slice(1)),
+        new Paragraph({
+          children: [new TextRun({ text: "", size: 2 })],
+          spacing: { line: 20, after: 80 },
+        }),
+      ];
     }
     case "list":
       return node.children.flatMap((item, i) =>
@@ -342,8 +354,13 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       ...doc.nextActions.map((a) => para(cite(a))),
     );
   children.push(
+    new Paragraph({
+      children: [new TextRun({ text: "", size: 2 })],
+      spacing: { line: 20, after: 120 },
+    }),
     para(
       "This draft does not authorize Discovery, funding or implementation. Only the authorized reviewer can record the decision, its scope and any conditions below.",
+      doc.sourceRegister.length <= 8,
     ),
     table(
       ["Decision record", "Guidance (not a recorded decision)"],
@@ -360,29 +377,38 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
           "Name any condition to close, accountable role and excluded work.",
         ],
       ],
+      undefined,
+      doc.sourceRegister.length <= 8,
     ),
-    heading("Source register", 2, doc.sourceRegister.length >= 4),
+    heading("Source register", 2),
   );
+  const commonReview =
+    new Set(doc.sourceRegister.map((s) => s.reviewStatus)).size === 1
+      ? doc.sourceRegister[0]?.reviewStatus
+      : undefined;
+  if (commonReview)
+    children.push(
+      para(
+        `${commonReview}. Source presence is not approval.${doc.sourceRegister.every((s) => !s.asOf) ? " Snapshot date not recorded." : ""}`,
+        true,
+      ),
+    );
+  const sourceUse = (value: string | undefined) =>
+    value?.replace(/;?\s*human approval remains separate\.?/gi, "") ||
+    "Use and limitations not recorded; confirm before relying on this source.";
   for (const { family, entries } of purposeSourceGroups(doc.sourceRegister)) {
-    if (entries.length === 1) {
-      const s = entries[0]!;
-      children.push(
-        heading(family, 2),
-        para(
-          `[${s.referenceId || s.citationNumber}] ${s.label}. ${s.reviewStatus || `${s.confidence} confidence`}. Use in this document: ${s.useAndLimitation || "Confirm the intended use with the source owner."}`,
-        ),
-      );
-      continue;
-    }
     children.push(
       heading(family, 2),
       table(
-        ["ID", "Source and review", "Use in this document"],
+        [
+          "ID",
+          commonReview ? "Source" : "Source and review",
+          "Use in this document",
+        ],
         entries.map((s) => [
           `[${s.referenceId || s.citationNumber}]`,
-          `${s.label}\n${s.reviewStatus || `${s.confidence} confidence`}${s.asOf ? ` / ${s.asOf}` : ""}`,
-          s.useAndLimitation ||
-            "Use and limitations not recorded; confirm before relying on this source.",
+          `${s.label}${commonReview ? "" : `\n${s.reviewStatus || `${s.confidence} confidence`}`}${s.asOf ? ` / ${s.asOf}` : ""}`,
+          sourceUse(s.useAndLimitation),
         ]),
         [0.6, 2.0, 4.4],
       ),

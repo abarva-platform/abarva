@@ -11,9 +11,40 @@ import {
 } from "../purpose-page-renderer";
 import { renderDeliverableDocx, renderDeliverablePptx } from "../renderers";
 import { inspectDeck } from "../deck-inspection";
-import { planPurposePages, purposeCitations } from "../purpose-page-plan";
+import {
+  planPurposePages,
+  purposeCitations,
+  purposeChartHeadline,
+} from "../purpose-page-plan";
 
 describe("purpose page rendered objects", () => {
+  it("lets charter sources follow the decision record without a forced blank continuation", async () => {
+    const doc = purposeFixture();
+    doc.deliverableType = "charter";
+    doc.purposePageDesign = true;
+    doc.exhibits = [];
+    doc.sourceRegister = Array.from({ length: 5 }, (_, i) => ({
+      citationNumber: i + 1,
+      label: `Reviewed input ${i + 1}`,
+      confidence: "low" as const,
+      evidenceFamily: "Planning",
+      reviewStatus: "Owner review pending",
+      useAndLimitation: "Planning input; human approval remains separate.",
+    }));
+    const zip = await JSZip.loadAsync(
+      await Packer.toBuffer(renderDeliverableDocx(doc)),
+    );
+    const xml = await zip.file("word/document.xml")!.async("string");
+    const sourceHeading = [...xml.matchAll(/<w:p[ >][\s\S]*?<\/w:p>/g)].find(
+      (p) => p[0].includes(">Source register<"),
+    )?.[0];
+    expect(sourceHeading).toBeDefined();
+    expect(sourceHeading).not.toMatch(
+      /<w:pageBreakBefore(?:\/>| w:val="true")/,
+    );
+    expect(xml.match(/Owner review pending/g)).toHaveLength(1);
+    expect(xml).not.toContain("human approval remains separate");
+  });
   it("keeps native table rows inside the body above the takeaway", async () => {
     const doc = purposeFixture();
     doc.exhibits = [];
@@ -156,7 +187,7 @@ describe("purpose page rendered objects", () => {
       buffer = await renderPurposeDeck(doc),
       inspection = await inspectDeck(buffer);
     expect(inspection.slides[1]!.namedText?.["purpose:statement-label:1"]).toBe(
-      "Conditions to close",
+      "CONDITION / Conditions to close",
     );
     expect(
       inspection.slides[2]!.purposeText?.find(
@@ -211,7 +242,7 @@ describe("purpose page rendered objects", () => {
       };
     doc.deckSlides!.push({
       key: "paired",
-      governingMessage: `${first.title} and ${second.title}`,
+      governingMessage: purposeChartHeadline([first, second]),
       citationsUsed: [1],
       pageIntent: {
         question: "What changed?",
@@ -224,7 +255,7 @@ describe("purpose page rendered objects", () => {
     const buffer = await renderPurposeDeck(doc, [first, second]);
     const inspection = await inspectDeck(buffer);
     expect(inspection.slides[0]!.namedText?.["purpose:scope"]).toBe(
-      "Scope for review [C01, E01].",
+      doc.deckSlides![0]!.pageIntent!.question,
     );
     expect(
       inspection.slides[1]!.namedText?.["purpose:annotation:takeaway"],
@@ -262,6 +293,7 @@ describe("purpose page rendered objects", () => {
       citationNumber: i + 1,
       referenceId: `E${String(i + 1).padStart(2, "0")}`,
       label: `Evidence ${i + 1}`,
+      useAndLimitation: "Definition and scope.",
     }));
     doc.deckSlides![0]!.citationsUsed = doc.sourceRegister.map(
       (s) => s.citationNumber,
@@ -271,7 +303,10 @@ describe("purpose page rendered objects", () => {
     );
     const sources = report.slides[1]!.namedText?.["purpose:sources"] || "";
     expect(sources).toContain("E01");
-    expect(sources).toContain("E17");
+    expect(sources).toContain("+12");
+    expect(report.slides[1]!.namedText?.["purpose:page-number"]).toMatch(
+      /^2 \/ \d+$/,
+    );
     expect(() =>
       validatePurposeInspection(
         report,
@@ -315,7 +350,7 @@ describe("purpose page rendered objects", () => {
       await Packer.toBuffer(renderDeliverableDocx(doc)),
     );
     const xml = await zip.file("word/document.xml")!.async("string");
-    expect(xml.match(/<w:tbl>/g)?.length).toBe(2);
+    expect(xml.match(/<w:tbl>/g)?.length).toBe(4);
     expect(xml).toContain("[C01]");
     expect(xml).toContain("Bounded discovery proposal [C01].");
     expect(xml).toContain('w:ascii="Arial"');

@@ -92,10 +92,6 @@ function addChrome(slide: Slide, spec: ReferenceDeckSpec, content: ReferenceSlid
     fontSize: 9, bold: true, charSpacing: 1, color: C.muted,
     objectName: "ref:running-header",
   });
-  slide.addText("AbarVa", {
-    x: 11.80, y: 0.24, w: 0.82, h: 0.25, fontFace: BODY,
-    fontSize: 9.5, bold: true, color: C.ink, align: "right", objectName: "ref:logo-wordmark",
-  });
   const sections = SECTIONS.map((s) => spec.edition === "validation" && s === "VALIDATE" ? "CONFIRM" : s);
   sections.forEach((section, i) => {
     const filled = section === content.section;

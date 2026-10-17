@@ -171,6 +171,16 @@ describe("purpose page planning", () => {
       },
     ];
     expect(() => planPurposePages(doc)).toThrow("units_not_comparable");
+    doc.tables[0]!.rows = [
+      ["Measured", "638 sec [1]", "Monthly record"],
+      ["Reference", "approximately 703 sec [2]", "Planning record"],
+    ];
+    doc.tables[0]!.valueUnits = ["duration:sec", "duration:sec"];
+    const values = planPurposePages(doc).find((p) =>
+      p.id.startsWith("numbers"),
+    );
+    expect(values?.items.map((i) => i.value)).toEqual(["638 sec", "~703 sec"]);
+    expect(values?.sources).toEqual(expect.arrayContaining([1, 2]));
     doc.tables = [];
     doc.deckSlides = [
       { governingMessage: "Same title", points: ["First question."] },
@@ -261,8 +271,12 @@ describe("purpose page planning", () => {
         p.sourceRegister &&
         p.rows?.some((r) => r.includes("Scope only; not authorization.")),
     )!;
-    expect(source.title).toContain(doc.sourceRegister[0]!.evidenceFamily);
-    expect(source.rows).toHaveLength(2);
+    expect(
+      source.rows!.some(
+        (r) => r[1]?.toLowerCase() === doc.sourceRegister[0]!.evidenceFamily,
+      ),
+    ).toBe(true);
+    expect(source.rows!.filter((r) => r[0])).toHaveLength(2);
     expect(source.columns).toContain("Use and limitation");
     const table = doc.tables.find((t) => t.pageShape === "comparison")!;
     const comparison = pages.find(

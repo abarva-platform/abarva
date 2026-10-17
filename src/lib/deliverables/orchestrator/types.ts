@@ -54,6 +54,8 @@ export interface GovernedEvidenceItem {
   statement: string; // the clean fact text the model may assert
   evidenceFamily: string; // e.g. 'run_cost_baseline'
   confidence: "high" | "medium" | "low";
+  /** Approval of this exact input, independent of confidence or presence. */
+  approvalState?: "approved" | "pending" | "proposed" | "unknown";
   asOf?: string; // freshness, e.g. "FY2026"
   disclosureTier: "vendor_facing" | "internal_only" | "aggregate_only";
   /** opaque provenance handle kept OUT of the body; for audit/source-register only. */

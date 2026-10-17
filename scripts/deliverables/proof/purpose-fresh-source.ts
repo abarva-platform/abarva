@@ -25,9 +25,14 @@ import {
 } from "@/lib/deliverables/orchestrator/purpose-page-renderer";
 import {
   planPurposePages,
+  purposeChartHeadline,
   type PurposeChart,
 } from "@/lib/deliverables/orchestrator/purpose-page-plan";
 import { renderDeliverableDocx } from "@/lib/deliverables/orchestrator/renderers";
+import {
+  collapsePurposeCitations,
+  purposeCitationIds,
+} from "@/lib/deliverables/orchestrator/purpose-citations";
 import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
 import {
   purposePhasePrompt,
@@ -48,6 +53,7 @@ type Input = {
   purpose: string;
   label?: string;
   sheets?: string[];
+  approvalState: "approved" | "pending" | "proposed" | "unknown";
 };
 type Config = {
   synthetic: true;
@@ -161,6 +167,15 @@ async function main() {
   )
     throw new Error("Synthetic-only external proof output required");
   mkdirSync(out, { recursive: true });
+  if (
+    cfg.sources.some(
+      (s) =>
+        !["approved", "pending", "proposed", "unknown"].includes(
+          s.approvalState,
+        ),
+    )
+  )
+    throw new Error("Every input requires an explicit approval state");
   if (!replayArg && existsSync(join(out, "prompt.json")))
     throw new Error(
       "Fresh generation requires a new output folder; preserve prior attempts.",
@@ -179,6 +194,7 @@ async function main() {
       confidence_level: "low",
       cited_render_verified_at: null,
       title: s.id,
+      approval_state: s.approvalState,
       citations: [`${s.id}:sha256:${s.sha256}`],
     })),
     { requireAgentReady: false },
@@ -203,6 +219,7 @@ async function main() {
     citation: number;
     referenceId: string;
     purpose: string;
+    approvalState: Input["approvalState"];
     text: string;
   }[] = [];
   const coverage: unknown[] = [];
@@ -253,6 +270,7 @@ async function main() {
       citation: i + 1,
       referenceId: source.id,
       purpose: source.purpose,
+      approvalState: source.approvalState,
       text: masked,
     });
   }
@@ -272,10 +290,19 @@ async function main() {
     phaseContract: purposePhasePrompt(
       cfg.phase === "P1" ? "charter" : "discovery_report",
     ),
+    factualClaimDiscipline:
+      "For a factual negative about the business, use the shortest exact supporting source sentence and cite it. Do not paraphrase negations or join a source's separate positive and negative sentences. Draft-status statements and decision conditions need not be quotations. Keep package-maintenance instructions out of all business narrative, even when they are attributed to an input. Every figure token must carry its source citation in the same field.",
     contractPrecedence:
-      "The phaseContract replaces any section key list or count in schema. Use its core slides only; no extra appendices are needed in this experiment. Always include nextActions:[] and actionRegister:[{owner,action,evidence}]. Avoid extra standalone action slides. Put the next decision in proceed_hold_stop AND make a proposed proceed/hold/stop decision visible on executive_answer. Bare decimal slots with no display type cannot be used; use an explicitly typed source slot or describe the condition qualitatively. Use figure slots as values, never spell their numeric values in words. Big-number comparisons must have the SAME typed unit and comparable meanings. A negative claim must be an exact source sentence with its citation, not an inference from a plan or absence of a row. Prefer positive scope statements (e.g. owner review pending; decision is proposed) to vague claims that nothing is evidenced. Do not copy synthetic/invented/fixture/demo into titles, table cells or other visible narrative. Do not copy operator instructions into business controls. Preserve every figure's purpose: a program ceiling cannot become a Discovery allowance. Preserve conditional and negated source statements verbatim when explaining denominator or cohort rules.",
+      "The phaseContract replaces any section key list or count in schema. Use its core slides only; no extra appendices are needed in this experiment. Always include nextActions:[] and actionRegister:[{owner,action,evidence}]. Avoid extra standalone action slides. Put the next decision in proceed_hold_stop AND make a proposed proceed/hold/stop decision visible on executive_answer. Bare decimal slots with no display type cannot be used; use an explicitly typed source slot or describe the condition qualitatively. Use figure slots as values, never spell their numeric values in words. Big-number comparisons must have the SAME typed unit and comparable meanings. Classify negative claims using phaseContract: draft status, decision conditions, bundle-bounded gaps, and supported factual claims. Supplied approvalState is independent of presence or confidence. Never call an input approved unless its state is approved. Prefer positive scope statements (e.g. owner review pending; decision is proposed) to vague claims that nothing is evidenced. Do not copy synthetic/invented/fixture/demo into titles, table cells or other visible narrative. Do not copy operator instructions into business controls. Preserve every figure's purpose: a program ceiling cannot become a Discovery allowance. Preserve conditional and negated source statements verbatim when explaining denominator or cohort rules.",
     sources: evidence,
     slots,
+    chartHeadlines: (cfg.charts || []).flatMap((c, i, all) => [
+      { keys: [c.key], headline: purposeChartHeadline([c]) },
+      ...all.slice(i + 1).map((other) => ({
+        keys: [c.key, other.key],
+        headline: purposeChartHeadline([c, other]),
+      })),
+    ]),
     charts: (cfg.charts || []).map((c) => ({
       key: c.key,
       title: c.title,
@@ -312,7 +339,7 @@ async function main() {
   }
   const initial =
     JSON.stringify(prompt) +
-    "\nWriting budget: keep the complete document under 1,400 words, excluding the server-generated source register. Keep qualifications specific and non-repetitive. P1: seven concise sections, tables with short cells, recommendation at most two sentences. P2: follow the ten-beat contract, under sixty words of visible body content per slide, speaker notes at most two sentences. Use nextActions:[] and four-to-five compact actionRegister rows. Each row has owner, action and evidence strings, under fifty characters per cell where practical. Keep detailed execution plans out of Discovery. Do not repeat the full recommendation in every section. P0 through P5 and declared source identifiers are permitted structural labels. Express controls positively where possible. For an absence, quote the exact source sentence in quotation marks and cite it immediately, or ask the owner to confirm; do not insert 'no' or 'missing' assertions into a paraphrase. Do not use classification words even when quoting; put the control positively instead. Return complete JSON within the output budget.";
+    "\nWriting budget: keep the complete document under 1,400 words, excluding the server-generated source register. Keep qualifications specific and non-repetitive. P1: seven concise sections, tables with short cells, recommendation at most two sentences. P2: follow the ten-beat contract, under sixty words of visible body content per slide, speaker notes at most two sentences. Use nextActions:[] and four-to-five compact actionRegister rows. Each row has owner, action and evidence strings, under fifty characters per cell where practical. Keep detailed execution plans out of Discovery. Do not repeat the full recommendation in every section. P0 through P5 and declared source identifiers are permitted structural labels. Express controls positively where possible. Cite factual negative claims accurately. Draft-status disclosures and conditional boundaries are allowed; a gap in supplied inputs must actually be absent from that bundle. Never generalize a bundle gap to the client's whole enterprise. Do not use classification words even when quoting; put the control positively instead. Return complete JSON within the output budget.";
   if (!replayArg)
     writeFileSync(
       join(out, "prompt.json"),
@@ -410,7 +437,7 @@ async function main() {
             if (!slots[id]) throw new Error(`Unknown figure slot: ${id}`);
             return "";
           })
-          .replace(/\[\d+(?:,\s*\d+)*\]|\bP[0-5]\b/g, "");
+          .replace(/\[\d+(?:\s*[-–,]\s*\d+)*\]|\bP[0-5]\b/g, "");
         for (const source of cfg.sources) {
           const escaped = source.id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
           without = without.replace(new RegExp(`\\b${escaped}\\b`, "g"), "");
@@ -429,19 +456,19 @@ async function main() {
           throw new Error(
             `Literal figure outside governed slots at ${path}: ${value.slice(0, 160)}`,
           );
-        for (const cite of value.matchAll(/\[(\d+(?:,\s*\d+)*)\]/g))
-          for (const id of cite[1]!.split(/,\s*/))
-            if (!cfg.sources[Number(id) - 1])
-              throw new Error(`Unknown citation ${id}`);
-        return value.replace(/\{([^{}]+)\}/g, (_, id) => {
-          const s = slots[id]!;
-          if (!s.type && /\d\.\d/.test(s.value))
-            throw new Error(
-              `Figure unit not declared: ${id}; choose a typed figure or qualitative wording`,
-            );
-          used.push({ path, slot: id, source: s.source, locator: s.locator });
-          return s.display || s.value;
-        });
+        for (const id of purposeCitationIds(value))
+          if (!cfg.sources[id - 1]) throw new Error(`Unknown citation ${id}`);
+        return collapsePurposeCitations(
+          value.replace(/\{([^{}]+)\}/g, (_, id) => {
+            const s = slots[id]!;
+            if (!s.type && /\d\.\d/.test(s.value))
+              throw new Error(
+                `Figure unit not declared: ${id}; choose a typed figure or qualitative wording`,
+              );
+            used.push({ path, slot: id, source: s.source, locator: s.locator });
+            return s.display || s.value;
+          }),
+        );
       }
       const authored = bind(raw) as Partial<RenderableDeliverable>;
       if (
@@ -460,7 +487,7 @@ async function main() {
         deliverableType: cfg.phase === "P1" ? "charter" : "discovery_report",
         presentationCover: {
           classification: "Synthetic scenario",
-          edition: "Fresh generation / Review draft",
+          edition: "Review draft R4",
           date: "16 October 2026",
           status: "Approval pending",
         },
@@ -477,7 +504,14 @@ async function main() {
           evidenceFamily: s.family,
           useAndLimitation: s.purpose,
           confidence: "low",
-          reviewStatus: "Owner review pending",
+          reviewStatus:
+            s.approvalState === "approved"
+              ? "Input approved"
+              : s.approvalState === "proposed"
+                ? "Proposed input"
+                : s.approvalState === "pending"
+                  ? "Owner review pending"
+                  : "Input approval unknown",
         })),
         recommendation: authored.recommendation || "",
         nextActions: authored.nextActions || [],
@@ -508,11 +542,13 @@ async function main() {
         doc,
         evidence.map((e) => ({
           citationNumber: e.citation,
+          approvalState: e.approvalState,
           statement: e.text.replace(
             /\{([^{}]+)\}/g,
             (_, id) => slots[id]!.display || slots[id]!.value,
           ),
         })),
+        { completeInputBundle: true },
       );
       writeFileSync(
         join(out, `story-validation-${attempt}.json`),

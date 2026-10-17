@@ -1,0 +1,141 @@
+[
+  {
+    "sentence": "No solution, target benefit or execution plan is approved by this charter [2].",
+    "class": "draft_status",
+    "expected": true
+  },
+  {
+    "sentence": "This is a proposed decision for sponsor review; no approval has been granted.",
+    "class": "draft_status",
+    "expected": true
+  },
+  {
+    "sentence": "No approval is recorded in this document.",
+    "class": "draft_status",
+    "expected": true
+  },
+  {
+    "sentence": "No signature is recorded in this draft.",
+    "class": "draft_status",
+    "expected": true
+  },
+  {
+    "sentence": "No benefit is approved here; every target stays a hypothesis.",
+    "class": "draft_status",
+    "expected": true
+  },
+  {
+    "sentence": "Aggregate monthly series awaiting Finance validation; this page attributes no cause and sizes no benefit [14].",
+    "class": "draft_status",
+    "expected": true
+  },
+  {
+    "sentence": "No value, savings or staffing statement is made [14]",
+    "class": "draft_status",
+    "expected": true
+  },
+  {
+    "sentence": "Sets counting conditions for any later value case; no approved ROM, benefit or investment decision is asserted here.",
+    "class": "draft_status",
+    "expected": true
+  },
+  {
+    "sentence": "Time carries no monetary value until a role or contract release is recorded [1] [1]",
+    "class": "decision_condition",
+    "expected": true
+  },
+  {
+    "sentence": "Kept separate; no blended baseline [10] [9] [6] [10] [6] [7] [10] [13]",
+    "class": "decision_condition",
+    "expected": true
+  },
+  {
+    "sentence": "If approved, the sponsor authorizes Discovery only as an evidence phase: no solution is selected, no operating model is set.",
+    "class": "decision_condition",
+    "expected": true
+  },
+  {
+    "sentence": "No meeting rhythm or individual names are recorded in the P0 or P1 evidence.",
+    "class": "evidence_gap",
+    "expected": true,
+    "complete": true,
+    "evidence": [
+      {
+        "citationNumber": 1,
+        "statement": "Sponsor role: Operations lead",
+        "approvalState": "pending"
+      }
+    ]
+  },
+  {
+    "sentence": "Strengths as recorded in sessions and inventories; none of these is yet confirmed by a product reviewer [16].",
+    "class": "evidence_gap",
+    "expected": true,
+    "complete": true,
+    "evidence": [
+      {
+        "citationNumber": 16,
+        "statement": "Controls for review",
+        "approvalState": "pending"
+      }
+    ]
+  },
+  {
+    "sentence": "Routing lacks a shared accountable rule [5] [5] [5] [2] [5] [6] [7]",
+    "class": "factual_claim",
+    "expected": false
+  },
+  {
+    "sentence": "Proposed decision for sponsor review: Authorize Discovery with Conditions, bounded to member service and to P2 evidence that classifies the change type, with no solution, target benefit or execution plan approved [2].",
+    "class": "draft_status",
+    "expected": true
+  },
+  {
+    "sentence": "Value direction is framed cautiously at source: the package states that no savings commitment is made until Finance validates the baseline and capacity assumptions [1].",
+    "class": "decision_condition",
+    "expected": true
+  },
+  {
+    "sentence": "The change hypothesis is limited workflow change for agents and supervisor quality review, with no assumed role reduction or operating-model redesign, to be confirmed or corrected after P2 evidence [1].",
+    "class": "decision_condition",
+    "expected": true
+  },
+  {
+    "sentence": "This is a proposed decision placed before the sponsor; approval is recorded separately and no approval has been granted here.",
+    "class": "draft_status",
+    "expected": true
+  },
+  {
+    "sentence": "Change assumptions awaiting confirmation: workflow change recorded as limited, and role accountability change recorded as none, are both marked proposed, not confirmed [3].",
+    "class": "draft_status",
+    "expected": true,
+    "evidence": [
+      {
+        "citationNumber": 3,
+        "statement": "Change assumptions awaiting review",
+        "approvalState": "pending"
+      }
+    ]
+  },
+  {
+    "sentence": "If approved, the sponsor authorizes Discovery only as an evidence phase: no solution is selected, no operating model is set, and no implementation funding is committed.",
+    "class": "decision_condition",
+    "expected": true
+  },
+  {
+    "sentence": "The revenue-cycle team receives denial feedback after submission and works a manually assembled queue, and source teams cannot reliably distinguish expired coverage, authorization mismatch, administrative coding errors and missing attachments [1].",
+    "class": "factual_claim",
+    "expected": true,
+    "evidence": [
+      {
+        "citationNumber": 1,
+        "statement": "The revenue-cycle team receives denial feedback after submission and works a manually assembled queue, and source teams cannot reliably distinguish expired coverage, authorization mismatch, administrative coding errors and missing attachments."
+      }
+    ]
+  },
+  {
+    "sentence": "Source teams cannot reliably distinguish expired coverage.",
+    "class": "factual_claim",
+    "expected": false
+  }
+]

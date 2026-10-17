@@ -4,10 +4,26 @@ import type {
   RenderableTable,
   SourceRegisterEntry,
 } from "./types";
-import { referenceCellTextHeight } from "./reference-deck-layout";
+import {
+  referenceCellTextHeight,
+  layoutReferenceTable,
+} from "./reference-deck-layout";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import type { PhrasingContent } from "mdast";
 import { formatPurposeNumber } from "./purpose-number-display";
+import {
+  collapsePurposeCitations,
+  purposeCitationIds,
+  compactPurposeCitationIds,
+} from "./purpose-citations";
+
+function compactDisplayValue(value: string): string {
+  // Source markers remain in the page footer; qualifiers remain beside the value.
+  return value
+    .replace(/\[\d+(?:\s*[-–,]\s*\d+)*\]/g, "")
+    .trim()
+    .replace(/^approximately\s+/i, "~");
+}
 
 export type PurposeFamily =
   | "cover"
@@ -105,13 +121,25 @@ export class PurposePageError extends Error {
 
 const draftScope =
   "Working draft for human review. No phase approval or funding commitment is recorded by this output.";
-const sourceIds = (text: string): number[] => [
-  ...new Set(
-    [...text.matchAll(/\[(\d+(?:\s*,\s*\d+)*)\]/g)].flatMap((m) =>
-      m[1]!.split(/\s*,\s*/).map(Number),
-    ),
-  ),
-];
+const sourceIds = purposeCitationIds;
+export const purposeBodyHeight = (page: PurposePage) =>
+  page.sourceRegister ? 4.45 : page.takeaway ? 3.9 : 4.1;
+export const purposeTableHeaderHeight = (page: PurposePage) =>
+  page.sourceRegister
+    ? 0.38
+    : page.columns
+      ? Math.max(
+          0.48,
+          ...page.columns.map(
+            (cell, i) =>
+              referenceCellTextHeight(
+                cell,
+                12.05 * purposeTableWidths(page)[i]! - 0.16,
+                16,
+              ) + 0.06,
+          ),
+        )
+      : 0.62;
 
 /** Slide families own emphasis; do not print inline Markdown delimiters as content. */
 export function purposePlainText(value: string): string {
@@ -139,13 +167,15 @@ export function purposeCitations(
   text: string,
   labels: Record<number, string>,
 ): string {
-  return text.replace(
-    /\[\d+(?:\s*,\s*\d+)*\](?:\s*\[\d+(?:\s*,\s*\d+)*\])*/g,
+  return collapsePurposeCitations(text).replace(
+    /\[\d+(?:\s*[-–,]\s*\d+)*\]/g,
     (group) => {
       const ids = sourceIds(group);
       if (ids.some((id) => !labels[id]))
         throw new PurposePageError("unknown_source", "citations");
-      return `[${ids.map((id) => labels[id]).join(", ")}]`;
+      return ids.every((id) => labels[id] === String(id))
+        ? compactPurposeCitationIds(ids)
+        : `[${ids.map((id) => labels[id]).join(", ")}]`;
     },
   );
 }
@@ -180,14 +210,14 @@ export const purposeStatementHeight = (
 export function purposeRowHeight(page: PurposePage, row: string[]): number {
   const widths = purposeTableWidths(page).map((w) => 12.05 * w - 0.16);
   return Math.max(
-    0.45,
+    page.sourceRegister ? 0.32 : 0.45,
     ...row.map(
       (cell, i) =>
         referenceCellTextHeight(
           purposeCitations(cell, page.referenceLabels || {}),
           widths[i]!,
           16,
-        ) + 0.06,
+        ) + (page.sourceRegister ? 0.04 : 0.06),
     ),
   );
 }
@@ -245,7 +275,15 @@ function normalizePage(input: PurposePage): PurposePage {
     ...input,
     title: purposePlainText(input.title),
     scope: purposePlainText(input.scope),
-    takeaway: input.takeaway ? purposePlainText(input.takeaway) : undefined,
+    takeaway: input.takeaway
+      ? purposePlainText(input.takeaway).replace(
+          new RegExp(
+            `^${(input.takeawayLabel || "(?!)").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*:\\s*`,
+            "i",
+          ),
+          "",
+        )
+      : undefined,
     takeawayLabel: input.takeawayLabel
       ? purposePlainText(input.takeawayLabel)
       : undefined,
@@ -260,7 +298,21 @@ function normalizePage(input: PurposePage): PurposePage {
 }
 
 function paginateRawContent(input: PurposePage): PurposePage[] {
-  const page = normalizePage(input);
+  let page = normalizePage(input);
+  if (page.columns && page.rows && !page.columnWeights) {
+    const weighted = {
+      ...page,
+      columnWeights: layoutReferenceTable(
+        { kind: "table", columns: page.columns, rows: page.rows },
+        12.05,
+      ).columnWidths,
+    };
+    const total = (p: PurposePage) =>
+      p.rows!.reduce((sum, row) => sum + purposeRowHeight(p, row), 0);
+    if (total(weighted) < total(page)) page = weighted;
+  }
+  const bodyHeight = purposeBodyHeight(page);
+  const headerHeight = purposeTableHeaderHeight(page);
   if (page.family === "trend") return [page];
   if (page.columns && page.rows) {
     if (page.columns.length < 1 || page.columns.length > 5)
@@ -270,21 +322,17 @@ function paginateRawContent(input: PurposePage): PurposePage[] {
       throw new PurposePageError("column_label_needs_edit", page.id);
     const groups: string[][][] = [];
     let group: string[][] = [],
-      used = 0.62;
+      used = headerHeight;
     for (const row of page.rows) {
       if (row.length !== page.columns.length)
         throw new PurposePageError("table_shape", page.id);
       // A single oversized record needs author review, not an unexplained truncation.
       const height = purposeRowHeight(page, row);
       if (height > 3.7) throw new PurposePageError("row_needs_edit", page.id);
-      if (
-        group.length &&
-        (used + height > 4.101 ||
-          group.length === PURPOSE_LAYOUTS.register.maxItems)
-      ) {
+      if (group.length && used + height > bodyHeight + 0.001) {
         groups.push(group);
         group = [];
-        used = 0.62;
+        used = headerHeight;
       }
       group.push(row);
       used += height;
@@ -293,7 +341,18 @@ function paginateRawContent(input: PurposePage): PurposePage[] {
     if (groups.length === 2) {
       const rows = groups.flat();
       const height = (rs: string[][]) =>
-        0.62 + rs.reduce((sum, row) => sum + purposeRowHeight(page, row), 0);
+        headerHeight +
+        rs.reduce((sum, row) => sum + purposeRowHeight(page, row), 0);
+      const tail = (at: number) => {
+        const slice = rows.slice(at);
+        const previousHeader =
+          page.sourceRegister && slice[0]?.[0]
+            ? rows.slice(0, at).findLast((row) => !row[0])
+            : undefined;
+        return previousHeader
+          ? [["", `${previousHeader[1]} (continued)`, ""], ...slice]
+          : slice;
+      };
       const cuts = Array.from(
         { length: Math.max(0, rows.length - 3) },
         (_, i) => i + 2,
@@ -301,25 +360,21 @@ function paginateRawContent(input: PurposePage): PurposePage[] {
         .map((at) => ({
           at,
           a: height(rows.slice(0, at)),
-          b: height(rows.slice(at)),
+          b: height(tail(at)),
         }))
         .filter(
           (c) =>
-            c.a <= 4.101 &&
-            c.b <= 4.101 &&
-            c.at <= PURPOSE_LAYOUTS.register.maxItems &&
-            rows.length - c.at <= PURPOSE_LAYOUTS.register.maxItems,
+            (!page.sourceRegister || Boolean(rows[c.at - 1]?.[0])) &&
+            c.a <= bodyHeight + 0.001 &&
+            c.b <= bodyHeight + 0.001 &&
+            c.a >= bodyHeight * 0.55 &&
+            c.b >= bodyHeight * 0.55,
         )
         .sort((a, b) => Math.abs(a.a - a.b) - Math.abs(b.a - b.b));
-      if (cuts[0])
-        groups.splice(0, 2, rows.slice(0, cuts[0].at), rows.slice(cuts[0].at));
+      if (height(rows) <= bodyHeight + 0.001) groups.splice(0, 2, rows);
+      else if (cuts[0])
+        groups.splice(0, 2, rows.slice(0, cuts[0].at), tail(cuts[0].at));
     }
-    if (
-      groups.length > 1 &&
-      groups.at(-1)!.length === 1 &&
-      groups.at(-2)!.length > 2
-    )
-      groups.at(-1)!.unshift(groups.at(-2)!.pop()!);
     return groups.map((rows, i) => ({
       ...page,
       id: `${page.id}:${i + 1}`,
@@ -354,9 +409,12 @@ function paginateRawContent(input: PurposePage): PurposePage[] {
         11.2,
         page.compact ? 18 : 22,
       );
-      if (next > 4.1)
+      if (next > bodyHeight)
         throw new PurposePageError("statement_needs_edit", page.id);
-      if (group.length && (group.length === cap || height + next > 4.1)) {
+      if (
+        group.length &&
+        (group.length === cap || height + next > bodyHeight)
+      ) {
         pages.push({
           ...page,
           id: `${page.id}:${pages.length + 1}`,
@@ -396,6 +454,7 @@ function paginateRawContent(input: PurposePage): PurposePage[] {
 
 function paginateContent(page: PurposePage): PurposePage[] {
   page = normalizePage(page);
+  const bodyHeight = purposeBodyHeight(page);
   if (page.family === "trend") return [page];
   // Fit the whole message before introducing a continuation.
   if (page.family === "statement" && page.items.length) {
@@ -410,16 +469,16 @@ function paginateContent(page: PurposePage): PurposePage[] {
           ),
         0,
       );
-    if (page.items.length <= 3 && height(11.2, 22) <= 4.1)
+    if (page.items.length <= 3 && height(11.2, 22) <= bodyHeight)
       return paginateRawContent(page);
-    if (page.items.length <= 5 && height(11.2, 18) <= 4.1)
+    if (page.items.length <= 5 && height(11.2, 18) <= bodyHeight)
       return [{ ...page, compact: true }];
     if (
       page.items.length <= 6 &&
       [
         page.items.filter((_, i) => i % 2 === 0),
         page.items.filter((_, i) => i % 2 === 1),
-      ].every((items) => height(5.1, 18, items) <= 4.1)
+      ].every((items) => height(5.1, 18, items) <= bodyHeight)
     )
       return [{ ...page, compact: true, statementColumns: 2 }];
     page = {
@@ -438,7 +497,11 @@ function paginateContent(page: PurposePage): PurposePage[] {
       page.items.every(
         (i) =>
           Math.max(
-            referenceCellTextHeight(i.label, width, 18),
+            referenceCellTextHeight(
+              `${i.tone!.toUpperCase()} / ${i.label}`,
+              width,
+              18,
+            ),
             referenceCellTextHeight(
               purposeCitations(i.detail, page.referenceLabels || {}),
               11.55 - width,
@@ -446,7 +509,7 @@ function paginateContent(page: PurposePage): PurposePage[] {
             ),
           ) +
             0.12 <=
-          4.1 / page.items.length,
+          bodyHeight / page.items.length,
       ),
     );
     if (labelWidth !== undefined)
@@ -465,11 +528,20 @@ function paginateContent(page: PurposePage): PurposePage[] {
       items: [],
     };
   }
-  const pages = paginateRawContent(
+  let pages = paginateRawContent(
     page.columns ? { ...page, compact: true } : page,
   );
   if (pages.length > 2)
     throw new PurposePageError("message_needs_edit", page.id);
+  if (pages.length === 2 && !page.rows) {
+    const items = pages.flatMap((p) => p.items);
+    const at = Math.ceil(items.length / 2);
+    if (at >= 2 && items.length - at >= 2)
+      pages = pages.map((p, i) => ({
+        ...p,
+        items: i ? items.slice(at) : items.slice(0, at),
+      }));
+  }
   if (
     pages.length > 1 &&
     pages.some((p) => (p.rows?.length ?? p.items.length) < 2)
@@ -480,8 +552,9 @@ function paginateContent(page: PurposePage): PurposePage[] {
     pages.some(
       (p) =>
         p.rows &&
-        0.62 + p.rows.reduce((n, row) => n + purposeRowHeight(p, row), 0) <
-          4.1 * 0.55,
+        purposeTableHeaderHeight(p) +
+          p.rows.reduce((n, row) => n + purposeRowHeight(p, row), 0) <
+          purposeBodyHeight(p) * 0.55,
     )
   )
     throw new PurposePageError("continuation_fill_needs_edit", page.id);
@@ -575,7 +648,8 @@ function tablePage(table: RenderableTable, base: PurposePage): PurposePage {
       );
     if (
       family === "big_numbers" &&
-      (table.columns.length !== 3 || table.rows.some((r) => r[1]!.length > 18))
+      (table.columns.length !== 3 ||
+        table.rows.some((r) => compactDisplayValue(r[1]!).length > 18))
     )
       throw new PurposePageError("big_number_shape", base.id);
     if (
@@ -593,7 +667,9 @@ function tablePage(table: RenderableTable, base: PurposePage): PurposePage {
       items: table.rows.map((row, i) => ({
         label: row[0]!,
         tone: table.rowTones?.[i],
-        ...(family === "big_numbers" ? { value: row[1]! } : {}),
+        ...(family === "big_numbers"
+          ? { value: compactDisplayValue(row[1]!) }
+          : {}),
         detail: row
           .slice(family === "big_numbers" ? 2 : 1)
           .map((cell, i) =>
@@ -662,9 +738,17 @@ export function validatePurposeChart(
     throw new PurposePageError("chart_point_invalid", chart.key);
 }
 
-/** Descriptive chart framing until a governed claim-to-series adapter exists. */
+/** Endpoint comparisons only: no causal or statistical trend is inferred. */
 export function purposeChartHeadline(charts: readonly PurposeChart[]): string {
-  return charts.map((chart) => chart.title).join(" and ");
+  return charts
+    .map((chart) => {
+      const first = chart.points[0]?.value;
+      const last = chart.points.at(-1)?.value;
+      if (first === undefined || last === undefined)
+        throw new PurposePageError("chart_without_data", chart.key);
+      return `${chart.metric} ends ${last > first ? "higher" : last < first ? "lower" : "unchanged"}`;
+    })
+    .join("; ");
 }
 
 /** Presentation only: preserve the authored sequence and declared graph edges. */
@@ -697,15 +781,21 @@ export function planPurposePages(
   );
   const paginate = (page: PurposePage) =>
     paginateContent({ ...page, referenceLabels });
+  const coverTitle = doc.title.startsWith(doc.initiativeDisplayName)
+    ? doc.title
+        .slice(doc.initiativeDisplayName.length)
+        .replace(/^\s*[-–—:/]\s*/, "")
+        .trim() || doc.title
+    : doc.title;
   const pages: PurposePage[] = [
     {
       id: "cover",
       family: "cover",
-      title: doc.title,
+      title: coverTitle,
       question: "What decision does this readout support?",
       scope:
-        doc.subtitle ||
-        "The recommendation is for review, not authorization to implement.",
+        doc.deckSlides[0]?.pageIntent?.question ||
+        "What does the evidence support, and what decision comes next?",
       cover: doc.presentationCover,
       sources: [],
       notes: `The point: ${doc.recommendation}\n${draftScope}`,
@@ -948,11 +1038,11 @@ export function planPurposePages(
     pages.push({
       id: chart.key,
       family: "trend",
-      title: chart.title,
+      title: purposeChartHeadline([chart]),
       question: `What changed in ${chart.metric}?`,
       scope: `${chart.unit}. ${chart.period}. ${chart.interpretation}`,
       sources: chart.sourceIds,
-      notes: `The point: ${chart.title}\n${chart.interpretation}\n${chart.points.map((point) => `${point.label}: ${point.value} ${chart.unit}; ${point.sourceRow}`).join("\n")}`,
+      notes: `The point: ${purposeChartHeadline([chart])}\n${chart.interpretation}\n${chart.points.map((point) => `${point.label}: ${point.value} ${chart.unit}; ${point.sourceRow}`).join("\n")}`,
       items: [],
       chart,
     });
@@ -986,50 +1076,44 @@ export function planPurposePages(
         items: doc.nextActions.map((detail) => ({ label: "", detail })),
       }),
     );
-  // Source families share the same schema and may share a page; their labels stay on each row.
+  // Compatible groups share the register; review caveats are stated once.
   const grouped = purposeSourceGroups(doc.sourceRegister);
-  const sourceBatches = grouped.flatMap((g) =>
-    g.entries.map((source) => ({ source, family: g.family })),
-  );
-  const batchCount = Math.ceil(sourceBatches.length / 5);
-  for (
-    let start = 0, batchIndex = 0;
-    start < sourceBatches.length;
-    batchIndex++
-  ) {
-    const remaining = sourceBatches.length - start;
-    const take = Math.ceil(remaining / (batchCount - batchIndex));
-    const batch = sourceBatches.slice(start, start + take);
-    const entries = batch.map((b) => b.source);
-    const family = [...new Set(batch.map((b) => b.family))].join(" / ");
-    const sourceTitle = `Sources ${String.fromCharCode(65 + batchIndex)}: ${family}`;
-    const mixed = new Set(batch.map((b) => b.family)).size > 1;
-    pages.push(
-      ...paginate({
-        id: `sources-${family}`,
-        family: "register",
-        title:
-          sourceTitle.length <= 90
-            ? sourceTitle
-            : `Sources ${String.fromCharCode(65 + batchIndex)}: evidence and controls`,
-        question: "Where can each source be checked?",
-        scope: `Source presence is not approval. ${[...new Set(entries.map((s) => s.asOf).filter(Boolean))].join(", ") || "Snapshot date not recorded"}.`,
-        sources: [],
-        notes:
-          "The point: source references let the reviewer trace claims. Review status remains separate.",
-        columns: ["Ref", "Source and review", "Use and limitation"],
-        columnWeights: [0.85, 5.2, 6],
-        sourceRegister: true,
-        rows: entries.map((source) => [
+  if (grouped.length) {
+    const entries = doc.sourceRegister;
+    const commonReview =
+      new Set(entries.map((s) => s.reviewStatus)).size === 1
+        ? entries[0]?.reviewStatus
+        : undefined;
+    const scope = `${commonReview ? `${commonReview} · ` : ""}Source presence is not approval · ${[...new Set(entries.map((s) => s.asOf).filter(Boolean))].join(", ") || "Snapshot date not recorded"}`;
+    const name = (value: string) =>
+      value.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+    const register: PurposePage = {
+      id: "sources",
+      family: "register",
+      title: "Sources for the decision and diagnostic evidence",
+      question: "Where can each source be checked?",
+      scope,
+      sources: [],
+      notes:
+        "The point: source references let the reviewer trace claims. Review status remains separate.",
+      columns: ["Ref", "Source", "Use and limitation"],
+      columnWeights: [0.85, 4.8, 6.4],
+      sourceRegister: true,
+      rows: grouped.flatMap((group) => [
+        ["", name(group.family), ""],
+        ...group.entries.map((source) => [
           `[${source.referenceId || source.citationNumber}]`,
-          `${mixed ? `${source.evidenceFamily}: ` : ""}${source.label}\n${source.reviewStatus || `${source.confidence} confidence`}`,
-          source.useAndLimitation ||
+          `${name(source.label)}${!commonReview && source.reviewStatus ? ` (${source.reviewStatus})` : ""}`,
+          source.useAndLimitation?.replace(
+            /;?\s*human approval remains separate\.?/gi,
+            "",
+          ) ||
             "Use and limitations not recorded; confirm before relying on this source.",
         ]),
-        items: [],
-      }),
-    );
-    start += take;
+      ]),
+      items: [],
+    };
+    pages.push(...paginate(register));
   }
   for (const page of pages) {
     page.classification = doc.presentationCover?.classification;

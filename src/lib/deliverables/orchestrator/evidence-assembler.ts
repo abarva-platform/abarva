@@ -736,7 +736,7 @@ async function loadMoveCurrentStateCandidates(
           });
           const artifact = sourceArtifacts.get(String(sourceRef.move_artifact_id));
           const admissionSource = strict && artifact ? reviewedEvidenceAdmissionSource({ clientKey: params.tenantClientKey, tenantId: clientId, moveId, evidence: row, review, artifact }) : null;
-          if (candidate) candidates.push({ ...candidate, ...(strict ? { admissionSource } : {}) });
+          if (candidate) candidates.push({ ...candidate, approvalState: "approved", ...(strict ? { admissionSource } : {}) });
         }
       }
     }
@@ -822,7 +822,7 @@ async function loadMoveCurrentStateCandidates(
         const sourcePhase = DELIVERABLE_REGISTRY.find(spec => spec.deliverableTypeKey === typeKey)?.phase ?? null;
         const approvedVersions = (versions as Array<Record<string, unknown>>).filter(version => sourceRefObject(version.structured_data).generated_artifact_id === row.id && deliverableRows.some(deliverable => deliverable.id === version.deliverable_id && deliverable.signed_off_version === version.version));
         const admissionSource = sourceForRow("generated_artifacts", row, sourcePhase, "artifact", { artifact: row, approvedVersions, approvals: deliverableRows.filter(deliverable => approvedVersions.some(version => version.deliverable_id === deliverable.id)) });
-        if (candidate) candidates.push({ ...candidate, ...(strict ? { admissionSource } : {}) });
+        if (candidate) candidates.push({ ...candidate, approvalState: "approved", ...(strict ? { admissionSource } : {}) });
       }
     }
   } catch {
