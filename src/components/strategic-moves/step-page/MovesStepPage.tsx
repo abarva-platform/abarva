@@ -638,12 +638,16 @@ export function MovesStepPage(props: MovesStepPageProps) {
                   <span className={cx("step-dot")}>
                     {done ? "✓" : String(index + 1).padStart(2, "0")}
                   </span>
-                  <span className={cx("step-title")}>{step.title}</span>
-                  {open ? (
-                    <span className={cx("step-depth")}>· open</span>
-                  ) : label !== "Full" ? (
-                    <span className={cx("step-depth")}>· {label}</span>
-                  ) : null}
+                  {/* The status sits under its own name, so a name that wraps
+                      to two lines does not leave it floating beside them. */}
+                  <span className={cx("step-label")}>
+                    <span className={cx("step-title")}>{step.title}</span>
+                    {open ? (
+                      <span className={cx("step-depth")}>· open</span>
+                    ) : label !== "Full" ? (
+                      <span className={cx("step-depth")}>· {label}</span>
+                    ) : null}
+                  </span>
                 </>
               );
               return (
