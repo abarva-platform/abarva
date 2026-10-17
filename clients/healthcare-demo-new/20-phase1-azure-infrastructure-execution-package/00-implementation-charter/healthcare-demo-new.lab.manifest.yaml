@@ -1,0 +1,73 @@
+tenant:
+  display_name: Healthcare Demo New
+  tenant_key: healthcare-demo-new
+  short_code: hcdn
+  industry_overlay: healthcare
+  tenant_type: synthetic_reference_implementation
+  frozen_release_id: healthcare-demo-new-source-corpus-v1.0.0
+  approval_manifest_sha256: 06f645913353988eb722eeccb2b89ee5f7d96fbf2b4c60d86d6bff3bee4412fd
+environment:
+  name: lab
+  region: eastus
+  database_region: eastus2
+subscription:
+  id: 701a8554-a166-46e9-bf13-743bc50e3b20
+  display_name: abarva-lab-sub
+  tenant_directory_id: f5151b70-963c-4124-a888-20a50e8c2e2c
+control_plane:
+  resource_group: rg-abarva-hcdn-lab-eus-001
+  virtual_network: vnet-abarva-hcdn-lab-eus-001
+  container_apps_subnet: snet-aca-hcdn-lab-eus-001
+  postgres_subnet: snet-pg-hcdn-lab-eus-001
+  private_endpoint_subnet: snet-pe-hcdn-lab-eus-001
+  container_apps_environment: cae-abarva-hcdn-lab-eus-001
+  log_analytics_workspace: law-abarva-hcdn-lab-eus-001
+network:
+  vnet_cidr: 10.74.0.0/22
+  container_apps_subnet_cidr: 10.74.0.0/23
+  postgres_subnet_cidr: 10.74.2.0/27
+  private_endpoint_subnet_cidr: 10.74.2.32/27
+database:
+  server_name: pg-abarva-hcdn-lab-eus-001
+  database_name: abarva_healthcare_demo_new_knowledge_lab
+  public_network_access: Disabled
+storage:
+  account_name: stabhcdnlab001
+  evaluator_account_name: stabhcdneval001
+  tenant_root: healthcare-demo-new
+key_vault:
+  name: kv-abarva-hcdn-lab-001
+container_image:
+  registry_resource_id: /subscriptions/701a8554-a166-46e9-bf13-743bc50e3b20/resourceGroups/rg-abarva-controlplane-lab-eastus/providers/Microsoft.ContainerRegistry/registries/acrabarvalab001
+  registry_hostname: acrabarvalab001.azurecr.io
+  repository: abarva/web
+  image_digest: sha256:7eb0ec9024dfcc57b42b02e3a7fd3f82ff376fb024ee1d057eabad7b05ef9160
+  image_digest_status: plan_locked_prior_approved_digest_requires_refresh_before_apply
+managed_identities:
+  source_loader: mi-hcdn-source-loader-lab-001
+  parser_worker: mi-hcdn-parser-worker-lab-001
+  knowledge_worker: mi-hcdn-knowledge-worker-lab-001
+  publisher: mi-hcdn-publisher-lab-001
+  runtime_reader: mi-hcdn-runtime-reader-lab-001
+  operations_admin: mi-hcdn-operations-admin-lab-001
+  evaluator: mi-hcdn-evaluator-lab-001
+database_roles:
+  source_loader: healthcare_demo_new_source_loader
+  parser_worker: healthcare_demo_new_parser_worker
+  knowledge_worker: healthcare_demo_new_knowledge_worker
+  publisher: healthcare_demo_new_publisher
+  runtime_reader: healthcare_demo_new_runtime_reader
+  operations_admin: healthcare_demo_new_operations_admin
+  evaluator: healthcare_demo_new_evaluator
+safety:
+  allow_tenant_all: false
+  expected_tenant_key: healthcare-demo-new
+  require_release_id_match: true
+  require_manifest_hash_match: true
+  require_subscription_match: true
+  require_digest_pinned_image: true
+  prohibit_public_postgres: true
+  prohibit_public_storage: true
+  prohibit_public_evaluator_storage: true
+  prohibit_hidden_truth_from_ingest_runtime: true
+  prohibit_airline_content: true

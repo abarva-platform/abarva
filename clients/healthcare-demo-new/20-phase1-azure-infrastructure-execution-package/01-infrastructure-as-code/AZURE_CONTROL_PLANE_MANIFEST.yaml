@@ -1,0 +1,35 @@
+schema: abarva.healthcare-demo-new.phase1.azure-control-plane/v1
+status: plan_only
+tenant_key: healthcare-demo-new
+release_id: healthcare-demo-new-source-corpus-v1.0.0
+approval_manifest_sha256: 06f645913353988eb722eeccb2b89ee5f7d96fbf2b4c60d86d6bff3bee4412fd
+subscription:
+  id: 701a8554-a166-46e9-bf13-743bc50e3b20
+  display_name: abarva-lab-sub
+  required_account_check: az account show --query "{id:id,name:name,tenantId:tenantId,user:user.name}" -o json
+resources:
+  resource_group: rg-abarva-hcdn-lab-eus-001
+  vnet: vnet-abarva-hcdn-lab-eus-001
+  container_apps_environment: cae-abarva-hcdn-lab-eus-001
+  postgres_server: pg-abarva-hcdn-lab-eus-001
+  postgres_database: abarva_healthcare_demo_new_knowledge_lab
+  storage_account: stabhcdnlab001
+  evaluator_storage_account: stabhcdneval001
+  key_vault: kv-abarva-hcdn-lab-001
+  log_analytics_workspace: law-abarva-hcdn-lab-eus-001
+required_tags:
+  app: AbarVa
+  tenantKey: healthcare-demo-new
+  releaseId: healthcare-demo-new-source-corpus-v1.0.0
+  environment: lab
+  phase: phase1-infrastructure
+  owner: platform-team
+  dataClassification: synthetic-reference
+explicitly_not_created_in_this_pr:
+  - azure_resources
+  - postgres_schema
+  - source_files
+  - product_runtime
+  - cube_models
+  - superset_datasets
+  - observable_stories
