@@ -3992,6 +3992,9 @@ describe("MovesPhaseStandaloneClient", () => {
         name: "Stored workbook responses",
       });
       expect(within(list).getAllByRole("checkbox")).toHaveLength(41);
+      // The scrolling list is itself focusable, so it scrolls from the keyboard
+      // even when a read-only review disables every checkbox inside it.
+      expect(list).toHaveAttribute("tabindex", "0");
       expect(
         within(list).getByRole("checkbox", {
           name: /Workbook question 41\./,

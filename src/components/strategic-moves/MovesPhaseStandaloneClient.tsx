@@ -10181,11 +10181,15 @@ function StageReadinessWorkbookPreviewControl({
             seeded from the whole set, so a 41-proposal workbook offered
             "41/41 selected" above six rows, and no row past the sixth could
             be rejected or flagged at all. The list scrolls instead.
+            It takes focus itself: when the review is read-only every checkbox
+            is disabled, and a scrolling region with nothing focusable inside
+            cannot be scrolled from the keyboard.
           */}
           <div
             aria-label="Stored workbook responses"
             className="mxw-workbook-review-list"
             role="group"
+            tabIndex={0}
           >
             {preview.proposalSet.proposals.map((proposal) => {
               const proposalId = proposal.proposalId ?? "";
