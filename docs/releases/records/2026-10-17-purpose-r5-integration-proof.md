@@ -57,6 +57,9 @@ Release lane: `experimental`.
 - Offline replay preserves the earlier drafts and rejects their over-long deck titles/scope notes.
 - Fresh four-case generation, native rendering and independent page review are tracked in the
   private proof bundle. No visual acceptance or score is inferred from passing tests.
+- Current outcome: two charter candidates rendered below the acceptance threshold; both
+  discovery candidates were rejected before rendering by the current story checks. This is
+  not a successful four-output acceptance run. No gate was bypassed to manufacture exports.
 
 ## Rollout Plan
 
