@@ -1,4 +1,4 @@
-# u659 — Setup → Rate cards: a workspace admin loads the rate card in the product
+# u659 — Admin → Rate cards: a workspace admin loads the rate card in the product
 
 ## Release ID
 
@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-A workspace's own rates for Moves estimates (global integrators, boutiques, offshore providers and its internal staff) could only be loaded through the API. This release adds a Setup screen, **Setup → Rate cards** (`/admin/rate-cards`), where a workspace admin loads them once, before any Move:
+A workspace's own rates for Moves estimates (global integrators, boutiques, offshore providers and its internal staff) could only be loaded through the API. This release adds a Setup screen, **Admin → Rate cards** (`/admin/rate-cards`), where a workspace admin loads them once, before any Move:
 
 - **Current card:** the approved version, the date, the approval reason, every line, and the version history. A card that cannot be read is said to be unreadable; it is never shown as "no card loaded".
 - **Load a new version:** download the template, upload the CSV, and see every problem row with its row number and field. The change against the current version is summarised (added, changed with before → after, removed, unchanged). There is a warning before any line is removed and for any line not priced per hour.
@@ -80,7 +80,7 @@ Merge after u657 and u658 (this stacks on both), then ship in the next repo-owne
 - ACA runtime invariant: unchanged.
 - Worker image invariant: unchanged.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes. As a workspace admin, open Setup → Rate cards, check a synthetic card file, and approve it. As a non-admin member, confirm the import route refuses with the sentence.
+- Live signed-in proof required: yes. As a workspace admin, open Admin → Rate cards, check a synthetic card file, and approve it. As a non-admin member, confirm the import route refuses with the sentence.
 
 ## Rollback Plan
 
