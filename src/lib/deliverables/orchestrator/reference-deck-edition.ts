@@ -191,6 +191,9 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
   const programEarned = basis("programEarned");
   const programPaid = basis("programPaid");
   const annual = dollars("annual_cash_base", annualCash?.base);
+  // "Calculated" names a fact: an evaluated case whose figures this viewer can see.
+  // Without one, the same cell is a gap, never a label that implies a case exists.
+  const calculated = (label: string): string => caseBody?.status === "evaluated" && economics ? label : GAP;
   const caseCost = inputs.edition === "investment" ? dollars("case_cost_base", costCents?.base) : null;
   const threeTotal = dollars("three_year_credited_earned", credited?.totalCents);
   const roi = (basisKey: string): ReferenceFigure | null => {
@@ -328,7 +331,7 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
           { label: "Annual value", value: valueCell(annual), meaning: "Current basis" },
           { label: "Credited value", value: valueCell(threeTotal), meaning: "Earned basis" },
           { label: "Delivery estimate", value: valueCell(romCombined), meaning: "Approved basis" },
-          { label: "Three-year return", value: valueCell(roi("creditedEarned")), meaning: "Calculated base" },
+          { label: "Three-year return", value: valueCell(roi("creditedEarned")), meaning: calculated("Calculated base") },
         ]),
         { kind: "text", lines: [
           `Problem: ${safeRead(inputs.move.problemStatement)}`,
@@ -369,7 +372,7 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
         "Map each handoff, with its owner, in a working session.")];
       case "one_step_value": {
         const blocks: ReferenceBlock[] = [table(["Step", "Driver", "Working value", "Basis"], [
-          ["Counted value", "Calculated case", valueCell(annual), "Earned or paid is explicit"],
+          ["Counted value", calculated("Calculated case"), valueCell(annual), "Earned or paid is explicit"],
           ["Validation", "Working assumptions", firstAssumption[2]!, firstAssumption[0]!],
         ])];
         if (annual) blocks.push({ kind: "bars", items: [{ label: "Annual base", value: annual, magnitude: Math.max(0, Number(annualCash?.base) || 0) }] });
@@ -382,7 +385,7 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
             valueCell(yearFigure(key, 0)), valueCell(yearFigure(key, 1)), valueCell(yearFigure(key, 2)), valueCell(dollars(`${key}_total`, basis(key)?.totalCents)),
             ...(inputs.edition === "investment" ? [valueCell(roi(key))] : [])]);
         if (inputs.edition === "validation") rows.push(["Counting basis", "Credited", "Earned", "To confirm", "To confirm"]);
-        else rows.push(["Case cost basis", "Not phased", "Not phased", "Not phased", valueCell(caseCost), "Calculated cost"]);
+        else rows.push(["Case cost basis", "Not phased", "Not phased", "Not phased", valueCell(caseCost), calculated("Calculated cost")]);
         const blocks: ReferenceBlock[] = [table(inputs.edition === "investment"
           ? ["Basis", "Year one", "Year two", "Year three", "Total", "ROI"]
           : ["Basis", "Year one", "Year two", "Year three", "Total"], rows)];
@@ -397,8 +400,8 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
         "No working assumption is recorded for this case yet.",
         "Agree the assumptions that could change the decision, with an owner for each.")];
       case "value_ledger": return [table(["Basis", "Earned", "Paid", "Counted", "Source", "Review"], [
-        ["Credited", valueCell(dollars("credited_earned_total", credited?.totalCents)), valueCell(dollars("credited_paid_total", creditedPaid?.totalCents)), "Calculated case", "Case model", "Check timing"],
-        ["Program", valueCell(dollars("program_earned_total", programEarned?.totalCents)), valueCell(dollars("program_paid_total", programPaid?.totalCents)), "Calculated case", "Case model", "Check attribution"],
+        ["Credited", valueCell(dollars("credited_earned_total", credited?.totalCents)), valueCell(dollars("credited_paid_total", creditedPaid?.totalCents)), calculated("Calculated case"), calculated("Case model"), "Check timing"],
+        ["Program", valueCell(dollars("program_earned_total", programEarned?.totalCents)), valueCell(dollars("program_paid_total", programPaid?.totalCents)), calculated("Calculated case"), calculated("Case model"), "Check attribution"],
       ])];
       case "users_decisions": return acceptedOwners.length ? [table(["Decision", "Named owner", "Right", "Source", "Status"],
         acceptedOwners.length ? acceptedOwners.slice(0, 4).map((row) => [
@@ -417,7 +420,7 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
         { name: "Sources", items: [capture(2, "current_state_findings", true)] },
         { name: "Intake", items: [capture(3, "architecture_integration", true)] },
         { name: "Common view", items: ["Shared records"] },
-        { name: "Measures", items: ["Calculated case"] },
+        { name: "Measures", items: [calculated("Calculated case")] },
         { name: "Review", items: [capture(3, "controls_governance", true)] },
         { name: "Use", items: [capture(3, "solution_approach", true)] },
       ], governance: "Access · traceability · approval" }];
