@@ -140,6 +140,67 @@ describe("reference-deck words", () => {
     expect(modelWordRule(entry, "investment", known, archetype)).toBe(rule);
   });
 
+  describe("AI-assisted scenario tokens", () => {
+    const scenarioSlot = (key: string, display: string | null): ReferenceSlotTable[string] => ({
+      key, display, meaning: "Synthetic scenario saving", sourceId: display === null ? `gap:${key.replaceAll(".", "_")}` : `rom:synthetic:ai_assisted:${key}`,
+      sourceLabel: "Synthetic scenario", missingPhrase: "not modelled", editions: ["investment"],
+    });
+    const known: ReferenceSlotTable = {
+      ...slots,
+      "rom.total.plan": stateSlot("rom.total.plan", "$550,000"),
+      "rom.ai.weeks_saved": scenarioSlot("rom.ai.weeks_saved", "3"),
+      "rom.ai.cost_saved": scenarioSlot("rom.ai.cost_saved", null),
+    };
+    const entry = {
+      title: "The delivery estimate is {rom.total.plan} across the work",
+      answer: "An AI-assisted scenario would take {rom.ai.weeks_saved} weeks off, as a comparison only.",
+      notes: "The point: the estimate funds the case. How to read: compare the scenario row with the estimate row.",
+    };
+
+    it("accepts a saving named as a scenario on the delivery-hours slide", () => {
+      expect(modelWordRule(entry, "investment", known, "rom_hours")).toBeNull();
+    });
+
+    it("refuses a scenario token on any other slide", () => {
+      expect(modelWordRule({ ...entry, title: "The delivery estimate is {rom.total.plan} across releases" }, "investment", known, "releases")).toBe("ai_scenario_slide");
+      expect(modelWordRule({ ...safeWords.words[0]!, title: "The annual case counts {value.annual.plan} on its current basis", answer: entry.answer }, "investment", known, "one_page")).toBe("ai_scenario_slide");
+    });
+
+    it("keeps the title on the estimate, even for a qualified scenario figure", () => {
+      expect(modelWordRule({ ...entry, title: "The estimate is {rom.total.plan}, and the scenario saves {rom.ai.weeks_saved} weeks" }, "investment", known, "rom_hours")).toBe("ai_scenario_in_title");
+    });
+
+    it("refuses a scenario token the scenario does not save", () => {
+      expect(modelWordRule({ ...entry, answer: "An AI-assisted scenario would cost {rom.ai.cost_saved} less, as a comparison only." }, "investment", known, "rom_hours")).toBe("unavailable_ai_scenario_claim");
+    });
+
+    it("refuses a scenario figure in a sentence that does not call it a scenario or comparison", () => {
+      expect(modelWordRule({ ...entry, answer: "AI assistance takes {rom.ai.weeks_saved} weeks off the delivery." }, "investment", known, "rom_hours")).toBe("ai_scenario_unqualified");
+      // Qualified in one sentence does not license the next.
+      expect(modelWordRule({ ...entry, answer: "Read the scenario as a comparison. Delivery finishes {rom.ai.weeks_saved} weeks sooner." }, "investment", known, "rom_hours")).toBe("ai_scenario_unqualified");
+      expect(modelWordRule({ ...entry, notes: "The point: delivery is {rom.ai.weeks_saved} weeks shorter. How to read: compare the rows." }, "investment", known, "rom_hours")).toBe("ai_scenario_unqualified");
+    });
+
+    it("refuses a saving claimed in words when no scenario saving exists", () => {
+      const none = { ...known, "rom.ai.weeks_saved": scenarioSlot("rom.ai.weeks_saved", null) };
+      expect(modelWordRule({ ...entry, answer: "AI-assisted delivery would shorten the work before funding." }, "investment", none, "rom_hours")).toBe("unavailable_ai_scenario_claim");
+      expect(modelWordRule({ ...entry, answer: "Confirm the delivery hours before relying on the estimate." }, "investment", none, "rom_hours")).toBeNull();
+    });
+
+    it("tells the model which slide carries the scenario, and only that one", async () => {
+      const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({ words: [entry, { ...entry, title: "The delivery estimate is {rom.total.plan} across releases", answer: "Confirm the release order." }] }) }] });
+      mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+      await draftEditionWords({ ...input, edition: "investment", archetypes: ["rom_hours", "releases"], slots: known });
+      const sent = JSON.parse(create.mock.calls[0][0].messages[0].content) as { slides: { archetype: string; evidence: Record<string, unknown> }[] };
+      expect(sent.slides.find((slide) => slide.archetype === "rom_hours")?.evidence.aiScenarioAvailable).toBe(true);
+      expect(sent.slides.find((slide) => slide.archetype === "releases")?.evidence).not.toHaveProperty("aiScenarioAvailable");
+      expect(create.mock.calls[0][0].system).toContain("Slots beginning rom.ai describe an AI-assisted delivery scenario");
+      // Displays stay server-side: the slot's value never reaches the prompt.
+      expect(create.mock.calls[0][0].messages[0].content).toContain('"name":"rom.ai.weeks_saved"');
+      expect(create.mock.calls[0][0].messages[0].content).not.toMatch(/"(?:display)"|:"3"/);
+    });
+  });
+
   it("keeps active and open counts distinct without exposing their displays in the prompt", () => {
     const counts = { ...slots, "register.count.active": stateSlot("register.count.active", "12"), "register.count.open": stateSlot("register.count.open", "3") };
     const entry = { ...safeWords.words[0]!, answer: "The {register.count.active} open assumptions require review." };

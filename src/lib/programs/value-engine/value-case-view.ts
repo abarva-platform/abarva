@@ -146,7 +146,22 @@ export interface ValueCaseReadInput {
   result: ValueCaseResult;
   costBasis: CostBasis;
   registerInputs: readonly RegisterInputResolution[];
+  /**
+   * The same case measured against the AI-assisted scenario approved beside
+   * the P3 estimate. A comparison only: the case's cost and verdict above are
+   * the funded estimate's.
+   */
+  aiAssisted?: {
+    label: string;
+    costBasis: CostBasis;
+    result: ValueCaseResult;
+    toolCostCents: number;
+    versusEstimate: { hours: number; weeks: number; planCents: number };
+  } | null;
 }
+
+export const AI_SCENARIO_NOT_FUNDING_DETAIL =
+  "A comparison only: the case is funded on the approved estimate. The scenario changes build cost and weeks; each lever's start month is unchanged unless its own register input changes.";
 
 /** A lever with every figure removed. */
 export interface RedactedLever {
@@ -223,12 +238,25 @@ export function valueCaseForViewer(
     registerInputs: input.registerInputs,
     blockedInputs: blocked,
   };
+  const ai = input.aiAssisted ?? null;
   if (viewer.seesFigures) {
     return {
       ...shared,
       figuresRedacted: false,
       case: input.result,
       costBasis: input.costBasis,
+      aiAssisted: ai
+        ? {
+            label: ai.label,
+            fundingBasis: false,
+            detail: AI_SCENARIO_NOT_FUNDING_DETAIL,
+            status: ai.result.status,
+            costBasis: ai.costBasis,
+            economics: ai.result.economics,
+            toolCostCents: ai.toolCostCents,
+            versusEstimate: ai.versusEstimate,
+          }
+        : null,
     };
   }
   return {
@@ -237,5 +265,8 @@ export function valueCaseForViewer(
     figuresRedactedDetail: FIGURES_WITHHELD_DETAIL,
     case: redactedCase(input.result),
     costBasis: redactedCostBasis(input.costBasis),
+    aiAssisted: ai
+      ? { label: ai.label, fundingBasis: false, detail: AI_SCENARIO_NOT_FUNDING_DETAIL, status: ai.result.status, figuresRedacted: true }
+      : null,
   };
 }

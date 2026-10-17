@@ -33,8 +33,12 @@ import {
   romCategories,
   romEstimateNextAction,
   romInputsFingerprint,
+  buildRomAiAssist,
   romPreviewBody,
   romPreviewRateCardPin,
+  setRomAiAssistPlan,
+  countedDrivers,
+  romAiScenarioCarry,
   romProvisionalBecause,
   romReliedRegisterIds,
   romRowStates,
@@ -1672,5 +1676,199 @@ describe("the rates an estimate is priced and approved on", () => {
     const a = approved(pinned).record;
     const b = approved({ mode: "reference" }).record;
     expect(romInputsFingerprint(a)).toBe(romInputsFingerprint(b));
+  });
+});
+
+describe("the AI-assisted scenario plan", () => {
+  const AI_REGISTER = (extra: RomRegisterRow[] = []) => [
+    ...settled().register,
+    reg("AI1", "confirmed", { workingFigure: "35% fewer hours", workingValue: 0.35, ownerRole: "Engineering lead" }),
+    reg("AI2", "open", { workingFigure: "30%", workingValue: 0.3, confidence: 1 }),
+    reg("AI3", "confirmed", { workingValue: 35 }),
+    reg("AI4", "confirmed", { workingValue: 0.9 }),
+    reg("TC1", "confirmed", { workingFigure: "$190 per seat-month", workingValue: 190, ownerRole: "Finance partner" }),
+    reg("TC2", "proposed", { workingValue: 40 }),
+    ...extra,
+  ];
+  const withPlan = (factors: Record<string, string>, tools: { label: string; seats: number; registerId: string }[] = []) => {
+    const { record } = settled();
+    const edit = setRomAiAssistPlan(record, {
+      label: "  AI coding agents  ",
+      factors: Object.fromEntries(Object.entries(factors).map(([d, id]) => [d, { kind: "register", registerId: id }])),
+      tools: tools.map((t, i) => ({ code: `T${i}`, label: t.label, seats: t.seats, cost: { kind: "register", registerId: t.registerId } })),
+    });
+    if (!edit.ok) throw new Error(edit.reason);
+    return edit.value;
+  };
+  const counted = () => countedDrivers(settled().record);
+
+  it("has nothing to price without a plan", () => {
+    expect(buildRomAiAssist(settled().record, AI_REGISTER())).toEqual({ status: "none" });
+  });
+
+  it("prices confirmed reductions and tool costs, with their register sources", () => {
+    const [d] = counted();
+    const record = withPlan({ [d]: "AI1" }, [{ label: "Agent seats", seats: 3, registerId: "TC1" }]);
+    expect(record.aiAssist?.label).toBe("AI coding agents");
+    const built = buildRomAiAssist(record, AI_REGISTER());
+    expect(built).toMatchObject({
+      status: "ready",
+      spec: {
+        label: "AI coding agents",
+        factors: { [d]: { hoursReduction: 0.35, source: "[A:AI1] confirmed · Engineering lead", confidence: "medium" } },
+        tools: [{ code: "T0", label: "Agent seats", seats: 3, monthlyCostCents: 19000, source: "[A:TC1] confirmed · Finance partner" }],
+      },
+      problems: [],
+    });
+  });
+
+  it("previews an open row's working figure only as a provisional scenario", () => {
+    const [d] = counted();
+    const built = buildRomAiAssist(withPlan({ [d]: "AI2" }), AI_REGISTER());
+    expect(built).toMatchObject({ status: "provisional", provisionalBecause: ["[A:AI2]"] });
+  });
+
+  it("leaves out, with a reason, a percent recorded as a whole number, a reduction above 80%, a proposed cost, and an uncounted driver", () => {
+    const [d1, d2, d3] = counted();
+    // A driver nothing counts any more: remove its counts from a copy of the record.
+    const raw = JSON.parse(serializeRomEstimate(withPlan({ [d1]: "AI3", [d2]: "AI4", [d3]: "AI1" }, [{ label: "Seats", seats: 1, registerId: "TC2" }])));
+    for (const block of [...raw.useCases, ...(raw.foundation ? [raw.foundation] : [])]) delete block.counts[d3];
+    const built = buildRomAiAssist(parseRomEstimate(JSON.stringify(raw))!, AI_REGISTER());
+    expect(built.status).toBe("incomplete");
+    if (built.status !== "incomplete") return;
+    expect(built.problems.join(" | ")).toMatch(/states 35; record a reduction as a share/);
+    expect(built.problems.join(" | ")).toMatch(/more than 80%/);
+    expect(built.problems.join(" | ")).toMatch(/Seats cost: A:TC2 is proposed/);
+    expect(built.problems.join(" | ")).toMatch(/nothing in the estimate counts/);
+  });
+
+  it("cannot resolve anything while the register is unread", () => {
+    const [d] = counted();
+    const built = buildRomAiAssist(withPlan({ [d]: "AI1" }), null);
+    expect(built).toMatchObject({ status: "incomplete", problems: [expect.stringContaining("could not be read")] });
+  });
+
+  it("adds the scenario to the preview body only when something can be priced", () => {
+    const [d] = counted();
+    const ready = withPlan({ [d]: "AI1" });
+    const build = buildRomStructure(ready, AI_REGISTER());
+    if (!build.ok) throw new Error(build.reason);
+    expect(romPreviewBody(ready, build.structure, AI_REGISTER()).aiAssist?.factors[d]?.hoursReduction).toBe(0.35);
+    const incomplete = withPlan({ [d]: "AI3" });
+    expect(romPreviewBody(incomplete, build.structure, AI_REGISTER()).aiAssist).toBeUndefined();
+  });
+
+  it("never touches the approval: editing the scenario keeps it current, and approval ignores the scenario priced beside it", () => {
+    const { record, register } = settled();
+    const rom = fakeRom(record, register);
+    const approved = approveRomEstimate(record, register, { ...rom, structure: { ...rom.structure, aiAssist: { label: "x", factors: {}, tools: [] } } } as RomResult, "me", AT);
+    if (!approved.ok) throw new Error(approved.reason);
+    const [d] = counted();
+    const edited = setRomAiAssistPlan(approved.value, { label: "AI", factors: { [d]: { kind: "register", registerId: "AI1" } }, tools: [] });
+    if (!edited.ok) throw new Error(edited.reason);
+    expect(romInputsFingerprint(edited.value)).toBe(romInputsFingerprint(approved.value));
+    expect(isRomApprovalCurrent(edited.value, register)).toBe(true);
+  });
+
+  it("survives a save and reload, and drops a malformed plan", () => {
+    const [d] = counted();
+    const record = withPlan({ [d]: "AI1" }, [{ label: "Seats", seats: 2, registerId: "TC1" }]);
+    expect(parseRomEstimate(serializeRomEstimate(record))?.aiAssist).toEqual(record.aiAssist);
+    const raw = JSON.parse(serializeRomEstimate(record));
+    raw.aiAssist = { label: "", factors: {}, tools: [] };
+    expect(parseRomEstimate(JSON.stringify(raw))?.aiAssist).toBeUndefined();
+  });
+
+  it("refuses an unnamed scenario and an implausible seat count", () => {
+    const { record } = settled();
+    expect(setRomAiAssistPlan(record, { label: " ", factors: {}, tools: [] }).ok).toBe(false);
+    expect(
+      setRomAiAssistPlan(record, { label: "AI", factors: {}, tools: [{ code: "T", label: "Seats", seats: 501, cost: { kind: "register", registerId: "TC1" } }] }),
+    ).toMatchObject({ ok: false, reason: expect.stringContaining("from 0 to 500") });
+    expect(setRomAiAssistPlan(record, null)).toMatchObject({ ok: true, value: { aiAssist: null } });
+  });
+});
+
+describe("carrying the AI scenario to P4 through the approval", () => {
+  const AI_REGISTER = () => [
+    ...settled().register,
+    reg("AI1", "confirmed", { workingValue: 0.35, ownerRole: "Engineering lead" }),
+    reg("AI2", "open", { workingValue: 0.3 }),
+    reg("TC1", "confirmed", { workingValue: 190, ownerRole: "Finance partner" }),
+  ];
+  const planned = (registerId: string) => {
+    const [d] = countedDrivers(settled().record);
+    const edit = setRomAiAssistPlan(settled().record, {
+      label: "AI coding agents",
+      factors: { [d]: { kind: "register", registerId } },
+      tools: [{ code: "T0", label: "Seats", seats: 2, cost: { kind: "register", registerId: "TC1" } }],
+    });
+    if (!edit.ok) throw new Error(edit.reason);
+    return edit.value;
+  };
+  // A preview priced exactly as the route would: the body's scenario, with figures.
+  const pricedWithScenario = (record: RomEstimate, register: RomRegisterRow[]): RomResult => {
+    const rom = fakeRom(record, register);
+    const body = romPreviewBody(record, rom.structure, register);
+    return {
+      ...rom,
+      structure: { ...rom.structure, rateCard: { mode: "reference" }, ...(body.aiAssist ? { aiAssist: body.aiAssist } : {}) },
+      aiAssisted: body.aiAssist
+        ? ({
+            ...rom,
+            productivityCreditApplied: true,
+            label: body.aiAssist.label,
+            factors: [],
+            toolCostCents: 38_000,
+            total: { ...rom.total, hours: rom.total.hours - 100, weeks: rom.total.weeks - 1, planCents: rom.total.planCents - 500_000 },
+            versusEstimate: { hours: -100, weeks: -1, planCents: -500_000 },
+          } as unknown as RomResult["aiAssisted"])
+        : null,
+    } as RomResult;
+  };
+
+  it("records a confirmed scenario's spec and figures with the approval, and survives a reload", () => {
+    const record = planned("AI1");
+    const register = AI_REGISTER();
+    const edit = approveRomEstimate(record, register, pricedWithScenario(record, register), "me", AT);
+    if (!edit.ok) throw new Error(edit.reason);
+    const ai = edit.value.approval?.aiAssisted;
+    expect(ai?.spec.label).toBe("AI coding agents");
+    expect(ai?.toolCostCents).toBe(38_000);
+    expect(ai?.versusEstimate).toEqual({ hours: -100, weeks: -1, planCents: -500_000 });
+    expect(parseRomEstimate(serializeRomEstimate(edit.value))?.approval?.aiAssisted).toEqual(ai);
+    expect(romAiScenarioCarry(edit.value, register)).toBe("carried");
+  });
+
+  it("does not carry a provisional scenario, and says so", () => {
+    const record = planned("AI2");
+    const register = AI_REGISTER();
+    const edit = approveRomEstimate(record, register, pricedWithScenario(record, register), "me", AT);
+    if (!edit.ok) throw new Error(edit.reason);
+    expect(edit.value.approval?.aiAssisted).toBeUndefined();
+    expect(romAiScenarioCarry(edit.value, register)).toBe("provisional");
+  });
+
+  it("does not carry a scenario that was priced with different settings", () => {
+    const record = planned("AI1");
+    const register = AI_REGISTER();
+    const rom = pricedWithScenario(record, register);
+    const stale = { ...rom, structure: { ...rom.structure, aiAssist: { ...rom.structure.aiAssist!, label: "Older scenario" } } } as RomResult;
+    const edit = approveRomEstimate(record, register, stale, "me", AT);
+    if (!edit.ok) throw new Error(edit.reason);
+    expect(edit.value.approval?.aiAssisted).toBeUndefined();
+    expect(romAiScenarioCarry(edit.value, register)).toBe("not_approved");
+  });
+
+  it("says when the scenario changed after approval, and keeps the estimate's approval current", () => {
+    const record = planned("AI1");
+    const register = AI_REGISTER();
+    const approved = approveRomEstimate(record, register, pricedWithScenario(record, register), "me", AT);
+    if (!approved.ok) throw new Error(approved.reason);
+    const changed = setRomAiAssistPlan(approved.value, { ...approved.value.aiAssist!, label: "Renamed scenario" });
+    if (!changed.ok) throw new Error(changed.reason);
+    expect(romAiScenarioCarry(changed.value, register)).toBe("changed_since_approval");
+    expect(isRomApprovalCurrent(changed.value, register)).toBe(true);
+    expect(romAiScenarioCarry({ ...record, aiAssist: null }, register)).toBe("none");
   });
 });

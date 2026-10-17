@@ -325,6 +325,51 @@ describe("ROM-linked cost basis", () => {
     expect(mockReadApprovedRomSnapshot).toHaveBeenCalledTimes(1);
   });
 
+  const approvedWithScenario = () =>
+    mockReadApprovedRomSnapshot.mockResolvedValue({status:"approved",snapshot:{id:"v2",result:{
+      combined:{lowCents:20_000_000,planCents:30_000_000,highCents:40_000_000},
+      aiAssisted:{
+        spec:{label:"AI coding agents",factors:{},tools:[]},
+        figures:{hours:900,weeks:12,lowCents:18_000_000,planCents:27_000_000,highCents:36_000_000},
+        toolCostCents:1_064_000,
+        versusEstimate:{hours:-100,weeks:-2,planCents:-3_000_000},
+      },
+    }}});
+
+  it("measures the same case against the approved AI scenario beside it, never as its cost", async () => {
+    mockGetModuleState.mockResolvedValue(modules({valuePlan:romPlan()}));
+    approvedWithScenario();
+    const {body} = await get();
+    expect(body.case.economics.costCents.base).toBe(30_000_000);
+    expect(body.aiAssisted).toMatchObject({
+      label:"AI coding agents",fundingBasis:false,status:"evaluated",toolCostCents:1_064_000,
+      costBasis:{status:"resolved",source:"rom:v2:ai-assisted",cents:{low:18_000_000,base:27_000_000,high:36_000_000}},
+      versusEstimate:{weeks:-2,planCents:-3_000_000},
+    });
+    expect(body.aiAssisted.economics.costCents.base).toBe(27_000_000);
+    expect(body.aiAssisted.economics.npvCents.base).toBeGreaterThan(body.case.economics.npvCents.base);
+  });
+
+  it("withholds the scenario's figures from a viewer who may not see them", async () => {
+    mockGetModuleState.mockResolvedValue(modules({valuePlan:romPlan()}));
+    approvedWithScenario();
+    mockLoadPolicy.mockResolvedValue(policy({ accessLevel: "program_viewer", canViewFinancialData: false }));
+    const {body} = await get();
+    expect(body.aiAssisted).toEqual({
+      label:"AI coding agents",fundingBasis:false,status:"evaluated",figuresRedacted:true,
+      detail:expect.stringContaining("funded on the approved estimate"),
+    });
+  });
+
+  it("has no scenario when the approval carries none", async () => {
+    mockGetModuleState.mockResolvedValue(modules({valuePlan:romPlan()}));
+    mockReadApprovedRomSnapshot.mockResolvedValue({status:"approved",snapshot:{id:"v2",result:{
+      combined:{lowCents:20_000_000,planCents:30_000_000,highCents:40_000_000},
+    }}});
+    const {body} = await get();
+    expect(body.aiAssisted).toBeNull();
+  });
+
   it("uses only the approved P3 low, plan and high snapshot", async () => {
     mockGetModuleState.mockResolvedValue(modules({valuePlan:romPlan()}));
     mockReadApprovedRomSnapshot.mockResolvedValue({status:"approved",snapshot:{id:"v2",result:{

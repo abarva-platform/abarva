@@ -843,6 +843,21 @@ jobs:
       - name: Exercise the Programs stage-readiness transition workbook suite
         run: npx jest src/lib/programs/stage-readiness-workbooks/__tests__ --runInBand
 
+      # The P5 mobilization and execution plan workbook, wired in the change
+      # that creates it so it is never dark.
+      #
+      # Measured before it was wired: 1 suite, 25 tests, GREEN.
+      #
+      # Not coverage of nothing: the subject is imported by live code outside
+      # this directory — the v1 Programs mobilization-plan route handler.
+      #
+      # No suite here reads a file's bytes, so `T-770` has nothing to refuse
+      # and `textIsTheSubject` is negative, judged per suite.
+      #
+      # Wired as a DIRECTORY with no trailing slash. Nothing nests beneath it.
+      - name: Exercise the Programs mobilization plan suites
+        run: npx jest src/lib/programs/mobilization-plan/__tests__ --runInBand
+
       # C-415 slice 15: the deliverable-generation precondition suites.
       #
       # Measured BEFORE it was wired, the directory executed on its own: 36

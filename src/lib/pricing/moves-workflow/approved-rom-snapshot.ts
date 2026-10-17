@@ -148,13 +148,34 @@ export async function readApprovedRomSnapshot(
         approvedAt: approval.approvedAt,
         result: approval,
         workbookHref: `${movePath}/rom/preview?format=xlsx`,
-        // Recomputed on the rates it was approved on, never today's card.
-        workbookStructure: { ...build.structure, rateCard: approval.rateCard ?? { mode: "reference" } },
+        // Recomputed on the rates it was approved on, never today's card, and
+        // with the AI scenario that was approved beside it (if any), never today's plan.
+        workbookStructure: {
+          ...build.structure,
+          rateCard: approval.rateCard ?? { mode: "reference" },
+          ...(approval.aiAssisted ? { aiAssist: approval.aiAssisted.spec } : {}),
+        },
       },
     };
   } catch {
     return { status: "failed" };
   }
+}
+
+/** The approved scenario's figures as a recompute produces them, or null when the preview has none. */
+export function previewScenarioMatchesApproval(preview: RomResult, approval: RomSnapshot): boolean {
+  const approved = approval.aiAssisted;
+  if (!approved) return preview.aiAssisted === undefined || preview.aiAssisted === null;
+  const ai = preview.aiAssisted;
+  return (
+    !!ai &&
+    ai.total.hours === approved.figures.hours &&
+    ai.total.weeks === approved.figures.weeks &&
+    ai.total.lowCents === approved.figures.lowCents &&
+    ai.total.planCents === approved.figures.planCents &&
+    ai.total.highCents === approved.figures.highCents &&
+    ai.toolCostCents === approved.toolCostCents
+  );
 }
 
 /** A workbook may be offered only while today's deterministic ROM equals the approval. */
