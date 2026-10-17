@@ -30,6 +30,10 @@ const holdsSchema = z.object({
 const base = holdsSchema.extend({
   contract_id: z.literal("ec-private-context/v0"), fixture_namespace: text,
   binding_key: text, id: text,
+  access_scope: z.literal("unknown").nullable().optional(),
+  source_access_scope: z.literal("unknown").optional(),
+  access_decision: z.literal("deny").optional(),
+  access_scope_revision: text.refine(value => value.trim().length > 0, "access revision must not be blank").optional(),
 }).passthrough();
 const locatorSchema = z.object({
   file_path: text, file_sha256: hash, source_id: text, source_version_id: text,
@@ -57,8 +61,6 @@ const assertionSchema = timed.extend({
   subject_id: text, predicate: text, value: z.unknown(),
   value_state: z.enum(["source_asserted_fictional", "unknown"]),
   missing_reason: nullableText, fact_basis: z.literal("fictional_source_assertion"),
-  access_scope: z.literal("unknown").nullable().optional(),
-  source_access_scope: z.literal("unknown").optional(), access_decision: z.literal("deny").optional(),
 });
 const measureSchema = timed.extend({
   subject_id: text, definition_id: text, definition_version: nullableText,
@@ -93,6 +95,27 @@ export function ecPrivateCandidateHolds(): EcCandidateHolds {
 
 function requireCandidate(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(`Invalid private candidate: ${message}`);
+}
+
+function accessDependency(row: unknown, source?: unknown, upstream: JsonObject[] = []): JsonObject {
+  const record = row as Record<string, unknown>;
+  const origin = source as Record<string, unknown> | undefined;
+  const locator = record.source_locator as EcPrivateLocator | undefined;
+  const dependency: JsonObject = {
+    kind: "source_access_scope", source_access_scope: "unknown", access_decision: "deny",
+    input_scope_state: record.access_scope === undefined && record.source_access_scope === undefined &&
+      record.access_decision === undefined ? "absent" : "unknown",
+    declared_scope_revision: typeof record.access_scope_revision === "string" ? record.access_scope_revision : null,
+    source_scope_revision: typeof origin?.access_scope_revision === "string" ? origin.access_scope_revision : null,
+    source_version: typeof origin?.id === "string" ? origin.id : locator?.source_version_id ?? null,
+    source_locator: locator ? json(locator) : null,
+    record_sha256: ecPrivateSha256(ecPrivateCanonicalJson(row)),
+  };
+  if (upstream.length) dependency.upstream_scope_revisions = upstream.map(item => item.revision_sha256);
+  if (typeof record.id === "string" && record.id.startsWith("assert:")) {
+    dependency.assertion_sha256 = dependency.record_sha256;
+  }
+  return { ...dependency, revision_sha256: ecPrivateSha256(ecPrivateCanonicalJson(dependency)) };
 }
 
 function date(value: string): number {
@@ -201,7 +224,12 @@ export function adaptEcPrivateCandidateV0(
     document: [], evidence_item: [], gaps: [],
   };
   const uuid = (kind: string, native: string) => ecPrivateCanonicalUuid(b, kind, native);
-  const attrs = (row: unknown, extra: JsonObject = {}): JsonObject => ({ raw_candidate: json(row), ...extra });
+  const attrs = (row: unknown, extra: JsonObject = {}): JsonObject => {
+    const record = row as Record<string, unknown>;
+    const locator = record.source_locator as EcPrivateLocator | undefined;
+    const source = sourceByVersion.get(locator?.source_version_id ?? String(record.id));
+    return { raw_candidate: json(row), access_dependency: accessDependency(row, source), ...extra };
+  };
   const core = (kind: string, native: string, attributes_json: JsonObject) => ({
     ...ecPrivateCandidateHolds(), id: uuid(kind, native), tenant_key: b.tenant_key,
     assessment_id: b.assessment_id, attributes_json,
@@ -290,12 +318,14 @@ export function adaptEcPrivateCandidateV0(
         const locator: EcPrivateLocator = { file_path: source.file_path, file_sha256: source.file_sha256,
           source_id: source.source_id, source_version_id: source.id, row_key: native,
           row_number: row.start, row_end: row.end };
-        out.source_record.push({ ...core("source_record", ecPrivateCanonicalJson([source.id, native]), {}),
+        out.source_record.push({ ...core("source_record", ecPrivateCanonicalJson([source.id, native]),
+          { access_dependency: accessDependency(source, source) }),
           source_file_id: uuid("source_file", source.id), native_id: native, record_type: "csv_row",
           row_number: row.start, payload_json: { ...row.values }, parse_state: "parsed", source_locator: locator });
       }
     } else {
-      out.source_record.push({ ...core("source_record", ecPrivateCanonicalJson([source.id, "whole_file"]), {}),
+      out.source_record.push({ ...core("source_record", ecPrivateCanonicalJson([source.id, "whole_file"]),
+        { access_dependency: accessDependency(source, source) }),
         source_file_id: uuid("source_file", source.id), native_id: source.id,
         record_type: source.file_path.endsWith(".txt") ? "text" : "json", row_number: null,
         payload_json: source.file_path.endsWith(".txt") ? file.text : json(JSON.parse(file.text)),
@@ -370,7 +400,11 @@ export function adaptEcPrivateCandidateV0(
       const docSource = sourceByPath.get(rawValues.document_path);
       requireCandidate(docSource && rawValues.logical_source_key === docSource.logical_source_key,
         "document does not resolve exact immutable source version");
-      out.document.push({ ...timedCore("document", row), document_key: row.native_ref,
+      const documentAccess = [accessDependency(docSource, docSource)];
+      out.document.push({ ...timedCore("document", row, {
+        source_access_dependencies: documentAccess,
+        access_dependency: accessDependency(row, sourceByVersion.get(row.source_locator.source_version_id), documentAccess),
+      }), document_key: row.native_ref,
         title: row.display_label, source_file_id: uuid("source_file", docSource.id),
         file_hash: docSource.file_sha256, logical_source_id: docSource.source_id, document_source_version: docSource.id });
     } else {
@@ -382,11 +416,25 @@ export function adaptEcPrivateCandidateV0(
         rawValues.locator_file === row.evidence_locator.file_path &&
         Number(rawValues.line_start) === row.evidence_locator.line_start &&
         Number(rawValues.line_end) === row.evidence_locator.line_end, "evidence document revision/span mismatch");
-      out.evidence_item.push({ ...timedCore("evidence_item", row), document_id: entityUuid(doc),
+      const documentSource = sourceByVersion.get(row.evidence_locator.source_version_id);
+      requireCandidate(documentSource, "evidence source access cannot resolve its document version");
+      const evidenceAccess = [accessDependency(doc, sourceByVersion.get(doc.source_locator.source_version_id)),
+        accessDependency(documentSource, documentSource)];
+      out.evidence_item.push({ ...timedCore("evidence_item", row, {
+        source_access_dependencies: evidenceAccess,
+        access_dependency: accessDependency(row, sourceByVersion.get(row.source_locator.source_version_id), evidenceAccess),
+      }), document_id: entityUuid(doc),
         evidence_locator: json(row.evidence_locator) as EcPrivateLocator });
     }
   }
 
+  const entityAccess = new Map([...out.object, ...out.document, ...out.evidence_item].map(row =>
+    [row.id, row.attributes_json.access_dependency as JsonObject]));
+  const endpointAccessFor = (rows: Entity[]): JsonObject[] => rows.map(row => {
+    const dependency = entityAccess.get(entityUuid(row));
+    requireCandidate(dependency, "canonical entity access dependency missing");
+    return dependency;
+  });
   const matchesCell = (value: unknown, cell: string): boolean => {
     if (value === null) return cell === "";
     if (typeof value !== "object") return String(value) === cell;
@@ -417,16 +465,16 @@ export function adaptEcPrivateCandidateV0(
     requireCandidate(subject.type !== "design:evidence_request" ||
       !["design:attribute/received", "design:attribute/received_locator"].includes(row.predicate) ||
       row.value === false || row.value === null, "request assertion cannot fabricate evidence");
-    const accessDependency: JsonObject = { kind: "source_access_scope", source_access_scope: "unknown",
-      access_decision: "deny", source_version: row.source_locator.source_version_id,
-      source_locator: json(row.source_locator), assertion_sha256: ecPrivateSha256(ecPrivateCanonicalJson(row)),
-      input_scope_state: row.access_scope === undefined ? "absent" : "unknown" };
     const typedReference = row.value !== null && typeof row.value === "object" && !Array.isArray(row.value) &&
       Object.keys(row.value).length === 1 && typeof (row.value as {entity_id?:unknown}).entity_id === "string"
       ? (row.value as {entity_id:string}).entity_id : null;
     const canonicalValue = typedReference === null ? json(row.value) : {entity_id:entityUuid(entity(typedReference))};
+    const assertionAccess = endpointAccessFor([subject, ...(typedReference === null ? [] : [entity(typedReference)])]);
     out.assertion.push({ ...timedCore("assertion", row, { source_access_scope: "unknown", access_decision: "deny",
-      access_dependency: accessDependency }), subject_id: entityUuid(subject), subject_kind: kind(subject),
+      source_access_dependencies: assertionAccess,
+      access_dependency: accessDependency(row, sourceByVersion.get(row.source_locator.source_version_id), assertionAccess),
+    }),
+      subject_id: entityUuid(subject), subject_kind: kind(subject),
       subject_object_id: kind(subject) === "object" ? entityUuid(subject) : null,
       predicate: row.predicate, value_json: canonicalValue, value_state: row.value_state,
       missing_reason: row.missing_reason, fact_basis: row.fact_basis,
@@ -466,8 +514,12 @@ export function adaptEcPrivateCandidateV0(
       population: json(row.population), dimensions: json(row.dimensions), period_start: row.period_start,
       period_end: row.period_end, calendar: row.calendar, timezone: row.timezone, scenario: row.scenario,
       method: row.method, fact_basis: row.fact_basis, unit: row.unit, currency: row.currency };
+    const measureAccess = endpointAccessFor([subject, definition]);
     out.measure.push({ ...timedCore("measure", row, { observation_grain: observationGrain,
-      candidate_observation_key: row.observation_key, candidate_scenario: row.scenario }),
+      candidate_observation_key: row.observation_key, candidate_scenario: row.scenario,
+      source_access_dependencies: measureAccess,
+      access_dependency: accessDependency(row, sourceByVersion.get(row.source_locator.source_version_id), measureAccess),
+    }),
       subject_object_id: entityUuid(subject), metric_key: uuid("metric_definition", definition.id),
       definition_id: entityUuid(definition), definition_version: row.definition_version,
       observation_key: ecPrivateSha256(ecPrivateCanonicalJson(observationGrain)), observation_role: observationRole,
@@ -508,6 +560,16 @@ export function adaptEcPrivateCandidateV0(
         (q.shared_service === undefined || typeof q.shared_service === "boolean" &&
         q.shared_service === (rawEntity(to).scope === "shared_service")), "wrong segment scope qualifier");
     } else requireCandidate(Object.keys(q).length === 0, "unexpected edge qualifier");
+    const endpointAccess = endpointAccessFor(mapping.reverse ? [to, from] : [from, to]);
+    const references: Entity[] = [];
+    if (row.predicate === "design:feeds") {
+      const flow = entityByRef.get(String(q.flow_ref));
+      requireCandidate(flow, "feed access cannot resolve the declared flow");
+      references.push(flow);
+    }
+    const referenceAccess = endpointAccessFor(references);
+    const edgeAccess = accessDependency(row, sourceByVersion.get(row.source_locator.source_version_id),
+      [...endpointAccess, ...referenceAccess]);
     if (row.predicate === "design:cites_document") {
       requireCandidate(from.evidence_locator && rawEntity(from).document_ref === to.native_ref &&
         from.evidence_locator.file_path === rawEntity(to).document_path, "wrong citation document revision");
@@ -523,6 +585,16 @@ export function adaptEcPrivateCandidateV0(
       prior.push(row);
       parentEdges.set(parentKey, prior);
     }
+    if (row.predicate === "design:cites_document") {
+      const item = out.evidence_item.find(item => item.id === entityUuid(from));
+      requireCandidate(item?.document_id === entityUuid(to), "citation sidecar contradicts evidence document");
+      sourceRecord(row.source_locator).attributes_json.evidence_link = {
+        evidence_item_id: entityUuid(from), document_id: entityUuid(to),
+        source_locator: json(row.source_locator),
+        access_dependency: edgeAccess, endpoint_access_dependencies: endpointAccess,
+      };
+      continue;
+    }
     if (mapping.relationship_type === null || kind(from) !== "object" || kind(to) !== "object") {
       out.gaps.push({ candidate_id: row.id, semantic_type: row.predicate,
         reason: mapping.relationship_type === null ? "predicate_not_admitted" : "non_object_endpoint" });
@@ -530,7 +602,10 @@ export function adaptEcPrivateCandidateV0(
       sourceRecord(row.source_locator).attributes_json.retained_edge = json(row);
       continue;
     }
-    out.relationship.push({ ...timedCore("relationship", row),
+    out.relationship.push({ ...timedCore("relationship", row, {
+      endpoint_access_dependencies: endpointAccess, access_dependency: edgeAccess,
+      reference_access_dependencies: referenceAccess, reference_object_ids: references.map(entityUuid),
+    }),
       from_object_id: entityUuid(mapping.reverse ? to : from), relationship_type: mapping.relationship_type,
       to_object_id: entityUuid(mapping.reverse ? from : to), qualifiers_json: json(q) as JsonObject,
       basis: "source_recorded", value_state: "unknown" });

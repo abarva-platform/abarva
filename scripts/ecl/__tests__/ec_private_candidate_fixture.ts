@@ -11,6 +11,7 @@ export interface EcPrivateFixtureOptions {
   label_suffix?: string;
   source_revision?: string;
   same_application_labels?: boolean;
+  contradictory_evidence_link?: boolean;
 }
 
 /** Reconstructs raw bytes and candidates together; contains no node:test registrations. */
@@ -50,7 +51,7 @@ export function makeEcPrivateCandidateFixture(options: EcPrivateFixtureOptions =
     source_version_id: source.id, row_number: row, row_end: row, row_key: key,
     ...(column ? { column } : {}),
   });
-  type Spec = { key: string; type: EcPrivateType; fields?: Record<string, string> };
+  type Spec = { key: string; type: EcPrivateType; label?: string; fields?: Record<string, string> };
   const specs: Spec[] = [
     { key: "app-a", type: "design:application" }, { key: "app-b", type: "design:application" },
     { key: "app-c", type: "design:application" }, { key: "module-a", type: "design:application_module" },
@@ -59,13 +60,20 @@ export function makeEcPrivateCandidateFixture(options: EcPrivateFixtureOptions =
     { key: "deploy-b", type: "design:deployment", fields: { environment: "production" } },
     { key: "deploy-c", type: "design:deployment", fields: { environment: "test" } },
     { key: "role-a", type: "design:role" }, { key: "role-b", type: "design:role" },
-    { key: "function-a", type: "design:function" }, { key: "unit-a", type: "design:org_unit" },
-    { key: "process-a", type: "design:process" }, { key: "metric-a", type: "design:metric_definition",
+    { key: "function-a", type: "design:function", label: "Fictional Service Function" },
+    { key: "unit-a", type: "design:org_unit", label: "Fictional Operations Unit" },
+    { key: "process-a", type: "design:process", label: "Fictional Request Process" },
+    { key: "capability-a", type: "design:capability", label: "Fictional Request Capability" },
+    { key: "initiative-a", type: "design:initiative", label: "Fictional Service Initiative" },
+    { key: "program-a", type: "design:program", label: "Fictional Service Program" },
+    { key: "priority-a", type: "design:strategic_priority", label: "Fictional Service Priority" },
+    { key: "metric-a", type: "design:metric_definition",
       fields: { definition_version: "v0-proposal" } },
     { key: "risk-a", type: "design:risk" }, { key: "control-a", type: "design:control" },
     { key: "platform-a", type: "design:platform" }, { key: "asset-a", type: "design:data_asset" },
     { key: "flow-a", type: "design:data_flow", fields: { source_ref: "objects/app-a", target_ref: "objects/asset-a" } },
-    { key: "usecase-a", type: "design:ai_use_case" }, { key: "tool-a", type: "design:ai_tool" },
+    { key: "usecase-a", type: "design:ai_use_case", label: "Fictional Request Assistance" },
+    { key: "tool-a", type: "design:ai_tool" },
     { key: "request-a", type: "design:evidence_request", fields: { received: "false" } },
     { key: "segment-a", type: "design:segment", fields: { scope: "shared_service" } },
     { key: "doc-a", type: "design:source_document", fields: { document_path: "raw/fixture/note-a.txt", logical_source_key: "note", revision: "a" } },
@@ -74,7 +82,7 @@ export function makeEcPrivateCandidateFixture(options: EcPrivateFixtureOptions =
     { key: "evidence-b", type: "design:evidence_item", fields: { document_ref: "objects/doc-b", locator_file: "raw/fixture/note-b.txt", line_start: "1", line_end: "2" } },
   ];
   const rows = specs.map(spec => ({ native_key: spec.key, ci_class: spec.type,
-    label: (options.same_application_labels && spec.type === "design:application" ? "Fictional application" : `Fictional ${spec.key}`) + (options.label_suffix ?? ""),
+    label: (options.same_application_labels && spec.type === "design:application" ? "Fictional application" : spec.label ?? `Fictional ${spec.key}`) + (options.label_suffix ?? ""),
     environment: "", scope: "", source_ref: "", target_ref: "", definition_version: "",
     document_path: "", logical_source_key: "", revision: "", document_ref: "", locator_file: "",
     line_start: "", line_end: "", received: "", received_locator: "",
@@ -140,7 +148,14 @@ export function makeEcPrivateCandidateFixture(options: EcPrivateFixtureOptions =
     ["app-a", "design:feeds", "asset-a", { flow_ref: "objects/flow-a" }],
     ["function-a", "design:belongs_to_segment", "segment-a", { shared_service: true }],
     ["function-a", "design:part_of_unit", "unit-a", {}],
-    ["evidence-a", "design:cites_document", "doc-a", {}],
+    ["function-a", "design:performs", "process-a", {}],
+    ["process-a", "design:realizes", "capability-a", {}],
+    ["initiative-a", "design:implements", "capability-a", {}],
+    ["initiative-a", "design:part_of_program", "program-a", {}],
+    ["program-a", "design:advances", "priority-a", {}],
+    ["initiative-a", "design:advances", "priority-a", {}],
+    ["usecase-a", "design:assists_process", "process-a", {}],
+    ["evidence-a", "design:cites_document", options.contradictory_evidence_link ? "doc-b" : "doc-a", {}],
     ["evidence-b", "design:cites_document", "doc-b", {}],
   ];
   const edgeRows = links.map(([from, predicate, to, qualifiers], i) => ({ relationship_key: `link-${i}`,

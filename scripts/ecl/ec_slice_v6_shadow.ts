@@ -111,6 +111,10 @@ export interface ShadowComparison {
   /** JSON tuples [relationship UUID, from UUID, canonical verb, to UUID]. */
   edge_set: ShadowSetComparison | null;
   semantic_nodes: ShadowSetComparison | null;
+  /** Exact canonical names, source-record bindings and JSON evidence payloads. */
+  node_evidence: ShadowSetComparison | null;
+  /** Exact qualifiers, validity, source-record bindings and JSON evidence payloads. */
+  edge_evidence: ShadowSetComparison | null;
   counts: {
     planned: { nodes: number; edges: number };
     reader: { nodes: number; edges: number };
@@ -259,12 +263,24 @@ function validTime(value: unknown): value is string {
   return new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) === date;
 }
 
+function validInterval(from: unknown, to: unknown): boolean {
+  if (from != null && !validTime(from)) return false;
+  if (to != null && !validTime(to)) return false;
+  if (from == null || to == null) return true;
+  // Date.parse retains milliseconds; the admitted source contract retains microseconds.
+  const micros = (value: string): bigint => {
+    const fraction = /\.(\d{1,6})(?:Z|[+-]\d{2}:\d{2})$/.exec(value)?.[1] ?? "";
+    return BigInt(Date.parse(value)) * 1000n + BigInt(fraction.padEnd(6, "0").slice(3));
+  };
+  return micros(String(from)) < micros(String(to));
+}
+
 export function ecSliceV6ShadowContractVersion(assessmentId: string): string {
   if (!assessment(assessmentId))
     throw new Error(
       "An assessment scope of 1-200 letters, digits, or ._:/- is required",
     );
-  return `ec-slice-v6-shadow/v1/assessment/${assessmentId}`;
+  return `ec-slice-v6-shadow/v2/assessment/${assessmentId}`;
 }
 
 function scopeIssue(
@@ -296,7 +312,7 @@ function difference(planned: string[], reader: string[]): ShadowSetComparison {
   };
 }
 
-/** Comparison is identity/structure evidence only, never serving or readiness approval. */
+/** Exact canonical identity, semantics and source evidence; never readiness approval. */
 export function compareEcSliceV6Shadow(
   plan: Pick<
     ShadowPlan,
@@ -309,6 +325,8 @@ export function compareEcSliceV6Shadow(
     edge_ids: null,
     edge_set: null,
     semantic_nodes: null,
+    node_evidence: null,
+    edge_evidence: null,
     counts: null,
     issues: [],
     counting_basis: COUNTING_BASIS,
@@ -331,6 +349,8 @@ export function compareEcSliceV6Shadow(
     if (!uuid(row.id)) issue(row.id, "invalid_uuid");
     else if (nodes.has(id(row.id))) issue(row.id, "duplicate_object_id");
     else nodes.add(id(row.id));
+    if (!uuid(row.source_record_id)) issue(row.id, "missing_or_invalid_source_lineage");
+    if (typeof row.display_name !== "string" || !row.display_name.trim()) issue(row.id, "missing_display_name");
     if (
       !object(row.attributes_json) ||
       !json(row.attributes_json) ||
@@ -355,6 +375,11 @@ export function compareEcSliceV6Shadow(
     }
     if (!verb(row.relationship_type))
       issue(row.id, "invalid_relationship_type");
+    if (!uuid(row.source_record_id)) issue(row.id, "missing_or_invalid_source_lineage");
+    if (!object(row.attributes_json) || !json(row.attributes_json) ||
+      row.qualifiers_json != null && (!object(row.qualifiers_json) || !json(row.qualifiers_json)))
+      issue(row.id, "invalid_relationship_payload");
+    if (!validInterval(row.valid_from, row.valid_to)) issue(row.id, "invalid_validity_interval");
   }
   // Do not let a foreign/ambiguous reader slice contribute IDs or successful counts.
   if (issues.length) return { ...base, status: "invalid_reader", issues };
@@ -392,8 +417,21 @@ export function compareEcSliceV6Shadow(
       JSON.stringify([id(row.id), semanticType(row)]),
     ),
   );
+  const node_evidence = difference(
+    plan.graph_nodes.map(row => stable([row.node_id, row.metadata.object_type,
+      row.business_display_name, row.source_record_id, row.metadata.attributes_json])),
+    reader.objects.map(row => stable([id(row.id), row.object_type,
+      row.display_name, id(row.source_record_id!), row.attributes_json])),
+  );
+  const edge_evidence = difference(
+    plan.graph_edges.map(row => stable([row.relationship_id, row.metadata.source_record_id,
+      row.metadata.attributes_json, row.metadata.qualifiers_json,
+      row.metadata.valid_from, row.metadata.valid_to])),
+    reader.relationships.map(row => stable([id(row.id), id(row.source_record_id!),
+      row.attributes_json, row.qualifiers_json ?? null, row.valid_from ?? null, row.valid_to ?? null])),
+  );
   return {
-    status: [node_ids, edge_ids, edge_set, semantic_nodes].every(
+    status: [node_ids, edge_ids, edge_set, semantic_nodes, node_evidence, edge_evidence].every(
       (set) => set.equal,
     )
       ? "match"
@@ -402,6 +440,8 @@ export function compareEcSliceV6Shadow(
     edge_ids,
     edge_set,
     semantic_nodes,
+    node_evidence,
+    edge_evidence,
     counts: {
       planned: {
         nodes: plan.graph_nodes.length,
@@ -566,13 +606,7 @@ export function planEcSliceV6Shadow(input: ShadowPlanInput): ShadowPlan {
       issue("relationship", row.id, "invalid_metadata");
       continue;
     }
-    const times = [row.valid_from, row.valid_to];
-    if (
-      times.some((time) => time != null && !validTime(time)) ||
-      (row.valid_from != null &&
-        row.valid_to != null &&
-        Date.parse(row.valid_from) > Date.parse(row.valid_to))
-    ) {
+    if (!validInterval(row.valid_from, row.valid_to)) {
       issue("relationship", row.id, "invalid_validity_interval");
       continue;
     }

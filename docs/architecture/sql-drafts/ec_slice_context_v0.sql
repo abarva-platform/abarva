@@ -15,19 +15,27 @@ end $$;
 
 -- Unknown receipt time is not the current clock or a fabricated intake event.
 alter table ecl_source.source_file alter column received_at drop not null;
+alter table ecl_source.source_record add column if not exists attributes_json jsonb not null default '{}'::jsonb;
 
 alter table intelligence_v6.graph_nodes drop constraint if exists graph_nodes_materialized_from_check;
 alter table intelligence_v6.graph_nodes add constraint graph_nodes_materialized_from_check
   check (materialized_from in ('v6_business_record','relationship_endpoint','manual_override','system_seed','ecl_context_object'));
 
-do $$ declare definition text; begin
-  select pg_get_constraintdef(oid) into definition from pg_constraint
+-- Preserve the complete existing check, including legacy forms, when adding missing verbs.
+do $$ declare definition text; additions text; begin
+  select pg_get_expr(conbin, conrelid) into definition from pg_constraint
     where conrelid = 'ecl_context.relationship'::regclass and conname = 'relationship_type_check';
-  if position('''SUPPORTS''' in definition) = 0 then
+  if definition is null then
+    raise exception 'Disposable relationship_type_check is required before widening';
+  end if;
+  select string_agg(quote_literal(verb), ', ' order by verb) into additions
+  from unnest(array['SUPPORTS', 'USES', 'PART_OF_UNIT', 'PERFORMS', 'REALIZES',
+    'IMPLEMENTS_CAPABILITY', 'PART_OF_PROGRAM', 'ASSISTS_PROCESS']) as admitted(verb)
+  where position(quote_literal(verb) in definition) = 0;
+  if additions is not null then
     alter table ecl_context.relationship drop constraint relationship_type_check;
-    execute 'alter table ecl_context.relationship add constraint relationship_type_check check (' ||
-      substring(definition from 8 for length(definition) - 8) ||
-      ' OR relationship_type in (''SUPPORTS'', ''USES''))';
+    execute format('alter table ecl_context.relationship add constraint relationship_type_check check ((%s) OR relationship_type in (%s))',
+      definition, additions);
   end if;
 end $$;
 
@@ -39,7 +47,10 @@ select verb, lower(replace(verb, '_', ' ')), category, 'directed', false,
   'Declared context relation for isolated non-serving rehearsal.'
 from (values
   ('HAS_SEGMENT', 'hierarchy'), ('HAS_FUNCTION', 'hierarchy'),
-  ('BELONGS_TO_SEGMENT', 'hierarchy'), ('ACCOUNTABLE_TO', 'ownership'),
+  ('BELONGS_TO_SEGMENT', 'hierarchy'), ('PART_OF_UNIT', 'hierarchy'),
+  ('ACCOUNTABLE_TO', 'ownership'), ('PERFORMS', 'operating_model'),
+  ('REALIZES', 'capability'), ('IMPLEMENTS_CAPABILITY', 'transformation'),
+  ('PART_OF_PROGRAM', 'hierarchy'), ('ASSISTS_PROCESS', 'usage'),
   ('MODULE_OF', 'hierarchy'), ('DEPLOYMENT_OF', 'infrastructure'),
   ('SUPPLIED_BY', 'vendor_system'), ('COVERED_BY', 'commercial'),
   ('ADVANCES_PRIORITY', 'transformation'), ('APPLIES_TO', 'risk_control'),
@@ -55,7 +66,10 @@ from (values
   ('HAS_SEGMENT', array['enterprise'], array['segment']),
   ('HAS_FUNCTION', array['enterprise'], array['function']),
   ('BELONGS_TO_SEGMENT', array['function','org_unit'], array['segment']),
+  ('PART_OF_UNIT', array['function'], array['org_unit']),
   ('ACCOUNTABLE_TO', array['function','process','application','platform','program','initiative','service','risk','control','strategic_priority'], array['role']),
+  ('PERFORMS', array['function'], array['process']),
+  ('REALIZES', array['process'], array['capability']),
   ('SUPPORTS', array['application'], array['process']),
   ('MODULE_OF', array['application_module'], array['application']),
   ('DEPLOYMENT_OF', array['deployment'], array['application']),
@@ -63,10 +77,13 @@ from (values
   ('FEEDS', array['application','etl_job','data_asset'], array['data_asset']),
   ('SUPPLIED_BY', array['application','contract','service','ai_tool'], array['supplier']),
   ('COVERED_BY', array['application','service'], array['contract']),
+  ('IMPLEMENTS_CAPABILITY', array['initiative'], array['capability']),
+  ('PART_OF_PROGRAM', array['initiative'], array['program']),
   ('ADVANCES_PRIORITY', array['program','initiative'], array['strategic_priority']),
   ('APPLIES_TO', array['risk'], array['application','process','data_asset','service']),
   ('MITIGATES', array['control'], array['risk']),
   ('USES', array['ai_use_case'], array['ai_tool']),
+  ('ASSISTS_PROCESS', array['ai_use_case'], array['process']),
   ('WORKS_IN', array['workforce_cohort'], array['function']),
   ('EVIDENCE_REQUESTED_FOR', array['evidence_request'], array['risk','control','program','initiative','metric_definition']),
   ('ATTRIBUTED_TO', array['leadership_observation'], array['role']),
