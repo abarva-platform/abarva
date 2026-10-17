@@ -362,24 +362,6 @@ describe("live-input reference edition", () => {
     expect(validateReferenceDeck(spec)).toContainEqual(expect.objectContaining({ code: "client_copy_term", blocking: true, slide: 2 }));
   });
 
-  it("replaces a sentence with missing figures and retains its exact basis in notes", async () => {
-    const inputs = fixture("investment");
-    const authored = words(INVESTMENT_SEQUENCE.length);
-    authored[1]!.title = "The annual basis {value.annual.base} can be compared with {rom.total.plan}";
-    authored[1]!.answer = "Compare {value.annual.base} with the estimate {rom.total.plan} before deciding.";
-    const spec = buildReferenceEdition(inputs, authored);
-    const summary = spec.slides[1]!;
-    expect(summary.actionTitle).toBe("The case summary still needs a confirmed value basis");
-    expect(summary.answer).toBe("Confirm how value is counted before relying on this summary.");
-    expect(summary.actionTitle).not.toContain("unavailable");
-    expect(summary.speakerNotes).toContain("Draft title awaiting input:");
-    expect(summary.speakerNotes).toContain("$1,200,000");
-    expect(summary.visibleNarrativeFigures).toEqual([]);
-    const rendered = await inspectDeck(await renderReferenceDeck(spec));
-    expect(judgeRenderedDeck(rendered, { referenceDeck: spec }).findings.filter((finding) =>
-      finding.kind === "reference_source" && "slide" in finding && finding.slide === 2)).toEqual([]);
-  }, 60_000);
-
   describe("investment economics on the value-ledger slide", () => {
     const withEconomics = (extra: Record<string, unknown>) => {
       const inputs = fixture("investment");
@@ -441,6 +423,24 @@ describe("live-input reference edition", () => {
       expect(ledger(spec).blocks.map((block) => block.kind)).toEqual(["table"]);
     });
   });
+
+  it("replaces a sentence with missing figures and retains its exact basis in notes", async () => {
+    const inputs = fixture("investment");
+    const authored = words(INVESTMENT_SEQUENCE.length);
+    authored[1]!.title = "The annual basis {value.annual.base} can be compared with {rom.total.plan}";
+    authored[1]!.answer = "Compare {value.annual.base} with the estimate {rom.total.plan} before deciding.";
+    const spec = buildReferenceEdition(inputs, authored);
+    const summary = spec.slides[1]!;
+    expect(summary.actionTitle).toBe("The case summary still needs a confirmed value basis");
+    expect(summary.answer).toBe("Confirm how value is counted before relying on this summary.");
+    expect(summary.actionTitle).not.toContain("unavailable");
+    expect(summary.speakerNotes).toContain("Draft title awaiting input:");
+    expect(summary.speakerNotes).toContain("$1,200,000");
+    expect(summary.visibleNarrativeFigures).toEqual([]);
+    const rendered = await inspectDeck(await renderReferenceDeck(spec));
+    expect(judgeRenderedDeck(rendered, { referenceDeck: spec }).findings.filter((finding) =>
+      finding.kind === "reference_source" && "slide" in finding && finding.slide === 2)).toEqual([]);
+  }, 60_000);
 
   it("uses one client-language panel for each empty exhibit and keeps partial rows", () => {
     const inputs = fixture("validation");
