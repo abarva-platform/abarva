@@ -121,6 +121,22 @@ export function clientCopyIssue(value: string): string | null {
   return CLIENT_INTERNAL_TERMS.find(([, pattern]) => pattern.test(prose))?.[0] ?? null;
 }
 
+// A claim the evidence cannot support is refused only where it is asserted. The
+// same words framed as an absence or a precondition ("until a measured baseline
+// is agreed", "the measured baseline has not been confirmed") are the honest form
+// the repair instruction asks for. The frame must sit in the claim's own clause,
+// and a condition must come before the claim, so "no objection, and the measured
+// baseline is confirmed" is still an assertion.
+const ABSENCE_FRAME = /\b(?:has|have|is|are|was|were)(?:\s+not|n't)\s+(?:yet\s+)?(?:been\s+)?(?:measured|verified|confirmed|agreed|accepted|assigned|mapped|established|available|in place)\b|\b(?:unconfirmed|unverified|unmeasured|unassigned|unaccepted|pending|prerequisite|precondition)\b/i;
+const CONDITION_FRAME = /\b(?:no|without|until|unless|before|once|only\s+(?:after|when|once)|needs?|requires?|must|depends\s+on|subject\s+to)\b/i;
+
+function assertsClaim(sentence: string, claim: RegExp): boolean {
+  return sentence.split(/\s*[,;:\u2013\u2014]\s*/).some((clause) => {
+    const match = claim.exec(clause);
+    return Boolean(match) && !ABSENCE_FRAME.test(clause) && !CONDITION_FRAME.test(clause.slice(0, match!.index));
+  });
+}
+
 /** Refuse a completed-evidence claim when its governed basis is missing. */
 export function referenceNarrativeIssue(prose: string, evidence?: ReferenceNarrativeEvidence): string | null {
   if (!evidence) return null;
@@ -143,10 +159,10 @@ export function referenceNarrativeIssue(prose: string, evidence?: ReferenceNarra
       return "unavailable_value_claim";
     if (evidence.estimateAvailable === false && /\b(?:this|that)\s+(?:figure|estimate|amount)\b|\b(?:the|an?)\s+(?:approved|current|plan-basis)\s+(?:delivery\s+)?estimate\b/i.test(sentence))
       return "unavailable_estimate_claim";
-    if (evidence.baselineAvailable === false && /\b(?:measured|verified|confirmed|source-verified)\s+(?:current-state\s+)?baseline\b|\bbaseline\s+(?:has been|is|was)\s+(?:measured|verified|confirmed)\b/i.test(sentence))
+    if (evidence.baselineAvailable === false && assertsClaim(sentence, /\b(?:measured|verified|confirmed|source-verified)\s+(?:current-state\s+)?baseline\b|\bbaseline\s+(?:has been|is|was)\s+(?:measured|verified|confirmed)\b/i))
       return "unavailable_baseline_claim";
     if (evidence.acceptedOwnersAvailable === false
-      && /\b(?:has|have|is|are|was|were|already)\s+(?:been\s+)?(?:mapped|assigned|accepted|agreed|confirmed)\b/i.test(sentence)
+      && assertsClaim(sentence, /\b(?:has|have|is|are|was|were|already)\s+(?:been\s+)?(?:mapped|assigned|accepted|agreed|confirmed)\b/i)
       && /\b(?:owners?|users?|decision|authority|accountability)\b/i.test(sentence))
       return "unaccepted_owner_claim";
     if (evidence.publicSourcesAvailable === false

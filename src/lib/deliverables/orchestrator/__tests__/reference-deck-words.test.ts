@@ -49,7 +49,19 @@ const stateSlot = (key: string, display: string | null): ReferenceSlotTable[stri
 });
 
 describe("reference-deck words", () => {
-  it.each([[false, false], [true, false], [false, true], [true, true]])("gives concrete binding requirements to the existing title-slot retry; persistent rejection %s, missing value %s", async (persistent, missing) => {
+  it("does not require the title figure when the figure does not exist, so an honest title stands", async () => {
+    const honest = { ...safeWords.words[0]!, title: "The annual case needs a reviewed basis" };
+    const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({ words: [honest] }) }] });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    const missingValue = { ...slots, "value.annual.plan": stateSlot("value.annual.plan", null) };
+    expect(modelWordRule(honest, "investment", missingValue, "one_page")).toBeNull();
+    const result = await draftEditionWords({ ...input, edition: "investment", slots: missingValue });
+    expect(result).toEqual({ status: "ok", words: [honest], fallbackSlides: [] });
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(create.mock.calls[0][0].messages[0].content).slides[0]).not.toHaveProperty("requiredTitleSlot");
+  });
+
+  it.each([[false, false], [true, false]])("gives concrete binding requirements to the existing title-slot retry; persistent rejection %s, missing value %s", async (persistent, missing) => {
     const rejected = { ...safeWords.words[0]!, title: "The annual case needs a reviewed basis" };
     const repaired = { ...rejected, title: "The annual case counts {value.annual.plan} on its current basis" };
     const create = jest.fn()
@@ -64,7 +76,7 @@ describe("reference-deck words", () => {
       ruleRequirements: expect.stringContaining("requiredTitleSlot") });
     expect(JSON.stringify(retry)).not.toContain(rejected.title);
     expect(JSON.stringify(create.mock.calls)).not.toContain("$12,000");
-    expect(create).toHaveBeenCalledTimes(2);
+    expect(create).toHaveBeenCalledTimes(persistent ? 3 : 2);
     expect(mockPreflight.mock.calls[1][0].workflow).toBe("moves:reference-deck:preview:words:repair");
     if (persistent) {
       expect(result).toMatchObject({ status: "unavailable", reason: "slide_rejected", rule: "missing_title_slot", fallbackSlides: [1] });
@@ -84,7 +96,7 @@ describe("reference-deck words", () => {
     expect(result).toEqual({ status: "ok", fallbackSlides: [], words: [repaired] });
     const retry = JSON.parse(create.mock.calls[1][0].messages[0].content);
     expect(retry.rejectedSlides[0]).toMatchObject({ rejectedRule: "title_format",
-      titleRequirements: { minimumWords: 5, maximumSentences: 1 }, ruleRequirements: expect.stringContaining("at least five words") });
+      titleRequirements: { minimumWords: 5, maximumSentences: 1, case: "sentence case" }, ruleRequirements: expect.stringContaining("at least five words") });
     expect(JSON.stringify(retry)).not.toContain(rejected.title);
     expect(mockPreflight.mock.calls[1][0].workflow).toBe("moves:reference-deck:preview:words:repair");
   });
@@ -232,7 +244,7 @@ describe("reference-deck words", () => {
     const result = await draftEditionWords({ ...input, archetypes: ["contents"] });
     expect(result).toMatchObject({ status: "unavailable", reason: "slide_rejected", rule: "internal_client_word", slide: 1, fallbackSlides: [1] });
     expect(result.words[0]?.answer).toContain("Draft words unavailable.");
-    expect(create).toHaveBeenCalledTimes(2);
+    expect(create).toHaveBeenCalledTimes(3); // initial, first repair, second repair
   });
 
   it("uses the mandated validation-cover words without counting a model disclosure as fallback", async () => {
@@ -289,7 +301,7 @@ describe("reference-deck words", () => {
     const result = await draftEditionWords(input);
     expect(result).toMatchObject({ status: "unavailable", reason: "slide_rejected", rule: "edition_language", slide: 1, fallbackSlides: [1] });
     expect(result.words).toEqual(unavailableEditionWords("validation", ["one_page"]));
-    expect(create).toHaveBeenCalledTimes(2);
+    expect(create).toHaveBeenCalledTimes(3); // initial, first repair, second repair
   });
 
   it("bounds a many-slide repair into audited short batches", async () => {
@@ -403,6 +415,47 @@ describe("reference-deck words", () => {
     }
   });
 
+  it("asks for sentence-case titles and answers, as the reference decks are written", async () => {
+    const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify(safeWords) }] });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    await draftEditionWords(input);
+    const request = create.mock.calls[0][0];
+    expect(request.system).toContain("Write titles and answers in sentence case: capitalize only the first word, proper nouns and acronyms, never every word.");
+    expect(request.system).toContain("Write each non-cover title as a finding: a declarative sentence stating what the evidence shows or what remains unconfirmed, never a topic label, a description of the slide or a question.");
+    expect(request.system).toContain("Keep titles under 14 words and answers under 25 words; the answer bar holds one short line.");
+    expect(JSON.parse(request.messages[0].content).slides[0].titleRequirements).toEqual({ minimumWords: 5, maximumSentences: 1, case: "sentence case" });
+  });
+
+  describe("the open-assumption count in the investment assumptions title", () => {
+    const withOpen = (display: string | null): ReferenceSlotTable => ({ ...slots,
+      "register.count.open": stateSlot("register.count.open", display),
+      "register.count.active": stateSlot("register.count.active", display === null ? null : "5") });
+    const plain = { title: "The working assumptions decide what can be claimed", answer: "Resolve the assumptions that could change the decision.",
+      notes: "The point: these assumptions are open. How to read: follow each row to its owner." };
+    const counted = { ...plain, title: "The {register.count.open} open assumptions decide what can be claimed" };
+
+    it("is required when the register has open assumptions", () => {
+      expect(modelWordRule(plain, "investment", withOpen("3"), "assumptions")).toBe("missing_title_slot");
+      expect(modelWordRule(counted, "investment", withOpen("3"), "assumptions")).toBeNull();
+    });
+
+    it("is not required with no open assumptions, an unread register, or in the validation edition", () => {
+      expect(modelWordRule(plain, "investment", withOpen("0"), "assumptions")).toBeNull();
+      expect(modelWordRule(plain, "investment", withOpen(null), "assumptions")).toBeNull();
+      expect(modelWordRule(plain, "validation", withOpen("3"), "assumptions")).toBeNull();
+    });
+
+    it("is asked for in the prompt only when it is required", async () => {
+      const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({ words: [counted] }) }] });
+      mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+      await draftEditionWords({ ...input, edition: "investment", archetypes: ["assumptions"], slots: withOpen("3") });
+      expect(JSON.parse(create.mock.calls[0][0].messages[0].content).slides[0].requiredTitleSlot).toBe("{register.count.open}");
+      create.mockClear();
+      await draftEditionWords({ ...input, edition: "investment", archetypes: ["assumptions"], slots: withOpen("0") });
+      expect(JSON.parse(create.mock.calls[0][0].messages[0].content).slides[0]).not.toHaveProperty("requiredTitleSlot");
+    });
+  });
+
   describe("a title the edition withholds", () => {
     const missingValue: ReferenceSlotTable = { ...slots, "value.annual.plan": stateSlot("value.annual.plan", null) };
     const shortTitle = { title: "Value: {value.annual.plan}. Pending.", answer: "Confirm the value basis before relying on it.",
@@ -431,6 +484,44 @@ describe("reference-deck words", () => {
     });
   });
 
+  describe("a second repair round", () => {
+    const literal = { title: "The annual case counts $1,200 on its current basis", answer: "Review the counted basis and its source.",
+      notes: "The point: confirm the basis. How to read: inspect the source line." };
+    const fixed = { ...literal, title: "The annual case counts {value.annual.base} on its current basis" };
+
+    it("retries once more the slides the first repair could not fix, and says so", async () => {
+      const create = jest.fn()
+        .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [literal] }) }] })
+        .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [literal] }) }] })
+        .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [fixed] }) }] });
+      mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+      const result = await draftEditionWords(input);
+      expect(result).toEqual({ status: "ok", words: [fixed], fallbackSlides: [] });
+      expect(create).toHaveBeenCalledTimes(3);
+      const second = create.mock.calls[2][0];
+      expect(second.system).toContain("already retried once and still broke the stated rule");
+      expect(JSON.parse(second.messages[0].content).rejectedSlides[0]).toMatchObject({ rejectedRule: "literal_figure", previousAttemptRejected: true });
+      expect(mockPreflight.mock.calls[2][0].metadata).toMatchObject({ repair: true, repairRound: 2 });
+    });
+
+    it("does not start a second round once the request is past its time budget", async () => {
+      let clock = 0;
+      const now = jest.spyOn(Date, "now").mockImplementation(() => clock);
+      try {
+        const create = jest.fn().mockImplementation(async () => {
+          clock += 40_000;
+          return { content: [{ type: "text", text: JSON.stringify({ words: [literal] }) }] };
+        });
+        mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+        const result = await draftEditionWords(input);
+        expect(create).toHaveBeenCalledTimes(2);
+        expect(result).toMatchObject({ status: "unavailable", fallbackCauses: [{ slide: 1, cause: "literal_figure" }] });
+      } finally {
+        now.mockRestore();
+      }
+    });
+  });
+
   describe("fallback causes and repair diagnostics", () => {
     const two = { ...input, archetypes: ["one_page", "assumptions"] as Parameters<typeof draftEditionWords>[0]["archetypes"] };
     const good = (title: string) => ({ title, answer: "Review the counted basis and its source.", notes: "The point: confirm the basis. How to read: inspect the source line." });
@@ -443,7 +534,8 @@ describe("reference-deck words", () => {
         const fixed = good("The annual case counts {value.annual.base} on its current basis");
         const create = jest.fn()
           .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [literal, badNotes] }) }] })
-          .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [fixed, badNotes] }) }] });
+          .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [fixed, badNotes] }) }] })
+          .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [badNotes] }) }] });
         mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
         const result = await draftEditionWords(two);
         expect(result).toMatchObject({ status: "unavailable", reason: "slide_rejected", rule: "notes_format", fallbackSlides: [2],
@@ -451,7 +543,7 @@ describe("reference-deck words", () => {
         const repairLog = warn.mock.calls.find(([tag]) => tag === "[reference-deck-words-repair]")?.[1];
         expect(repairLog).toEqual({ requestId: null, edition: "validation", attempted: 2, repaired: 1,
           initialRules: [{ slide: 1, rule: "literal_figure" }, { slide: 2, rule: "notes_format" }],
-          stillRejected: [{ slide: 2, rule: "notes_format" }], callFailures: [] });
+          stillRejected: [{ slide: 2, rule: "notes_format" }], callFailures: [], secondRound: { attempted: 1, callFailures: [] } });
         expect(JSON.stringify(repairLog)).not.toMatch(/annual case|counted basis|Review the basis/);
       } finally {
         warn.mockRestore();
