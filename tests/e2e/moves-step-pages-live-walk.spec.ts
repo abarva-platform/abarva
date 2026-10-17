@@ -255,6 +255,16 @@ function routeFor(moveId: string, phase: number, query = ""): string {
   return `/strategic-moves/${encodeURIComponent(moveId)}/phase/${phase}${query}`;
 }
 
+// The stored current phase can run ahead of the page: when an earlier phase's
+// evidence is reopened, the step pages hold the Move there and redirect later
+// phase routes back to it. Returns that earlier phase, or null.
+function heldAtEarlierPhase(landed: string, phase: number): number | null {
+  const match = /\/phase\/(\d+)(?:[?#]|$)/.exec(landed);
+  if (!match) return null;
+  const landedPhase = Number(match[1]);
+  return landedPhase < phase ? landedPhase : null;
+}
+
 function landedAt(page: Page): string {
   const url = new URL(page.url());
   return `${url.pathname}${url.search}`;
@@ -649,6 +659,15 @@ test("lets only the ROM preview's compute POST through the write guard", () => {
   expect(isReadOnlyPost("POST", `${move}/steps/rom-estimate`)).toBe(false);
 });
 
+test("files a later phase as held when its route redirects to an earlier one", () => {
+  const move = "/strategic-moves/move-1";
+  expect(heldAtEarlierPhase(`${move}/phase/2?step=p2-baseline`, 3)).toBe(2);
+  expect(heldAtEarlierPhase(`${move}/phase/2`, 3)).toBe(2);
+  expect(heldAtEarlierPhase(`${move}/phase/3?step=architecture-options`, 3)).toBeNull();
+  expect(heldAtEarlierPhase(`${move}/phase/4?step=p4-milestones`, 3)).toBeNull();
+  expect(heldAtEarlierPhase("/sign-in?redirect_url=x", 3)).toBeNull();
+});
+
 test("keeps long step content reachable inside the clipped workspace", async ({
   page,
 }) => {
@@ -897,28 +916,31 @@ test("walks every deployed Moves step page without writing", async ({
       await route.continue();
     });
 
+    const recordUnreachableViews = (phase: number, notReachable: Finding) => {
+      for (const [view, definition] of VIEW_ENTRIES.filter(
+        ([, entry]) => entry.phase === phase,
+      )) {
+        proof.views.push({
+          phase,
+          view,
+          stepId: definition.stepId,
+          ...notReachable,
+          screenshots: [],
+          ux: scoreWalkUx(emptyUxInput(notReachable.reason)),
+        });
+      }
+    };
+
     for (const phase of PHASES) {
       if (!phaseReachable(currentPhase, phase)) {
-        const reason = `Move is at P${currentPhase}`;
         const notReachable: Finding = {
           status: "not_reachable",
-          reason,
+          reason: `Move is at P${currentPhase}`,
           landed: "",
         };
         proof.landings.push({ phase, ...notReachable });
         proof.legacy.push({ phase, ...notReachable });
-        for (const [view, definition] of VIEW_ENTRIES.filter(
-          ([, entry]) => entry.phase === phase,
-        )) {
-          proof.views.push({
-            phase,
-            view,
-            stepId: definition.stepId,
-            ...notReachable,
-            screenshots: [],
-            ux: scoreWalkUx(emptyUxInput(reason)),
-          });
-        }
+        recordUnreachableViews(phase, notReachable);
         continue;
       }
       const landing = await inspectPage(
@@ -947,6 +969,17 @@ test("walks every deployed Moves step page without writing", async ({
         blockedWrites,
       );
       proof.landings.push({ phase, ...landing });
+      const heldAt = heldAtEarlierPhase(landing.landed, phase);
+      if (heldAt !== null) {
+        const notReachable: Finding = {
+          status: "not_reachable",
+          reason: `Move is held at P${heldAt}: P${phase} pages redirect to ${landing.landed}`,
+          landed: landing.landed,
+        };
+        proof.legacy.push({ phase, ...notReachable });
+        recordUnreachableViews(phase, notReachable);
+        continue;
+      }
 
       const legacy = await inspectPage(
         page,
