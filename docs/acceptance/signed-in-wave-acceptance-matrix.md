@@ -1725,3 +1725,123 @@ later reader does not re-discover it as new:
   controls while the same chapter renders a risk-concentration exhibit sourced
   from a risk register. Both statements may be true of different records; which
   record feeds which is not established here.
+
+---
+
+## 2026-10-03/04 sixth wave — walked on deployed SHA `de09c6b806`
+
+**Item:** C-586, claiming the definition filed under *"Added 2026-10-04T02:16Z by
+the watcher (read-only pass)"*. The second `C-586` filed later the same morning
+was withdrawn by its own filer as an id collision, so there is one live
+definition and this block answers it.
+**Walked:** 2026-10-04, between 04:27:03Z and 04:34:24Z, by
+`source-backlog-executor#20261004T042206Z`.
+**Signed in as:** the platform-admin session, tenant context resolved to
+`Meridian Health`, shown consistently in the board header, the move header and
+the event breadcrumb.
+
+**Which SHA, and why it is not pinned.** C-586's acceptance forbids pinning a
+SHA — C-635 pinned one and became unexecutable when the runtime moved past it.
+This walk resolved what was serving, stamped it, and asserts ancestry instead.
+The serving SHA was `de09c6b8063379d3e1712220852df2f912c81a75` (#8961), and
+**every one of the eight merges C-586 names is an ancestor of it**, by
+`git merge-base --is-ancestor` run in this walk's own worktree:
+
+| Merge | SHA | Ancestor of `de09c6b806` |
+|---|---|---|
+| #8939 Source lab-only NDA embedded signing link | `6de543f93d` | yes |
+| #8940 Moves readiness prep gated to final step | `be8bbcb2c6` | yes |
+| #8915 Moves explicit evidence phase assignment | `671fb591f5` | yes |
+| #8917 Moves retry incomplete charter repairs | `49e0ffa0a9` | yes |
+| #8942 Source guarded demo NDA actions in Stage 05 | `f840268d25` | yes |
+| #8944 Source evidenced contact review, eligible suppliers | `2dd54d1ff4` | yes |
+| #8950 Moves aVa docked to the left on desktop | `d9e927f3c8` | yes |
+| #8949 Moves phase stepper as a horizontal top nav | `f431ae90c7` | yes |
+
+**The two class-(ii) merges are now behind the runtime.** C-586 filed #8949 and
+#8950 as *ahead of the serving SHA and declared unproven*. They are ancestors of
+`de09c6b806`, so this walk reaches them and the row's two classes collapse into
+one. That is the unpinned form working as C-635's re-verification recommended.
+
+**The digest was tied to its commit in the registry, not read off the revision
+suffix.** `az acr manifest show-metadata` at 04:24:42Z returns tag
+`main-de09c6b8` for
+`sha256:cdc60ad95b1515eeb7ad61951f5121898196141f3ebea5403130a6ce020a2fbb`.
+A held invariant says the runtime is internally consistent; only the ACR tag or
+ancestry says *which commit is serving*.
+
+**Runtime invariant, read independently with read-only `az` before the walk and
+again after it, unchanged across both reads:**
+
+| | |
+|---|---|
+| Container App | `ca-abarva-web-lab-eastus` (`rg-abarva-controlplane-lab-eastus`) |
+| Template image | `sha256:cdc60ad95b1515eeb7ad61951f5121898196141f3ebea5403130a6ce020a2fbb` |
+| 100%-traffic revision | `ca-abarva-web-lab-eastus--mde09c6b8` — **count of `weight>0` entries is 1**, not merely that one of them reads 100; Healthy / Running, created 2026-10-04T04:08:53Z |
+| Revision image | identical to the template image |
+| ACR tag for that digest | `main-de09c6b8` |
+
+Read at 04:24:28Z and again at 04:34:24Z. Both returned the same digest and the
+same sole revision, so no deploy landed inside the walk and no surface was
+reloaded onto a different build.
+
+### The viewport this walk could produce, stated before the rows that depend on it
+
+Every row below was read at a CSS viewport of **1200 × 715**. That number is not
+a choice. The browser window was resized to 1600, 1700, 2200 and 420 pixels wide
+and the content viewport reported `1200x715` after every one of them, so this
+walk had exactly one width available to it. Two of C-586's sub-claims are
+defined by width — aVa's desktop dock is `@media (min-width:1281px)` and the
+acceptance separately asks for a phone width — and 1200 is on the wrong side of
+both. Those are recorded `blocked` with the width named, not quietly folded into
+a pass at a width that cannot test them.
+
+### Results
+
+| # | Surface | Proving | Verdict | What was observed |
+|---|---|---|---|---|
+| 1a | Moves phase surface — stepper layout | #8949 | **pass** | On a P1 Charter move at 1200px the six phases render as a **horizontal strip across the top**, between the move header and the `Steps / Files & Evidence / Intelligence / Approvals` tabs, in order `Originate · Charter · Discover & Diagnose · Design Future State · Roadmap & Business Case · Mobilize & Handoff`. All three states are distinguishable and correct for this move: Originate carries a **✓** (done, `3 of 3`), Charter carries the `P1` marker and is the **underlined** viewed phase (`1 of 2`), and P2–P5 render greyed with their counts (`0 of 6`, `0 of 3`, `0 of 5`, `0 of 4`). Reachability is in the element kind, not only the styling: `Originate` and `Charter` are **links** with `href` to `/phase/0` and `/phase/1`, while `Discover & Diagnose`, `Design Future State`, `Roadmap & Business Case` and `Mobilize & Handoff` are **buttons** with no href — the disabled future phases. **No vertical phase list appears anywhere on the page**, which is the half the merge removed. |
+| 1b | Moves phase surface — aVa dock at desktop width | #8950 | **blocked** — the width is unreachable in this browser | #8950 docks aVa left only at `@media (min-width:1281px)`. The walk's viewport is pinned at 1200px (see above), 81px short, so the dock's media query cannot fire and the row cannot be proven or disproven here. What *was* observed is the branch #8950 says it leaves unchanged: the floating **`Ask aVa`** FAB is present at the bottom-right of the Moves phase surface. That is consistent with the sub-1281px behaviour and is **not** evidence about the dock. Unblocking needs a client whose CSS viewport can exceed 1280px, or device-width emulation, neither of which this session's browser offers on a signed-in origin. |
+| 1c | Moves phase surface — phone width | #8949 · #8950 | **blocked** — the width is unreachable in this browser | The acceptance asks for the layout at a phone width "since neither merge's own suite renders at that width". Resizing the window to 420px left the content viewport at 1200×715, so no narrow-viewport assertion was available. Related and separately unproven: #8949 says the left rail survives, relabelled `Move workspace` / `Collapse workspace rail`. At 1200px **no such control is in the accessibility tree at all** — consistent with the rail being hidden by a width rule at this size, but this walk cannot distinguish "hidden by a media query" from "gone", and does not claim either. |
+| 2a | Moves Files & Evidence — explicit evidence phase | #8915 | **pass**, both halves, with no upload | The File Cabinet upload panel carries a new combobox labelled **`Evidence applies to phase`**. It offers all six phases by label — `P0 Originate` … `P5 Mobilize & Handoff` — and **defaults to the viewed phase** (`P1 Charter` selected on the P1 surface), which is the `useState(phase)` default. The second half was proven by changing client-side view state rather than by reading the source: with the selector moved to `P3 Design Future State`, the **evidence-family combobox disappeared** — the one that had been offering `Not stated` plus twelve tenant-specific families (`Current-state member-service workflow map`, `Contact center baseline KPIs`, …). That is `uploadPhase === phase` guarding the family selector and `setDeclaredFamily("")` clearing it, observed as behaviour. The selector was returned to `P1 Charter` afterwards. **No file was uploaded**; the `Upload evidence` control was never pressed. |
+| 2b | Moves charter repair retry | #8917 | **blocked** — proving it requires a write | #8917 changes `src/lib/deliverables/orchestrator/orchestrator.ts` only — no route, no component. Its behaviour is a **retry of an incomplete charter repair**, which becomes observable only by causing a charter deliverable to be generated and to come back incomplete. That is a committed write on a governed surface, and the standing boundary forbids an unattended walk from performing one to find out. Named so the next walker does not re-discover it: the unblocking action is a charter generate/repair cycle on a move, run by someone authorised to write. |
+| 3 | Moves readiness prep gating | #8940 | **pass** on the permissive branch · **blocked** on the restrictive one | #8940 narrows the readiness-workbook affordance from `readinessWorkbookHref` alone to `readinessWorkbookHref && (phase.phase < 3 \|\| substep.key === "approve")`. The **permissive** branch was reached and holds: on the P1 (`phase < 3`) surface, at workflow `Step 1 of 10` — which is `Charter Inputs`, **not** the `Approve & Build` substep — `Download P2 readiness workbook` is present. So the pre-P3 case still shows the workbook away from the approve step, exactly as the condition's left disjunct says. The **restrictive** branch, `phase >= 3`, could not be reached: no move in this tenant has an open phase above P1, and direct navigation to `/phase/3` is **refused by the product** — the router redirected to `/phase/1?blockedPhase=3` and rendered `P3 BLOCKED · P3 cannot begin yet · Finish the required P1 gate before opening P3`. That refusal is itself worth recording as correct behaviour, and it means the only way to test the right disjunct is to advance a move through the P1 and P2 gates — a sequence of writes this walk must not perform. |
+| 4a | Source Stage 05 — guarded synthetic NDA actions | #8942 | **blocked** — a precondition the walk must not satisfy | Stage 05 NDA readiness **was reached** on the one event whose Suppliers & NDA stage is recorded, and it renders: `Accepted suppliers 4 · Covered 0 · Blocked or unknown 4`, `Readiness posture: Blocked before supplier work`, and the governing sentence #8942 rewrote — "A completed signing envelope does not grant coverage; a named reviewer must record the executed document or Legal waiver." The guarded **send** control #8942 added (`Synthetic NDA signing`, with its per-supplier template selector, its internal-test-inbox confirmation checkbox and its disabled-until-ready submit) is **not rendered**, and the reason is a product precondition rather than a defect: the component returns the template-publication fallback whenever the event has **no published NDA template version**, and this event has none — the surface says so itself, "No published NDA template version is available for this event, so no executed document can be checked against one." What renders instead is the lab-fenced publication path, `Synthetic NDA template — Lab event only. Admin publication is recorded as a synthetic test decision, not Legal approval or an executed NDA`. Publishing a template is a write (`Publish synthetic template`), so the walk stopped here. **Unblocking action, named:** publish one synthetic NDA template version on a Meridian event, then re-walk Stage 05. |
+| 4b | Source Stage 05 — lab fence on the synthetic affordance | #8942 · #8939 | **pass**, narrowly, and only for what was visible | The synthetic affordance that *is* rendered is fenced to the lab tenant and says so on the surface. In code the fence is `canonicalTenantKey(clientKey) === "meridian-health"`; on the surface the panel is labelled `Lab event only` and disclaims that admin publication "is recorded as a synthetic test decision, not Legal approval or an executed NDA". The signed-in tenant is Meridian Health, so this walk observed the **permitted** side of the fence only. It did **not** observe a non-lab tenant being refused, and nothing here should be read as proving the fence excludes anyone. |
+| 4c | Source — NDA embedded signing link | #8939 | **blocked** — and the reason is that no client surface can ever reach it | No embedded-signing-link affordance appeared anywhere in the Stage 05 NDA surface. This is not a walk that missed it. `#8939` ships `src/lib/source/esign/embedded-link.ts` and `POST /api/v1/source/[eventId]/nda/esign/link`, and **no component, page or client module in `src/` references `esign/link`** — the only references outside the route's own directory are its tests. So the capability has no caller: a signed-in reader cannot reach it by any sequence of clicks, and the only way to exercise it is to issue the `POST` directly, which is a write and is forbidden here. The row is `blocked` rather than `fail` because the merge claims an API capability and that capability may well be correct; what is *absent* is any client path to it. **Filed as `C-591`** so this is a tracked finding and not a verdict buried in a matrix row. |
+| 5 | Source — evidenced contact review for eligible suppliers | #8944 | **blocked** — proving it requires the write it governs | #8944 changes one predicate in `src/lib/source/rfx-delivery/write-contact-approval.ts`: `supplierContactAllowed` now admits `review_required` as well as `contact_allowed`. The predicate runs **inside** `approveRfxContact`, so its behaviour is only observable by submitting a contact approval — and for an authorization change the failure mode under test *is* the write succeeding, which an unattended walk must never discover by performing it. The surrounding state was read and is consistent with the change mattering: all four accepted suppliers on the walked event print `Contact policy: review required · Contact readiness: review required`, i.e. they sit in exactly the band #8944 moved from refused to eligible, and each row carries an `Accept candidate` submit that was **not** pressed. **Unblocking action, named:** one contact approval submitted by an authorised named user against a `review_required` supplier, plus a negative control against a `do not contact` supplier. |
+
+### What this walk adds to C-586's two classes
+
+Class (i) — six merges inside the walked build with no verdict anywhere — now has
+one: #8940 and #8915 are `pass`, #8942 and #8939 are `blocked` with their
+preconditions named, #8944 and #8917 are `blocked` as writes. Class (ii) — the
+two client-first layout redesigns no walk had ever rendered — is answered for
+the stepper (#8949, `pass`) and remains open for the dock (#8950, `blocked` on
+viewport width, not on the merge).
+
+### Stated limits of this walk
+
+- **One CSS width, 1200px.** Three sub-rows (1b, 1c, and the rail relabelling
+  inside 1c) are blocked on that single fact. A walk from a client that can
+  emulate device widths would close all three cheaply, and that is the highest-value
+  unblocking action in this block.
+- **Four rows are `blocked` and none is a quiet pass.** Each names the specific
+  action that would unblock it and who may take it.
+- **Row 4b proves the permitted side of a fence only.** A fence is proven by the
+  refusal, and no refusal was observed.
+- **No write was performed on any surface.** No upload, no template published,
+  no candidate accepted, no NDA sent, no approval submitted, no phase advanced,
+  no step saved, no file downloaded. The only interactions were navigation,
+  stage selection, tab selection and one `<select>` change that was reverted —
+  all client-side view state.
+
+### Noted, not filed — because this walk cannot attribute it
+
+On the Source event stage rail, clicking the `Suppliers & NDA` step **through its
+accessibility reference** reported success three times and changed nothing,
+while a click at the same label's **screen coordinates** selected the stage
+immediately. Two readings fit — a stale or mis-resolved element reference in the
+automation layer, or a real hit-target defect on the rail — and this walk did
+not separate them. Recorded so a later reader does not take the ref-click
+no-op as evidence that the stage is unreachable; it is reachable.
