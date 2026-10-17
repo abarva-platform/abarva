@@ -439,6 +439,18 @@ async function measureUxVariants(
   }
 }
 
+// POSTs that compute and write nothing. The ROM preview route prices the
+// step's own inputs and stores no estimate, deliverable, or capture value; the
+// estimate step calls it as soon as its inputs are complete.
+function isReadOnlyPost(method: string, url: string): boolean {
+  if (method !== "POST") return false;
+  const { pathname, search } = new URL(url);
+  return (
+    search === "" &&
+    /^\/api\/v1\/programs\/[^/]+\/rom\/preview$/.test(pathname)
+  );
+}
+
 async function checkRootCauseWorkReachability(
   page: Page,
   checkGlobalNav = false,
@@ -449,7 +461,11 @@ async function checkRootCauseWorkReachability(
       '[class*="MovesStepPage-module"][class$="__root"]',
     );
     const row = page.getByText("RANK 01 · RC-1");
-    const action = page.getByRole("button", { name: "Confirm this order" });
+    // The ranked list's foot: the confirm button until someone confirms the
+    // order, then the sentence naming who confirmed it.
+    const action = page
+      .getByRole("button", { name: "Confirm this order" })
+      .or(page.getByText(/^Order confirmed by /));
     await expect(root).toHaveCount(1);
     await expect(row).toHaveCount(1);
     await expect(action).toHaveCount(1);
@@ -594,6 +610,43 @@ test("walks long work through pane and document scrolling", async ({
     </div>
   `);
   await checkRootCauseWorkReachability(page);
+});
+
+test("reaches the ranked list's foot once the order is confirmed", async ({
+  page,
+}) => {
+  await page.setContent(`
+    <style>
+      body { margin: 0; }
+      .workspace { height: 900px; overflow: hidden; }
+      .MovesStepPage-module__fixture__root { height: 100%; overflow-y: auto; }
+      @media (max-width: 600px) {
+        .workspace { height: auto; overflow: visible; }
+        .MovesStepPage-module__fixture__root { height: auto; overflow-y: visible; }
+      }
+    </style>
+    <div class="workspace">
+      <div class="MovesStepPage-module__fixture__root">
+        <div style="height: 1100px"></div>
+        <div>RANK 01 · RC-1</div>
+        <div style="height: 160px"></div>
+        <span>Order confirmed by you, 17 Oct</span>
+        <div style="height: 300px"></div>
+      </div>
+    </div>
+  `);
+  await checkRootCauseWorkReachability(page);
+});
+
+test("lets only the ROM preview's compute POST through the write guard", () => {
+  const move = "https://app.example/api/v1/programs/move-1";
+  expect(isReadOnlyPost("POST", `${move}/rom/preview`)).toBe(true);
+  expect(isReadOnlyPost("GET", `${move}/rom/preview`)).toBe(false);
+  expect(isReadOnlyPost("POST", `${move}/rom/preview?format=xlsx`)).toBe(false);
+  expect(isReadOnlyPost("POST", `${move}/rom`)).toBe(false);
+  expect(isReadOnlyPost("POST", `${move}/rom/preview/extra`)).toBe(false);
+  expect(isReadOnlyPost("PATCH", `${move}/rom/preview`)).toBe(false);
+  expect(isReadOnlyPost("POST", `${move}/steps/rom-estimate`)).toBe(false);
 });
 
 test("keeps long step content reachable inside the clipped workspace", async ({
@@ -833,7 +886,10 @@ test("walks every deployed Moves step page without writing", async ({
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.route(`${BASE_URL}/**`, async (route) => {
       const method = route.request().method();
-      if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
+      if (
+        !["GET", "HEAD", "OPTIONS"].includes(method) &&
+        !isReadOnlyPost(method, route.request().url())
+      ) {
         blockedWrites.push(`${method} ${route.request().url()}`);
         await route.abort("blockedbyclient");
         return;
