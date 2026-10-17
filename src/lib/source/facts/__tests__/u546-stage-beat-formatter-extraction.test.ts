@@ -53,6 +53,10 @@ import path from 'node:path';
 import { getSourceArchetype } from '@/lib/source/archetypes/registry';
 import { buildLiveStageView } from '@/lib/source/facts/view/stage-analytics-builder';
 import type { StageAnalyticsView } from '@/components/source/canvas/analytics/view-model';
+import type {
+  SourceEventArchetype,
+  ValueLeverRule,
+} from '@/lib/source/archetypes/types';
 import type { FactSourceCitation } from '@/lib/source/facts/fact-types';
 
 const BASELINE_PATH = path.join(__dirname, 'u546-stage-view-baseline.json');
@@ -250,6 +254,7 @@ describe('U-546 stage-beat formatter extraction', () => {
         citedDocFor: unknown;
         targetBandFor: unknown;
         targetLabel: unknown;
+        ruleIndex: unknown;
       };
     }
 
@@ -346,5 +351,170 @@ describe('U-546 stage-beat formatter extraction', () => {
         );
       },
     );
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Item U-547 — the FIFTH helper, `ruleIndex`, extracted into the same module.
+  //
+  // WHY THIS EXTENDS THIS SUITE RATHER THAN ADDING A SECOND ONE. The byte-
+  // identical baseline above already builds `bafo` and `evaluation` on both
+  // branches of each stage's signal, and those four comparisons are exactly the
+  // "nothing changed" proof `ruleIndex` needs. A second file would have had to
+  // rebuild them, and a second baseline generated on a later commit would be a
+  // weaker one. The baseline this file reads was written at 31641238a1, which is
+  // before BOTH extractions — older than "the commit before this change", not
+  // newer.
+  //
+  // POPULATION IS TWO, NOT SIX. `bafo-` and `evaluation-fact-beats.ts` each held
+  // the map-building copy. `responses-`, `rfp-`, `selection-` and
+  // `value-fact-beats.ts` resolve rules from the array or with `.find()` and hold
+  // no copy, which is why `U-546` did not name this among its four.
+  //
+  // WHAT A WRONG INDEX LOOKS LIKE, AND WHY THE CASES ARE SHAPED THIS WAY. Both
+  // callers do `rules.get(result.key)` and both TOLERATE a miss: `bafo` falls
+  // back to a generic ask, `evaluation` to a generic scorecard sentence. So a
+  // dropped rule does not throw and does not change a number — it quietly
+  // replaces the archetype's own words with words that name no rule. Asserting
+  // the returned Map against itself would not see that. So each rule gets a
+  // marker string the surface can carry ONLY if that rule resolved on that
+  // stage, asserted per rule per stage: dropping any one rule from the shared map
+  // fails that rule's case on both stages, which is also the only behavioural
+  // evidence that both callers now route through the shared helper at all.
+  // ───────────────────────────────────────────────────────────────────────────
+  describe('U-547 — the fifth helper, ruleIndex', () => {
+    /**
+     * Loaded per case for the same reason the block above does it: on the commit
+     * before this change the export does not exist, so a top-level import would
+     * redden the baseline comparison too and the red-first count would stop
+     * meaning anything.
+     */
+    function sharedFormatters() {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      return require('@/lib/source/facts/view/stage-beat-formatters') as {
+        usd: unknown;
+        idSegment: unknown;
+        citedDocFor: unknown;
+        targetBandFor: unknown;
+        targetLabel: unknown;
+        ruleIndex: (a: SourceEventArchetype) => Map<string, ValueLeverRule>;
+      };
+    }
+
+    /** The two stages that built the map. `RULE_MARKER` has one entry per stage. */
+    const MAP_STAGES = ['bafo', 'evaluation'] as const;
+
+    /**
+     * A string the surface can only carry if `ruleIndex` resolved THIS rule on
+     * THIS stage.
+     *
+     * `bafo` renders the computed lever's `bafoAsk` and, for the five that did
+     * not compute, each rule's input LABELS in the evidence rows. The labels are
+     * the marker for those five rather than `commercialRisk`, which two of the
+     * six rules do not declare at all — a marker only four rules carry would
+     * leave two rules' cases asserting the fallback text and passing mutated.
+     * `evaluation` puts `evaluationImpact` on the guide of both its scored and
+     * its unscorable task, so one expression covers all six there.
+     */
+    const RULE_MARKER: Record<string, (rule: ValueLeverRule) => string> = {
+      bafo: (rule) =>
+        rule.key === LEAKAGE_KEY
+          ? rule.bafoAsk
+          : rule.computation.inputs[0].label,
+      evaluation: (rule) => rule.evaluationImpact,
+    };
+
+    /**
+     * What each caller renders when `.get()` MISSES. Absent from an unmutated
+     * view, and the text a dropped rule is replaced by — asserted alongside each
+     * marker so a case cannot pass on a marker coincidence while the surface has
+     * in fact fallen back.
+     *
+     * THIS IS THE WEAKER OF THE TWO DIRECTIONS AND DELIBERATELY SO. Measured:
+     * dropping `AMS.ENHANCEMENT_LEAKAGE` fails it on both stages, dropping
+     * `AMS.TRANSITION_RISK` fails it on `evaluation` only. `bafo`'s confirm-task
+     * fallback is reachable only by a lever that COMPUTED, and its evidence-task
+     * fallback stands in for `commercialRisk`, which two of the six rules do not
+     * declare — so on `bafo` this case speaks for the computed lever and not for
+     * all six. `RULE_MARKER` is what covers every rule on every stage; this case
+     * is the second direction on top of it, not a substitute for it.
+     */
+    const MISS_TEXT: Record<string, readonly string[]> = {
+      bafo: [
+        'Press this lever in the BAFO round and book the concession against it.',
+      ],
+      evaluation: [
+        'Carry this lever’s computed value into the scorecard as an evidenced input, not as an impression.',
+        'Unscored, this lever contributes nothing to the ranking and cannot be defended in the decision brief.',
+      ],
+    };
+
+    const RULES: readonly ValueLeverRule[] = ams.valueLeverRules!;
+
+    it('exports ruleIndex beside the four, and it is the only new export', () => {
+      const shared = sharedFormatters();
+      expect(typeof shared.ruleIndex).toBe('function');
+      // The four `U-546` named are still there — an extraction that quietly
+      // moved one of them out while adding this would pass every case below.
+      expect(typeof shared.usd).toBe('function');
+      expect(typeof shared.idSegment).toBe('function');
+      expect(typeof shared.citedDocFor).toBe('function');
+      expect(typeof shared.targetBandFor).toBe('function');
+      expect(typeof shared.targetLabel).toBe('function');
+    });
+
+    it('keys every declared rule by its own key, and did not widen in the move', () => {
+      const index = sharedFormatters().ruleIndex(ams);
+      expect(index.size).toBe(RULES.length);
+      for (const rule of RULES) expect(index.get(rule.key)).toBe(rule);
+      // The `?? []` arm, which both private copies had and which this must keep:
+      // an archetype declaring no rules yields an empty map rather than throwing.
+      // Asserted because it is the one branch of the helper no rendered view can
+      // reach — `buildLiveStageView` returns null when no lever computes.
+      const noRules = { ...ams, valueLeverRules: undefined };
+      expect(sharedFormatters().ruleIndex(noRules).size).toBe(0);
+    });
+
+    it('has a distinct marker per rule per stage, so no case below is vacuous', () => {
+      // A marker two rules share would let a dropped rule pass on its sibling's
+      // text; a marker that is also the fallback text would pass mutated. Both
+      // are checked here rather than assumed, and the population is checked
+      // first so the loops below cannot run over nothing.
+      expect(RULES.length).toBeGreaterThan(1);
+      expect(Object.keys(RULE_MARKER).sort()).toEqual([...MAP_STAGES].sort());
+      for (const stage of MAP_STAGES) {
+        const markers = RULES.map((rule) => RULE_MARKER[stage](rule));
+        expect(markers.every((m) => typeof m === 'string' && m.length > 0)).toBe(true);
+        expect(new Set(markers).size).toBe(RULES.length);
+        for (const marker of markers) {
+          expect(MISS_TEXT[stage]).not.toContain(marker);
+        }
+      }
+    });
+
+    describe.each(MAP_STAGES)('%s', (stage) => {
+      // Both branches of this stage's signal, so a rule resolved on one branch
+      // and lost on the other cannot hide.
+      const BRANCHES: readonly Branch[] = ['unobserved', 'observed'];
+
+      it.each(
+        BRANCHES.flatMap((branch) =>
+          RULES.map((rule) => [`${branch} · ${rule.key}`, branch, rule] as const),
+        ),
+      )('%s resolves through the shared index', (_label, branch, rule) => {
+        const rendered = JSON.stringify(buildFixture({ stage, branch }));
+        expect(rendered).toContain(RULE_MARKER[stage](rule));
+      });
+
+      it.each(BRANCHES)('%s falls back for no lever at all', (branch) => {
+        // The other direction of the same claim. Every lever on this stage
+        // resolved, so none of the caller's miss text can be on the surface —
+        // which is what makes the markers above the index's answer rather than
+        // text that happened to be there.
+        const rendered = JSON.stringify(buildFixture({ stage, branch }));
+        for (const miss of MISS_TEXT[stage]) {
+          expect(rendered).not.toContain(miss);
+        }
+      });
+    });
   });
 });

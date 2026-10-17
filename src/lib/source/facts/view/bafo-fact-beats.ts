@@ -45,6 +45,7 @@ import type {
 import {
   citedDocFor,
   idSegment,
+  ruleIndex,
   usd,
 } from '@/lib/source/facts/view/stage-beat-formatters';
 import type { ValueLeverResult } from '@/lib/source/facts/evaluators/types';
@@ -69,15 +70,6 @@ export interface BafoFactBeatInput {
   citations: Record<string, FactSourceCitation | null>;
   /** The computed next-stage label, already resolved from the canonical order. */
   nextStageName: string | null;
-}
-
-/** The rule a result came from, by key. */
-function ruleIndex(
-  archetype: SourceEventArchetype,
-): Map<string, ValueLeverRule> {
-  return new Map(
-    (archetype.valueLeverRules ?? []).map((rule) => [rule.key, rule]),
-  );
 }
 
 /**
