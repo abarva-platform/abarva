@@ -90,6 +90,8 @@ import { inspectDeck } from "./deck-inspection";
 import { judgeRenderedDeck } from "./deck-quality";
 import { judgeSheetQuality } from "./sheet-quality";
 import { renderReferenceDeck } from "./reference-deck-renderer";
+import { renderPurposeDeck } from "./purpose-page-renderer";
+import { renderPurposeCharter } from "./purpose-charter-renderer";
 import {
   MAX_SLIDE_BULLETS,
   normaliseSlideText,
@@ -491,6 +493,11 @@ export function renderDeliverableDocx(
   doc: RenderableDeliverable,
   architectureModel?: ArchitectureModel,
 ): Document {
+  if (doc.purposePageDesign === true && doc.deliverableType === "charter") {
+    if (architectureModel)
+      throw new Error("purpose_charter_architecture_adapter_required");
+    return renderPurposeCharter(doc);
+  }
   const children: (Paragraph | Table)[] = [];
 
   // Cover
@@ -3311,6 +3318,11 @@ export async function renderDeliverablePptx(
   doc: RenderableDeliverable,
   architectureModel?: ArchitectureModel,
 ): Promise<Buffer> {
+  if (
+    doc.purposePageDesign === true &&
+    doc.deliverableType === "discovery_report"
+  )
+    return renderPurposeDeck(doc);
   if (doc.referenceDeck) return renderReferenceDeck(doc.referenceDeck);
   const { default: PptxGenJS } = await import("pptxgenjs");
   const pptx = new PptxGenJS();
