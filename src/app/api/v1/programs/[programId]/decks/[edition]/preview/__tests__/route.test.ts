@@ -80,7 +80,7 @@ beforeEach(() => {
 
 describe("read-only reference deck preview", () => {
   it.each(["preview", "workbook"])("retains typed lineage codes without private wording in the %s refusal", async (format) => {
-    mockBuild.mockImplementationOnce(() => { throw new ReferenceDeckLineageRefusal([
+    mockBuild.mockImplementation(() => { throw new ReferenceDeckLineageRefusal([
       { slide: 8, code: "unsupported_narrative", message: "private source detail", blocking: true },
     ]); });
     const result = await (format === "preview" ? GET : workbookGET)(request(), params());
@@ -97,7 +97,7 @@ describe("read-only reference deck preview", () => {
   it.each(["pptx", "pdf"])("retains known wording context and unknown score for an early %s lineage refusal", async (format) => {
     mockWords.mockResolvedValueOnce({ status: "unavailable", reason: "slide_rejected", rule: "missing_title_slot", slide: 9, fallbackSlides: [9, 12], words: [],
       fallbackCauses: [{ slide: 9, cause: "missing_title_slot" }, { slide: 12, cause: "parse_failed" }] });
-    mockBuild.mockImplementationOnce(() => { throw new Error("reference_deck_lineage_refusal: 8:unsupported_narrative; private source detail"); });
+    mockBuild.mockImplementation(() => { throw new Error("reference_deck_lineage_refusal: 8:unsupported_narrative; private source detail"); });
     const result = await GET(request(format), params());
     expect(result.status).toBe(422);
     expect(result.headers.get("X-AbarVa-Deck-Request-Id")).toMatch(/^[0-9a-f-]{36}$/);
@@ -260,12 +260,32 @@ describe("read-only reference deck preview", () => {
   });
 
   it("states no findings header where the deck was never judged", async () => {
-    mockBuild.mockImplementationOnce(() => { throw new ReferenceDeckLineageRefusal([
+    mockBuild.mockImplementation(() => { throw new ReferenceDeckLineageRefusal([
       { slide: 8, code: "unsupported_narrative", message: "private", blocking: true },
     ]); });
     const result = await GET(request(), params());
     expect(result.status).toBe(422);
     expect(result.headers.get("X-AbarVa-Deck-Fidelity-Findings")).toBeNull();
+  });
+
+  it("tells the words drafter which slides will show only a confirmation panel", async () => {
+    mockBuild.mockReturnValueOnce({ edition: "validation", figureLedger: [], slides: [
+      { blocks: [{ kind: "table", columns: [], rows: [] }] },
+      { blocks: [{ kind: "gap", title: "The current handoffs still need to be mapped", detail: "d", nextAction: "n" }] },
+      { blocks: [{ kind: "gap", title: "Compact gap", detail: "d", nextAction: "n", compact: true }, { kind: "text", lines: ["Problem"] }] },
+    ] });
+    const result = await GET(request(), params());
+    expect(result.status).toBe(200);
+    expect(mockBuild.mock.calls[0][1]).toEqual(expect.any(Array));
+    expect(mockWords).toHaveBeenCalledWith(expect.objectContaining({ confirmationPanels: { 2: "The current handoffs still need to be mapped" } }));
+    expect(mockWords.mock.invocationCallOrder[0]).toBeGreaterThan(mockBuild.mock.invocationCallOrder[0]!);
+  });
+
+  it("drafts unmarked when the panel probe cannot build the deck", async () => {
+    mockBuild.mockImplementationOnce(() => { throw new Error("synthetic probe failure"); });
+    const result = await GET(request(), params());
+    expect(result.status).toBe(200);
+    expect(mockWords).toHaveBeenCalledWith(expect.objectContaining({ confirmationPanels: {} }));
   });
 
   it("refuses unsupported formats without reading data", async () => {
