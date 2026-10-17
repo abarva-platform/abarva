@@ -181,7 +181,12 @@ const REPAIR_CALL_OPTIONS = { timeout: 15_000, maxRetries: 0 };
  */
 const SECOND_REPAIR_BUDGET_MS = 75_000;
 
-export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, slots: ReferenceSlotTable, archetype?: ReferenceArchetype): string | null {
+// Words that describe an exhibit's contents. On a slide that shows only a
+// confirmation panel there are no rows, table or chart for them to describe.
+const EXHIBIT_REFERENCE = /\b(?:rows?|tables?|charts?|columns?)\b|\b(?:shown|listed|set out)\s+(?:below|above)\b|\bbelow\s+(?:shows?|lists?|sets?)\b/i;
+
+export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, slots: ReferenceSlotTable, archetype?: ReferenceArchetype,
+  options: { panelOnly?: boolean } = {}): string | null {
   const prose = `${entry.title} ${entry.answer} ${entry.notes}`;
   const tokens = [...prose.matchAll(SLOT_TOKEN)];
   for (const match of tokens) {
@@ -216,6 +221,7 @@ export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, sl
   if (!titleWithheld && (entry.title.trim().split(/\s+/).length < 5 || /[.!?]\s+\S/.test(entry.title))) return "title_format";
   // Validated tokens are binding metadata, not words shown to the client.
   if (clientCopyIssue(`${entry.title} ${entry.answer}`.replace(SLOT_TOKEN, ""))) return "internal_client_word";
+  if (options.panelOnly && EXHIBIT_REFERENCE.test(`${entry.title} ${entry.answer}`.replace(SLOT_TOKEN, ""))) return "panel_only_exhibit_reference";
   if (answerIsCountDump(entry.answer)) return "count_dump_answer";
   const editionText = archetype === "cover" ? `${entry.answer} ${entry.notes}` : literal;
   if (edition === "validation" && VALIDATION_FORBIDDEN.test(editionText)) return "edition_language";
@@ -242,6 +248,7 @@ const RULE_REQUIREMENTS: Record<string, string> = {
   unavailable_ai_scenario_claim: "No AI-assisted scenario saving is available for this token. Do not describe what AI assistance would save.",
   ai_scenario_unqualified: "Call the AI-assisted figure a scenario or a comparison in the same sentence. The case stays funded on the approved estimate.",
   ai_scenario_in_title: "Keep the title on the approved estimate. Put any AI-assisted scenario figure in the answer or notes.",
+  panel_only_exhibit_reference: "This slide shows only a confirmation panel naming what is missing; it has no rows, table or chart. Write the title and answer about that missing input, using the confirmationPanelTitle.",
   public_source_scope: "The public-citation collection does not establish the source coverage of every case fact or internal working figure. Qualify the public scope; do not infer that all internal evidence is either approved by, or absent from, this collection.",
 };
 
@@ -265,17 +272,21 @@ export async function draftEditionWords(input: {
   phaseStage: PhasePromptStage;
   available: { valueCase: boolean; register: boolean; rom: boolean; publicSources: boolean; owners: boolean };
   slots: ReferenceSlotTable;
+  /** Slides (1-based) whose exhibit is only a confirmation panel, with that panel's title. */
+  confirmationPanels?: Readonly<Record<number, string>>;
 }): Promise<DraftEditionWordsResult> {
+  const panelTitle = (index: number): string | undefined => input.confirmationPanels?.[index + 1];
   const startedAt = Date.now();
   const unavailable = unavailableEditionWords(input.edition, input.archetypes);
   const allSlides = input.archetypes.map((_, index) => index + 1);
   const failure = (reason: WordsUnavailableReason): DraftEditionWordsResult =>
     ({ status: "unavailable", reason, words: unavailable, fallbackSlides: allSlides,
       fallbackCauses: allSlides.map((slide) => ({ slide, cause: reason })) });
-  const system = "Write client-ready slide language as JSON with a words array. Each entry has exactly title, answer, notes. Use the edition, use-case lens, phase stage and read-state controls. Every non-cover title, including a section divider, has at least five words and exactly one sentence. Write titles and answers in sentence case: capitalize only the first word, proper nouns and acronyms, never every word. Write each non-cover title as a finding: a declarative sentence stating what the evidence shows or what remains unconfirmed, never a topic label, a description of the slide or a question. Keep titles under 14 words and answers under 25 words; the answer bar holds one short line. Keep the title and answer to one sentence each; use two short sentences in notes. The answer must interpret what the evidence means and the next decision, never list counts. Never prefix client text with a layout or archetype name such as big number context, plain English table, flow today or one step value. Do not put internal workflow words such as slot, readback, capture, register, governed, Move, flag, preview or ROM in the title or answer; consultant guidance belongs only in notes. Copy every requiredTitleSlot exactly into its title. Figure slots use one pair of braces, for example {value.annual.base}; never use double braces, a bare slot name, or a value. Use only supplied, edition-allowed slot tokens for figures; never write a digit, currency symbol or magnitude word outside a slot. Do not invent a client fact. Specific case facts require an approved model-ready context bundle, which this request does not supply. Use each slide evidence flag literally: false means the input is not confirmed. An unavailable input remains a visible gap after generation; do not write this figure, an approved estimate, mapped decision owners or verified citations as completed facts when that basis is absent. Active assumptions include open, confirmed and corrected items; only register.count.open describes open items. Slots beginning rom.ai describe an AI-assisted delivery scenario priced beside the approved estimate: use them only on a slide whose evidence has aiScenarioAvailable true, name it a scenario or comparison in the same sentence, keep it out of the title, and never present it as the estimate or the funding basis. Notes begin 'The point:' and contain 'How to read:'. The server sets the cover title and promise from the use-case name and edition; do not put an edition rule on the cover. In validation answers, notes and non-cover titles, avoid cost, ROM, ROI, investment, solution, plan, roadmap and release even in a negated phrase.";
+  const system = "Write client-ready slide language as JSON with a words array. Each entry has exactly title, answer, notes. Use the edition, use-case lens, phase stage and read-state controls. Every non-cover title, including a section divider, has at least five words and exactly one sentence. Write titles and answers in sentence case: capitalize only the first word, proper nouns and acronyms, never every word. Write each non-cover title as a finding: a declarative sentence stating what the evidence shows or what remains unconfirmed, never a topic label, a description of the slide or a question. Keep titles under 14 words and answers under 25 words; the answer bar holds one short line. Keep the title and answer to one sentence each; use two short sentences in notes. The answer must interpret what the evidence means and the next decision, never list counts. Never prefix client text with a layout or archetype name such as big number context, plain English table, flow today or one step value. Do not put internal workflow words such as slot, readback, capture, register, governed, Move, flag, preview or ROM in the title or answer; consultant guidance belongs only in notes. Copy every requiredTitleSlot exactly into its title. Figure slots use one pair of braces, for example {value.annual.base}; never use double braces, a bare slot name, or a value. Use only supplied, edition-allowed slot tokens for figures; never write a digit, currency symbol or magnitude word outside a slot. Do not invent a client fact. Specific case facts require an approved model-ready context bundle, which this request does not supply. Use each slide evidence flag literally: false means the input is not confirmed. An unavailable input remains a visible gap after generation; do not write this figure, an approved estimate, mapped decision owners or verified citations as completed facts when that basis is absent. Active assumptions include open, confirmed and corrected items; only register.count.open describes open items. Slots beginning rom.ai describe an AI-assisted delivery scenario priced beside the approved estimate: use them only on a slide whose evidence has aiScenarioAvailable true, name it a scenario or comparison in the same sentence, keep it out of the title, and never present it as the estimate or the funding basis. A slide with a confirmationPanelTitle shows only that panel, naming what is missing, and no table, chart or rows: write its title and answer about that missing input and never describe rows, a table, a chart or the items of an exhibit. Notes begin 'The point:' and contain 'How to read:'. The server sets the cover title and promise from the use-case name and edition; do not put an edition rule on the cover. In validation answers, notes and non-cover titles, avoid cost, ROM, ROI, investment, solution, plan, roadmap and release even in a negated phrase.";
   const profile = { edition: input.edition, useCaseLens: DESIGN_LENS[input.useCaseType] ?? DESIGN_LENS.unclassified, phaseStage: input.phaseStage, available: input.available };
-  const promptSlides = input.archetypes.map((archetype) => ({ archetype,
+  const promptSlides = input.archetypes.map((archetype, index) => ({ archetype,
     titleRequirements: TITLE_REQUIREMENTS, evidence: promptEvidence(input.slots, archetype, input.edition),
+    ...(panelTitle(index) ? { confirmationPanelTitle: panelTitle(index) } : {}),
     ...(archetype === "cover"
       ? { coverTitleAndPromiseProvidedByServer: true } : {}), ...(requiredTitleSlot(input.edition, archetype, input.slots)
       ? { requiredTitleSlot: `{${requiredTitleSlot(input.edition, archetype, input.slots)}}` } : {}) }));
@@ -392,7 +403,7 @@ export async function draftEditionWords(input: {
     });
     const ruleAt = (index: number) => input.archetypes[index] === "cover"
       ? null : parseFailedSlides.includes(index + 1)
-        ? null : modelWordRule(words[index]!, input.edition, input.slots, input.archetypes[index]);
+        ? null : modelWordRule(words[index]!, input.edition, input.slots, input.archetypes[index], { panelOnly: Boolean(panelTitle(index)) });
     const rejected = words.flatMap((_, index) => {
       const rule = ruleAt(index);
       const blockedClientTerm = rule === "internal_client_word"
@@ -415,6 +426,7 @@ export async function draftEditionWords(input: {
             archetype: input.archetypes[index], rejectedRule: rule,
             ruleRequirements: RULE_REQUIREMENTS[rule], titleRequirements: TITLE_REQUIREMENTS,
             evidence: promptEvidence(input.slots, input.archetypes[index]!, input.edition),
+            ...(panelTitle(index) ? { confirmationPanelTitle: panelTitle(index) } : {}),
             ...detail,
             ...(round === 2 ? { previousAttemptRejected: true } : {}),
             ...(requiredTitleSlot(input.edition, input.archetypes[index], input.slots)
@@ -453,7 +465,7 @@ export async function draftEditionWords(input: {
         result.value.forEach((entry, repairIndex) => {
           const index = repairChunks[chunkIndex]![repairIndex]!.index;
           const candidate = normalizeKnownSlotTokens(entry, input.edition, input.slots);
-          if (!modelWordRule(candidate, input.edition, input.slots, input.archetypes[index])) words[index] = candidate;
+          if (!modelWordRule(candidate, input.edition, input.slots, input.archetypes[index], { panelOnly: Boolean(panelTitle(index)) })) words[index] = candidate;
         });
       });
       return callFailures;

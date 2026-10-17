@@ -49,6 +49,61 @@ const stateSlot = (key: string, display: string | null): ReferenceSlotTable[stri
 });
 
 describe("reference-deck words", () => {
+  describe("a slide that shows only a confirmation panel", () => {
+    const panelWords = {
+      title: "The current position still needs confirmation by its owners",
+      answer: "Confirm the current position with the people who own it.",
+      notes: "The point: the position is not yet recorded. How to read: the panel names the missing input.",
+    };
+    it.each([
+      "Each row below shows what is structurally expected.",
+      "The table sets out three capability areas.",
+      "The chart compares the options.",
+      "The items listed below remain open.",
+    ])("refuses words that describe an exhibit: %s", (answer) => {
+      expect(modelWordRule({ ...panelWords, answer }, "validation", slots, "plain_english_table", { panelOnly: true })).toBe("panel_only_exhibit_reference");
+      // The same words stand on a slide whose exhibit renders.
+      expect(modelWordRule({ ...panelWords, answer }, "validation", slots, "plain_english_table")).toBeNull();
+    });
+
+    it("accepts words about the missing input, including an ordinary use of below", () => {
+      expect(modelWordRule(panelWords, "validation", slots, "plain_english_table", { panelOnly: true })).toBeNull();
+      expect(modelWordRule({ ...panelWords, answer: "Confirm whether handle time sits below the agreed threshold." }, "validation", slots, "plain_english_table", { panelOnly: true })).toBeNull();
+    });
+
+    it("marks the slide in the prompt and repairs an exhibit reference against the panel's title", async () => {
+      const described = { ...panelWords, answer: "Each row below shows what is structurally expected." };
+      const create = jest.fn()
+        .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [described] }) }] })
+        .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [panelWords] }) }] });
+      mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+      const result = await draftEditionWords({ ...input, archetypes: ["plain_english_table"], confirmationPanels: { 1: "The current position evidence still needs confirmation" } });
+      const sent = JSON.parse(create.mock.calls[0][0].messages[0].content);
+      expect(sent.slides[0].confirmationPanelTitle).toBe("The current position evidence still needs confirmation");
+      expect(create.mock.calls[0][0].system).toContain("confirmationPanelTitle");
+      const retry = JSON.parse(create.mock.calls[1][0].messages[0].content);
+      expect(retry.rejectedSlides[0]).toMatchObject({ rejectedRule: "panel_only_exhibit_reference",
+        confirmationPanelTitle: "The current position evidence still needs confirmation", ruleRequirements: expect.stringContaining("no rows, table or chart") });
+      expect(result).toEqual({ status: "ok", words: [panelWords], fallbackSlides: [] });
+    });
+
+    it("keeps the fallback when every repair still describes an exhibit", async () => {
+      const described = { ...panelWords, answer: "Each row below shows what is structurally expected." };
+      const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({ words: [described] }) }] });
+      mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+      const result = await draftEditionWords({ ...input, archetypes: ["plain_english_table"], confirmationPanels: { 1: "Panel" } });
+      expect(result.status).toBe("unavailable");
+      expect(result.status === "unavailable" ? result.fallbackCauses : null).toEqual([{ slide: 1, cause: "panel_only_exhibit_reference" }]);
+    });
+
+    it("sends no panel title for a slide whose exhibit renders", async () => {
+      const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify(safeWords) }] });
+      mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+      await draftEditionWords({ ...input, confirmationPanels: { 2: "Another slide's panel" } });
+      expect(JSON.parse(create.mock.calls[0][0].messages[0].content).slides[0]).not.toHaveProperty("confirmationPanelTitle");
+    });
+  });
+
   it("does not require the title figure when the figure does not exist, so an honest title stands", async () => {
     const honest = { ...safeWords.words[0]!, title: "The annual case needs a reviewed basis" };
     const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({ words: [honest] }) }] });

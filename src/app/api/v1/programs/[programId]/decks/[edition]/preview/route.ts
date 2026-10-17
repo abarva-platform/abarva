@@ -6,7 +6,7 @@ import { requireTenancy, tenancyErrorResponse } from "@/lib/auth/tenancy";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { assembleEditionInputs, ReferenceMoveUnavailable } from "@/lib/deliverables/orchestrator/reference-deck-inputs";
 import { VALIDATION_SEQUENCE, INVESTMENT_SEQUENCE, buildReferenceEdition } from "@/lib/deliverables/orchestrator/reference-deck-edition";
-import { draftEditionWords, type DraftEditionWordsResult, type PhasePromptStage, type UseCasePromptType } from "@/lib/deliverables/orchestrator/reference-deck-words";
+import { draftEditionWords, unavailableEditionWords, type DraftEditionWordsResult, type PhasePromptStage, type UseCasePromptType } from "@/lib/deliverables/orchestrator/reference-deck-words";
 import { buildReferenceSlotTable } from "@/lib/deliverables/orchestrator/reference-deck-slots";
 import { validateReferenceDeck, ReferenceDeckLineageRefusal, type ReferenceEdition } from "@/lib/deliverables/orchestrator/reference-deck-model";
 import { renderReferenceDeck } from "@/lib/deliverables/orchestrator/reference-deck-renderer";
@@ -81,6 +81,16 @@ export async function GET(
       : inputs.move.currentPhase <= 2 ? "need_validation"
         : inputs.move.currentPhase === 3 ? "design_review" : "delivery_review";
     const slots = buildReferenceSlotTable(inputs);
+    // Exhibits depend on inputs alone, so placeholder words show which slides will
+    // be only a confirmation panel; their words must speak to that panel, not to
+    // rows that will not render. If the probe fails, drafting proceeds unmarked.
+    const confirmationPanels: Record<number, string> = {};
+    try {
+      buildReferenceEdition(inputs, unavailableEditionWords(edition, sequence), slots).slides.forEach((slide, index) => {
+        const [first] = slide.blocks;
+        if (first?.kind === "gap" && slide.blocks.every((block) => block.kind === "gap")) confirmationPanels[index + 1] = first.title;
+      });
+    } catch { /* drafting proceeds without panel marks; the edition still validates every slide */ }
     wordsResult = await draftEditionWords({
       tenantId: ctx.clientKey, userId: ctx.userId, requestId, edition, archetypes: sequence,
       slots,
@@ -93,6 +103,7 @@ export async function GET(
         publicSources: inputs.citations.status === "ready" && inputs.citations.value.length > 0,
         owners: Boolean(ownerReadback?.ownersAcceptedAt && ownerReadback.rows.some((row) => row.owner)),
       },
+      confirmationPanels,
     });
     if (wordsResult.status === "unavailable") {
       console.warn("[reference-deck-words]", { requestId, edition, reason: wordsResult.reason, rule: wordsResult.rule, slide: wordsResult.slide });
