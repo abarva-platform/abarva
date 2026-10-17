@@ -30,6 +30,30 @@ describe("referenceNarrativeIssue: a missing basis framed as a prerequisite", ()
   });
 });
 
+describe("referenceNarrativeIssue: a missing estimate or value framed as a prerequisite", () => {
+  const noEstimateOrValue = { estimateAvailable: false, valueAvailable: false };
+  // A panel slide's title ("…still needs an approved estimate") reaches the writer, which echoes it.
+  it.each([
+    "The shared foundation needs an approved estimate before its effort can be shared.",
+    "Without an approved estimate, effort and duration cannot be sized.",
+    "Release sequencing depends on an approved estimate.",
+    "Until the annual value is confirmed, savings remain provisional.",
+    "This estimate is pending approval by the delivery team.",
+    "The annual value has not been confirmed.",
+  ])("passes: %s", (sentence) => {
+    expect(referenceNarrativeIssue(sentence, noEstimateOrValue)).toBeNull();
+  });
+
+  it.each([
+    ["The approved estimate is the funding basis for the build.", "unavailable_estimate_claim"],
+    ["Delivery follows this estimate across three releases.", "unavailable_estimate_claim"],
+    ["The annual value covers the investment within three years.", "unavailable_value_claim"],
+    ["Finance raised no objection, and the credited value is counted.", "unavailable_value_claim"],
+  ])("still refuses: %s", (sentence, rule) => {
+    expect(referenceNarrativeIssue(sentence, noEstimateOrValue)).toBe(rule);
+  });
+});
+
 describe("referenceNarrativeIssue: an asserted claim is still refused", () => {
   it.each([
     "The measured current-state baseline is the basis for this review.",
