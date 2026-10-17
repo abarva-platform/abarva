@@ -1,6 +1,6 @@
 # Non-Serving Context Slice: Advisory Readiness Audit
 
-Status: local contract proof, 2026-10-17. No shared readiness default or product behavior changed.
+Status: local contract proof, 2026-10-17. The dormant decision-request helper now explicitly requires strict readiness. The generic bundle default and existing product callers are unchanged.
 
 ## Boundary
 
@@ -12,7 +12,7 @@ The new candidate floor is `agent_readiness_status: blocked`, `downstream_contex
 
 The TypeScript AST test scans runtime JavaScript/TypeScript under `src`, `scripts`, and `tests`, excluding declarations, test/spec files and mock/test directories. It recognizes named import aliases, namespace imports and the local decision helper. Comments, strings and type references are not call sites. The exact inventory is asserted, so added direct callers and changed readiness options require review.
 
-There are 23 direct `buildValidatedAgentContextBundle` calls: 20 in `src`, three in `scripts`. Six set `requireAgentReady: true`, eleven explicitly set false, five omit it, and one forwards options. There are no runtime calls to `buildDecisionReasoningRequest` in these scanned roots. Its definition calls the bundle builder once and is included below.
+There are 23 direct `buildValidatedAgentContextBundle` calls: 20 in `src`, three in `scripts`. Seven set `requireAgentReady: true`, eleven explicitly set false, four omit it, and one forwards options. There are no runtime calls to `buildDecisionReasoningRequest` in these scanned roots. Its definition calls the bundle builder once and is included below.
 
 All paths below are repository-relative. `Omitted` preserves the existing non-strict bundle default; it is not evidence of a leak.
 
@@ -21,7 +21,7 @@ All paths below are repository-relative. `Omitted` preserves the existing non-st
 | `scripts/deliverables/proof/purpose-fresh-source.ts`                | `main`                                                                          | False        | Operator proof script; not executed by this audit                        |
 | `scripts/ecl/build_home_ecl_narrative_layer.ts`                     | `buildGovernedSignalPacket` (two calls)                                         | True         | Projection rows and derived signals separately admitted                  |
 | `src/lib/ecl/insights/home-admission.ts`                            | `validateHomeInsightAdmission`                                                  | True         | Exact-content and lineage admission                                      |
-| `src/lib/governance/agent-context-bundle.ts`                        | `buildDecisionReasoningRequest`                                                 | Omitted      | Dormant reasoning-envelope helper                                        |
+| `src/lib/governance/agent-context-bundle.ts`                        | `buildDecisionReasoningRequest`                                                 | True         | Dormant reasoning-envelope helper; strict before any future adoption      |
 | `src/lib/intelligence/ask/executive-context.ts`                     | `prepareExecutiveContext`                                                       | Omitted      | Provisional sources plus explicit advisory restrictions                  |
 | `src/lib/knowledge/agent-context-broker.ts`                         | `withGovernance`                                                                | Omitted      | Adds a verdict; does not filter the original items                       |
 | `src/lib/programs/evidence-readiness/exact-source-preparation.ts`   | `prepareExactSourcePlan`                                                        | True         | Asserts that pending evidence is not admitted                            |
@@ -46,7 +46,7 @@ The forwarded event wrapper has three direct runtime consumers. Artifact-quality
 
 - Every inventoried readiness option pattern excludes blocked, quarantined, retired and downstream-excluded fixtures from `usable`, citations and ready counts, across every tenant supplied by `CANONICAL_TENANT_KEYS`. Both mixed bundles and candidate-only bundles are tested. Sensitive/restricted clearance cannot override those hard refusals.
 - Strict advisory mode rejects unreviewed, committed or restricted-readiness candidates, missing tenant binding, missing source/confidence/cite-render fields, and unindexed states. Fully ready controls pass with either supported Azure-native index state.
-- The actual decision helper excludes blocked/excluded candidates without a code change. It still admits an otherwise valid unreviewed candidate because it omits strict readiness. This is a demonstrated helper-contract gap, with no runtime caller found here; it is not a demonstrated serving leak.
+- The actual decision helper excludes blocked/excluded candidates and now explicitly requires `agent_ready`. A regression first reproduced provisional admission in the old implementation. The corrected helper refuses provisional-only requests and removes unready context and citations from mixed requests across every canonical tenant. Fully ready controls pass with both supported Azure-native index states. The generic diagnostic default still retains otherwise-valid provisional candidates. No runtime helper caller was found; no serving leak or product activation is claimed.
 - The actual enterprise-item adapter preserves camel-case `downstreamContextPolicy: exclude` into the governed candidate and the bundle refuses it.
 - The actual grounded-answer builder refuses to answer from provisional or blocked/excluded evidence and produces no answer citations from it, despite the bundle's non-strict default.
 - The actual executive adapter keeps sources provisional and emits its advisory restrictions. This is a compatibility contract, not strict admission or proof that a model obeys the restrictions.
@@ -55,7 +55,7 @@ The forwarded event wrapper has three direct runtime consumers. Artifact-quality
 
 ## Gaps And Limits
 
-The generic bundle's `requireAgentReady` option remains opt-in. Changing that default affects existing diagnostic/provisional contracts. The dormant decision helper could independently set true, but any such shared-code change requires parent review before merge; none is included here.
+The generic bundle's `requireAgentReady` option remains opt-in. Changing that default affects existing diagnostic/provisional contracts and is outside this follow-up. Only the dormant decision helper independently sets true; existing product callers and diagnostic options are unchanged.
 
 Governance results still carry blocked candidates in diagnostic fields. Consumers must use the admitted list and its citations, not serialize the entire result. The broker explicitly attaches a verdict without filtering its original `items`; this test does not certify all broker consumers or every answer table/prompt serializer. Several existing converters construct provisional candidates from their own domain records. Their retention of future candidate-specific holds must be reviewed before any new reader is connected.
 
@@ -75,4 +75,4 @@ node node_modules/jest/bin/jest.js --runInBand --runTestsByPath \
   src/lib/governance/__tests__/agent-context-bundle.test.ts
 ```
 
-Result: two suites, 101 tests passed. Targeted ESLint and whitespace checks passed. No commit, PR, merge, data load or deployment was performed by this audit.
+Original audit: two suites, 101 tests passed. Follow-up validation is recorded in `docs/releases/records/2026-10-17-decision-request-strict-readiness.md`. This audit claims no data load, product adoption, index or signed-in proof.

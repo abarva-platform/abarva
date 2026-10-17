@@ -198,7 +198,7 @@ const EXPECTED_CALLERS: Array<[string, string, Readiness]> = [
     "validateHomeInsightAdmission",
     "true",
   ],
-  [BUNDLE_MODULE, "buildDecisionReasoningRequest", "omitted"],
+  [BUNDLE_MODULE, "buildDecisionReasoningRequest", "true"],
   [
     "src/lib/intelligence/ask/executive-context.ts",
     "prepareExecutiveContext",
@@ -536,7 +536,7 @@ describe("non-serving candidate advisory readiness", () => {
       expect(request.retrievalBundle.citations).toEqual(["fixture://ready#1"]);
     });
 
-    it("records the dormant helper's provisional-context gap without asserting a serving leak", () => {
+    it("keeps provisional context diagnostic-only, out of the decision request", () => {
       const provisional = readyCandidate(clientKey, {
         agent_readiness_status: "not_reviewed",
       });
@@ -546,9 +546,74 @@ describe("non-serving candidate advisory readiness", () => {
         tenantKey: clientKey,
         candidates: [provisional],
       });
-      expect(request.retrievalBundle.usable).toEqual([provisional]);
+      expect(request.retrievalBundle.usable).toEqual([]);
+      expect(request.retrievalBundle.citations).toEqual([]);
+      expect(request.retrievalBundle.blocked).toHaveLength(1);
       expect(request.retrievalBundle.agentReadyCount).toBe(0);
+      expect(request.retrievalBundle.decision).toBe("block");
+      expect(request.retrievalBundle.blocked[0].errors.join(" ")).toMatch(
+        /require agent_ready/,
+      );
+
+      const diagnostic = buildValidatedAgentContextBundle([provisional]);
+      expect(diagnostic.usable).toEqual([provisional]);
+      expect(diagnostic.agentReadyCount).toBe(0);
     });
+
+    const incompleteReadiness: Array<[string, Partial<GovernedCandidate>]> = [
+      ["unreviewed", { agent_readiness_status: "not_reviewed" }],
+      ["unindexed commitment", { agent_readiness_status: "committed_not_indexed" }],
+      ["restricted readiness", { agent_readiness_status: "restricted" }],
+      ["missing source", { source_basis: null }],
+      ["missing confidence", { confidence_level: null }],
+      ["missing cite-render proof", { cited_render_verified_at: null }],
+      ["not indexed", { retrievability: "not_indexed" }],
+      ["committed but not indexed", { retrievability: "committed_not_indexed" }],
+    ];
+
+    it.each(incompleteReadiness)(
+      "excludes %s content and citations from a mixed decision request",
+      (_label, overrides) => {
+        const request = buildDecisionReasoningRequest({
+          task: "fixture advisory",
+          agent: "nexus",
+          tenantKey: clientKey,
+          candidates: [
+            readyCandidate(clientKey),
+            readyCandidate(clientKey, {
+              ...overrides,
+              id: "unready-control",
+              citations: ["fixture://unready#1"],
+            }),
+          ],
+        });
+
+        expect(request.retrievalBundle.usable.map(({ id }) => id)).toEqual([
+          "ready-control",
+        ]);
+        expect(request.retrievalBundle.citations).toEqual(["fixture://ready#1"]);
+        expect(
+          request.retrievalBundle.blocked.map(({ candidate }) => candidate.id),
+        ).toEqual(["unready-control"]);
+        expect(request.retrievalBundle.agentReadyCount).toBe(1);
+        expect(request.retrievalBundle.decision).toBe("warn");
+      },
+    );
+
+    it.each(["fts_indexed", "search_indexed"] as const)(
+      "accepts a fully ready decision-request control with %s",
+      (retrievability) => {
+        const request = buildDecisionReasoningRequest({
+          task: "fixture advisory",
+          agent: "nexus",
+          tenantKey: clientKey,
+          candidates: [readyCandidate(clientKey, { retrievability })],
+        });
+        expect(request.retrievalBundle.usable).toHaveLength(1);
+        expect(request.retrievalBundle.agentReadyCount).toBe(1);
+        expect(request.retrievalBundle.decision).toBe("pass");
+      },
+    );
 
     it("preserves enterprise-item exclusion through the real adapter and bundle", () => {
       const candidates = fromEnterpriseBundle(
