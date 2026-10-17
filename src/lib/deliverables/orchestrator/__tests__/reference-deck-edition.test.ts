@@ -19,6 +19,7 @@ import type { EditionWords } from "../reference-deck-words";
 import { unavailableEditionWords } from "../reference-deck-words";
 import type { ReferenceBlock, ReferenceCell, ReferenceFigure } from "../reference-deck-model";
 import { AI_SCENARIO_NOT_FUNDING_DETAIL } from "@/lib/programs/value-engine/value-case-view";
+import { buildReferenceNarrativeEvidence, buildReferenceSlotTable } from "../reference-deck-slots";
 
 const basis = (values: number[]) => {
   const totalCents = values.reduce((sum, item) => sum + item, 0);
@@ -780,6 +781,54 @@ describe("the AI-assisted scenario on the delivery-hours slide", () => {
     if (inputs.valueCase.status === "ready") ((inputs.valueCase.value.aiAssisted as Record<string, unknown>).economics as Record<string, unknown>).paybackMonth = { base: null };
     expect(comparisonRows(build(inputs))?.[5]).toEqual(["Payback", "14 months", "Not within horizon", "Not comparable"]);
   });
+
+  it("offers the slide words only the savings the scenario makes", () => {
+    const table = buildReferenceSlotTable(scenarioInputs());
+    expect(["rom.ai.weeks_saved", "rom.ai.hours_saved", "rom.ai.cost_saved", "rom.ai.tool_cost"].map((key) => [table[key]?.display, table[key]?.sourceId])).toEqual([
+      ["3", `rom:${ROM_ID}:ai_assisted:versus_weeks`],
+      ["200", `rom:${ROM_ID}:ai_assisted:versus_hours`],
+      ["$80,000", `rom:${ROM_ID}:ai_assisted:versus_plan`],
+      ["$13,680", `rom:${ROM_ID}:ai_assisted:tool_cost`],
+    ]);
+    expect(table["rom.ai.weeks_saved"]?.editions).toEqual(["investment"]);
+    expect(buildReferenceNarrativeEvidence(table, "rom_hours", "investment").aiScenarioAvailable).toBe(true);
+    expect(buildReferenceNarrativeEvidence(table, "releases", "investment")).not.toHaveProperty("aiScenarioAvailable");
+    expect(buildReferenceNarrativeEvidence(table, "rom_hours", "validation")).not.toHaveProperty("aiScenarioAvailable");
+
+    // A scenario that costs more saves no money: that slot is withheld, the others stand.
+    // Hours that rise, or weeks that do not move, are not savings either.
+    const dearer = scenarioInputs();
+    if (dearer.rom.status === "ready") Object.assign(dearer.rom.value.result.aiAssisted!.versusEstimate, { planCents: 2_000_000, hours: 50 });
+    const dearerTable = buildReferenceSlotTable(dearer);
+    expect(dearerTable["rom.ai.cost_saved"]).toMatchObject({ display: null, sourceId: "gap:rom_ai_cost_saved", sourceLabel: "The AI-assisted scenario does not reduce this figure" });
+    expect(dearerTable["rom.ai.hours_saved"]?.display).toBeNull();
+    expect(dearerTable["rom.ai.weeks_saved"]?.display).toBe("3");
+    const level = scenarioInputs();
+    if (level.rom.status === "ready") level.rom.value.result.aiAssisted!.versusEstimate.weeks = 0;
+    expect(buildReferenceSlotTable(level)["rom.ai.weeks_saved"]?.display).toBeNull();
+
+    const none = buildReferenceSlotTable(scenarioInputs({ scenario: false }));
+    expect(none["rom.ai.weeks_saved"]).toMatchObject({ display: null, sourceLabel: "No AI-assisted scenario approved with the estimate" });
+    expect(buildReferenceNarrativeEvidence(none, "rom_hours", "investment").aiScenarioAvailable).toBe(false);
+  });
+
+  it("binds a scenario saving the slide's answer cites, beside the comparison", async () => {
+    const authored = words(INVESTMENT_SEQUENCE.length);
+    authored[ROM_SLIDE] = {
+      title: "The delivery estimate is {rom.total.plan} across the work",
+      answer: "An AI-assisted scenario would take {rom.ai.weeks_saved} weeks off, as a comparison only.",
+      notes: "The point: the estimate funds the case. How to read: compare the scenario row with the estimate row.",
+    };
+    const spec = buildReferenceEdition(scenarioInputs(), authored);
+    const slide = spec.slides[ROM_SLIDE]!;
+    expect(slide.answer).toBe("An AI-assisted scenario would take 3 weeks off, as a comparison only.");
+    expect(slide.visibleNarrativeFigures).toContainEqual(expect.objectContaining({ display: "3", sourceId: `rom:${ROM_ID}:ai_assisted:versus_weeks` }));
+    expect(slide.sourceIds).toContain(`rom:${ROM_ID}:ai_assisted:versus_weeks`);
+    expect(validateReferenceDeck(spec).filter((finding) => finding.blocking)).toEqual([]);
+    const rendered = await inspectDeck(await renderReferenceDeck(spec));
+    expect(judgeRenderedDeck(rendered, { referenceDeck: spec }).findings.filter((finding) =>
+      ["reference_layout", "off_canvas", "reference_source", "reference_edition", "reference_client_copy"].includes(finding.kind))).toEqual([]);
+  }, 60_000);
 
   it("never reaches the validation edition", () => {
     const inputs = scenarioInputs();

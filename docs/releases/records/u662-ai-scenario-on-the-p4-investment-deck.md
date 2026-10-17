@@ -25,6 +25,13 @@ u661 carried the approved AI-assisted scenario into the ROM workbook and the P4 
 - **When the return is compared:** NPV and payback appear only when the value case is costed on this approved estimate. The scenario's own NPV and payback appear only when the value case evaluated this same scenario, matched by its cost-basis source, as a comparison that was evaluated successfully. Otherwise the cells say "Not measured" or "Not comparable", and the speaker notes give the cause: value case unavailable, not costed on this estimate, no calculated return yet, or not measured against this scenario. A payback outside the horizon is stated in words and not differenced.
 - **Fitting the slide:** the comparison keeps every cell. If the figures are long enough to crowd the body, the driver table gives up rows instead. Only the drivers shown are bound to the ledger. Fit is measured with the same table layout the renderer uses, so the slide cannot overflow.
 - **Speaker notes:** they name the scenario and repeat the value step's sentence that the case is funded on the approved estimate and that benefit timing is unchanged. They point to the deck workbook for each reduction and its source; the deck workbook already refuses to build if the scenario no longer reproduces its approved figures (u661).
+- **Slide words:** the slide's answer may now cite the scenario's savings through four investment-only governed slots: weeks saved, hours saved, cost saved and AI tool cost. Each slot is present only when the scenario actually saves that much; a scenario that costs more or takes as long offers nothing to cite. The model is told which slide carries the scenario. The words are refused when:
+  - a scenario figure appears on any other slide, or in the title;
+  - a sentence uses a scenario figure without calling it a scenario or comparison;
+  - a slot cites a saving that does not exist;
+  - a sentence claims an AI-assisted saving when none was approved.
+
+  Values stay server-side; only slot names and meanings reach the model.
 - **Unchanged:** every other slide, the validation edition, and a deck whose approval has no scenario.
 
 ## Layer Impact
@@ -46,6 +53,9 @@ Release lane: `global-control-lane`, behind the existing `moves_reference_deck_v
 - `src/lib/deliverables/orchestrator/reference-deck-edition.ts`: the scenario comparison on the delivery-hours slide, the fit-to-body choice of driver rows, and the scenario's speaker notes.
 - `src/lib/deliverables/orchestrator/reference-deck-layout.ts`: the slide body's top, bottom and table gap, exported.
 - `src/lib/deliverables/orchestrator/reference-deck-renderer.ts`: uses those constants instead of its own literals; no behaviour change.
+- `src/lib/deliverables/orchestrator/reference-deck-slots.ts`: the `rom.ai.*` slots and the delivery-hours slide's `aiScenarioAvailable` evidence flag.
+- `src/lib/deliverables/orchestrator/reference-deck-words.ts`, `reference-deck-model.ts`: the scenario word rules and the prompt sentence.
+- `src/lib/deliverables/orchestrator/__tests__/reference-deck-words.test.ts`: seven cases for the rules and the prompt.
 - `src/lib/deliverables/orchestrator/__tests__/reference-deck-edition.test.ts`: eight cases.
   - The comparison's figures, sources and ledger entries, and the estimate shared with the summary slide.
   - A render passes the layout, source, edition and client-copy checks.
@@ -56,13 +66,16 @@ Release lane: `global-control-lane`, behind the existing `moves_reference_deck_v
   - A scenario measured on another estimate, as the funding basis, or not evaluated is not used.
   - A payback outside the horizon.
   - The validation edition.
+  - The slot values: savings only, sign and zero handled.
+  - An answer citing a saving binds it and renders clean.
 
 ## QA / Validation
 
 - `src/lib/deliverables/orchestrator`: **1,079 passed / 1,079**.
 - `npm run typecheck` clean; ESLint clean on changed files.
 - Rendered the slide to an image and reviewed it: both tables fit inside the body above the answer bar.
-- Mutation check: 16 hand mutants, 14 killed. Two survivors are behaviour-neutral.
+- Slide words: 14 more hand mutants, all killed. They covered each rule (including the title rule), the evidence flag's slide and edition, the slot sign, zero and gap source, and the prompt sentence.
+- Mutation check (comparison table): 16 hand mutants, 14 killed. Two survivors are behaviour-neutral.
   - The edition gate survives because the validation sequence has no delivery-hours slide.
   - Measuring raw gap wording instead of the client wording survives because every row that can hold a gap already wraps to two lines either way.
 - `audit:lib-orphans`: no new module. Test-coverage census: no new test file.
@@ -87,7 +100,7 @@ Revert the squash commit and redeploy. Nothing is stored; decks generated afterw
 
 ## Known Gaps
 
-- **The slide's title and answer do not mention the scenario.** The words are written per slide from governed slots, and no slot carries a scenario figure yet. The comparison is carried by the table and the speaker notes.
+- **The title stays on the estimate.** The delivery-hours title must carry the estimate figure; the scenario may appear only in the answer and notes, which keeps the funding basis the headline.
 - **The drop-the-comparison fallback is unreachable today.** It applies only when not even one driver row fits above the comparison. No numeric input up to 1e14 reaches it. It exists so a future, longer measure degrades the slide rather than failing the whole deck.
 
 ## Audit Evidence

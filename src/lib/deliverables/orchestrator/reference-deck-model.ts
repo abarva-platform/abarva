@@ -57,6 +57,8 @@ export interface ReferenceSlide {
 export interface ReferenceNarrativeEvidence {
   valueAvailable?: boolean;
   estimateAvailable?: boolean;
+  /** Whether the approved AI-assisted scenario saves anything the slide can cite; set only for the slide that shows it. */
+  aiScenarioAvailable?: boolean;
   baselineAvailable?: boolean;
   acceptedOwnersAvailable?: boolean;
   publicSourcesAvailable?: boolean;
@@ -143,6 +145,9 @@ export function referenceNarrativeIssue(prose: string, evidence?: ReferenceNarra
       return "unavailable_value_claim";
     if (evidence.estimateAvailable === false && /\b(?:this|that)\s+(?:figure|estimate|amount)\b|\b(?:the|an?)\s+(?:approved|current|plan-basis)\s+(?:delivery\s+)?estimate\b/i.test(sentence))
       return "unavailable_estimate_claim";
+    if (evidence.aiScenarioAvailable === false && /\bAI[- ]assist(?:ed|ance)\b/i.test(sentence)
+      && /\b(?:would|could|will|can|saves?|cuts?|reduces?|shortens?|lowers?)\b/i.test(sentence))
+      return "unavailable_ai_scenario_claim";
     if (evidence.baselineAvailable === false && /\b(?:measured|verified|confirmed|source-verified)\s+(?:current-state\s+)?baseline\b|\bbaseline\s+(?:has been|is|was)\s+(?:measured|verified|confirmed)\b/i.test(sentence))
       return "unavailable_baseline_claim";
     if (evidence.acceptedOwnersAvailable === false
