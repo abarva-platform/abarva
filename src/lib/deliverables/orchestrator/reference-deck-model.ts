@@ -157,9 +157,11 @@ export function referenceNarrativeIssue(prose: string, evidence?: ReferenceNarra
     if (unavailable.test(sentence)) continue;
     if (/^(?:Confirm|Review|Agree|Establish|Identify|Assess|Check|Validate|Resolve|Discuss|Obtain)\b/i.test(sentence.trim())
       && !/\b(?:this|that)\s+(?:figure|estimate|amount|total)\b/i.test(sentence)) continue;
-    if (evidence.valueAvailable === false && /\b(?:this|that|the)\s+(?:(?:measured|approved|current|annual|credited|working|counted|confirmed|three-year|current-state)\s+){0,3}(?:figure|value|amount|total)\b/i.test(sentence))
+    // Like the baseline and owner rules below: a prerequisite ("needs an approved
+    // estimate", "until the annual value is confirmed") states the gap honestly.
+    if (evidence.valueAvailable === false && assertsClaim(sentence, /\b(?:this|that|the)\s+(?:(?:measured|approved|current|annual|credited|working|counted|confirmed|three-year|current-state)\s+){0,3}(?:figure|value|amount|total)\b/i))
       return "unavailable_value_claim";
-    if (evidence.estimateAvailable === false && /\b(?:this|that)\s+(?:figure|estimate|amount)\b|\b(?:the|an?)\s+(?:approved|current|plan-basis)\s+(?:delivery\s+)?estimate\b/i.test(sentence))
+    if (evidence.estimateAvailable === false && assertsClaim(sentence, /\b(?:this|that)\s+(?:figure|estimate|amount)\b|\b(?:the|an?)\s+(?:approved|current|plan-basis)\s+(?:delivery\s+)?estimate\b/i))
       return "unavailable_estimate_claim";
     if (evidence.aiScenarioAvailable === false && /\bAI[- ]assist(?:ed|ance)\b/i.test(sentence)
       && /\b(?:would|could|will|can|saves?|cuts?|reduces?|shortens?|lowers?)\b/i.test(sentence))
