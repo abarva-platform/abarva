@@ -1,5 +1,5 @@
 import { buildReferenceEdition, INVESTMENT_SEQUENCE, VALIDATION_SEQUENCE } from "../reference-deck-edition";
-import { validateReferenceDeck, ReferenceDeckLineageRefusal } from "../reference-deck-model";
+import { validateReferenceDeck, ReferenceDeckLineageRefusal, type ReferenceBlock } from "../reference-deck-model";
 import { renderReferenceDeck } from "../reference-deck-renderer";
 import { inspectDeck } from "../deck-inspection";
 import { judgeRenderedDeck } from "../deck-quality";
@@ -17,7 +17,7 @@ import fs from "node:fs";
 import type { EditionInputs } from "../reference-deck-inputs";
 import type { EditionWords } from "../reference-deck-words";
 import { unavailableEditionWords } from "../reference-deck-words";
-import type { ReferenceBlock, ReferenceCell, ReferenceFigure } from "../reference-deck-model";
+import type { ReferenceCell, ReferenceFigure } from "../reference-deck-model";
 import { AI_SCENARIO_NOT_FUNDING_DETAIL } from "@/lib/programs/value-engine/value-case-view";
 import { buildReferenceNarrativeEvidence, buildReferenceSlotTable } from "../reference-deck-slots";
 
