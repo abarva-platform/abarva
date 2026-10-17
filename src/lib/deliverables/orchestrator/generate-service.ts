@@ -597,6 +597,10 @@ export async function runDeliverableForTenant(
   const deliverableKey = deliverableKeyForOrchestratorType(
     input.deliverableType,
   );
+  const purposePageDesign = input.module === "moves"
+    && (input.deliverableType === "charter" || input.deliverableType === "discovery_report")
+    && isFeatureEnabled({ clientKey: input.tenantClientKey }, "moves_purpose_page_design_v1");
+  if (purposePageDesign) req.purposePageDesign = true;
   const wantsArchitecture =
     !!deliverableKey &&
     (usesStructuredArchitecturePath(deliverableKey) ||
@@ -845,6 +849,7 @@ export async function runDeliverableForTenant(
       "moves_decision_storytelling",
     );
   const record = await persist(result, {
+    ...(purposePageDesign ? { purposePageDesign: true } : {}),
     clientId: input.clientId,
     renderedBy: input.userId,
     sourceArtifactRef: input.sourceArtifactRef,
