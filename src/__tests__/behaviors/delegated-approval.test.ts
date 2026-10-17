@@ -372,6 +372,20 @@ describe("explicit delegated approvals", () => {
     }
   });
 
+  test("Move registry delegation binds the exact Move and authenticated native tenant", async () => {
+    const f=fixture({operation:"load",assessmentIds:["test-assessment"]});
+    const manifest={dataset_id:f.scope.dataset_id,title:"Exact Move source",client_key:null,tenant_scope:"move_registry",source_layer:"move",classification:"internal",owner:"Test steward",source_basis:"Saved synthetic source",ingestion_method:"operator_aca_job",retrieval_plan:"azure_ai_search",retrieval_proof_required:true,expected_object_count:f.scope.object_count,approved_by:"Alex Example",approved_at:"2026-10-12",load_approval:{approved_by:f.declaration.actor.identity,approved_at:"2026-10-12",assessment_id:f.scope.assessment_id,move_id:f.scope.assessment_id,source_set_hash:f.scope.source_set_hash,release_record:f.scope.release_record,delegated_decision:f.declaration}};
+    const binding={dataset_id:f.scope.dataset_id,tenant_key:f.scope.tenant_key,assessment_id:f.scope.assessment_id,move_id:f.scope.assessment_id,source_set_hash:f.scope.source_set_hash,object_count:f.scope.object_count,ingestion_method:"operator_aca_job" as const,release_record:f.scope.release_record,extra_bindings:f.scope.extra_bindings};
+    const receipt=await f.api.verifyDelegationProofBytes(f.declaration,f.authorityBytes,f.decisionBytes),evidence={evidence:[receipt]};
+    expect(f.manifests.resolveLoadApproval([manifest],binding,evidence).approved).toBe(true);
+    expect(f.manifests.resolveLoadApproval([manifest],binding).approved).toBe(false);
+    expect(f.manifests.resolveLoadApproval([manifest],{...binding,move_id:"other-move"},evidence).approved).toBe(false);
+    expect(f.manifests.resolveLoadApproval([manifest],{...binding,tenant_key:CANONICAL_TENANT_KEYS.find(k=>k!==tenant)!},evidence).approved).toBe(false);
+    expect(f.manifests.resolveLoadApproval([manifest],{...binding,source_set_hash:"f".repeat(64)},evidence).approved).toBe(false);
+    expect(f.manifests.validateManifest({...manifest,load_approval:{...manifest.load_approval,move_id:"other-move"}}).ok).toBe(false);
+    expect(f.manifests.validateManifest({...manifest,serving_approval:{...manifest.load_approval,surface:"tower"}}).ok).toBe(false);
+  });
+
   test("accepts certified exact bytes, actual actor and order-independent exact scope", async () => {
     const f = fixture();
     const receipt = await f.api.verifyDelegationProofBytes(

@@ -261,9 +261,12 @@ export async function verifyDelegationProofBytes(
   if (
     !root.allowed_operations.includes(parsed.scope.operation) ||
     !authority.scope.allowed_operations.includes(parsed.scope.operation) ||
-    (authority.scope.assessment_ids && !authority.scope.assessment_ids.includes(parsed.scope.assessment_id)) ||
+    (authority.scope.assessment_ids &&
+      !authority.scope.assessment_ids.includes(parsed.scope.assessment_id)) ||
     (parsed.scope.surface &&
-      (!root.allowed_serving_surfaces.some(surface => surface === parsed.scope.surface) ||
+      (!root.allowed_serving_surfaces.some(
+        (surface) => surface === parsed.scope.surface,
+      ) ||
         !authority.scope.allowed_serving_surfaces.includes(
           parsed.scope.surface,
         ))) ||

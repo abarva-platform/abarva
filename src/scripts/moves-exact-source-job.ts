@@ -262,16 +262,14 @@ async function main() {
     }
     if (mode === "verify") {
       verifyExactIndexedDocuments(plan.documents, before);
-      const admission = await admitMoveSources<{ admissionSource: MoveAdmissionSource }>(
-        plan.sources,
-        (s) => s.admissionSource,
-        {
-          clientKey: cohort.clientKey,
-          tenantId: cohort.clientId,
-          moveId: cohort.moveId,
-          phase: cohort.expectedCurrentPhase,
-        },
-      );
+      const admission = await admitMoveSources<{
+        admissionSource: MoveAdmissionSource;
+      }>(plan.sources, (s) => s.admissionSource, {
+        clientKey: cohort.clientKey,
+        tenantId: cohort.clientId,
+        moveId: cohort.moveId,
+        phase: cohort.expectedCurrentPhase,
+      });
       if (
         admission.items.length !== plan.sources.filter((s) => s.eligible).length
       )
@@ -399,16 +397,14 @@ async function main() {
     await client.query("COMMIT");
     open = false;
     committed = true;
-    const admitted = await admitMoveSources<{ admissionSource: MoveAdmissionSource }>(
-      plan.sources,
-      (s) => s.admissionSource,
-      {
-        clientKey: cohort.clientKey,
-        tenantId: cohort.clientId,
-        moveId: cohort.moveId,
-        phase: cohort.expectedCurrentPhase,
-      },
-    );
+    const admitted = await admitMoveSources<{
+      admissionSource: MoveAdmissionSource;
+    }>(plan.sources, (s) => s.admissionSource, {
+      clientKey: cohort.clientKey,
+      tenantId: cohort.clientId,
+      moveId: cohort.moveId,
+      phase: cohort.expectedCurrentPhase,
+    });
     if (admitted.items.length !== rows.length)
       throw new Error("source_readiness_consumer_readback_failed");
     await proof("complete", {

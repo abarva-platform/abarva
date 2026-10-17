@@ -6,7 +6,9 @@ import type {
 } from "@/lib/programs/evidence-readiness/exact-source-preparation";
 
 /** Use the same authoritative Clerk identity and native person mapping as the signed-in product. */
-export async function sourceOperatorVerifier(cohort: Pick<ExactSourceCohort,"operatorPersonId"|"operatorClerkId">) {
+export async function sourceOperatorVerifier(
+  cohort: Pick<ExactSourceCohort, "operatorPersonId" | "operatorClerkId">,
+) {
   let secret = process.env.CLERK_SECRET_KEY;
   if (!secret) {
     const uri = process.env.MOVES_SOURCE_CLERK_SECRET_URI;

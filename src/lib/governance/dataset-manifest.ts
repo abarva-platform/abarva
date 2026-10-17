@@ -269,14 +269,20 @@ export function validateManifest(raw: unknown): ManifestValidation {
     }
     if (approval && delegated) {
       const scope = delegated.scope;
+      const exactTenantScope =
+        scopeMode === "canonical_tenant"
+          ? !approval.move_id && scope.tenant_key === m.client_key
+          : scopeMode === "move_registry" &&
+            field === "load_approval" &&
+            m.client_key === null &&
+            !!approval.move_id &&
+            approval.move_id === scope.assessment_id;
       if (
-        scopeMode !== "canonical_tenant" ||
-        approval.move_id ||
+        !exactTenantScope ||
         approval.approved_by !== delegated.actor.identity ||
         approval.approved_at !== delegated.decided_at.slice(0, 10) ||
         scope.operation !== (field === "load_approval" ? "load" : "serve") ||
         scope.dataset_id !== m.dataset_id ||
-        scope.tenant_key !== m.client_key ||
         scope.assessment_id !== approval.assessment_id ||
         scope.source_set_hash !== approval.source_set_hash ||
         scope.object_count !== m.expected_object_count ||
