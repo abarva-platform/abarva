@@ -504,6 +504,10 @@
     "audit:source-candidate-consumption": {
       "kind": "unclassified"
     },
+    "audit:source-color-literals": {
+      "kind": "pr-gate",
+      "reason": "Compares Source CSS and TypeScript color literals against the base branch, per file and per normalized literal. Existing debt and removals pass; new literals, duplicate occurrences and new files fail. Exact shared token modules are the only exemption. architecture-boundary.yml runs the audit and its Node test suite. No product colors or runtime state are changed."
+    },
     "audit:source-projection:all-tenants": {
       "kind": "unclassified"
     },
