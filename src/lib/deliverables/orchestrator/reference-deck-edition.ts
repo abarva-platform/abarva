@@ -5,7 +5,11 @@ import { ROM_DRIVER_LABELS, type RomDriver } from "@/lib/pricing/moves-workflow/
 import type { EditionInputs } from "./reference-deck-inputs";
 import type { EditionWords } from "./reference-deck-words";
 import { buildReferenceNarrativeEvidence, buildReferenceSlotTable, type ReferenceSlotTable } from "./reference-deck-slots";
-import { referenceArchitectureLabel } from "./reference-deck-layout";
+import { AI_SCENARIO_NOT_FUNDING_DETAIL } from "@/lib/programs/value-engine/value-case-view";
+import {
+  layoutReferenceTable, referenceArchitectureLabel,
+  REFERENCE_BODY_BOTTOM, REFERENCE_BODY_TOP, REFERENCE_TABLE_GAP,
+} from "./reference-deck-layout";
 import {
   type ReferenceArchetype, type ReferenceBlock, type ReferenceCell,
   type ReferenceDeckSpec, type ReferenceFigure, type ReferenceSection,
@@ -67,6 +71,16 @@ const flowFromHandoffs = (value: string): { labels: string[]; full: string[] } |
 };
 const money = formatConsultantCents;
 const percent = formatConsultantPercent;
+const hoursText = (hours: number): string => `${hours.toLocaleString("en-US", { maximumFractionDigits: 1 })} h`;
+const weeksText = (weeks: number): string => `${weeks.toLocaleString("en-US")} ${weeks === 1 ? "week" : "weeks"}`;
+const monthsText = (months: number): string => `${months.toLocaleString("en-US")} ${months === 1 ? "month" : "months"}`;
+/** A difference reads as a change: an explicit sign, then the magnitude in the row's own unit. */
+const signed = (value: number, format: (magnitude: number) => string): string =>
+  value === 0 ? "No change" : `${value < 0 ? "\u2212" : "+"}${format(Math.abs(value))}`;
+type ReferenceTable = Extract<ReferenceBlock, { kind: "table" }>;
+/** Whether these tables, as the client sees them, stack inside the renderer's slide body. */
+const tablesFitBody = (tables: ReferenceTable[]): boolean => tables.reduce((y, block) => y + REFERENCE_TABLE_GAP
+  + layoutReferenceTable({ ...block, rows: block.rows.map((row) => row.map(clientCell)) }).height, REFERENCE_BODY_TOP) <= REFERENCE_BODY_BOTTOM;
 const cell = (row: number): string => `Deck Figures!B${row}`;
 
 function missingNarrative(archetype: ReferenceArchetype): { title: string; answer: string } {
@@ -208,6 +222,83 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
     }) : [];
   const rom = inputs.rom.status === "ready" ? inputs.rom.value : null;
   const romCombined = rom ? bind(`rom:${rom.id}:combined_plan`, `Approved ROM ${rom.id}`, money(rom.result.combined.planCents)) : null;
+  // The AI-assisted scenario recorded with the approval, beside the estimate.
+  // A comparison only: every other slide, and the case, stay on the estimate.
+  const aiScenario = inputs.edition === "investment" && rom ? rom.result.aiAssisted ?? null : null;
+  const valueBody = inputs.valueCase.status === "ready" && inputs.valueCase.value.figuresRedacted !== true
+    ? inputs.valueCase.value : null;
+  // The case's return is compared only when the case is costed on this
+  // approved estimate; its scenario figures only when the value case measured
+  // this same scenario.
+  const costedOnRom = Boolean(rom && obj(valueBody?.costBasis)?.source === `rom:${rom.id}`);
+  const caseOnRom = costedOnRom && economics !== null;
+  const scenarioCase = obj(valueBody?.aiAssisted);
+  const scenarioEconomics = rom && caseOnRom && scenarioCase?.fundingBasis === false && scenarioCase.status === "evaluated"
+    && obj(scenarioCase.costBasis)?.source === `rom:${rom.id}:ai-assisted` ? obj(scenarioCase.economics) : null;
+  const aiScenarioNotes = (): string[] => !aiScenario ? [] : [
+    `AI-assisted scenario: ${safeRead(aiScenario.spec.label)}. ${AI_SCENARIO_NOT_FUNDING_DETAIL} Each reduction and its source is in the deck workbook.`,
+    ...(!valueBody ? ["The value case is not available to this deck, so its return is not compared with the scenario."]
+      : !costedOnRom ? ["The value case is not costed on this approved estimate, so its return is not compared with the scenario."]
+        : !caseOnRom ? ["The value case has no calculated return yet, so its return is not compared with the scenario."]
+          : !scenarioEconomics ? ["The value case has not been measured against this scenario."] : []),
+  ];
+  type Figure = (sourceId: string, label: string, display: string) => ReferenceCell;
+  type Measure = { header: string; estimate: ReferenceCell; scenario: ReferenceCell; difference: ReferenceCell };
+  /**
+   * One row per basis, one column per measure, the funding basis first.
+   * Built twice: once with plain text to measure it, once binding what the slide shows.
+   */
+  const aiScenarioTable = (figure: Figure): ReferenceTable | null => {
+    if (!rom || !aiScenario) return null;
+    const own = (key: string, display: string) => figure(`rom:${rom.id}:${key}`, `Approved ROM ${rom.id}`, display);
+    const ai = (key: string, display: string) =>
+      figure(`rom:${rom.id}:ai_assisted:${key}`, `Approved ROM ${rom.id}: AI-assisted scenario, comparison only`, display);
+    const engine = (id: string, label: string, display: string) => figure(`engine:${id}`, `Value engine: ${label}`, display);
+    const versus = aiScenario.versusEstimate;
+    const measures: Measure[] = [
+      { header: "Effort", estimate: own("combined_hours", hoursText(rom.result.combined.hours)),
+        scenario: ai("hours", hoursText(aiScenario.figures.hours)), difference: ai("versus_hours", signed(versus.hours, hoursText)) },
+      { header: "Duration", estimate: own("combined_weeks", weeksText(rom.result.combined.weeks)),
+        scenario: ai("weeks", weeksText(aiScenario.figures.weeks)), difference: ai("versus_weeks", signed(versus.weeks, weeksText)) },
+      { header: "Cost at plan", estimate: own("combined_plan", money(rom.result.combined.planCents)),
+        scenario: ai("plan", money(aiScenario.figures.planCents)), difference: ai("versus_plan", signed(versus.planCents, money)) },
+      { header: "AI tool licences", estimate: "None added",
+        scenario: ai("tool_cost", money(aiScenario.toolCostCents)), difference: "In scenario cost" },
+    ];
+    if (caseOnRom) {
+      const isCents = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value);
+      const npv = (from: Record<string, unknown> | null) => obj(from?.npvCents)?.base;
+      const fundedNpv = npv(economics);
+      const scenarioNpv = npv(scenarioEconomics);
+      measures.push({ header: "NPV",
+        estimate: isCents(fundedNpv) ? engine("npv_base", "npv base", money(fundedNpv)) : GAP,
+        scenario: isCents(scenarioNpv) ? engine("ai_assisted_npv_base", "NPV base against the AI-assisted scenario, comparison only", money(scenarioNpv)) : "Not measured",
+        difference: isCents(fundedNpv) && isCents(scenarioNpv)
+          ? engine("ai_assisted_npv_versus_estimate", "AI-assisted scenario NPV less the funded NPV", signed(scenarioNpv - fundedNpv, money))
+          : "Not comparable" });
+      const payback = (from: Record<string, unknown> | null): number | null | undefined => {
+        const value = obj(from?.paybackMonth)?.base;
+        return value === null || (typeof value === "number" && Number.isSafeInteger(value)) ? value : undefined;
+      };
+      const fundedPayback = payback(economics);
+      const scenarioPayback = payback(scenarioEconomics);
+      const paybackCell = (id: string, label: string, value: number | null | undefined, missing: ReferenceCell): ReferenceCell =>
+        value === null ? "Not within horizon" : value === undefined ? missing : engine(id, label, monthsText(value));
+      measures.push({ header: "Payback",
+        estimate: paybackCell("payback_month_base", "payback month base", fundedPayback, GAP),
+        scenario: paybackCell("ai_assisted_payback_month_base", "payback month base against the AI-assisted scenario, comparison only", scenarioPayback, "Not measured"),
+        difference: typeof fundedPayback === "number" && typeof scenarioPayback === "number"
+          ? engine("ai_assisted_payback_versus_estimate", "AI-assisted scenario payback less the funded payback", signed(scenarioPayback - fundedPayback, monthsText))
+          : "Not comparable" });
+    }
+    return table(["Basis", ...measures.map((measure) => measure.header)], [
+      ["Approved estimate · funding basis", ...measures.map((measure) => measure.estimate)],
+      ["AI-assisted scenario · comparison", ...measures.map((measure) => measure.scenario)],
+      ["Difference", ...measures.map((measure) => measure.difference)],
+    ], [0]) as ReferenceTable;
+  };
+  const plainText: Figure = (_sourceId, _label, display) => display;
+  let aiScenarioShown = false;
   const adoption = inputs.capture[3].status === "ready"
     ? parseOperatingAdoption(inputs.capture[3].value.operating_adoption) : null;
   const acceptedOwners = adoption?.ownersAcceptedAt ? adoption.rows.filter((row) => row.owner) : [];
@@ -386,15 +477,18 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
       ])];
       case "rom_hours": {
         if (!rom) return [gapPanel("The delivery estimate is still to confirm")];
-        const unitRows = rom ? Object.entries(rom.workbookStructure.unitHours).slice(0, 3)
-          .flatMap(([driver, unit]) => {
-            if (!unit) return [];
-            const ref = `rom:${rom.id}:unit_hours:${driver}`;
-            const bound = bind(ref, unit.source, `${unit.value} h`);
-            return [[ROM_DRIVER_LABELS[driver as RomDriver] ?? safeRead(driver), "Unit-hour driver", bound, unit.confidence, GAP, GAP, GAP, "Approved delivery estimate"] as ReferenceCell[]];
-          }) : [];
-        return unitRows.length ? [table(["Driver", "Basis", "Unit hours", "Confidence", "Low", "Plan", "High", "Source"], unitRows)]
-          : [gapPanel("The delivery hours still need an approved basis")];
+        const units = Object.entries(rom.workbookStructure.unitHours).slice(0, 3)
+          .flatMap(([driver, unit]) => unit ? [{ driver, unit }] : []);
+        if (!units.length) return [gapPanel("The delivery hours still need an approved basis")];
+        const unitTable = (count: number, figure: Figure): ReferenceTable => table(["Driver", "Basis", "Unit hours", "Confidence", "Low", "Plan", "High", "Source"],
+          units.slice(0, count).map(({ driver, unit }) => [ROM_DRIVER_LABELS[driver as RomDriver] ?? safeRead(driver), "Unit-hour driver",
+            figure(`rom:${rom.id}:unit_hours:${driver}`, unit.source, `${unit.value} h`), unit.confidence, GAP, GAP, GAP, "Approved delivery estimate"])) as ReferenceTable;
+        const comparison = aiScenarioTable(plainText);
+        // The comparison keeps every row; the driver table gives up rows to fit.
+        const shown = comparison && [3, 2, 1].filter((count) => count <= units.length)
+          .find((count) => tablesFitBody([unitTable(count, plainText), comparison]));
+        aiScenarioShown = shown !== undefined;
+        return shown ? [unitTable(shown, bind), aiScenarioTable(bind)!] : [unitTable(units.length, bind)];
       }
       case "team": return [table(["Role", "Decision", "Source", "State"], [
         ["Sponsor", "Confirm need", "Sponsor workshop", capture(1, "sponsor_commitment")],
@@ -454,6 +548,8 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
     const noteParts = [resolveSlots(authored.notes, false), ...withheldNarratives];
     if (archetype === "cover" && inputs.edition === "validation")
       noteParts.push("Edition guidance: this discussion validates the need and excludes the solution, plan and cost.");
+    if (archetype === "rom_hours") noteParts.push(...(aiScenarioShown ? aiScenarioNotes()
+      : aiScenario ? ["An AI-assisted scenario was approved beside the estimate; it is not shown on this slide."] : []));
     if (archetype === "flow_today" && actualFlow)
       noteParts.push(`Full handoffs: ${actualFlow.full.join(" → ")}.`);
     for (const block of blocks) {
