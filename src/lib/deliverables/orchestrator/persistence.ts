@@ -83,6 +83,7 @@ function usesStructuredArchitecturePreview(
 }
 
 export interface PersistDeliverableOptions {
+  purposePageDesign?: boolean;
   clientId: string;
   renderedBy: string;
   /** the move / source-event id this deliverable was generated for. */
@@ -715,6 +716,10 @@ export async function persistDeliverable(
   const save = deps.save ?? saveGeneratedArtifact;
   const renderableDocWithType = {
     ...doc,
+    ...(opts.purposePageDesign === true
+      && result.brief.module === "moves"
+      && ["charter", "discovery_report"].includes(result.brief.deliverableType)
+      ? { purposePageDesign: true } : {}),
     deliverableTypeKey: resolvedDeliverableTypeKey,
     deliverableType: result.brief.deliverableType,
   };
