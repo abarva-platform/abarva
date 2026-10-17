@@ -274,18 +274,24 @@ export class ConsumptionReader {
     const domainRows = (await this.readPayloads<DomainReadinessV1>("domain_summary_v1", query.tenantKey, baseline.knowledgeBaselineRef))
       .filter((d): d is DomainReadinessV1 => Boolean(d))
       .map(normalizeDomainReadiness);
-    const entityRows = (await this.readPayloads<EntitySummaryV1>("application_inventory_v1", query.tenantKey, baseline.knowledgeBaselineRef))
+    const applicationRows = (await this.readPayloads<EntitySummaryV1>("application_inventory_v1", query.tenantKey, baseline.knowledgeBaselineRef))
       .filter((e): e is EntitySummaryV1 => Boolean(e))
-      .map(normalizeApplicationEntity);
+      .map((e) => normalizeExploreEntity(e, "application", "technology"));
+    const technologyRows = (await this.readPayloads<EntitySummaryV1>("technology_estate_v1", query.tenantKey, baseline.knowledgeBaselineRef))
+      .filter((e): e is EntitySummaryV1 => Boolean(e))
+      .map((e) => normalizeExploreEntity(e, "technology_estate", "technology_estate"));
+    const dataProductRows = (await this.readPayloads<EntitySummaryV1>("data_product_inventory_v1", query.tenantKey, baseline.knowledgeBaselineRef))
+      .filter((e): e is EntitySummaryV1 => Boolean(e))
+      .map((e) => normalizeExploreEntity(e, "data_product", "data_products"));
     const vendorRows = (await this.readPayloads<EntitySummaryV1>("vendor_contract_inventory_v1", query.tenantKey, baseline.knowledgeBaselineRef))
       .filter((e): e is EntitySummaryV1 => Boolean(e))
-      .map(normalizeVendorEntity);
-    let entities = [...entityRows, ...vendorRows];
+      .map((e) => normalizeExploreEntity(e, "vendor", "vendors"));
+    let entities = [...applicationRows, ...technologyRows, ...dataProductRows, ...vendorRows];
     const projectionName = exploreProjectionName(query.domainKey);
     const normalizedQueryDomainKey = query.domainKey ? normalizeDomainKey(query.domainKey) : null;
     if (domainRows.length === 0 && entities.length === 0) {
       return this.notLoaded(query.tenantKey, projectionName, empty, baseline,
-        "domain_summary_v1 / application_inventory_v1 are not built for the active baseline yet.");
+        "domain_summary_v1 / Explore inventory projections are not built for the active baseline yet.");
     }
     if (normalizedQueryDomainKey) entities = entities.filter((e) => e.domainKey === normalizedQueryDomainKey);
     if (query.domainKey && entities.length === 0) {
@@ -317,16 +323,19 @@ export class ConsumptionReader {
       return this.notLoaded(query.tenantKey, "consumption.application_inventory_v1", empty, null,
         "No active Knowledge Baseline for this tenant.");
     }
-    for (const table of ["application_inventory_v1", "vendor_contract_inventory_v1"] as const) {
+    for (const table of [
+      "application_inventory_v1",
+      "technology_estate_v1",
+      "data_product_inventory_v1",
+      "vendor_contract_inventory_v1",
+    ] as const) {
       const rows = await this.q.rows<{ payload: EntitySummaryV1 | null }>(
         `SELECT payload FROM consumption.${table} WHERE tenant_key = $1 AND knowledge_baseline_ref = $2 AND object_ref = $3 LIMIT 1`,
         [query.tenantKey, baseline.knowledgeBaselineRef, query.entityRef],
       ).catch(() => []);
       const entity = rows[0]?.payload;
       if (entity) {
-        const normalizedEntity = table === "application_inventory_v1"
-          ? normalizeApplicationEntity(entity)
-          : normalizeVendorEntity(entity);
+        const normalizedEntity = normalizeEntityForProjectionTable(entity, table);
         const data: EntityDetailV1 = {
           entity: normalizedEntity,
           fields: normalizedEntity.fields,
@@ -450,24 +459,43 @@ function normalizeDomainReadiness(domain: DomainReadinessV1): DomainReadinessV1 
   };
 }
 
-function normalizeApplicationEntity(entity: EntitySummaryV1): EntitySummaryV1 {
+function normalizeExploreEntity(
+  entity: EntitySummaryV1,
+  entityType: string,
+  domainKey: string,
+): EntitySummaryV1 {
   return {
     ...entity,
-    entityType: entity.entityType === "application_platform" ? "application" : entity.entityType,
-    domainKey: normalizeDomainKey(entity.domainKey),
+    entityType,
+    domainKey,
   };
 }
 
-function normalizeVendorEntity(entity: EntitySummaryV1): EntitySummaryV1 {
-  return {
-    ...entity,
-    domainKey: normalizeDomainKey(entity.domainKey),
-  };
+type ExploreInventoryTable =
+  | "application_inventory_v1"
+  | "technology_estate_v1"
+  | "data_product_inventory_v1"
+  | "vendor_contract_inventory_v1";
+
+function normalizeEntityForProjectionTable(
+  entity: EntitySummaryV1,
+  table: ExploreInventoryTable,
+): EntitySummaryV1 {
+  if (table === "application_inventory_v1") return normalizeExploreEntity(entity, "application", "technology");
+  if (table === "technology_estate_v1") return normalizeExploreEntity(entity, "technology_estate", "technology_estate");
+  if (table === "data_product_inventory_v1") return normalizeExploreEntity(entity, "data_product", "data_products");
+  return normalizeExploreEntity(entity, "vendor", "vendors");
 }
 
 function exploreProjectionName(domainKey: string | null | undefined): ProjectionName {
   if (domainKey === "technology" || domainKey === "application_platform") {
     return "consumption.application_inventory_v1";
+  }
+  if (domainKey === "technology_estate" || domainKey === "infrastructure") {
+    return "consumption.technology_estate_v1";
+  }
+  if (domainKey === "data_products" || domainKey === "data_product") {
+    return "consumption.data_product_inventory_v1";
   }
   if (domainKey === "vendors" || domainKey === "vendor") {
     return "consumption.vendor_contract_inventory_v1";
@@ -475,10 +503,11 @@ function exploreProjectionName(domainKey: string | null | undefined): Projection
   return "consumption.domain_summary_v1";
 }
 
-function inventoryProjectionName(table: "application_inventory_v1" | "vendor_contract_inventory_v1"): ProjectionName {
-  return table === "application_inventory_v1"
-    ? "consumption.application_inventory_v1"
-    : "consumption.vendor_contract_inventory_v1";
+function inventoryProjectionName(table: ExploreInventoryTable): ProjectionName {
+  if (table === "application_inventory_v1") return "consumption.application_inventory_v1";
+  if (table === "technology_estate_v1") return "consumption.technology_estate_v1";
+  if (table === "data_product_inventory_v1") return "consumption.data_product_inventory_v1";
+  return "consumption.vendor_contract_inventory_v1";
 }
 
 function shapeSearchHit(row: {
