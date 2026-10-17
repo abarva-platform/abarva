@@ -20,7 +20,7 @@ import { tenancyOrNamedErrorResponse } from "@/lib/programs/tenancy-catch-respon
 import { phaseCaptureModuleKey, VALUE_MODEL_SECTION_KEY } from "@/lib/programs/phase-capture-contract";
 import { readValueModel } from "@/lib/programs/value-model-capture";
 import { VALUE_ENGINE_FLAG, valueCaseRefusalResponse } from "@/lib/programs/value-engine/value-case-view";
-import type { ValueCaseResult } from "@/lib/programs/value-engine/types";
+import type { CaseEconomics, ValueCaseResult } from "@/lib/programs/value-engine/types";
 import { GET as readValueCaseRoute } from "@/app/api/v1/programs/[programId]/value-case/route";
 import {
   FINANCIAL_MODEL_CONTENT_TYPE,
@@ -83,6 +83,12 @@ export async function GET(
     const saved = typeof raw === "string" ? readValueModel(raw) : null;
     if (!saved || saved.kind !== "model") return refuse("model_unreadable");
 
+    // The AI-assisted scenario, when the value case evaluated one beside the funded case.
+    const scenario = isObject(body.aiAssisted) && body.aiAssisted.fundingBasis === false
+      && body.aiAssisted.status === "evaluated" && isObject(body.aiAssisted.economics)
+      ? { label: typeof body.aiAssisted.label === "string" && body.aiAssisted.label ? body.aiAssisted.label : "AI-assisted scenario",
+        economics: body.aiAssisted.economics as unknown as CaseEconomics }
+      : null;
     let bytes: Buffer;
     try {
       bytes = await financialModelBuffer({
@@ -90,6 +96,7 @@ export async function GET(
         model: saved.model.case,
         result,
         costBasis: costBasisWords(body.costBasis),
+        aiScenario: scenario,
       });
     } catch (err) {
       if (err instanceof FinancialModelMismatch) return refuse("model_changed");

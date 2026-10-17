@@ -106,6 +106,49 @@ describe("buildFinancialModelWorkbook", () => {
     expect(formulaOf(econ.getCell(layout.economics.payback))).toMatch(/^IF\(B6<=0,0,IF\(COUNT\(.+\)=0,"Not within horizon",MIN\(.+\)\)\)$/);
   });
 
+  describe("the AI-assisted scenario", () => {
+    /** The same value at a lower build cost, as the value case evaluates a scenario. */
+    const scenarioEconomics = (baseCents = 180_000_000) => {
+      const model = goldenCase();
+      model.cost = { kind: "estimate", baseCents };
+      return evaluateValueCase(model).economics!;
+    };
+
+    it("models its NPV and payback on the same value at its own investment, and checks both", () => {
+      const input = { ...inputs(), aiScenario: { label: "Synthetic coding agents", economics: scenarioEconomics() } };
+      const { workbook, layout } = buildFinancialModelWorkbook(input);
+      const econ = workbook.getWorksheet(FINANCIAL_MODEL_SHEETS.economics)!;
+      const ai = layout.aiScenario!;
+      expect(cached(econ.getCell(ai.cost))).toBe(180_000_000);
+      expect(cached(econ.getCell(ai.npv))).toBe(input.aiScenario.economics.npvCents.base);
+      expect(cached(econ.getCell(ai.payback))).toBe(input.aiScenario.economics.paybackMonth.base ?? "Not within horizon");
+      // Lower investment, same value: the scenario's NPV is higher by exactly the saving.
+      expect((cached(econ.getCell(ai.npv)) as number) - (cached(econ.getCell(layout.economics.npv)) as number)).toBe(240_000_000 - 180_000_000);
+      expect(formulaOf(econ.getCell(ai.npv))).toBe("ROUND(-B" + ai.cost.slice(1) + "+B7+B8+B9,0)");
+      // The scenario's payback reads its own investment, not the funded one.
+      const schedule = workbook.getWorksheet(FINANCIAL_MODEL_SHEETS.schedule)!;
+      const reachedAi = [...Array(80).keys()].map((i) => schedule.getCell(5 + i, 2)).find((cell) => cell.value === "Month cash covers the AI-assisted scenario's investment")!;
+      expect(formulaOf(schedule.getCell(Number(reachedAi.row), 3))).toMatch(/>=Inputs!\$E\$11,C\$4,""\)$/);
+      const check = workbook.getWorksheet(FINANCIAL_MODEL_SHEETS.check)!;
+      expect(cached(check.getCell(layout.check.overall))).toBe("YES");
+      expect(layout.check.rows).toBe(3 + 4 + 2 + input.result.levers.filter((lever) => lever.annualCents).length);
+      const inputsSheet = workbook.getWorksheet(FINANCIAL_MODEL_SHEETS.inputs)!;
+      expect(inputsSheet.getCell("F11").value).toBe("Synthetic coding agents: a comparison, not the funding basis");
+      expect(formulaOf(inputsSheet.getCell("E11"))).toBe("CHOOSE(Inputs!$B$5,B11,C11,D11)");
+    });
+
+    it("is left out when its value schedule is not the funded case's", () => {
+      const moved = goldenCase();
+      moved.levers[0]!.timing = { ...moved.levers[0]!.timing, startMonth: moved.levers[0]!.timing.startMonth + 2 };
+      const { layout } = buildFinancialModelWorkbook({ ...inputs(), aiScenario: { label: "Other", economics: evaluateValueCase(moved).economics! } });
+      expect(layout.aiScenario).toBeNull();
+    });
+
+    it("is absent when no scenario was approved", () => {
+      expect(buildFinancialModelWorkbook(inputs()).layout.aiScenario).toBeNull();
+    });
+  });
+
   it("refuses a saved model whose timing no longer reproduces the evaluated case", () => {
     const input = inputs();
     input.model.levers[0]!.timing = { ...input.model.levers[0]!.timing, startMonth: input.model.levers[0]!.timing.startMonth + 1 };
@@ -138,8 +181,12 @@ describe("buildFinancialModelWorkbook", () => {
 if (process.env.FINANCIAL_MODEL_OUTPUT) {
   it("writes samples for recalculation", async () => {
     const fs = await import("node:fs");
-    for (const [name, model] of [["golden", goldenCase()], ["phased", phasedCase()]] as const) {
-      const input = inputs(model);
+    for (const [name, model] of [["golden", goldenCase()], ["phased", phasedCase()], ["scenario", goldenCase()]] as const) {
+      const scenarioModel = goldenCase();
+      scenarioModel.cost = { kind: "estimate", baseCents: 180_000_000 };
+      const input = name === "scenario"
+        ? { ...inputs(model), aiScenario: { label: "Synthetic coding agents", economics: evaluateValueCase(scenarioModel).economics! } }
+        : inputs(model);
       const { workbook } = buildFinancialModelWorkbook(input);
       for (const ws of workbook.worksheets) ws.eachRow((row) => row.eachCell((cell) => {
         if (typeof cell.value === "object" && cell.value !== null && "formula" in cell.value)
