@@ -16,6 +16,7 @@ import type {
 } from "./types";
 import { carriesRequiredEvidenceSignal } from "./evidence-signals";
 import { scanForInternalLeaks } from "./source-register";
+import { validatePurposeStory } from "./purpose-story-contract";
 import { countBodyWords } from "@/lib/deliverables/shared/body-word-count";
 import { judgeSlideCount } from "@/lib/deliverables/slide-contract";
 import { findExcludedNumericClaims } from "./excluded-numeric-claims";
@@ -180,7 +181,11 @@ function collectUnsupportedClaims(
     /(\$\s?\d|\b\d{1,3}(?:,\d{3})+\b|\b\d+%|\bFY?20\d\d\b|\b\d{4}-\d{2}-\d{2}\b)/;
   const claims: string[] = [];
   for (const s of sentences) {
-    if (!factLike.test(s) || (allowExternalBenchmarkShortcut && isSupportedExternalBenchmarkClaim(s))) continue;
+    if (
+      !factLike.test(s) ||
+      (allowExternalBenchmarkShortcut && isSupportedExternalBenchmarkClaim(s))
+    )
+      continue;
     const verdict = judgeFigureSentence(s, policy);
     if (verdict.supported) continue;
     if (verdict.citedRegisterIds.length > 0) {
@@ -245,7 +250,8 @@ function identifiesSameExhibit(
   const wantKey = exhibitIdentity(want.key);
   const gotTitle = exhibitIdentity(got.title);
   const gotKey = exhibitIdentity(got.key);
-  if (wantTitle && (wantTitle === gotTitle || wantTitle === gotKey)) return true;
+  if (wantTitle && (wantTitle === gotTitle || wantTitle === gotKey))
+    return true;
   if (wantKey && (wantKey === gotKey || wantKey === gotTitle)) return true;
   return false;
 }
@@ -298,6 +304,17 @@ export function validateDeliverableQuality(
   const blockers: string[] = [];
   const warnings: string[] = [];
   const qb = req.qualityBar;
+  if (
+    req.purposePageDesign &&
+    ["charter", "discovery_report"].includes(req.deliverableType)
+  ) {
+    blockers.push(
+      ...validatePurposeStory(
+        { ...doc, deliverableType: req.deliverableType },
+        req.governedEvidenceBundle,
+      ),
+    );
+  }
 
   const body = doc.generatedSections
     .map((s) => `${s.title}\n${s.bodyMarkdown}`)
@@ -368,6 +385,9 @@ export function validateDeliverableQuality(
       .join("\n\n"),
     doc.recommendation,
     doc.nextActions.join("\n"),
+    (doc.actionRegister || [])
+      .flatMap((row) => [row.owner, row.action, row.evidence])
+      .join("\n"),
     (doc.deckSlides ?? [])
       .flatMap((slide) => [
         slide.title ?? "",
