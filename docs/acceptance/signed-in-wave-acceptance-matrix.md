@@ -34,6 +34,152 @@ committed write is `blocked`, with the write named.
 
 ---
 
+## 2026-10-05 eighteenth wave — walked on serving SHA `4835f97fb6`
+
+**Item:** U-569.
+**Walked:** 2026-10-05, between 17:55:00Z and 18:00:28Z, by
+`source-backlog-executor#20261005T1732Z`.
+**Signed in as:** an existing browser session on `app.abarva.ai`, on one governed
+synthetic tenant. The tenant is not named here: this repository is public, and the
+habit of writing a tenant name into a public artifact is the one worth not having
+once real engagements exist. No credential was entered on any host during this
+walk. No write was performed on any surface.
+
+**The serving SHA is established from two independent sources, and they agree.**
+The Container App template image for `ca-abarva-web-lab-eastus` in
+`rg-abarva-controlplane-lab-eastus` and the **sole** 100%-traffic revision
+`ca-abarva-web-lab-eastus--m4835f97f` both carry
+`acrabarvalab001.azurecr.io/abarva/web@sha256:18efa3113d726684b6c89ef31e7c95bd10ee17617b4b4eaaecf9ed8594cee70f`,
+Healthy / Running. Three further active revisions (`--ma48fd427`, `--m474d3aab`,
+`--m9b2900ba`) held 0%. The invariant was read **again at the end of the walk**
+and had not moved: same template digest, same sole 100% revision. **The build
+did not move during this pass.**
+
+**Draining the queue was attempted for 20 minutes and did not succeed, so the
+outstanding run is named rather than hidden.** At claim time (17:35Z) two
+`ACA main deploy` runs were in flight; between 15:37Z and 17:48Z the lane carried
+fourteen runs, **seven of them cancelled by concurrency**. Waiting did not reduce
+the queue — it grew: `ddbd95aabe` (#9026) merged at 17:48Z and superseded the
+pending run on `aaaeb9707d`, whose deploy then cancelled. The walk started in the
+window immediately after traffic shifted to `--m4835f97f` at ~17:54Z.
+**One run was outstanding at walk start and still at walk end: `ddbd95aabe`,
+queued.** `git merge-base --is-ancestor` puts it **on `main`**, so unlike the
+seventeenth wave's two outstanding runs this one *can* shift shared web traffic.
+It did not do so during the window — proven by the closing invariant read, not
+assumed. `aaaeb9707d` (#9046) and `ddbd95aabe` (#9026) are therefore **not** in
+this build and belong to the nineteenth wave.
+
+**The sweep is the build, not a row list.** `git rev-list --first-parent
+bbe053153e..4835f97fb6` returns **24** merges; **16** are `feat(` or `fix(` on a
+product surface. The item's floor of 16 was measured against a different head and
+is a floor: `408efe4c56` entered the build after it was written, and two merges
+named in it (`aaaeb9707d`, `ddbd95aabe`) had not yet been built.
+
+### The finding this wave exists to report
+
+**Thirteen of the sixteen client-visible merges reach no screen at all**, and in
+every case the reason was read out of the code or the served data rather than
+guessed. This is not thirteen separate accidents. Three causes account for all of
+them, and each is stated once below and cited per row:
+
+- **(A) The consumer is a write route, a CLI script, a migration or a dataset.**
+  Eight merges. The code shipped and is correct; nothing reads it back onto a
+  screen, so a walk that performs no write cannot reach it.
+- **(B) `next.config.ts` redirects the whole `/programs/:id/*` subtree away.**
+  Lines 84–86 redirect `/programs/:id/report`, `/programs/:id/:rest*` and
+  `/programs/:id` to `/strategic-moves/:id` — and the `report` rule **drops the
+  `/report` segment entirely**. Verified live: `/programs/APX-CDP-2026/report`
+  lands on `/strategic-moves/APX-CDP-2026` and renders *"This item is not
+  available for this account."* with a 404. This is a **correction to a reading
+  made during this walk**: the page component at `src/app/programs/[id]/page.tsx`
+  redirects only when `isStrategicMoveRouteId(id)` (a bare UUID test), which
+  suggested a non-UUID id would render `ProgramDetailPage`. It does not — the
+  config-level redirect sits above the page and catches every id. The
+  seventeenth wave's note was right about the outcome; the mechanism is the
+  config, not the page.
+- **(C) The surface is behind a feature flag with `includeTenants: []`.** Read
+  from the registry at the serving commit, not inferred from an absence.
+
+### Rows
+
+| # | Surface / claim | Merge | Verdict | What was seen |
+|---|---|---|---|---|
+| 1 | Approvals overview stops claiming approvals it never read | #9023 `ebeed2451b` | **pass — both branches** | Read on two Moves. On `6ac2a1ee` (at P0, no advanced-past row) all six rows read Approver **`Not recorded`**, tally `1 of 3 met` / `0 of 2 met` / `0 of 6 met` / `0 of 3 met` / `0 of 5 met` / `0 of 4 met`, each `title` naming the set (`1 of 3 gate criteria met`), status `Not yet submitted` / `Not reached`, and the P0 status `title` reading *"1 of 3 gate criteria met on the Move's live gate evaluation."* On `5e996404` (handed off, every row advanced-past) all six read status **`Gate passed`** with `title` *"Inferred from this Move having advanced past the phase - no approval record is read on this view."* — and the word **`Approved` occurs 0 times on that page**. The duplicate notation the merge removed, `N/M met`, occurs **0 times**. All three defects the merge names are closed, and the inferred branch — the one that mattered — was exercised rather than argued. |
+| 2 | Discover's inherited assumptions, resolution read | #9021 `59ecd2e7d3` | **pass as an absence, with the limit stated** | `[data-testid="charter-assumptions-carry-forward"]` and `.cac` are **0** on the P2 Discover route of `5e996404`, and the words *assumption*, *confirmed*, *corrected*, *superseded* occur **0** times. Cause (C): `moves_charter_assumption_resolution_v1` reads `includeTenants: []` at the serving commit. **This absence is weaker evidence than it looks** and is recorded as such: the merge's own text says the write path is a later slice and that "on and off read identically today", so an enabled tenant would render the same nothing. |
+| 3 | Capture hand-off recap made reachable | #9019 `b7c1f7cbe2` | **pass as an absence** | On the P1 capture flow of `823580a9` with `data-capture-v2="on"`, *"Review what you captured"* occurs **0** times and the footer's **only** control is `Continue` — which is exactly the pre-merge state the item `U-564` describes, and exactly what cause (C) predicts: `moves_capture_handoff_recap_v1` reads `includeTenants: []`. |
+| 4 | The captured-brief review states what its figure counts | #9020 `62b65eeef7` | **blocked — the surface is superseded on this tenant** | `P0CapturedBriefReview` renders under `phase.phase === 0` **in the legacy canvas**. On the served P0 route the page renders the redesigned capture flow instead: `data-capture-v2="on"`, and the DOM carries `mcf-*` classes with **no** `.mxw-p0-brief-review` and no element whose class contains `brief`. `MovesPhaseStandaloneClient` picks the flow for P0 when `captureV2Enabled && captureP0Enabled`, both of which are on for this tenant. The merge's fix is real and its suite proves it; **the screen it fixes is not the screen this tenant is served.** |
+| 5 | The Explain drawer's gate headline counts the criteria it heads | #9035 `171667ac93` | **blocked — no reachable host** | `buildGateSummaryLine` reaches the product only through `ExplainQuoteDrawer`, whose every host is unreachable: `ExplainQuotePill` is imported by `NexusSynthesisQuote` and `CompareWithDropdown` (both only in `ProgramDetailPage` — cause **(B)**), by `AtlasSynthesisQuote` (referenced by **nothing**) and by `SentinelSynthesisQuote` (which appears only inside a **comment** at `src/components/shell/AgentColumn.tsx:60`); `StageSynthesisDrawer` is reached from `SourceJourneyTracker(Client)` via `SentinelEngagementCanvas`, which the repository's own `src/lib/qa/active-route-ownership-map.ts:117` states "is imported by no route". `Gates:` and `gate criteria met` occur **0** times on every surface walked. |
+| 6 | The gate tally says whether it counted criteria | #9041 `408efe4c56` | **blocked — the route is redirected away** | `describeGateSummary` has exactly one product consumer, `src/app/programs/[id]/report/page.tsx`. Cause **(B)**: `/programs/APX-CDP-2026/report` was requested and the browser landed on `/strategic-moves/APX-CDP-2026` showing *"This item is not available for this account."* and `404 Can't open this`. Neither the defect reading `0 / 1 gates met` nor either replacement (`N of M gate criteria met`, `Gate approved — no criteria evaluated`) occurs anywhere, because the page is served to nobody. |
+| 7 | RFx release state on the event page | #9022 `3bdbb01df5` | **blocked — renders on no served event** | The `RFx release` row lives in `SourceNewStage04VendorReadiness`, gated by `{responsesStage && …}` where `isResponsesStage` requires `normalizeSourceStageKey(event.currentStage) === "responses"`. **All four served events were read** — `e1a55cdb`, `9edaaf34`, `11cae092`, `f9aa91f3` — and on each the definition list carries only `Need`, `Scope`, `Decision owner` (and on `11cae092`, none). `RFx release` is absent on all four, as is the panel's own anchor `Solicitation motion`, which is what makes this an unreached panel rather than a failing row. Same gate as `U-566` / `D-522`, one wave later and still unreached. |
+| 8 | Show what parsing actually extracted | #9033 `274b10a66b` | **blocked — renders on no served event** | `Extracted from artifacts` sits in the same `<dl>` of the same panel as row 7 and is absent on the same four events, for the same gate. Neither `Nothing extracted yet` nor any `N requirements · N pricing components` reading was reachable. |
+| 9 | Record that nothing scanned an uploaded artifact | #9034 `5eb7282858` | **blocked — no read surface** | Cause **(A)**: `malwareScanStatus` / `malware_scan_reason` are written by `src/lib/source/file-cabinet/repository.ts` and read by **no component** in the repository. Confirmed as an absence too: the words *not scanned*, *malware* and *scanner* occur **0** times across all four served events. |
+| 10 | Let a sourcing event produce a contract | #9043 `ad0209f7ed` | **blocked — write path only** | Cause **(A)**: `write-award-decision` and `contract-from-award` are imported only by `src/app/api/v1/source/[eventId]/award/route.ts`, which exports `POST` and nothing else. Exercising it is a committed write and was not performed. |
+| 11 | Record who accepted a piece of evidence | #9029 `62ff89a2e5` | **blocked — no read surface** | Cause **(A)**: the new `acceptedByUserId` / `acceptedByName` / `acceptedAt` fields on `canvas-substrate/types.ts` are read by **no component**; the merge's other files are a `POST` review route, a migration and an integration test. The `acceptedByName` that *is* rendered in `SourceNewWorkspace` is the pre-existing vendor-panel field, a different row in a panel that is itself unreached (row 7). |
+| 12 | Discovery blueprint catalog + declared archetype wins | #9030 `6223df3297` | **blocked — write path only** | Cause **(A)**: `getDiscoveryBlueprint`, `buildDiscoveryBlueprintInputFromProgram` and `resolveDeclaredProgramArchetypeId` are reached from `api/v1/programs/[programId]/artifacts/upload` (a `POST`) and from `move-context-extract`, which is itself imported only by write routes and a script. |
+| 13 | Discovery archetype suggestion engine (Phase 1) | #9037 `474d3aab33` | **blocked — write path only** | Cause **(A)**: same two consumers as row 12. The merge's four files are two under `src/lib/deliverables/orchestrator/` plus docs; it adds no route and no component. |
+| 14 | A phase status report anyone can run | #9031 `64d8ea6866` | **blocked — not a client surface** | Cause **(A)**, in its strongest form: the merge's three files are `scripts/source/…`, `package.json` and a release record. It touches **no `src/` file at all**. It is an operator CLI, and `feat(source):` on the subject line is what put it in a client-visible count. |
+| 15 | The award decision storage contract | #9027 `f2e486d293` | **blocked — storage contract only** | Cause **(A)**: a `supabase/migrations/` file plus an integration test plus a release record. No route, no component, no read path. |
+| 16 | Evidence-linked market candidate research pack | #9025 `b2009eeb68` | **blocked — data, not a surface** | Cause **(A)**: a dataset under `datasets/source/market-candidate-research-v1`, two `scripts/source` files, a workflow and a release record. Nothing it adds is served. |
+
+### Stated limits of this walk
+
+- **The verdict counts, stated so that neither can be quoted as the other.**
+  Over the sixteen rows: **one `pass`** (row 1), **two `pass` as an absence**
+  (rows 2 and 3, each naming why the absence is the expected state), and
+  **thirteen `blocked`**. Counted per merge the division is the same, because no
+  row verdicts more than one merge this wave.
+- **No `fail` was recorded, and that is not a clean bill.** Only one merge of the
+  sixteen reached a screen in a state where it *could* have failed. The other
+  fifteen were either unreachable or gated off.
+- **Row 2 and row 3 are absences, not demonstrations.** Each is consistent with
+  the flag being off; neither evidences that the enabled path works.
+- **Enforcement is server-side and was not exercised anywhere.** Every refusal
+  recorded — the 404 on the redirected report route, the unrendered Stage 04
+  panel — was observed as a route response or an unrendered branch.
+- **Row 4's finding is about this tenant.** `P0CapturedBriefReview` may well
+  render for a tenant not enrolled in `moves_capture_v2`; no such tenant was
+  walked, and this row should not be read as "the component is dead".
+
+### Residue — filed, not absorbed
+
+- **U-570** — `next.config.ts:84` redirects `/programs/:id/report` to
+  `/strategic-moves/:id`, **dropping the `/report` segment**, so
+  `ProgramReportPage` is served to nobody. That page is the only product consumer
+  of `describeGateSummary` (#9041) and the printable program report as a whole.
+  Filed from row 6. Whether the report is meant to be retired or to be reachable
+  at a new path is a **product decision** and is not guessed here.
+- **U-571** — every host of `ExplainQuoteDrawer` is unreachable, so the reasoning
+  Explain drawer reaches no user on this runtime: two hosts sit inside
+  `ProgramDetailPage` (redirected away), one is referenced by nothing, one
+  appears only in a comment, and the fifth is reached through a canvas the
+  repository itself records as imported by no route. Filed from row 5. This is
+  the third consecutive wave in which a reasoning-layer merge could not be
+  observed; the pattern, not the merge, is the item.
+- **U-572** — the Stage 04 vendor-readiness panel still renders on none of the
+  four served events, one wave after `U-566` settled that the Responses stage is
+  journey-decided and `D-522` was filed to seed an event that reaches it. Rows 7
+  and 8 are two further merges that have now landed behind that same gate. Filed
+  so the cost of the unseeded stage is attributed to the data gap rather than
+  re-discovered a fourth time.
+
+### Noted, not filed
+
+- **`feat(` and `fix(` on the subject line is a poor proxy for "client-visible".**
+  Four of this wave's sixteen (#9031, #9027, #9025, and #9037) touch no served
+  file at all; a fifth (#9043) is a `POST` handler. A wave that counts merges by
+  prefix will keep over-stating how much is owed a screen. A cheaper test exists
+  and was used throughout this walk: does the merge's diff reach a component or a
+  `GET` route?
+- **The deploy lane is the binding constraint on this family of items.** Seven of
+  fourteen deploys in the two hours before this walk were cancelled by
+  concurrency, and the queue grew while it was being drained. The practice the
+  sixteenth wave added — drain first — did not survive contact with a lane this
+  busy, and the nineteenth wave should expect to walk a build with a run
+  outstanding and prove the invariant at both ends instead, as this one did.
+
+---
+
+
 ## 2026-10-05 seventeenth wave — walked on serving SHA `bbe053153e`
 
 **Item:** U-565.
