@@ -69,24 +69,60 @@ const money = formatConsultantCents;
 const percent = formatConsultantPercent;
 const cell = (row: number): string => `Deck Figures!B${row}`;
 
-function missingNarrative(archetype: ReferenceArchetype): { title: string; answer: string } {
-  if (["releases", "shared_foundation", "rom_hours"].includes(archetype)) return {
-    title: "The delivery estimate still needs an approved basis",
-    answer: "Confirm the delivery scope and estimate before comparing it with value.",
-  };
-  if (["users_decisions", "team"].includes(archetype)) return {
+/**
+ * What a slide says when its figure is not available yet. Each slide names
+ * its own gap, so a deck waiting on the same input never repeats one title
+ * on every slide. No sentence states a figure, and each says what is missing.
+ */
+const MISSING_NARRATIVE: Partial<Record<ReferenceArchetype, { title: string; answer: string }>> = {
+  one_page: {
+    title: "The case summary still needs a confirmed value basis",
+    answer: "Confirm how value is counted before relying on this summary.",
+  },
+  big_number_context: {
+    title: "The headline value still needs a confirmed basis",
+    answer: "Confirm the counting basis before quoting a headline value.",
+  },
+  one_step_value: {
+    title: "The annual value step still needs a confirmed basis",
+    answer: "Confirm the counted step and its source before relying on it.",
+  },
+  three_year_value: {
+    title: "The three-year value still needs a confirmed basis",
+    answer: "Confirm when value is earned and paid before comparing years.",
+  },
+  value_ledger: {
+    title: "Credited and program value still need a confirmed basis",
+    answer: "Confirm what is credited, and when, before relying on the comparison.",
+  },
+  releases: {
+    title: "The release sequence still needs an approved estimate",
+    answer: "Approve the delivery estimate before sequencing releases against value.",
+  },
+  shared_foundation: {
+    title: "The shared foundation still needs an approved estimate",
+    answer: "Approve the delivery estimate before sharing its effort across the case.",
+  },
+  rom_hours: {
+    title: "The delivery hours still need an approved estimate",
+    answer: "Confirm the delivery scope and working hours before using the estimate.",
+  },
+  users_decisions: {
     title: "Decision owners still need your team's agreement",
     answer: "Agree who owns each decision before delivery begins.",
-  };
-  if (archetype === "flow_today") return {
+  },
+  team: {
+    title: "The delivery team still needs agreed owners",
+    answer: "Agree who leads each part of the work before delivery begins.",
+  },
+  flow_today: {
     title: "The current handoffs still need an agreed basis",
     answer: "Confirm how the work moves between owners before relying on this account.",
-  };
-  if (["one_page", "big_number_context", "one_step_value", "three_year_value", "value_ledger"].includes(archetype)) return {
-    title: "The value case still needs a confirmed basis",
-    answer: "Confirm the source and counting basis before relying on this value.",
-  };
-  return {
+  },
+};
+
+function missingNarrative(archetype: ReferenceArchetype): { title: string; answer: string } {
+  return MISSING_NARRATIVE[archetype] ?? {
     title: "The evidence for this decision still needs confirmation",
     answer: "Confirm the supporting source with your team before relying on this conclusion.",
   };

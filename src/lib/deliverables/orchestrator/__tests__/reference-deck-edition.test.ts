@@ -354,8 +354,8 @@ describe("live-input reference edition", () => {
     authored[1]!.answer = "Compare {value.annual.base} with the estimate {rom.total.plan} before deciding.";
     const spec = buildReferenceEdition(inputs, authored);
     const summary = spec.slides[1]!;
-    expect(summary.actionTitle).toBe("The value case still needs a confirmed basis");
-    expect(summary.answer).toBe("Confirm the source and counting basis before relying on this value.");
+    expect(summary.actionTitle).toBe("The case summary still needs a confirmed value basis");
+    expect(summary.answer).toBe("Confirm how value is counted before relying on this summary.");
     expect(summary.actionTitle).not.toContain("unavailable");
     expect(summary.speakerNotes).toContain("Draft title awaiting input:");
     expect(summary.speakerNotes).toContain("$1,200,000");
@@ -542,7 +542,7 @@ describe("live-input reference edition", () => {
     const authored = words(VALIDATION_SEQUENCE.length);
     authored[4]!.title = "Credited value reaches {value.three_year.credited} over three years";
     const spec = buildReferenceEdition(inputs, authored);
-    expect(spec.slides[4]?.actionTitle).toBe("The value case still needs a confirmed basis");
+    expect(spec.slides[4]?.actionTitle).toBe("The headline value still needs a confirmed basis");
     expect(spec.slides[4]?.speakerNotes).toContain("not yet modelled");
     expect(spec.slides[4]?.speakerNotes).toContain("No value levers yet; add them in P4 Step 3.");
     expect(JSON.stringify(spec.slides[4]?.blocks)).not.toContain("P4 Step 3");
@@ -553,6 +553,20 @@ describe("live-input reference edition", () => {
     expect(validateReferenceDeck(spec).some((finding) => finding.code === "edition_violation" && finding.blocking)).toBe(true);
   });
 
+  it.each(["validation", "investment"] as const)("names each %s gap slide's own missing input, never one title on every slide", async (edition) => {
+    const inputs = fixture(edition);
+    inputs.valueCase = { status: "empty", detail: "No value levers yet; add them in P4 Step 3." };
+    const sequence = edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
+    // The deterministic words keep every required figure token, so every figure slide is a gap.
+    const spec = buildReferenceEdition(inputs, unavailableEditionWords(edition, sequence));
+    const titles = spec.slides.filter((slide) => slide.archetype !== "cover").map((slide) => slide.actionTitle);
+    expect(new Set(titles).size).toBe(titles.length);
+    expect(validateReferenceDeck(spec).filter((finding) => finding.blocking)).toEqual([]);
+    const rendered = await inspectDeck(await renderReferenceDeck(spec));
+    expect(judgeRenderedDeck(rendered, { referenceDeck: spec }).findings.filter((finding) =>
+      ["reference_client_copy", "reference_edition"].includes(finding.kind))).toEqual([]);
+  }, 60_000);
+
   it("replaces a withheld title of any form with its own sentence, keeping the draft in notes", async () => {
     const inputs = fixture("investment");
     inputs.valueCase = { status: "empty", detail: "No value levers yet; add them in P4 Step 3." };
@@ -560,7 +574,7 @@ describe("live-input reference edition", () => {
     authored[1] = { title: "Value: {value.annual.plan}. Pending.", answer: "Confirm the value basis before relying on it.",
       notes: "The point: the basis is open. How to read: follow the source line." };
     const spec = buildReferenceEdition(inputs, authored);
-    expect(spec.slides[1]!.actionTitle).toBe("The value case still needs a confirmed basis");
+    expect(spec.slides[1]!.actionTitle).toBe("The case summary still needs a confirmed value basis");
     expect(spec.slides[1]!.answer).toBe("Confirm the value basis before relying on it.");
     expect(spec.slides[1]!.speakerNotes).toContain("Draft title awaiting input: Value: not yet modelled. Pending.");
     expect(validateReferenceDeck(spec).filter((finding) => finding.blocking)).toEqual([]);
