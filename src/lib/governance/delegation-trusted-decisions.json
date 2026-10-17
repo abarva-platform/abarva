@@ -24,6 +24,12 @@
       "decision_id": "moves-reviewed-source-load-20261017-001",
       "decision_sha256": "d16ff261e494d8d11925539cd3229ce69b5bca408bebc46c3f05a925e6e0cc4f",
       "status": "active"
+    },
+    {
+      "authority_id": "moves-source-completion-20261017",
+      "decision_id": "moves-phase-capture-load-20261017-002",
+      "decision_sha256": "41083138eb55642a9d67bf14e655b33472db99066d21fc60ebbd1ee88f79871b",
+      "status": "active"
     }
   ]
 }
