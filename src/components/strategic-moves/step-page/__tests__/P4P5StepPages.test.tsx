@@ -17,7 +17,10 @@ import {
 } from "@/lib/pricing/moves-workflow/approved-rom-snapshot";
 import { evaluateValueCase } from "@/lib/programs/value-engine";
 import { readValueModel } from "@/lib/programs/value-model-capture";
-import { valueCaseForViewer } from "@/lib/programs/value-engine/value-case-view";
+import {
+  VALUE_CASE_REFUSAL,
+  valueCaseForViewer,
+} from "@/lib/programs/value-engine/value-case-view";
 import {
   withCostBasis,
   type CostBasis,
@@ -764,19 +767,36 @@ describe("P4 and P5 step pages", () => {
     expect(URL.createObjectURL).toHaveBeenCalled();
   });
 
-  it("shows unavailable value-case readback without presenting client figures", async () => {
-    global.fetch = jest
-      .fn()
-      .mockResolvedValue({ ok: false, json: async () => ({}) });
-    render(page(P4_STEP_PAGES, "p4-value", host(4)));
-    await waitFor(() =>
-      expect(screen.getByText(/Value case unavailable/)).toBeInTheDocument(),
-    );
-    expect(
-      screen.getByText(/Legacy text is not an engine result/),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
-  });
+  it.each([
+    ["no saved plan", "", VALUE_CASE_REFUSAL.value_model_absent.detail],
+    [
+      "a free-text plan",
+      "Reduce spend by retiring the legacy reporting stack.",
+      VALUE_CASE_REFUSAL.value_model_not_structured.detail,
+    ],
+    [
+      "a malformed value model",
+      JSON.stringify({ kind: "value_model", version: 1, case: {} }),
+      VALUE_CASE_REFUSAL.value_model_invalid.detail,
+    ],
+  ])(
+    "states the value-case refusal for %s without asking the route for it",
+    (_, valuePlanText, detail) => {
+      global.fetch = jest.fn();
+      render(
+        page(P4_STEP_PAGES, "p4-value", host(4, { value_plan: valuePlanText })),
+      );
+      expect(screen.getAllByText(detail).length).toBeGreaterThan(0);
+      expect(global.fetch).not.toHaveBeenCalledWith(
+        expect.stringContaining("/value-case"),
+        expect.anything(),
+      );
+      expect(
+        screen.getByText(/Legacy text is not an engine result/),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    },
+  );
 
   it("shows engine-supplied value statuses and source terms without calculating money", async () => {
     const valuePlan = JSON.stringify({
@@ -982,6 +1002,22 @@ describe("P4 and P5 step pages", () => {
     const block = await screen.findByTestId("p4-ai-scenario");
     expect(block.textContent).toContain("Figures are withheld");
     expect(block.textContent).not.toMatch(/\$/);
+  });
+
+  it("shows unavailable value-case readback for a structured plan without presenting client figures", async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({ ok: false, json: async () => ({}) });
+    render(page(P4_STEP_PAGES, "p4-value", host(4, { value_plan: valuePlan })));
+    await waitFor(() =>
+      expect(screen.getByText(/Value case unavailable/)).toBeInTheDocument(),
+    );
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/v1/programs/move-1/value-case",
+      expect.objectContaining({ cache: "no-store" }),
+    );
+    expect(screen.queryByText(/\$/)).toBeNull();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
   });
 
   it("shows no scenario when none was approved", async () => {
