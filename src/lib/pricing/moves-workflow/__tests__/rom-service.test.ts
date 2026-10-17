@@ -940,3 +940,84 @@ describe("computeRom — the workspace's own rate card", () => {
     expect(refused(billRated("client")).code).toBe("invalid_rate_card_pin");
   });
 });
+
+describe("computeRom — the AI-assisted scenario, priced beside the estimate", () => {
+  const spec = (over: Record<string, unknown> = {}) => ({
+    label: "AI coding agents for pipeline build",
+    factors: {
+      design_row_count: { hoursReduction: 0.5, source: "[A:AI1] confirmed · pilot measured", confidence: "medium" },
+    },
+    tools: [],
+    ...over,
+  });
+  const withAi = (over: Record<string, unknown> = {}) =>
+    mutate((s) => {
+      (s as Record<string, unknown>).aiAssist = spec(over);
+    });
+
+  it("never changes the estimate's own figures, and says no credit is in them", () => {
+    const plain = priced(golden());
+    const rom = priced(withAi());
+    expect(rom.total).toEqual(plain.total);
+    expect(rom.releases).toEqual(plain.releases);
+    expect(rom.productivityCreditApplied).toBe(false);
+    expect(plain.aiAssisted).toBeUndefined();
+    expect(rom.aiAssisted?.productivityCreditApplied).toBe(true);
+  });
+
+  it("reduces only the factored driver's unit hours, with the reduction's source and the lower confidence", () => {
+    const rom = priced(withAi());
+    const ai = rom.aiAssisted!;
+    const base = golden().unitHours;
+    expect(ai.structure.unitHours.design_row_count).toMatchObject({
+      value: base.design_row_count!.value * 0.5,
+      confidence: "low",
+    });
+    expect(ai.structure.unitHours.design_row_count!.source).toContain("reduction: [A:AI1] confirmed · pilot measured");
+    expect(ai.structure.unitHours.data_source_count).toEqual(base.data_source_count);
+    // UC-A counts 40 design rows: its hours fall by exactly 40 × unit × 0.5 × friction.
+    const ucA = (r: RomResult) => r.releases[0].useCases.find((u) => u.code === "UC-A")!.hours;
+    expect(ucA(rom) - ucA(ai as unknown as RomResult)).toBeCloseTo(40 * base.design_row_count!.value * 0.5 * 1.1, 4);
+    expect(ai.versusEstimate.hours).toBeLessThan(0);
+    expect(ai.versusEstimate.planCents).toBe(ai.total.planCents - rom.total.planCents);
+    expect(ai.factors).toEqual([{ driver: "design_row_count", hoursReduction: 0.5, source: "[A:AI1] confirmed · pilot measured", confidence: "medium" }]);
+  });
+
+  it("is identical to the estimate at zero reduction and no tools", () => {
+    const rom = priced(withAi({ factors: { design_row_count: { hoursReduction: 0, source: "x", confidence: "high" } } }));
+    expect(rom.aiAssisted!.total).toEqual(rom.total);
+    expect(rom.aiAssisted!.versusEstimate).toEqual({ hours: 0, weeks: 0, planCents: 0 });
+  });
+
+  it("charges each tool per seat per whole month of every block, inside the scenario's totals", () => {
+    const tool = { code: "TOOL-1", label: "Coding agent seats", monthlyCostCents: 4500, seats: 2, source: "[A:AI2] client technology cost" };
+    const noTools = priced(withAi()).aiAssisted!;
+    const ai = priced(withAi({ tools: [tool] })).aiAssisted!;
+    const blocks = [...ai.releases.map((r) => r.own), ...(ai.foundation ? [ai.foundation.priced] : [])];
+    const expected = blocks.reduce((sum, b) => sum + Math.ceil(b.weeks / (52 / 12)) * 2 * 4500, 0);
+    expect(ai.toolCostCents).toBe(expected);
+    expect(ai.total.planCents).toBe(noTools.total.planCents + expected);
+    expect(ai.total.hours).toBe(noTools.total.hours);
+  });
+
+  it("refuses a scenario it cannot trace, with a sentence", () => {
+    const code = (over: Record<string, unknown>) => refused(withAi(over));
+    expect(code({ factors: { design_row_count: { hoursReduction: 0.81, source: "x", confidence: "low" } } })).toMatchObject({
+      code: "invalid_ai_assist",
+      message: expect.stringContaining("between 0 and 80%"),
+    });
+    expect(code({ factors: { invented_driver: { hoursReduction: 0.2, source: "x", confidence: "low" } } }).message).toContain("unknown driver");
+    expect(code({ factors: { design_row_count: { hoursReduction: 0.2, source: " ", confidence: "low" } } }).message).toContain("needs a source");
+    expect(code({ factors: { design_row_count: { hoursReduction: 0.2, source: "x", confidence: "certain" } } }).message).toContain("confidence");
+    expect(code({ factors: {} }).message).toContain("at least one factor");
+    expect(code({ label: "" }).message).toContain("label");
+    expect(code({ tools: [{ code: "T", label: "Seats", monthlyCostCents: 45.5, seats: 1, source: "x" }] }).message).toContain("whole cents");
+    expect(code({ tools: [{ code: "T", label: "Seats", monthlyCostCents: 4500, seats: 1, source: "" }] }).message).toContain("source for its cost");
+    const noUnitHours = mutate((s) => {
+      (s as Record<string, unknown>).aiAssist = spec({ factors: { validation_row_count: { hoursReduction: 0.2, source: "x", confidence: "low" } } });
+      delete (s.unitHours as Record<string, unknown>).validation_row_count;
+      for (const uc of s.useCases) delete (uc.counts as Record<string, unknown>).validation_row_count;
+    });
+    expect(refused(noUnitHours).message).toContain("no unit hours for");
+  });
+});

@@ -9,6 +9,7 @@ import {
 // Types only: the service's rate resolver reaches the data plane, so a client
 // surface must never load it. Every number comes from the preview route.
 import type {
+  RomAiAssistSpec,
   RomConfidence,
   RomDesignStatus,
   RomRateCardPin,
@@ -170,6 +171,26 @@ export interface RomSnapshot {
   rateCard?: RomResolvedRateCardPin;
 }
 
+/**
+ * An AI-assisted delivery scenario to price BESIDE the estimate. Every number
+ * is a register assumption: a factor's row holds the share of that driver's
+ * hours removed (0 to 0.8, e.g. 0.35); a tool's row holds its monthly cost per
+ * seat in dollars. Seats are the team's own count. It never changes the
+ * estimate, its approval or what P4 reads.
+ */
+export interface RomAiAssistPlan {
+  label: string;
+  factors: Partial<Record<RomDriver, { kind: "register"; registerId: string }>>;
+  tools: RomAiToolPlan[];
+}
+
+export interface RomAiToolPlan {
+  code: string;
+  label: string;
+  seats: number;
+  cost: { kind: "register"; registerId: string };
+}
+
 export interface RomEstimate {
   kind: typeof ROM_ESTIMATE_KIND;
   version: 1;
@@ -186,6 +207,8 @@ export interface RomEstimate {
   snapshotsIssued: number;
   deliveryOptions?: RomDeliveryOption[];
   deliverySelection?: RomDeliverySelection | null;
+  /** Absent or null = no AI-assisted scenario. Not part of what approval depends on. */
+  aiAssist?: RomAiAssistPlan | null;
 }
 
 export interface RomDeliveryOption {
@@ -584,7 +607,31 @@ export function parseRomEstimate(
     ...(o.deliveryOptions !== undefined
       ? { deliveryOptions: parseDeliveryOptions(o.deliveryOptions),
           deliverySelection: parseDeliverySelection(o.deliverySelection) } : {}),
+    ...(parseAiAssistPlan(o.aiAssist) ? { aiAssist: parseAiAssistPlan(o.aiAssist) } : {}),
   };
+}
+
+function parseRegisterRef(v: unknown): { kind: "register"; registerId: string } | null {
+  return isObj(v) && v.kind === "register" && text(v.registerId) ? { kind: "register", registerId: text(v.registerId) as string } : null;
+}
+
+function parseAiAssistPlan(v: unknown): RomAiAssistPlan | null {
+  if (!isObj(v) || !text(v.label)) return null;
+  const factors: RomAiAssistPlan["factors"] = {};
+  if (isObj(v.factors)) {
+    for (const driver of ROM_DRIVERS) {
+      const ref = parseRegisterRef(v.factors[driver]);
+      if (ref) factors[driver] = ref;
+    }
+  }
+  const tools: RomAiToolPlan[] = [];
+  for (const t of Array.isArray(v.tools) ? v.tools : []) {
+    const cost = isObj(t) ? parseRegisterRef(t.cost) : null;
+    if (isObj(t) && text(t.code) && text(t.label) && finite(t.seats) && t.seats >= 0 && cost) {
+      tools.push({ code: text(t.code) as string, label: text(t.label) as string, seats: t.seats, cost });
+    }
+  }
+  return { label: text(v.label) as string, factors, tools };
 }
 
 export function serializeRomEstimate(value: RomEstimate): string {
@@ -644,6 +691,8 @@ export function romInputsFingerprint(record: RomEstimate): string {
   const inputs: Partial<RomEstimate> = { ...record };
   delete inputs.approval;
   delete inputs.snapshotsIssued;
+  // The AI scenario is priced beside the estimate; editing it never touches approval.
+  delete inputs.aiAssist;
   return stableFingerprint(inputs);
 }
 
@@ -1774,10 +1823,14 @@ export function approveRomEstimate(
  * cards were wired), so the approved figures keep reproducing. Otherwise the
  * tenant's current approved card, resolved by the preview route.
  */
-/** The priced structure without the rates it was priced on: what the inputs alone determine. */
-function withoutRatePin(structure: RomStructure): Omit<RomStructure, "rateCard"> {
+/**
+ * The priced structure without the rates it was priced on or the AI scenario
+ * priced beside it: what the estimate's own inputs alone determine.
+ */
+function withoutRatePin(structure: RomStructure): Omit<RomStructure, "rateCard" | "aiAssist"> {
   const rest = { ...structure };
   delete rest.rateCard;
+  delete rest.aiAssist;
   return rest;
 }
 
@@ -1791,13 +1844,116 @@ export function romPreviewRateCardPin(
   return { mode: "client_current" };
 }
 
-/** The ROM preview request body for this record: its structure plus the rates to price it on. */
+/** The ROM preview request body: the structure, the rates to price it on, and any AI scenario to price beside it. */
 export function romPreviewBody(
   record: RomEstimate,
   structure: RomStructure,
   register?: readonly RomRegisterRow[] | null,
 ): RomStructure {
-  return { ...structure, rateCard: romPreviewRateCardPin(record, register) };
+  const ai = buildRomAiAssist(record, register ?? null);
+  return {
+    ...structure,
+    rateCard: romPreviewRateCardPin(record, register),
+    ...(ai.status === "ready" || ai.status === "provisional" ? { aiAssist: ai.spec } : {}),
+  };
+}
+
+// ── The AI-assisted scenario ────────────────────────────────────────────────
+
+const AI_MAX_REDUCTION = 0.8;
+
+/** Save, replace or remove (null) the scenario plan. Never touches approval. */
+export function setRomAiAssistPlan(record: RomEstimate, plan: RomAiAssistPlan | null): RomEdit {
+  if (plan === null) return okEdit({ ...record, aiAssist: null });
+  const label = plan.label.trim();
+  if (!label || label.length > 90) return { ok: false, reason: "Name the scenario in 90 characters or fewer." };
+  for (const tool of plan.tools) {
+    if (!tool.label.trim() || tool.label.trim().length > 60) return { ok: false, reason: "Name each tool in 60 characters or fewer." };
+    if (!Number.isFinite(tool.seats) || tool.seats < 0 || tool.seats > 500) {
+      return { ok: false, reason: `Give '${tool.label.trim()}' a number of seats from 0 to 500.` };
+    }
+  }
+  return okEdit({ ...record, aiAssist: { ...plan, label, tools: plan.tools.map((t) => ({ ...t, label: t.label.trim() })) } });
+}
+
+export type RomAiAssistBuild =
+  | { status: "none" }
+  /** A plan exists but no factor can be priced yet; `problems` says why. */
+  | { status: "incomplete"; problems: string[] }
+  | {
+      status: "ready" | "provisional";
+      spec: RomAiAssistSpec;
+      /** Register rows still open whose working figures this preview uses. */
+      provisionalBecause: string[];
+      /** References left out of the scenario, each with the reason. */
+      problems: string[];
+    };
+
+/**
+ * Resolve the plan against the register. Confirmed rows price it; open rows
+ * price a provisional preview from their working figure; anything else is
+ * left out with a stated reason. Never a default.
+ */
+export function buildRomAiAssist(record: RomEstimate, register: readonly RomRegisterRow[] | null): RomAiAssistBuild {
+  const plan = record.aiAssist;
+  if (!plan) return { status: "none" };
+  const problems: string[] = [];
+  const provisional: string[] = [];
+  const read = (ref: { kind: "register"; registerId: string }, what: string): { value: number; source: string; confidence: RomConfidence } | null => {
+    const s = resolveRomUnitHours(ref, register);
+    if (s.state === "confirmed") return { value: s.value, source: s.sourceLabel, confidence: s.confidence };
+    if (s.state === "open" && s.workingValue !== null && Number.isFinite(s.workingValue) && s.workingValue >= 0) {
+      provisional.push(`[A:${s.registerId}]`);
+      return { value: s.workingValue, source: `[A:${s.registerId}] open · working figure, provisional`, confidence: s.confidence };
+    }
+    problems.push(
+      s.state === "unread"
+        ? `${what}: A:${s.registerId} could not be read.`
+        : s.state === "open"
+          ? `${what}: A:${s.registerId} is open with no working number.`
+          : s.state === "unusable"
+            ? `${what}: A:${s.registerId} is ${s.reason === "no_value" ? "confirmed without a number" : s.reason}.`
+            : `${what}: no register row is referenced.`,
+    );
+    return null;
+  };
+  const counted = new Set(countedDrivers(record));
+  const factors: RomAiAssistSpec["factors"] = {};
+  for (const driver of ROM_DRIVERS) {
+    const ref = plan.factors[driver];
+    if (!ref) continue;
+    const what = `${ROM_DRIVER_LABELS[driver]} reduction`;
+    if (!counted.has(driver)) {
+      problems.push(`${what}: nothing in the estimate counts ${ROM_DRIVER_LABELS[driver].toLowerCase()}.`);
+      continue;
+    }
+    const v = read(ref, what);
+    if (!v) continue;
+    if (v.value > 1) {
+      problems.push(`${what}: A:${ref.registerId} states ${v.value}; record a reduction as a share, e.g. 0.35 for 35%.`);
+      continue;
+    }
+    if (v.value > AI_MAX_REDUCTION) {
+      problems.push(`${what}: A:${ref.registerId} removes more than 80% of the hours; evidence a lower unit hour instead.`);
+      continue;
+    }
+    factors[driver] = { hoursReduction: v.value, source: v.source, confidence: v.confidence };
+  }
+  const tools: RomAiAssistSpec["tools"][number][] = [];
+  for (const tool of plan.tools) {
+    const v = read(tool.cost, `${tool.label} cost`);
+    if (!v) continue;
+    tools.push({ code: tool.code, label: tool.label, monthlyCostCents: Math.round(v.value * 100), seats: tool.seats, source: v.source });
+  }
+  if (Object.keys(factors).length === 0) {
+    return { status: "incomplete", problems: problems.length ? problems : ["Link at least one hours reduction to a register row."] };
+  }
+  return {
+    status: provisional.length ? "provisional" : "ready",
+    spec: { label: plan.label, factors, tools },
+    provisionalBecause: provisional,
+    problems,
+  };
 }
 
 export function reopenRomApproval(record: RomEstimate): RomEstimate {

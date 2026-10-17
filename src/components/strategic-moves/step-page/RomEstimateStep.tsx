@@ -58,6 +58,7 @@ import {
   applyRomNotesProposals,
   proposeRomCountsFromNotes,
 } from "@/lib/programs/rom-estimate-notes";
+import { RomAiScenarioPanel } from "./RomAiScenarioPanel";
 import {
   MovesStepPage,
   SourceTag,
@@ -2005,6 +2006,15 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
             estimate was approved on. The approved figures stay as they are;
             reopen the approval to re-price on the new card.
           </p>
+        ) : null}
+        {build.ok ? (
+          <RomAiScenarioPanel
+            record={record}
+            register={register}
+            rom={rom}
+            hiddenMoney={hiddenMoney}
+            onEdit={commit}
+          />
         ) : null}
         {downloadError ? (
           <p className={cx("lead-line")} role="alert">
