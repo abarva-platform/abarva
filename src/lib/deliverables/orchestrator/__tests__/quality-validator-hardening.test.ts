@@ -2,6 +2,365 @@
 
 import { validateDeliverableQuality } from "../quality-validator";
 import { amsRfpRequest, goodDocument } from "../__fixtures__/ams-rfp";
+import {
+  validatePurposeStory,
+  unsupportedPurposeAbsences,
+} from "../purpose-story-contract";
+import { deckContract } from "../../shared/deck-story-contract";
+import { CHARTER_CONTRACT } from "../../shared/artifact-contracts";
+import { purposeFixture } from "../__fixtures__/purpose-pages";
+
+describe("fresh purpose storyline contract", () => {
+  const measuresTable =
+    "| Outcome | Measure | Basis |\n| --- | --- | --- |\n| Better service | Resolution rate | Owner validation pending |";
+  function complete() {
+    const doc = purposeFixture();
+    doc.tables = [];
+    doc.exhibits = [];
+    doc.nextActions = [];
+    doc.deckSlides = deckContract("REF_DECK_P2_DISCOVERY_READOUT").slides.map(
+      (s) => ({
+        key: s.id,
+        governingMessage:
+          s.id === "executive_answer"
+            ? "Hold design until the definitions agree"
+            : s.id.replaceAll("_", " "),
+        points: ["Owner review is the next step."],
+      }),
+    );
+    return doc;
+  }
+  it("accepts the P2 spine, then rejects every removed required beat", () => {
+    expect(validatePurposeStory(complete(), [])).toEqual([]);
+    for (const beat of deckContract(
+      "REF_DECK_P2_DISCOVERY_READOUT",
+    ).slides.filter((s) => s.required)) {
+      const doc = complete();
+      doc.deckSlides = doc.deckSlides!.filter((s) => s.key !== beat.id);
+      expect(validatePurposeStory(doc, [])).toContain(
+        `purpose_story:missing_beat:${beat.id}`,
+      );
+    }
+  });
+  it("rejects reordered beats and a P1 ask substituted for the finding", () => {
+    const doc = complete();
+    [doc.deckSlides![1], doc.deckSlides![2]] = [
+      doc.deckSlides![2]!,
+      doc.deckSlides![1]!,
+    ];
+    expect(validatePurposeStory(doc, []).join()).toContain("beat_order");
+    doc.deckSlides![0]!.governingMessage =
+      "Ask: test whether this opportunity merits Discovery";
+    expect(validatePurposeStory(doc, [])).toContain(
+      "purpose_story:forbidden_discovery_opener",
+    );
+  });
+  it("counts a visible decision takeaway and distinguishes scope from absence", () => {
+    const doc = complete();
+    doc.deckSlides![0]!.governingMessage = "Measurement definitions differ";
+    doc.deckSlides![0]!.pageIntent = {
+      question: "Next decision?",
+      scopeNote: "This page establishes no funding approval.",
+      takeaway: "Hold design until definitions agree.",
+    };
+    expect(validatePurposeStory(doc, [])).toEqual([]);
+    doc.deckSlides![0]!.pageIntent.scopeNote =
+      "Proposed for sponsor decision; records no build approval or funding.";
+    expect(validatePurposeStory(doc, [])).toEqual([]);
+    doc.deckSlides![0]!.pageIntent.scopeNote =
+      "No evidence has been collected.";
+    expect(validatePurposeStory(doc, []).join()).toContain(
+      "unsupported_absence",
+    );
+  });
+  it("requires the P1 charter contract rather than a separate evidence-plan appendix", () => {
+    const doc = complete();
+    doc.deliverableType = "charter";
+    doc.deckSlides = [];
+    doc.generatedSections = CHARTER_CONTRACT.sections.map((s) => ({
+      key: s.key,
+      title: s.title,
+      bodyMarkdown:
+        s.key === "success_measures"
+          ? measuresTable
+          : "Owner review is the next step.",
+      groundingMode: "expert_template",
+      citationsUsed: [],
+    }));
+    expect(validatePurposeStory(doc, [])).toEqual([]);
+    doc.generatedSections.pop();
+    expect(validatePurposeStory(doc, [])).toContain(
+      "purpose_story:missing_beat:authorization_conditions",
+    );
+  });
+  it("refuses a draft that purports to grant its own authorization", () => {
+    const doc = complete();
+    doc.deliverableType = "charter";
+    doc.generatedSections = CHARTER_CONTRACT.sections.map((s) => ({
+      key: s.key,
+      title: s.title,
+      bodyMarkdown:
+        s.key === "success_measures" ? measuresTable : "Owner review pending.",
+      groundingMode: "expert_template" as const,
+      citationsUsed: [],
+    }));
+    doc.recommendation = "This charter authorizes Discovery.";
+    expect(validatePurposeStory(doc, [])).toContain(
+      "purpose_story:draft_claims_authorization",
+    );
+    doc.recommendation = "If approved, this charter authorizes Discovery.";
+    expect(validatePurposeStory(doc, [])).toEqual([]);
+    doc.recommendation =
+      "If approved, the team may proceed. This charter authorizes Discovery.";
+    expect(validatePurposeStory(doc, [])).toContain(
+      "purpose_story:draft_claims_authorization",
+    );
+  });
+  it("permits distinct appendices only after the complete core spine", () => {
+    const doc = complete();
+    doc.deckSlides!.push({
+      key: "appendix_evidence",
+      governingMessage: "Evidence detail",
+      points: ["Owner review pending."],
+    });
+    expect(validatePurposeStory(doc, [])).toEqual([]);
+    doc.deckSlides!.push({ ...doc.deckSlides!.at(-1)! });
+    expect(validatePurposeStory(doc, []).join()).toContain(
+      "beat_order:appendix_evidence",
+    );
+    const early = complete();
+    early.deckSlides!.splice(1, 0, {
+      key: "appendix_evidence",
+      governingMessage: "Evidence detail",
+      points: [],
+    });
+    expect(validatePurposeStory(early, []).join()).toContain(
+      "beat_order:appendix_evidence",
+    );
+  });
+  it("rejects prose-only Charter measures and accepts native table bindings", () => {
+    const doc = complete();
+    doc.deliverableType = "charter";
+    doc.generatedSections = CHARTER_CONTRACT.sections.map((s) => ({
+      key: s.key,
+      title: s.title,
+      bodyMarkdown: "Owner review pending.",
+      groundingMode: "expert_template" as const,
+      citationsUsed: [],
+    }));
+    expect(validatePurposeStory(doc, [])).toContain(
+      "purpose_story:success_measures_need_table",
+    );
+    doc.tables = [
+      {
+        key: "success_measures",
+        title: "Measures",
+        columns: ["Measure", "Basis"],
+        rows: [["Resolution rate", "Owner review pending"]],
+        targetFormat: "docx",
+      },
+    ];
+    expect(validatePurposeStory(doc, [])).toEqual([]);
+    doc.tables[0]!.targetFormat = "xlsx";
+    expect(validatePurposeStory(doc, [])).toContain(
+      "purpose_story:success_measures_need_table",
+    );
+    doc.generatedSections.find(
+      (s) => s.key === "success_measures",
+    )!.bodyMarkdown = measuresTable;
+    expect(validatePurposeStory(doc, [])).toEqual([]);
+  });
+  it("keeps a scope-note hypothesis in the headline rather than asserting a cause", () => {
+    const doc = complete();
+    const slide = doc.deckSlides![2]!;
+    slide.governingMessage = "Fragmented knowledge causes longer calls";
+    slide.pageIntent = {
+      question: "Why?",
+      scopeNote: "Hypotheses require owner confirmation.",
+    };
+    expect(validatePurposeStory(doc, []).join()).toContain(
+      "hypothesis_hidden_from_headline",
+    );
+    slide.governingMessage =
+      "Fragmented knowledge may contribute to longer calls";
+    expect(validatePurposeStory(doc, [])).toEqual([]);
+  });
+  it.each([
+    "Preserve seed rows.",
+    "Perform a scoped rebind.",
+    "Run the loader.",
+    "Status: not_reviewed",
+  ])("refuses client-facing operator or status-code prose: %s", (text) => {
+    const doc = complete();
+    doc.deckSlides![2]!.points = [text];
+    expect(validatePurposeStory(doc, []).join()).toMatch(
+      /operator_instructions_in_body|raw_status_in_body/,
+    );
+  });
+  it("requires an explicit cited absence, not a plan, unrelated absence, or changed citation", () => {
+    const claim = "No baseline has been collected. [1]";
+    expect(
+      unsupportedPurposeAbsences(claim, [
+        { citationNumber: 1, statement: "Evidence plan: baseline to collect." },
+      ]),
+    ).toEqual([claim]);
+    const sources = [
+      { citationNumber: 1, statement: "No baseline has been collected." },
+    ];
+    expect(unsupportedPurposeAbsences(claim, sources)).toEqual([]);
+    expect(
+      unsupportedPurposeAbsences(
+        "No baseline has been collected [1].",
+        sources,
+      ),
+    ).toEqual([]);
+    expect(
+      unsupportedPurposeAbsences(
+        "No baseline has been collected [2].",
+        sources,
+      ),
+    ).toHaveLength(1);
+    expect(
+      unsupportedPurposeAbsences(
+        'Source states: "No baseline has been collected." [1]',
+        sources,
+      ),
+    ).toEqual([]);
+    expect(
+      unsupportedPurposeAbsences(
+        'No interviews exist; source states: "No baseline has been collected." [1]',
+        sources,
+      ),
+    ).toHaveLength(1);
+    expect(
+      unsupportedPurposeAbsences(
+        '"No baseline has been collected." [1] and "No interviews were collected." [2]',
+        [
+          ...sources,
+          { citationNumber: 2, statement: "No interviews were collected." },
+        ],
+      ),
+    ).toEqual([]);
+    expect(
+      unsupportedPurposeAbsences(claim.replace("[1]", "[2]"), sources),
+    ).toHaveLength(1);
+    expect(
+      unsupportedPurposeAbsences("No interviews were collected. [1]", sources),
+    ).toHaveLength(1);
+    expect(
+      unsupportedPurposeAbsences(
+        "Confirm whether the baseline is missing.",
+        [],
+      ),
+    ).toEqual([]);
+    expect(
+      unsupportedPurposeAbsences("Review found no baseline.", []),
+    ).toHaveLength(1);
+  });
+  it("retains spreadsheet array text while removing only citation tokens", () => {
+    const source = {
+      citationNumber: 4,
+      statement:
+        'row 7: ["Access owner", "Authorization end dates are missing in legacy entries", "Review pending"]',
+    };
+    expect(
+      unsupportedPurposeAbsences(
+        '"Authorization end dates are missing in legacy entries" [4]',
+        [source],
+      ),
+    ).toEqual([]);
+    expect(
+      unsupportedPurposeAbsences('"No authorizations were received" [4]', [
+        source,
+      ]),
+    ).toHaveLength(1);
+  });
+  it("distinguishes a draft's own scope from claims about evidence history", () => {
+    for (const text of [
+      "No approval is recorded in this document.",
+      "No signature is recorded in this draft.",
+      "No benefit is approved here.",
+      "Monetary claims follow the no-double-count rules [1].",
+      "This page attributes no cause and sizes no benefit.",
+      "**If approved**, Discovery sets no operating model.",
+    ])
+      expect(unsupportedPurposeAbsences(text, [])).toEqual([]);
+    for (const text of [
+      "No approval was ever recorded.",
+      "No evidence has been collected. No approval is recorded in this document.",
+      "This page attributes no cause and sizes no benefit; no baseline exists.",
+      "This charter defines no baseline; no evidence has been collected.",
+    ])
+      expect(unsupportedPurposeAbsences(text, []).length).toBeGreaterThan(0);
+  });
+  it("checks Markdown table claims independently with row-local citations", () => {
+    const doc = complete();
+    doc.generatedSections = [
+      {
+        key: "evidence",
+        title: "Evidence status",
+      groundingMode: "expert_template",
+      citationsUsed: [1],
+        bodyMarkdown:
+          "| Item | Status | Basis |\n| --- | --- | --- |\n| Baseline | No baseline has been collected. | [1] |\n| Interviews | Planned | [2] |",
+      },
+    ];
+    const evidence = [
+      { citationNumber: 1, statement: "No baseline has been collected." },
+    ];
+    expect(
+      validatePurposeStory(doc, evidence).filter((e) =>
+        e.includes("unsupported_absence"),
+      ),
+    ).toEqual([]);
+    doc.generatedSections[0]!.bodyMarkdown =
+      doc.generatedSections[0]!.bodyMarkdown.replace(
+        "No baseline has been collected.",
+        "No interviews were collected.",
+      );
+    expect(validatePurposeStory(doc, evidence).join()).toContain(
+      "unsupported_absence",
+    );
+    doc.generatedSections[0]!.bodyMarkdown =
+      doc.generatedSections[0]!.bodyMarkdown.replace(
+        "No interviews were collected.",
+        "No baseline has been collected.",
+      ).replace("| [1] |", "| [2] |");
+    expect(validatePurposeStory(doc, evidence).join()).toContain(
+      "unsupported_absence",
+    );
+  });
+  it.each(["synthetic", "invented", "fixture", "demo"])(
+    "rejects %s in visible authored text, but not the footer",
+    (word) => {
+      const doc = complete();
+      doc.presentationCover = { classification: "Synthetic scenario" };
+      expect(validatePurposeStory(doc, [])).toEqual([]);
+      doc.deckSlides![1]!.governingMessage = `A ${word} finding`;
+      expect(validatePurposeStory(doc, []).join()).toContain(
+        "classification_in_body",
+      );
+    },
+  );
+  it("reaches the real quality gate only for enrolled purpose output", () => {
+    const req = {
+      ...amsRfpRequest(),
+      deliverableType: "discovery_report",
+      purposePageDesign: true,
+    };
+    const doc = complete();
+    doc.deckSlides!.shift();
+    expect(validateDeliverableQuality(doc, req).blockers).toContain(
+      "purpose_story:missing_beat:executive_answer",
+    );
+    expect(
+      validateDeliverableQuality(doc, {
+        ...req,
+        purposePageDesign: false,
+      }).blockers.join(),
+    ).not.toContain("purpose_story:");
+  });
+});
 
 describe("quality validator — truncation + tenant casing", () => {
   it("a clean board document still passes", () => {

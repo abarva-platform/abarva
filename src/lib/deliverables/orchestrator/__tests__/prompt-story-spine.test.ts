@@ -34,6 +34,27 @@ function promptFor(deliverableType: string): string {
 }
 
 describe("executive story spine reaches the prompt", () => {
+  it.each(["architect", "full_draft", "synthesis"] as const)(
+    "injects the fresh P2 contract into %s",
+    (pass) => {
+      const req = {
+        ...movesRequest("discovery_report"),
+        purposePageDesign: true,
+      };
+      const prompt = buildPassPrompt(pass, {
+        req,
+        brief: getArtifactBrief(req),
+        evidence: req.governedEvidenceBundle,
+        approvedPlanJson: "{}",
+      });
+      expect(prompt.system).toContain("executive_answer");
+      expect(prompt.system).toContain("proceed_hold_stop");
+      expect(prompt.system).toContain(
+        "Never open with an ask to authorize Discovery",
+      );
+      expect(prompt.system).toContain("structured actionRegister");
+    },
+  );
   it("injects the P4 investment-case beats, in order, for a business case", () => {
     const prompt = promptFor("business_case");
     expect(prompt).toContain("EXECUTIVE STORY SPINE");
