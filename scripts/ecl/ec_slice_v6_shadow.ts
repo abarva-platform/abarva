@@ -270,7 +270,7 @@ function validInterval(from: unknown, to: unknown): boolean {
   // Date.parse retains milliseconds; the admitted source contract retains microseconds.
   const micros = (value: string): bigint => {
     const fraction = /\.(\d{1,6})(?:Z|[+-]\d{2}:\d{2})$/.exec(value)?.[1] ?? "";
-    return BigInt(Date.parse(value)) * 1000n + BigInt(fraction.padEnd(6, "0").slice(3));
+    return BigInt(Date.parse(value)) * BigInt(1000) + BigInt(fraction.padEnd(6, "0").slice(3));
   };
   return micros(String(from)) < micros(String(to));
 }
