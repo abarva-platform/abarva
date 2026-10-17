@@ -1589,6 +1589,13 @@ export function buildSourceWorkspaceVisualAnswer(input: {
       ? "performance coverage not established"
       : `${contract.performanceObservationCount} active performance observations`,
   ].join(", ");
+  const requestedOtherFinancialMeasures =
+    /\b(?:support|consum\w*|invoic\w*|paid|payment|fee\w*)\b/i.test(
+      input.query,
+    );
+  const otherFinancialMeasures = requestedOtherFinancialMeasures
+    ? " Separate financial measures: support fee amount Not established; consumption amount Not established; invoiced amount Not established; paid amount Not established in this answer packet. Actual annual spend is not proof of consumption, invoicing, or payment."
+    : "";
   const candidateSummary =
     sizedCount > 0
       ? `${sizedCount} sized ${sizedCount === 1 ? "line" : "lines"} of contract-specific candidate commercial opportunities total ${currencyLabel(candidateTotalUsd)}. ${signalRows.length > 0 ? `${signalStageClause(signalRows.length)} and excluded from sized totals and charts until evidence gates close. ` : ""}Evidence is present for ${lineCount(evidencePresentCount)}, and ${lineCount(gapCount)} ${gapCount === 1 ? "still requires" : "still require"} explicit workflow, review, or finance confirmation. These amounts are candidates, not realized savings.`
@@ -1601,7 +1608,7 @@ export function buildSourceWorkspaceVisualAnswer(input: {
   return {
     directAnswer: [
       `Verdict: ${contract.vendorName} ${contract.contractName} (${contract.contractId}) ${lines.length > 0 ? "has governed commercial opportunity rows, but they are not realized savings without finance-confirmed outcome evidence" : "has no governed commercial opportunity row in the current packet; actionability and value are not established"}. ${contractMismatch ? "It is the current selected contract, but it does not match the contract ID named in the question; do not use it to answer that contract-specific question." : "It is bound from the governed Source contract context."}`,
-      `Rationale: loaded contract facts are ${loadedContractFacts}. ${candidateSummary}${topOpportunitySummary}`,
+      `Rationale: loaded contract facts are ${loadedContractFacts}.${otherFinancialMeasures} ${candidateSummary}${topOpportunitySummary}`,
       leverTableSummary,
       negotiationStance,
       "Caveat: Annual contract value is not the total committed value. Actual spend does not by itself establish that invoices were paid. Source will not convert candidate, avoidable, recoverable, or negotiable value into realized savings without explicit finance confirmation; outside-in market practice is advisory pattern context only and must not replace Source/Tower evidence.",
