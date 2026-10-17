@@ -84,6 +84,25 @@ describe("GET financial-model", () => {
     expect(workbook.getWorksheet(FINANCIAL_MODEL_SHEETS.levers)!.getCell("B5").value).toBe("Premium labour");
   });
 
+  it("models the AI-assisted scenario when the value case evaluated one, and only then", async () => {
+    const cheaper = goldenCase();
+    cheaper.cost = { kind: "estimate", baseCents: 180_000_000 };
+    mockValueCase.mockImplementationOnce(async () => Response.json(caseBody(goldenCase(), { aiAssisted: {
+      label: "Synthetic coding agents", fundingBasis: false, status: "evaluated", economics: evaluateValueCase(cheaper).economics,
+    } })));
+    const read = async () => {
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(Buffer.from(await (await call()).arrayBuffer()) as unknown as Parameters<typeof workbook.xlsx.load>[0]);
+      return workbook.getWorksheet(FINANCIAL_MODEL_SHEETS.inputs)!.getCell("F11").value;
+    };
+    expect(await read()).toBe("Synthetic coding agents: a comparison, not the funding basis");
+    // A scenario marked as the funding basis is never modelled as a comparison.
+    mockValueCase.mockImplementationOnce(async () => Response.json(caseBody(goldenCase(), { aiAssisted: {
+      label: "Wrong", fundingBasis: true, status: "evaluated", economics: evaluateValueCase(cheaper).economics,
+    } })));
+    expect(await read()).toBeNull();
+  });
+
   it("passes the value case's own refusal through unchanged", async () => {
     const refusal = { ok: false, error: "value_model_absent", detail: VALUE_CASE_REFUSAL.value_model_absent.detail };
     mockValueCase.mockResolvedValue(Response.json(refusal, { status: 404 }));

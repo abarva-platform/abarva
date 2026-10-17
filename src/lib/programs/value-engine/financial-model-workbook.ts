@@ -26,6 +26,7 @@ import { npvWithTerms, paybackMonth as enginePayback } from "./economics";
 import { productOfTerms, roundWhole } from "./formula-terms";
 import { monthlyCashCents, monthlyEarnedCents } from "./timing";
 import type {
+  CaseEconomics,
   Cents,
   LeverResult,
   Scenario,
@@ -63,12 +64,20 @@ export interface FinancialModelInputs {
   result: ValueCaseResult;
   /** How the one-time cost was set, in words (e.g. "approved estimate ROM-1"). */
   costBasis: string;
+  /**
+   * The AI-assisted scenario approved beside the estimate, as the value case
+   * evaluated it: the same value at the scenario's build cost. A comparison,
+   * never the funding basis. Absent when no scenario was approved.
+   */
+  aiScenario?: { label: string; economics: CaseEconomics } | null;
 }
 
 export interface FinancialModelLayout {
   scenarioCell: string;
   /** Economics addresses, for a reader or a test. */
   economics: { annualCash: string; npv: string; payback: string; cost: string };
+  /** Economics addresses for the AI-assisted scenario, when one is modelled. */
+  aiScenario: { cost: string; npv: string; payback: string } | null;
   check: { overall: string; rows: number };
   /** Base-scenario values the workbook computes, equal to the engine's. */
   base: { annualCashCents: Cents; npvCents: Cents; paybackMonth: number | null };
@@ -176,6 +185,17 @@ export function buildFinancialModelWorkbook(input: FinancialModelInputs): {
     || baseCash.some((value, i) => value !== economics.monthlyCashCents.base[i]))
     throw new FinancialModelMismatch("the recomputed cash, NPV or payback differs from the engine's");
 
+  // The scenario changes the build cost only; its value schedule must be the funded case's.
+  const ai = input.aiScenario && SCENARIOS.every((s) =>
+    input.aiScenario!.economics.monthlyCashCents[s].length === months
+    && input.aiScenario!.economics.monthlyCashCents[s].every((value, i) => value === economics.monthlyCashCents[s][i]))
+    ? input.aiScenario : null;
+  const aiCostBase = ai ? ai.economics.costCents.base : 0;
+  const aiNpv = ai ? npvWithTerms(baseCash, aiCostBase, economics.discountRate, result.horizonYears).figure : 0;
+  const aiPayback = ai ? enginePayback(baseCash, aiCostBase) : null;
+  if (ai && (aiNpv !== ai.economics.npvCents.base || aiPayback !== ai.economics.paybackMonth.base))
+    throw new FinancialModelMismatch("the AI-assisted scenario's NPV or payback differs from the engine's");
+
   const wb = new ExcelJS.Workbook();
   wb.creator = "AbarVa Moves";
   wb.calcProperties.fullCalcOnLoad = true;
@@ -190,6 +210,7 @@ export function buildFinancialModelWorkbook(input: FinancialModelInputs): {
     ["Checks", "Check compares every key figure with the value engine for the chosen scenario. It reads YES when the workbook and the engine agree."],
     ["Cost", `The one-time investment is incurred at month 0: ${input.costBasis}. A low-value scenario uses the high cost, and a high-value scenario the low cost.`],
     ["Not live", "Sensitivity is the engine's one-at-a-time result, shown as values. Change an input here and re-run the case in the product to refresh it."],
+    ...(ai ? [["AI-assisted scenario", `${ai.label} is priced beside the estimate. Economics shows its NPV and payback on the same value at its own build cost, as a comparison. The case is funded on the estimate.`]] : []),
   ].forEach(([label, value], i) => {
     readme.getCell(4 + i, 1).value = label;
     readme.getCell(4 + i, 1).font = BOLD;
@@ -225,6 +246,13 @@ export function buildFinancialModelWorkbook(input: FinancialModelInputs): {
   formula(inputs, 10, 5, "C10", result.horizonYears, BOLD);
   const COST = "Inputs!$E$8";
   const RATE = "Inputs!$E$9";
+  const AI_COST = "Inputs!$E$11";
+  if (ai) {
+    put(inputs, 11, 1, "AI-assisted scenario investment (cents)");
+    SCENARIOS.forEach((s, i) => { put(inputs, 11, 2 + i, ai.economics.costCents[s], INPUT).numFmt = CENTS; });
+    formula(inputs, 11, 5, "CHOOSE(" + IDX + ",B11,C11,D11)", aiCostBase, BOLD).numFmt = CENTS;
+    put(inputs, 11, 6, `${ai.label}: a comparison, not the funding basis`, NOTE);
+  }
 
   const termTop = 13;
   head(inputs, termTop, ["Lever", "Term", "Role", "Source", "Low", "Base", "High", "Selected", "Program (no attribution)"]);
@@ -362,10 +390,11 @@ export function buildFinancialModelWorkbook(input: FinancialModelInputs): {
     row += 6;
   }
   const totals = row + 1;
-  const totalRow = { cash: totals, earned: totals + 1, program: totals + 2, programPaid: totals + 3, cumulative: totals + 4, discounted: totals + 5, reached: totals + 6 };
+  const totalRow = { cash: totals, earned: totals + 1, program: totals + 2, programPaid: totals + 3, cumulative: totals + 4, discounted: totals + 5, reached: totals + 6, reachedAi: totals + 7 };
   const labels: [keyof typeof totalRow, string][] = [["cash", "Total cash (credited paid)"], ["earned", "Total credited earned"],
     ["program", "Total program earned"], ["programPaid", "Total program paid"], ["cumulative", "Cumulative cash"],
-    ["discounted", "Discounted cash"], ["reached", "Month cash covers the investment"]];
+    ["discounted", "Discounted cash"], ["reached", "Month cash covers the investment"],
+    ...(ai ? [["reachedAi", "Month cash covers the AI-assisted scenario's investment"] as [keyof typeof totalRow, string]] : [])];
   labels.forEach(([key, label]) => { put(schedule, totalRow[key], 1, "Total", BOLD); put(schedule, totalRow[key], 2, label, BOLD); });
   const curves = { cash: baseCash, earned: baseEarned, program: baseProgramEarned, programPaid: baseProgramPaid };
   let cumulative = 0;
@@ -380,6 +409,7 @@ export function buildFinancialModelWorkbook(input: FinancialModelInputs): {
     formula(schedule, totalRow.cumulative, c, m === 1 ? `${letter}${totalRow.cash}` : `${monthCol(m - 1)}${totalRow.cumulative}+${letter}${totalRow.cash}`, cumulative).numFmt = CENTS;
     formula(schedule, totalRow.discounted, c, `${letter}${totalRow.cash}/(1+${RATE})^(${letter}$4/12)`, baseCash[m - 1]! / (1 + economics.discountRate) ** (m / 12)).numFmt = "#,##0.00";
     formula(schedule, totalRow.reached, c, `IF(${letter}${totalRow.cumulative}>=${COST},${letter}$4,"")`, cumulative >= baseCost ? m : "");
+    if (ai) formula(schedule, totalRow.reachedAi, c, `IF(${letter}${totalRow.cumulative}>=${AI_COST},${letter}$4,"")`, cumulative >= aiCostBase ? m : "");
   }
   schedule.getColumn(1).width = 8;
   schedule.getColumn(2).width = 30;
@@ -432,6 +462,24 @@ export function buildFinancialModelWorkbook(input: FinancialModelInputs): {
       formula(econ, at, 6, `IF($B$6=0,"n/a",(E${at}-$B$6)/$B$6)`, baseCost === 0 ? "n/a" : (total - baseCost) / baseCost).numFmt = "0%";
     });
   }
+  let aiCells: FinancialModelLayout["aiScenario"] = null;
+  if (ai) {
+    const aiTop = (threeYear ? basesTop + 6 : paybackRow + 3);
+    head(econ, aiTop, ["AI-assisted scenario (comparison only)", "Value", "How"]);
+    put(econ, aiTop + 1, 1, "Investment", BOLD);
+    formula(econ, aiTop + 1, 2, AI_COST, aiCostBase, BOLD).numFmt = CENTS;
+    put(econ, aiTop + 1, 3, `${ai.label}: the same value at a different build cost. The case is funded on the investment above.`, NOTE);
+    put(econ, aiTop + 2, 1, "Net present value", BOLD);
+    formula(econ, aiTop + 2, 2, `ROUND(-B${aiTop + 1}+${yearRows.join("+")},0)`, aiNpv, BOLD).numFmt = CENTS;
+    put(econ, aiTop + 3, 1, "Against the funded case");
+    formula(econ, aiTop + 3, 2, `B${aiTop + 2}-B${npvRow}`, aiNpv - baseNpv).numFmt = CENTS;
+    put(econ, aiTop + 3, 3, "Scenario NPV less the funded NPV", NOTE);
+    put(econ, aiTop + 4, 1, "Payback month", BOLD);
+    const reachedAi = `'${FINANCIAL_MODEL_SHEETS.schedule}'!$${monthCol(1)}$${totalRow.reachedAi}:$${monthCol(months)}$${totalRow.reachedAi}`;
+    formula(econ, aiTop + 4, 2, `IF(B${aiTop + 1}<=0,0,IF(COUNT(${reachedAi})=0,"${NOT_WITHIN}",MIN(${reachedAi})))`,
+      aiPayback === null ? NOT_WITHIN : aiPayback, BOLD);
+    aiCells = { cost: `B${aiTop + 1}`, npv: `B${aiTop + 2}`, payback: `B${aiTop + 4}` };
+  }
   econ.getColumn(1).width = 34;
   econ.getColumn(2).width = 18;
   econ.getColumn(3).width = 60;
@@ -463,6 +511,11 @@ export function buildFinancialModelWorkbook(input: FinancialModelInputs): {
       workbook: `'${FINANCIAL_MODEL_SHEETS.economics}'!E${basesTop + 1 + i}`,
       value: economics.threeYearBases!.base[key].totalCents,
     })) : []),
+    ...(ai && aiCells ? [
+      { label: "AI-assisted scenario NPV", engine: ai.economics.npvCents, workbook: `'${FINANCIAL_MODEL_SHEETS.economics}'!${aiCells.npv}`, value: aiNpv },
+      { label: "AI-assisted scenario payback month", engine: { low: ai.economics.paybackMonth.low ?? NOT_WITHIN, base: ai.economics.paybackMonth.base ?? NOT_WITHIN, high: ai.economics.paybackMonth.high ?? NOT_WITHIN },
+        workbook: `'${FINANCIAL_MODEL_SHEETS.economics}'!${aiCells.payback}`, value: aiPayback ?? NOT_WITHIN },
+    ] : []),
     ...result.levers.filter((lever) => lever.annualCents && annualCell.has(lever.leverId)).map((lever) => ({
       label: `${lever.leverId} annual`, engine: lever.annualCents!, workbook: annualCell.get(lever.leverId)!, value: lever.annualCents!.base,
     })),
@@ -491,6 +544,7 @@ export function buildFinancialModelWorkbook(input: FinancialModelInputs): {
     layout: {
       scenarioCell: "Inputs!B4",
       economics: { annualCash: "B5", npv: `B${npvRow}`, payback: `B${paybackRow}`, cost: "B6" },
+      aiScenario: aiCells,
       check: { overall: `G${overallRow}`, rows: checks.length },
       base: { annualCashCents: economics.annualCashCents.base, npvCents: baseNpv, paybackMonth: basePayback },
     },
