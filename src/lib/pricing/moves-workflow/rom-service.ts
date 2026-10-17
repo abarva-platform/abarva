@@ -1100,7 +1100,7 @@ function rollupLines(
   block: RomPricedBlock,
   sharedCostRef: string | null,
 ): EffortLineItem[] {
-  return block.pod.memberLines.map((line, i) => ({
+  const members: EffortLineItem[] = block.pod.memberLines.map((line, i) => ({
     archetypeCode: "rom",
     activityPackCode: `${block.kind}:${block.code}`,
     activityPackName: block.name,
@@ -1124,33 +1124,34 @@ function rollupLines(
     overrideRationale: null,
     formulaTrace: block.pod.formulaTrace,
     formulaTerms: line.formulaTerms,
-  })).concat(
-    block.pod.toolLicenceLines.map((tool, i) => ({
-      archetypeCode: "rom",
-      activityPackCode: `${block.kind}:${block.code}`,
-      activityPackName: block.name,
-      category: "technical" as const,
-      ruleCode: `tool-${i + 1}`,
-      operation: "fixed_hours" as const,
-      driverCode: null,
-      driverQuantity: null,
-      modelVersion: 0,
-      scenarioKey: "custom" as const,
-      classification: sharedCostRef ? ("shared_program" as const) : ("initiative_specific" as const),
-      sharedCostRef,
-      roleCode: null,
-      allocationPct: null,
-      moduleHours: null,
-      roleHours: null,
-      rate: null,
-      laborCostCents: null,
-      manualCostCents: tool.costCents,
-      gapReason: null,
-      overrideRationale: null,
-      formulaTrace: block.pod.formulaTrace,
-      formulaTerms: tool.formulaTerms,
-    })),
-  );
+  }));
+  // Tool licences ride along as non-labour cost on lines with no role.
+  const tools: EffortLineItem[] = block.pod.toolLicenceLines.map((tool, i) => ({
+    archetypeCode: "rom",
+    activityPackCode: `${block.kind}:${block.code}`,
+    activityPackName: block.name,
+    category: "technical" as const,
+    ruleCode: `tool-${i + 1}`,
+    operation: "fixed_hours" as const,
+    driverCode: null,
+    driverQuantity: null,
+    modelVersion: 0,
+    scenarioKey: "custom" as const,
+    classification: sharedCostRef ? ("shared_program" as const) : ("initiative_specific" as const),
+    sharedCostRef,
+    roleCode: null,
+    allocationPct: null,
+    moduleHours: null,
+    roleHours: null,
+    rate: null,
+    laborCostCents: null,
+    manualCostCents: tool.costCents,
+    gapReason: null,
+    overrideRationale: null,
+    formulaTrace: block.pod.formulaTrace,
+    formulaTerms: tool.formulaTerms,
+  }));
+  return [...members, ...tools];
 }
 
 export function foundationSharedCostRef(code: string): string {
