@@ -33,6 +33,8 @@ import {
   romCategories,
   romEstimateNextAction,
   romInputsFingerprint,
+  romPreviewBody,
+  romPreviewRateCardPin,
   romProvisionalBecause,
   romReliedRegisterIds,
   romRowStates,
@@ -1591,6 +1593,19 @@ describe("saved delivery option selection", () => {
     expect(selectRomDeliveryOption(record, register, "B", "Delivery evidence", "operator", AT, { ...previews, B: unequal }).ok).toBe(false);
   });
 
+  it("refuses to compare two options priced on different rate cards, and accepts the same card", () => {
+    const { record, register, previews } = options();
+    const on = (rom: RomResult, rateCard: unknown) => ({ ...rom, structure: { ...rom.structure, rateCard } }) as RomResult;
+    const card = { mode: "client", cardVersionId: "card-v3" };
+    const mixed = { A: on(previews.A, card), B: on(previews.B, { mode: "reference" }) };
+    expect(selectRomDeliveryOption(record, register, "B", "Delivery evidence", "operator", AT, mixed)).toMatchObject({
+      ok: false,
+      reason: expect.stringContaining("different rate cards"),
+    });
+    const same = { A: on(previews.A, card), B: on(previews.B, card) };
+    expect(selectRomDeliveryOption(record, register, "B", "Delivery evidence", "operator", AT, same).ok).toBe(true);
+  });
+
   it("approves only the selected current snapshot and invalidates changes to either option or unit values", () => {
     const { record, register, previews } = options();
     expect(approveRomEstimate(record, register, previews.B, "operator", AT).ok).toBe(false);
@@ -1609,5 +1624,53 @@ describe("saved delivery option selection", () => {
     const changedRegister = register.map((r) => r.registerId === "DL3" ? { ...r, answerValue: 21 } : r);
     expect(isRomDeliverySelectionCurrent(approved.value, changedRegister)).toBe(false);
     expect(isRomApprovalCurrent(approved.value, changedRegister)).toBe(false);
+  });
+});
+
+describe("the rates an estimate is priced and approved on", () => {
+  const pinned = { mode: "client" as const, cardVersionId: "card-v3", cardCode: "ENTERPRISE", version: 3 };
+  const pricedOn = (rom: RomResult, rateCard: unknown): RomResult =>
+    ({ ...rom, structure: { ...rom.structure, rateCard } }) as RomResult;
+  const approved = (rateCard: unknown = pinned) => {
+    const { record, register } = settled();
+    const edit = approveRomEstimate(record, register, pricedOn(fakeRom(record, register), rateCard), "me", AT);
+    if (!edit.ok) throw new Error(edit.reason);
+    return { record: edit.value, register };
+  };
+
+  it("records the exact card version with the approval, and it survives a save and reload", () => {
+    const { record } = approved();
+    expect(record.approval?.rateCard).toEqual(pinned);
+    expect(parseRomEstimate(serializeRomEstimate(record))?.approval?.rateCard).toEqual(pinned);
+  });
+
+  it("records reference rates for an estimate priced without a client card", () => {
+    expect(approved({ mode: "reference" }).record.approval?.rateCard).toEqual({ mode: "reference" });
+  });
+
+  it("refuses an estimate that was not priced on an exact card", () => {
+    const { record, register } = settled();
+    const edit = approveRomEstimate(record, register, pricedOn(fakeRom(record, register), { mode: "client_current" }), "me", AT);
+    expect(edit).toMatchObject({ ok: false, reason: expect.stringContaining("exact rate card") });
+  });
+
+  it("previews an approved estimate on its own rates, and anything else on the current card", () => {
+    const { record, register } = approved();
+    expect(romPreviewRateCardPin(record, register)).toEqual(pinned);
+    // Approved before rate cards were wired: reference rates, so its figures still reproduce.
+    const legacy = { ...record, approval: { ...record.approval!, rateCard: undefined } };
+    expect(romPreviewRateCardPin(legacy, register)).toEqual({ mode: "reference" });
+    expect(romPreviewRateCardPin(reopenRomApproval(record), register)).toEqual({ mode: "client_current" });
+    const edited = { ...record, friction: { value: 1.3, source: "changed" } };
+    expect(romPreviewRateCardPin(edited, register)).toEqual({ mode: "client_current" });
+    const build = buildRomStructure(record, register);
+    if (!build.ok) throw new Error(build.reason);
+    expect(romPreviewBody(record, build.structure, register)).toEqual({ ...build.structure, rateCard: pinned });
+  });
+
+  it("does not let the inputs fingerprint depend on the card the approval was priced on", () => {
+    const a = approved(pinned).record;
+    const b = approved({ mode: "reference" }).record;
+    expect(romInputsFingerprint(a)).toBe(romInputsFingerprint(b));
   });
 });

@@ -138,11 +138,23 @@ describe("approved P3 ROM read for P4", () => {
     expect(
       read.snapshot.workbookStructure.unitHours.data_source_count?.value,
     ).toBe(8);
+    // Approved before rate cards were wired: recomputed on reference rates.
+    expect(read.snapshot.workbookStructure.rateCard).toEqual({ mode: "reference" });
     expect(global.fetch).toHaveBeenNthCalledWith(
       1,
       `/api/v1/programs/${MOVE_ID}/phase-capture?phase=3`,
       { cache: "no-store" },
     );
+  });
+
+  it("recomputes an approval on the exact client card version it was approved on", async () => {
+    const record = approvedRecord();
+    const pin = { mode: "client" as const, cardVersionId: "card-v3", cardCode: "ENTERPRISE", version: 3 };
+    mockReads({ ...record, approval: { ...record.approval!, rateCard: pin } });
+    const read = await readApprovedRomSnapshot(MOVE_ID);
+    expect(read.status).toBe("approved");
+    if (read.status !== "approved") return;
+    expect(read.snapshot.workbookStructure.rateCard).toEqual(pin);
   });
 
   it("distinguishes a saved but unapproved estimate from an unreadable capture", async () => {

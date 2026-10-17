@@ -22,7 +22,18 @@ import {
   computeRom,
   type RomReferenceLoaders,
 } from "@/lib/pricing/moves-workflow/rom-service";
-import { createCommittedRomReferenceLoaders } from "@/lib/pricing/moves-workflow/rom-reference";
+import {
+  createCommittedRomReferenceLoaders,
+  loadCommittedRomRoles,
+} from "@/lib/pricing/moves-workflow/rom-reference";
+import {
+  currentRomRateCardSummary,
+  resolveRomRateCard,
+  withClientRateCard,
+  type RomRateCardResolution,
+  type RomRateCardSummary,
+} from "@/lib/pricing/moves-workflow/rom-rate-card";
+import { canonicalTenantKey } from "@/lib/tenant/aliases";
 import {
   ROM_WORKBOOK_CONTENT_TYPE,
   romWorkbookBuffer,
@@ -39,6 +50,8 @@ const ROM_PREVIEW_DETAILS = {
   invalidFormat: "The format must be json or xlsx.",
   referenceUnavailable:
     "The cost foundation reference data could not be read, so no ROM was priced. Try again; if it keeps failing, the reference pack is missing from this deployment.",
+  rateCardUnavailable:
+    "Your workspace's rate card could not be read, so no ROM was priced (it is never replaced by reference rates). Try again.",
   internal:
     "The ROM preview failed unexpectedly. Nothing was saved. Try again.",
 } as const;
@@ -47,6 +60,15 @@ let committedLoaders: RomReferenceLoaders | null = null;
 function referenceLoaders(): RomReferenceLoaders {
   committedLoaders ??= createCommittedRomReferenceLoaders();
   return committedLoaders;
+}
+let committedRoles: ReturnType<typeof loadCommittedRomRoles> | null = null;
+function referenceRoles() {
+  committedRoles ??= loadCommittedRomRoles();
+  return committedRoles;
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 export async function POST(
@@ -106,8 +128,10 @@ export async function POST(
       loaders.loadRateReference();
       loaders.loadPodLibrary();
       loaders.loadRangePolicies();
+      referenceRoles();
     } catch (err) {
       committedLoaders = null;
+      committedRoles = null;
       console.error(
         "[POST /api/v1/programs/:programId/rom/preview] reference pack",
         err,
@@ -121,7 +145,51 @@ export async function POST(
       );
     }
 
-    const rom = computeRom(body, loaders);
+    // Which rates: the pin in the body, resolved for THIS tenant only.
+    const requestedPin = isObject(body) ? body.rateCard : undefined;
+    const tenantKey = ctx.clientKey ? canonicalTenantKey(ctx.clientKey) : null;
+    let resolution: RomRateCardResolution;
+    try {
+      // Without a tenant there is no client card: `client_current` means the
+      // reference rates, and an explicit client pin cannot be found.
+      resolution = tenantKey
+        ? await resolveRomRateCard(tenantKey, requestedPin, referenceRoles())
+        : isObject(requestedPin) && requestedPin.mode === "client"
+          ? {
+              ok: false,
+              code: "rate_card_not_found",
+              detail: "This workspace has no client rate card, so a client-card pin cannot be priced.",
+            }
+          : await resolveRomRateCard("", isObject(requestedPin) && requestedPin.mode === "client_current" ? undefined : requestedPin, referenceRoles());
+    } catch (err) {
+      console.error("[POST /api/v1/programs/:programId/rom/preview] rate card", err);
+      return Response.json(
+        { error: "rate_card_unavailable", detail: ROM_PREVIEW_DETAILS.rateCardUnavailable },
+        { status: 503 },
+      );
+    }
+    if (!resolution.ok) {
+      return Response.json(
+        { error: resolution.code, detail: resolution.detail },
+        { status: 422 },
+      );
+    }
+    // The tenant's current card is informational here (a "newer rates" notice);
+    // failing to read it never blocks pricing on the resolved pin.
+    let current: RomRateCardSummary | null = null;
+    let currentKnown = true;
+    if (isObject(requestedPin) && requestedPin.mode === "client_current") {
+      current = resolution.used;
+    } else if (tenantKey) {
+      try {
+        current = await currentRomRateCardSummary(tenantKey);
+      } catch {
+        currentKnown = false;
+      }
+    }
+
+    const priced = isObject(body) ? { ...body, rateCard: resolution.pin } : body;
+    const rom = computeRom(priced, withClientRateCard(loaders, resolution.card));
     if (!rom.ok) {
       return Response.json(
         { error: rom.code, detail: rom.message },
@@ -140,7 +208,13 @@ export async function POST(
         },
       });
     }
-    return Response.json({ ok: true, programId, writes: false, rom });
+    return Response.json({
+      ok: true,
+      programId,
+      writes: false,
+      rom,
+      rateCards: { used: resolution.used, current, currentKnown },
+    });
   } catch (err) {
     try {
       return tenancyErrorResponse(err);

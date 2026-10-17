@@ -12,6 +12,9 @@ const mockRequireTenancy = jest.fn();
 const mockGetProgramById = jest.fn();
 const mockLoadPolicy = jest.fn();
 const mockCreateLoaders = jest.fn();
+const mockGetCurrentRateCard = jest.fn();
+const mockListRateCardVersions = jest.fn();
+const mockListRateCardLines = jest.fn();
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: () => mockRequireTenancy(),
@@ -43,6 +46,12 @@ jest.mock("@/lib/pricing/moves-workflow/rom-reference", () => {
       mockCreateLoaders(...args),
   };
 });
+
+jest.mock("@/lib/pricing/rate-card-repository", () => ({
+  getCurrentRateCard: (...args: unknown[]) => mockGetCurrentRateCard(...args),
+  listRateCardVersions: (...args: unknown[]) => mockListRateCardVersions(...args),
+  listRateCardLines: (...args: unknown[]) => mockListRateCardLines(...args),
+}));
 
 import { POST } from "../route";
 import { moveUnreadableRefusalBody } from "@/lib/programs/move-unreadable-refusal";
@@ -137,6 +146,9 @@ function req(body: unknown, query = ""): NextRequest {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockGetCurrentRateCard.mockResolvedValue(null);
+  mockListRateCardVersions.mockResolvedValue([]);
+  mockListRateCardLines.mockResolvedValue([]);
   mockRequireTenancy.mockResolvedValue(DEMO_CTX);
   mockGetProgramById.mockResolvedValue({ id: "prog-1", name: "Move" });
   mockLoadPolicy.mockResolvedValue({
@@ -318,5 +330,105 @@ describe("POST .../rom/preview — refusals carry a sentence", () => {
       detail:
         "The ROM preview failed unexpectedly. Nothing was saved. Try again.",
     });
+  });
+});
+
+describe("POST .../rom/preview — the workspace's own rate card", () => {
+  const card = (id: string, version: number, status = "approved") => ({
+    id,
+    scope_type: "client",
+    tenant_key: "meridian",
+    card_code: "ENTERPRISE",
+    version,
+    status,
+    is_current: true,
+    approved_at: "2026-10-01T00:00:00.000Z",
+  });
+  const line = (rate: number) => ({
+    role_or_band_ref: "ROL-037",
+    level: "LVL-07",
+    rate_value: rate,
+    currency: "USD",
+    card_version_id: "card-v3",
+    provider_ref: null,
+    location_ref: null,
+  });
+  const billRated = (rateCard?: unknown) => {
+    const body = structure();
+    body.pod = { ...(body.pod as object), rateBasis: "bill_rate" };
+    return rateCard === undefined ? body : { ...body, rateCard };
+  };
+  const memberRate = (rom: { foundation: { priced: { pod: { memberLines: { member: { roleCode: string }; rate: { hourlyRateCents: number; baseSource: string } }[] } } } }, role: string) =>
+    rom.foundation.priced.pod.memberLines.find((l) => l.member.roleCode === role)!.rate;
+
+  beforeEach(() => {
+    mockCreateLoaders.mockImplementation(() => actualReference.createCommittedRomReferenceLoaders());
+  });
+
+  it("prices 'current card' on the tenant's approved card and pins that exact version", async () => {
+    mockGetCurrentRateCard.mockResolvedValue(card("card-v3", 3));
+    mockListRateCardLines.mockResolvedValue([line(200)]);
+    const res = await POST(req(billRated({ mode: "client_current" })), { params });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(mockGetCurrentRateCard).toHaveBeenCalledWith("client", "meridian-health", "ENTERPRISE");
+    expect(body.rom.structure.rateCard).toEqual({ mode: "client", cardVersionId: "card-v3", cardCode: "ENTERPRISE", version: 3 });
+    expect(memberRate(body.rom, "ROL-037")).toMatchObject({ hourlyRateCents: 20000, baseSource: "client_rate_card:card-v3" });
+    expect(body.rateCards.used).toMatchObject({ cardVersionId: "card-v3", version: 3 });
+  });
+
+  it("prices 'current card' on reference rates when the workspace has no approved card", async () => {
+    mockGetCurrentRateCard.mockResolvedValue(card("card-v1", 1, "draft"));
+    const res = await POST(req(billRated({ mode: "client_current" })), { params });
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(body.rom.structure.rateCard).toEqual({ mode: "reference" });
+    expect(memberRate(body.rom, "ROL-037").baseSource).toMatch(/^rate_band:/);
+    expect(body.rateCards.used).toBeNull();
+  });
+
+  it("re-reads a pinned version for this tenant, even after a newer card is current", async () => {
+    mockListRateCardVersions.mockResolvedValue([card("card-v4", 4), { ...card("card-v3", 3, "superseded"), is_current: false }]);
+    mockListRateCardLines.mockResolvedValue([line(180)]);
+    mockGetCurrentRateCard.mockResolvedValue(card("card-v4", 4));
+    const res = await POST(req(billRated({ mode: "client", cardVersionId: "card-v3" })), { params });
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(mockListRateCardLines).toHaveBeenCalledWith("card-v3");
+    expect(memberRate(body.rom, "ROL-037").hourlyRateCents).toBe(18000);
+    expect(body.rateCards).toMatchObject({ used: { version: 3 }, current: { version: 4 }, currentKnown: true });
+  });
+
+  it("refuses a pinned version that is not this tenant's approved card", async () => {
+    mockListRateCardVersions.mockResolvedValue([card("card-v3", 3, "draft")]);
+    const res = await POST(req(billRated({ mode: "client", cardVersionId: "card-v3" })), { params });
+    expect(res.status).toBe(422);
+    const body = await res.json();
+    expect(body.error).toBe("rate_card_not_found");
+    expect(body.detail).toMatch(/re-price it on the current card/);
+  });
+
+  it("refuses a rate-card pin it does not understand, with a sentence", async () => {
+    const res = await POST(req(billRated({ mode: "partner" })), { params });
+    expect(res.status).toBe(422);
+    expect(await res.json()).toMatchObject({ error: "invalid_rate_card_pin", detail: expect.stringContaining("not one of reference, client or client_current") });
+  });
+
+  it("prices nothing — never reference rates — when the card cannot be read", async () => {
+    mockGetCurrentRateCard.mockRejectedValue(new Error("db down"));
+    const res = await POST(req(billRated({ mode: "client_current" })), { params });
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body).toMatchObject({ error: "rate_card_unavailable" });
+    expect(body.rom).toBeUndefined();
+  });
+
+  it("still prices a reference pin when the current-card notice cannot be read", async () => {
+    mockGetCurrentRateCard.mockRejectedValue(new Error("db down"));
+    const res = await POST(req(billRated({ mode: "reference" })), { params });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.rom.structure.rateCard).toEqual({ mode: "reference" });
+    expect(body.rateCards).toEqual({ used: null, current: null, currentKnown: false });
   });
 });
