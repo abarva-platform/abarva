@@ -11,7 +11,7 @@ import { buildReferenceSlotTable } from "@/lib/deliverables/orchestrator/referen
 import { validateReferenceDeck, ReferenceDeckLineageRefusal, type ReferenceEdition } from "@/lib/deliverables/orchestrator/reference-deck-model";
 import { renderReferenceDeck } from "@/lib/deliverables/orchestrator/reference-deck-renderer";
 import { inspectDeck } from "@/lib/deliverables/orchestrator/deck-inspection";
-import { judgeRenderedDeck } from "@/lib/deliverables/orchestrator/deck-quality";
+import { judgeRenderedDeck, type DeckFinding } from "@/lib/deliverables/orchestrator/deck-quality";
 import { inspectReferenceDeckPdf } from "@/lib/deliverables/orchestrator/reference-deck-pdf-inspection";
 import { parseOperatingAdoption } from "@/lib/programs/operating-adoption";
 import { tenancyOrNamedErrorResponse } from "@/lib/programs/tenancy-catch-response";
@@ -20,10 +20,23 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-const previewHeaders = (score?: number, words?: DraftEditionWordsResult, requestId?: string, titleFigureCount?: number) => ({
+const MAX_FINDING_CODES = 40;
+
+/** Every judge finding behind the score, by code only: "4:reference_gap,-:slide_count". */
+function findingCodes(findings: readonly DeckFinding[]): string {
+  if (!findings.length) return "none";
+  const codes = findings.map((finding) => `${"slide" in finding ? finding.slide : "-"}:${finding.kind}${
+    "detailCode" in finding && finding.detailCode ? `/${finding.detailCode}` : ""}`);
+  return codes.length > MAX_FINDING_CODES
+    ? [...codes.slice(0, MAX_FINDING_CODES), `+${codes.length - MAX_FINDING_CODES}`].join(",") : codes.join(",");
+}
+
+const previewHeaders = (score?: number, words?: DraftEditionWordsResult, requestId?: string, titleFigureCount?: number, findings?: readonly DeckFinding[]) => ({
   "X-AbarVa-Preview": "not-persisted",
   "Cache-Control": "private, no-store, max-age=0",
   ...(score === undefined ? {} : { "X-AbarVa-Deck-Fidelity-Score": String(score) }),
+  // The score is 100 less 5 per finding; this names each one, so a low score can be read.
+  ...(findings === undefined ? {} : { "X-AbarVa-Deck-Fidelity-Findings": findingCodes(findings) }),
   ...(titleFigureCount === undefined ? {} : { "X-AbarVa-Deck-Title-Figure-Count": String(titleFigureCount) }),
   ...(requestId === undefined ? {} : { "X-AbarVa-Deck-Request-Id": requestId }),
   ...(words === undefined ? {} : { "X-AbarVa-Deck-Words-Status": words.status }),
@@ -109,12 +122,12 @@ export async function GET(
           ...("slide" in finding ? { slide: finding.slide } : {}),
           ...("detailCode" in finding && finding.detailCode ? { detailCode: finding.detailCode } : {}),
         })),
-      }, { status: 422, headers: previewHeaders(score, wordsResult, requestId, titleFigureCount) });
+      }, { status: 422, headers: previewHeaders(score, wordsResult, requestId, titleFigureCount, verdict.findings) });
     }
     if (format === "pptx") {
       return new Response(Uint8Array.from(pptx), {
         headers: {
-          ...previewHeaders(score, wordsResult, requestId, titleFigureCount),
+          ...previewHeaders(score, wordsResult, requestId, titleFigureCount, verdict.findings),
           "X-AbarVa-Deck-Figure-Hash": figureHash,
           "Content-Type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
           "Content-Disposition": `attachment; filename="move-${edition}-preview.pptx"`,
@@ -142,7 +155,7 @@ export async function GET(
     }
     return new Response(Uint8Array.from(pdfBytes), {
       headers: {
-        ...previewHeaders(score, wordsResult, requestId, titleFigureCount), "Content-Type": "application/pdf",
+        ...previewHeaders(score, wordsResult, requestId, titleFigureCount, verdict.findings), "Content-Type": "application/pdf",
         "X-AbarVa-Deck-Figure-Hash": figureHash,
         "Content-Disposition": `attachment; filename="move-${edition}-preview.pdf"`,
       },
