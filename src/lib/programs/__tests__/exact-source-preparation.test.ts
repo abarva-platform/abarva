@@ -82,6 +82,7 @@ describe("exact source preparation",()=>{
     const registry={activeTenants:CANONICAL_TENANT_KEYS.map(tenantKey=>({tenantKey,packets:[{classification:"synthetic-demo",status:"active-input"}]}))};
     expect(isDeclaredSyntheticSourceTenant(registry,clientKey)).toBe(true);
     expect(isDeclaredSyntheticSourceTenant({activeTenants:[{tenantKey:clientKey,packets:[{classification:"client-private",status:"active-input"}]}]},clientKey)).toBe(false);
+    expect(isDeclaredSyntheticSourceTenant({activeTenants:[{tenantKey:clientKey,packets:[{classification:"synthetic-demo",status:"active-input"},{classification:"client-private",status:"active-input"}]}]},clientKey)).toBe(false);
   });
   it("verifies actual indexed membership/content and rejects duplicates, missing fields and wrong tenants",()=>{
     const f=fixture();const plan=prepareExactSourcePlan(f.cohort,f.snapshot,manifest);const actual=plan.documents.map(document=>Object.fromEntries(Object.entries(document).filter(([key])=>key!=="@search.action")));

@@ -2,6 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { canonicalTenantKey } from "@/lib/tenant/aliases";
+import { isDeclaredSyntheticDemoTenant } from "@/lib/tenant/synthetic-tenant-declaration";
 import { isCanonicalClientKey } from "@/lib/governance/context-corpus-policy";
 import { buildValidatedAgentContextBundle } from "@/lib/governance/agent-context-bundle";
 import { validateManifest, type DatasetManifest } from "@/lib/governance/dataset-manifest";
@@ -29,7 +30,7 @@ export type ExactSourceCohort = z.infer<typeof ExactSourceCohortSchema>;
 export function isDeclaredSyntheticSourceTenant(registry:unknown,clientKey:string):boolean {
   const schema=z.object({activeTenants:z.array(z.object({tenantKey:z.string(),packets:z.array(z.object({classification:z.string(),status:z.string()}))}))});
   const parsed=schema.safeParse(registry);
-  return parsed.success && isCanonicalClientKey(clientKey) && parsed.data.activeTenants.some(tenant=>tenant.tenantKey===clientKey && tenant.packets.some(packet=>packet.classification==="synthetic-demo" && packet.status==="active-input"));
+  return parsed.success && isCanonicalClientKey(clientKey) && isDeclaredSyntheticDemoTenant(clientKey,parsed.data) && parsed.data.activeTenants.some(tenant=>tenant.tenantKey===clientKey && tenant.packets.some(packet=>packet.status==="active-input"));
 }
 export type NativeSourceRow = Record<string, unknown>;
 export interface ExactSourceSnapshot {
