@@ -1141,6 +1141,7 @@
     "test:layer4-freshness-stamp": "node scripts/tower/__tests__/run-layer4-freshness-stamp-tests.mjs",
     "check:triage-verdict-discharge": "node --test scripts/quality/triage-verdict-discharge-check.test.mjs && node scripts/quality/triage-verdict-discharge-check.mjs",
     "check:triage-deferral-authority": "node --test scripts/quality/triage-deferral-authority-check.test.mjs && node scripts/quality/triage-deferral-authority-check.mjs",
+    "ops:moves-exact-source-job": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' node node_modules/tsx/dist/cli.mjs src/scripts/moves-exact-source-job.ts",
     "ops:moves-source-original-repair": "NODE_OPTIONS='--require ./src/scripts/_mock-server-only-preload.cjs' node node_modules/tsx/dist/cli.mjs src/scripts/moves-source-original-repair.ts"
   },
   "dependencies": {

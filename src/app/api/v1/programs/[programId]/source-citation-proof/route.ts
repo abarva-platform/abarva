@@ -23,11 +23,13 @@ export async function GET(req:NextRequest,{params}:{params:Promise<{programId:st
     if (!ctx.clientKey || !ctx.clerkUserId || !z.string().uuid().safeParse(ctx.userId).success) return Response.json({error:"source_proof_identity_unavailable"},{status:403});
     if (!isDeclaredSyntheticSourceTenant(tenantRegistry,canonicalTenantKey(ctx.clientKey)!)) return Response.json({error:"source_proof_tenant_not_released"},{status:403});
     const cohort=await resolveSourceProofCohort(db,{clientId:ctx.clientId,clientKey:canonicalTenantKey(ctx.clientKey)!,nativeTenantKey:ctx.clientKey,moveId:parsed.data.programId,evidenceId:parsed.data.evidenceId,personId:ctx.userId,clerkId:ctx.clerkUserId});
-    const plan=prepareExactSourcePlan(cohort,await readExactSourceSnapshot(db,cohort),sourceManifest as DatasetManifest);
+    // requireTenancy has already resolved the signed-in Clerk actor to this native person.
+    const read=()=>readExactSourceSnapshot(db,cohort,undefined,async person=>person.id===ctx.userId && cohort.operatorClerkId===ctx.clerkUserId);
+    const plan=prepareExactSourcePlan(cohort,await read(),sourceManifest as DatasetManifest,{inspectBoundReadiness:true});
     const source=plan.sources[0];
     if (source.admissionSource.binding.source_revision_sha256!==parsed.data.revision) return Response.json({error:"source_proof_revision_changed"},{status:409});
     const proof=await proveReviewedSourceCitation(source);
-    const fresh=prepareExactSourcePlan(cohort,await readExactSourceSnapshot(db,cohort),sourceManifest as DatasetManifest);
+    const fresh=prepareExactSourcePlan(cohort,await read(),sourceManifest as DatasetManifest,{inspectBoundReadiness:true});
     if (fresh.sourceSetHash!==plan.sourceSetHash || proof.sourceRevision!==parsed.data.revision) return Response.json({error:"source_proof_revision_changed"},{status:409});
     if (req.headers.get("accept")?.includes("application/json")) return Response.json({proof,sourceSetHash:plan.sourceSetHash,modelReadinessGranted:false},{headers:{"cache-control":"private, no-store"}});
     return new Response(renderSourceCitationProof(source,plan.sourceSetHash),{headers:{"content-type":"text/html; charset=utf-8","cache-control":"private, no-store","content-security-policy":"default-src 'none'; frame-ancestors 'none'; base-uri 'none'","x-content-type-options":"nosniff","x-source-proof-mode":"non-model"}});
