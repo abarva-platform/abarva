@@ -95,13 +95,16 @@ describe("read-only reference deck preview", () => {
   });
 
   it.each(["pptx", "pdf"])("retains known wording context and unknown score for an early %s lineage refusal", async (format) => {
-    mockWords.mockResolvedValueOnce({ status: "unavailable", reason: "slide_rejected", rule: "missing_title_slot", slide: 9, fallbackSlides: [9], words: [] });
+    mockWords.mockResolvedValueOnce({ status: "unavailable", reason: "slide_rejected", rule: "missing_title_slot", slide: 9, fallbackSlides: [9, 12], words: [],
+      fallbackCauses: [{ slide: 9, cause: "missing_title_slot" }, { slide: 12, cause: "parse_failed" }] });
     mockBuild.mockImplementationOnce(() => { throw new Error("reference_deck_lineage_refusal: 8:unsupported_narrative; private source detail"); });
     const result = await GET(request(format), params());
     expect(result.status).toBe(422);
     expect(result.headers.get("X-AbarVa-Deck-Request-Id")).toMatch(/^[0-9a-f-]{36}$/);
     expect(result.headers.get("X-AbarVa-Deck-Words-Rule")).toBe("missing_title_slot");
-    expect(result.headers.get("X-AbarVa-Deck-Fallback-Count")).toBe("1");
+    expect(result.headers.get("X-AbarVa-Deck-Fallback-Count")).toBe("2");
+    // Every fallback slide and why, names only.
+    expect(result.headers.get("X-AbarVa-Deck-Fallback-Causes")).toBe("9:missing_title_slot,12:parse_failed");
     expect(result.headers.get("X-AbarVa-Deck-Fidelity-Score")).toBeNull();
     expect(result.headers.get("Cache-Control")).toContain("no-store");
     expect(JSON.stringify(await result.json())).not.toContain("private source detail");
@@ -198,6 +201,7 @@ describe("read-only reference deck preview", () => {
     expect(result.headers.get("X-AbarVa-Deck-Fidelity-Score")).toBe("85");
     expect(result.headers.get("X-AbarVa-Deck-Title-Figure-Count")).toBe("0");
     expect(result.headers.get("X-AbarVa-Deck-Words-Status")).toBe("ok");
+    expect(result.headers.get("X-AbarVa-Deck-Fallback-Causes")).toBeNull();
     expect(result.headers.get("X-AbarVa-Deck-Fallback-Count")).toBe("0");
     expect(result.headers.get("X-AbarVa-Deck-Request-Id")).toMatch(/^[0-9a-f-]{36}$/);
     expect(result.headers.get("Cache-Control")).toContain("no-store");
@@ -248,7 +252,7 @@ describe("read-only reference deck preview", () => {
   });
 
   it("serves an in-memory PDF under the same preview contract", async () => {
-    mockWords.mockResolvedValueOnce({ words: [{ title: "The governed read identifies the next decision.", answer: "Review the exhibit.", notes: "The point: review. How to read: source line." }], status: "unavailable", reason: "preflight_denied", fallbackSlides: [1] });
+    mockWords.mockResolvedValueOnce({ words: [{ title: "The governed read identifies the next decision.", answer: "Review the exhibit.", notes: "The point: review. How to read: source line." }], status: "unavailable", reason: "preflight_denied", fallbackSlides: [1], fallbackCauses: [{ slide: 1, cause: "preflight_denied" }] });
     const result = await GET(request("pdf"), params());
     expect(result.status).toBe(200);
     expect(result.headers.get("Content-Type")).toBe("application/pdf");
@@ -256,6 +260,7 @@ describe("read-only reference deck preview", () => {
     expect(result.headers.get("X-AbarVa-Deck-Words-Status")).toBe("unavailable");
     expect(result.headers.get("X-AbarVa-Deck-Words-Reason")).toBe("preflight_denied");
     expect(result.headers.get("X-AbarVa-Deck-Fallback-Count")).toBe("1");
+    expect(result.headers.get("X-AbarVa-Deck-Fallback-Causes")).toBe("1:preflight_denied");
     expect(Buffer.from(await result.arrayBuffer()).toString()).toBe("%PDF synthetic preview");
   });
 });
