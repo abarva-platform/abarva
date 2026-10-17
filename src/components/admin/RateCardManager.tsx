@@ -1,6 +1,6 @@
 "use client";
 
-// Setup → Rate cards: the workspace's own rates for Moves estimates.
+// Admin → Rate cards: the workspace's own rates for Moves estimates.
 //
 // Load once, before any Move: download the template, upload the CSV, review
 // every problem row and the change against the current version, then approve
@@ -52,7 +52,7 @@ interface Preview {
   linesToCommit: Array<RateCardLineView & Record<string, unknown>>;
 }
 
-export const RATE_CARD_TEMPLATE_HEADER =
+const RATE_CARD_TEMPLATE_HEADER =
   "role_or_band_ref,level,provider_ref,location_ref,rate_basis,unit,rate_value,currency,valid_from,valid_to";
 
 const HOURLY = new Set(["hour", "hours", "hr", "hrs", "hourly"]);
