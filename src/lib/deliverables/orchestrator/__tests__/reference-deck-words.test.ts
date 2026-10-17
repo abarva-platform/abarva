@@ -76,7 +76,7 @@ describe("reference-deck words", () => {
       ruleRequirements: expect.stringContaining("requiredTitleSlot") });
     expect(JSON.stringify(retry)).not.toContain(rejected.title);
     expect(JSON.stringify(create.mock.calls)).not.toContain("$12,000");
-    expect(create).toHaveBeenCalledTimes(2);
+    expect(create).toHaveBeenCalledTimes(persistent ? 3 : 2);
     expect(mockPreflight.mock.calls[1][0].workflow).toBe("moves:reference-deck:preview:words:repair");
     if (persistent) {
       expect(result).toMatchObject({ status: "unavailable", reason: "slide_rejected", rule: "missing_title_slot", fallbackSlides: [1] });
@@ -244,7 +244,7 @@ describe("reference-deck words", () => {
     const result = await draftEditionWords({ ...input, archetypes: ["contents"] });
     expect(result).toMatchObject({ status: "unavailable", reason: "slide_rejected", rule: "internal_client_word", slide: 1, fallbackSlides: [1] });
     expect(result.words[0]?.answer).toContain("Draft words unavailable.");
-    expect(create).toHaveBeenCalledTimes(2);
+    expect(create).toHaveBeenCalledTimes(3); // initial, first repair, second repair
   });
 
   it("uses the mandated validation-cover words without counting a model disclosure as fallback", async () => {
@@ -301,7 +301,7 @@ describe("reference-deck words", () => {
     const result = await draftEditionWords(input);
     expect(result).toMatchObject({ status: "unavailable", reason: "slide_rejected", rule: "edition_language", slide: 1, fallbackSlides: [1] });
     expect(result.words).toEqual(unavailableEditionWords("validation", ["one_page"]));
-    expect(create).toHaveBeenCalledTimes(2);
+    expect(create).toHaveBeenCalledTimes(3); // initial, first repair, second repair
   });
 
   it("bounds a many-slide repair into audited short batches", async () => {
@@ -483,6 +483,44 @@ describe("reference-deck words", () => {
     });
   });
 
+  describe("a second repair round", () => {
+    const literal = { title: "The annual case counts $1,200 on its current basis", answer: "Review the counted basis and its source.",
+      notes: "The point: confirm the basis. How to read: inspect the source line." };
+    const fixed = { ...literal, title: "The annual case counts {value.annual.base} on its current basis" };
+
+    it("retries once more the slides the first repair could not fix, and says so", async () => {
+      const create = jest.fn()
+        .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [literal] }) }] })
+        .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [literal] }) }] })
+        .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [fixed] }) }] });
+      mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+      const result = await draftEditionWords(input);
+      expect(result).toEqual({ status: "ok", words: [fixed], fallbackSlides: [] });
+      expect(create).toHaveBeenCalledTimes(3);
+      const second = create.mock.calls[2][0];
+      expect(second.system).toContain("already retried once and still broke the stated rule");
+      expect(JSON.parse(second.messages[0].content).rejectedSlides[0]).toMatchObject({ rejectedRule: "literal_figure", previousAttemptRejected: true });
+      expect(mockPreflight.mock.calls[2][0].metadata).toMatchObject({ repair: true, repairRound: 2 });
+    });
+
+    it("does not start a second round once the request is past its time budget", async () => {
+      let clock = 0;
+      const now = jest.spyOn(Date, "now").mockImplementation(() => clock);
+      try {
+        const create = jest.fn().mockImplementation(async () => {
+          clock += 40_000;
+          return { content: [{ type: "text", text: JSON.stringify({ words: [literal] }) }] };
+        });
+        mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+        const result = await draftEditionWords(input);
+        expect(create).toHaveBeenCalledTimes(2);
+        expect(result).toMatchObject({ status: "unavailable", fallbackCauses: [{ slide: 1, cause: "literal_figure" }] });
+      } finally {
+        now.mockRestore();
+      }
+    });
+  });
+
   describe("fallback causes and repair diagnostics", () => {
     const two = { ...input, archetypes: ["one_page", "assumptions"] as Parameters<typeof draftEditionWords>[0]["archetypes"] };
     const good = (title: string) => ({ title, answer: "Review the counted basis and its source.", notes: "The point: confirm the basis. How to read: inspect the source line." });
@@ -495,7 +533,8 @@ describe("reference-deck words", () => {
         const fixed = good("The annual case counts {value.annual.base} on its current basis");
         const create = jest.fn()
           .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [literal, badNotes] }) }] })
-          .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [fixed, badNotes] }) }] });
+          .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [fixed, badNotes] }) }] })
+          .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [badNotes] }) }] });
         mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
         const result = await draftEditionWords(two);
         expect(result).toMatchObject({ status: "unavailable", reason: "slide_rejected", rule: "notes_format", fallbackSlides: [2],
@@ -503,7 +542,7 @@ describe("reference-deck words", () => {
         const repairLog = warn.mock.calls.find(([tag]) => tag === "[reference-deck-words-repair]")?.[1];
         expect(repairLog).toEqual({ requestId: null, edition: "validation", attempted: 2, repaired: 1,
           initialRules: [{ slide: 1, rule: "literal_figure" }, { slide: 2, rule: "notes_format" }],
-          stillRejected: [{ slide: 2, rule: "notes_format" }], callFailures: [] });
+          stillRejected: [{ slide: 2, rule: "notes_format" }], callFailures: [], secondRound: { attempted: 1, callFailures: [] } });
         expect(JSON.stringify(repairLog)).not.toMatch(/annual case|counted basis|Review the basis/);
       } finally {
         warn.mockRestore();

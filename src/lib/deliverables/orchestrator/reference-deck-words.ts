@@ -172,6 +172,12 @@ const INITIAL_BATCH_SIZE = 8;
 const INITIAL_CALL_OPTIONS = { timeout: 65_000, maxRetries: 0 };
 const RECOVERY_CALL_OPTIONS = { timeout: 30_000, maxRetries: 0 };
 const REPAIR_CALL_OPTIONS = { timeout: 15_000, maxRetries: 0 };
+/**
+ * A second repair round starts only while this much of the request has passed,
+ * so with its own call timeout the words finish well inside the preview
+ * route's 120 s limit (and leave time to render).
+ */
+const SECOND_REPAIR_BUDGET_MS = 75_000;
 
 export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, slots: ReferenceSlotTable, archetype?: ReferenceArchetype): string | null {
   const prose = `${entry.title} ${entry.answer} ${entry.notes}`;
@@ -242,6 +248,7 @@ export async function draftEditionWords(input: {
   available: { valueCase: boolean; register: boolean; rom: boolean; publicSources: boolean; owners: boolean };
   slots: ReferenceSlotTable;
 }): Promise<DraftEditionWordsResult> {
+  const startedAt = Date.now();
   const unavailable = unavailableEditionWords(input.edition, input.archetypes);
   const allSlides = input.archetypes.map((_, index) => index + 1);
   const failure = (reason: WordsUnavailableReason): DraftEditionWordsResult =>
@@ -374,10 +381,15 @@ export async function draftEditionWords(input: {
         ? clientCopyIssue(`${words[index]!.title} ${words[index]!.answer}`.replace(SLOT_TOKEN, "")) : null;
       return rule ? [{ index, rule, ...(blockedClientTerm ? { blockedClientTerm } : {}) }] : [];
     });
-    if (rejected.length) {
-      const repairSystem = `${system} This is a targeted retry. Return one words entry per rejected slide, in the same order. Correct each stated rule; never invent a fact or a figure. When a blockedClientTerm is supplied, remove that vocabulary and its forms from the title and answer. Use advance instead of move, confirm instead of capture, and identify instead of flag. Keep permitted figure tokens exactly as supplied.`;
-      const repairChunks = Array.from({ length: Math.ceil(rejected.length / PARSE_RECOVERY_CHUNK_SIZE) }, (_, chunk) =>
-        rejected.slice(chunk * PARSE_RECOVERY_CHUNK_SIZE, (chunk + 1) * PARSE_RECOVERY_CHUNK_SIZE));
+    type RepairTarget = (typeof rejected)[number];
+    type CallFailure = { slides: number[]; outcome: string; errorName?: string; status?: number | null };
+    /** One audited repair round over the given slides; accepted repairs replace their words. */
+    const repairRound = async (targets: RepairTarget[], round: 1 | 2): Promise<CallFailure[]> => {
+      const repairSystem = `${system} This is a targeted retry. Return one words entry per rejected slide, in the same order. Correct each stated rule; never invent a fact or a figure. When a blockedClientTerm is supplied, remove that vocabulary and its forms from the title and answer. Use advance instead of move, confirm instead of capture, and identify instead of flag. Keep permitted figure tokens exactly as supplied.${round === 2
+        ? " These slides were already retried once and still broke the stated rule. Rewrite each one from its evidence flags alone, more plainly and more conservatively; if in doubt, state what remains to be confirmed."
+        : ""}`;
+      const repairChunks = Array.from({ length: Math.ceil(targets.length / PARSE_RECOVERY_CHUNK_SIZE) }, (_, chunk) =>
+        targets.slice(chunk * PARSE_RECOVERY_CHUNK_SIZE, (chunk + 1) * PARSE_RECOVERY_CHUNK_SIZE));
       const repairs = await Promise.allSettled(repairChunks.map(async (chunk) => {
         const repairUser = JSON.stringify({
           profile,
@@ -386,6 +398,7 @@ export async function draftEditionWords(input: {
             ruleRequirements: RULE_REQUIREMENTS[rule], titleRequirements: TITLE_REQUIREMENTS,
             evidence: promptEvidence(input.slots, input.archetypes[index]!, input.edition),
             ...detail,
+            ...(round === 2 ? { previousAttemptRejected: true } : {}),
             ...(requiredTitleSlot(input.edition, input.archetypes[index], input.slots)
               ? { requiredTitleSlot: `{${requiredTitleSlot(input.edition, input.archetypes[index], input.slots)}}` } : {}),
           })),
@@ -396,7 +409,7 @@ export async function draftEditionWords(input: {
           workflow: "moves:reference-deck:preview:words:repair", workload: "moves_reference_deck",
           prompt: `${repairSystem}\n${repairUser}`, model, dataClass: "internal",
           artifactType: "reference_deck_preview",
-          metadata: { edition: input.edition, slideCount: chunk.length, persist: false, repair: true },
+          metadata: { edition: input.edition, slideCount: chunk.length, persist: false, repair: true, repairRound: round },
         });
         if (repairPreflight.ok) {
           const repairResponse = await repairPreflight.client.messages.create({
@@ -409,7 +422,7 @@ export async function draftEditionWords(input: {
         }
         return null;
       }));
-      const callFailures: { slides: number[]; outcome: string; errorName?: string; status?: number | null }[] = [];
+      const callFailures: CallFailure[] = [];
       repairs.forEach((result, chunkIndex) => {
         const slides = repairChunks[chunkIndex]!.map(({ index }) => index + 1);
         if (result.status === "rejected") {
@@ -425,16 +438,29 @@ export async function draftEditionWords(input: {
           if (!modelWordRule(candidate, input.edition, input.slots, input.archetypes[index])) words[index] = candidate;
         });
       });
-      // Shape diagnostics only: rule names and slide numbers, never model prose.
-      const stillRejected = rejected.flatMap(({ index }) => {
-        const rule = ruleAt(index);
-        return rule ? [{ slide: index + 1, rule }] : [];
+      return callFailures;
+    };
+    if (rejected.length) {
+      const remaining = (): RepairTarget[] => rejected.flatMap((target) => {
+        const rule = ruleAt(target.index);
+        if (!rule) return [];
+        const blockedClientTerm = rule === "internal_client_word"
+          ? clientCopyIssue(`${words[target.index]!.title} ${words[target.index]!.answer}`.replace(SLOT_TOKEN, "")) : null;
+        return [{ index: target.index, rule, ...(blockedClientTerm ? { blockedClientTerm } : {}) }];
       });
+      const callFailures = await repairRound(rejected, 1);
+      // A second round only for slides the first could not fix, and only while
+      // the request can still finish inside the route's time limit.
+      const afterFirst = remaining();
+      const secondRound = afterFirst.length && Date.now() - startedAt < SECOND_REPAIR_BUDGET_MS
+        ? { attempted: afterFirst.length, callFailures: await repairRound(afterFirst, 2) } : null;
+      // Shape diagnostics only: rule names and slide numbers, never model prose.
+      const stillRejected = remaining().map(({ index, rule }) => ({ slide: index + 1, rule }));
       console.warn("[reference-deck-words-repair]", {
         requestId: input.requestId ?? null, edition: input.edition,
         attempted: rejected.length, repaired: rejected.length - stillRejected.length,
         initialRules: rejected.map(({ index, rule }) => ({ slide: index + 1, rule })),
-        stillRejected, callFailures,
+        stillRejected, callFailures, secondRound,
       });
     }
     const fallbackSlides: number[] = [...parseFailedSlides];
