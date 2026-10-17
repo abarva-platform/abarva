@@ -191,7 +191,14 @@ describe("buildDecisionReasoningRequest", () => {
       task: "summarize cloud posture",
       agent: "sentinel",
       tenantKey: "meridian-health",
-      candidates: [candidate()],
+      candidates: [
+        candidate({
+          agent_readiness_status: "agent_ready",
+          retrievability: "fts_indexed",
+          confidence_level: "high",
+          cited_render_verified_at: "2026-06-08T00:00:00Z",
+        }),
+      ],
     });
     expect(req.task).toMatch(/cloud posture/);
     expect(req.agent).toBe("sentinel");

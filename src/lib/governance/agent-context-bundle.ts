@@ -240,6 +240,7 @@ export interface DecisionReasoningRequest {
   policy_version: string;
 }
 
+/** Reasoning envelopes admit fully agent-ready context, never provisional diagnostics. */
 export function buildDecisionReasoningRequest(input: {
   task: string;
   agent: ApplicableAgent | string;
@@ -250,7 +251,9 @@ export function buildDecisionReasoningRequest(input: {
     task: input.task,
     agent: input.agent,
     tenantKey: input.tenantKey,
-    retrievalBundle: buildValidatedAgentContextBundle(input.candidates),
+    retrievalBundle: buildValidatedAgentContextBundle(input.candidates, {
+      requireAgentReady: true,
+    }),
     policy_version: POLICY_VERSION,
   };
 }
