@@ -1,6 +1,7 @@
 import type { EditionInputs } from "./reference-deck-inputs";
 import type { ReferenceArchetype, ReferenceEdition, ReferenceNarrativeEvidence } from "./reference-deck-model";
 import { parseOperatingAdoption } from "@/lib/programs/operating-adoption";
+import { formatConsultantCents, formatConsultantPercent } from "@/lib/programs/value-engine/format-money";
 
 export interface ReferenceSlot {
   key: string;
@@ -18,11 +19,12 @@ const both = ["validation", "investment"] as const;
 const investment = ["investment"] as const;
 const obj = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+// The same formatters the exhibits use: a title's figure and its exhibit's
+// figure come from one source, so they must read the same ("$3.60M", "33%").
 const cents = (value: unknown): string | null =>
-  typeof value === "number" && Number.isSafeInteger(value) && value >= 0
-    ? `$${Math.round(value / 100).toLocaleString("en-US")}` : null;
+  typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? formatConsultantCents(value) : null;
 const ratio = (value: unknown): string | null =>
-  typeof value === "number" && Number.isFinite(value) ? `${(value * 100).toFixed(1)}%` : null;
+  typeof value === "number" && Number.isFinite(value) ? formatConsultantPercent(value) : null;
 const count = (value: number): string => value.toLocaleString("en-US");
 
 /** Governed values stay server-side. Only keys and meanings enter the model prompt. */

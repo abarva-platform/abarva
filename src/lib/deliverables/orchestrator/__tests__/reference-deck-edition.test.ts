@@ -58,6 +58,20 @@ function fixture(edition: EditionInputs["edition"]): EditionInputs {
 }
 
 describe("live-input reference edition", () => {
+  it.each(["validation", "investment"] as const)("gives every %s figure one display, so a title and its exhibit match", (edition) => {
+    const inputs = fixture(edition);
+    inputs.rom = { status: "ready", value: { id: "ROM-1", result: { combined: { planCents: 55_000_000 }, releases: [] }, workbookStructure: { unitHours: {} } } } as never;
+    const sequence = edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
+    const spec = buildReferenceEdition(inputs, words(sequence.length));
+    const displays = new Map<string, Set<string>>();
+    for (const figure of spec.figureLedger) displays.set(figure.sourceId, (displays.get(figure.sourceId) ?? new Set()).add(figure.display));
+    const split = [...displays].filter(([, set]) => set.size > 1).map(([id, set]) => `${id}: ${[...set].join(" | ")}`);
+    expect(split).toEqual([]);
+    // The slot a title uses and the exhibit read the same compact form.
+    expect(displays.get("engine:three_year_credited_earned")).toEqual(new Set(["$3.60M"]));
+    if (edition === "investment") expect(displays.get("rom:ROM-1:combined_plan")).toEqual(new Set(["$0.55M"]));
+  });
+
   it("keeps unsupported wording blocked with source-free typed refusal metadata", () => {
     const inputs = fixture("validation");
     inputs.valueCase = { status: "empty", detail: "Synthetic value evidence is unavailable." };
@@ -370,7 +384,7 @@ describe("live-input reference edition", () => {
     expect(summary.answer).toBe("Confirm how value is counted before relying on this summary.");
     expect(summary.actionTitle).not.toContain("unavailable");
     expect(summary.speakerNotes).toContain("Draft title awaiting input:");
-    expect(summary.speakerNotes).toContain("$1,200,000");
+    expect(summary.speakerNotes).toContain("$1.20M");
     expect(summary.visibleNarrativeFigures).toEqual([]);
     const rendered = await inspectDeck(await renderReferenceDeck(spec));
     expect(judgeRenderedDeck(rendered, { referenceDeck: spec }).findings.filter((finding) =>
@@ -540,8 +554,8 @@ describe("live-input reference edition", () => {
     const noSlotWords = buildReferenceEdition(fixture("validation"), words(VALIDATION_SEQUENCE.length));
     expect(spec.figureLedger).toEqual(noSlotWords.figureLedger);
     const slide = spec.slides[4]!;
-    expect(slide.actionTitle).toContain("$3,600,000");
-    expect(slide.narrativeFigures?.some((figure) => figure.display === "$3,600,000")).toBe(true);
+    expect(slide.actionTitle).toBe("Credited value reaches $3.60M over three years");
+    expect(slide.narrativeFigures?.some((figure) => figure.display === "$3.60M")).toBe(true);
     expect(slide.sourceIds).toContain("engine:three_year_credited_earned");
     expect(validateReferenceDeck(spec).filter((finding) => finding.blocking)).toEqual([]);
     slide.actionTitle = "A model typed $9,999 outside the governed slot.";
