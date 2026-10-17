@@ -44,7 +44,7 @@ Release lane: `global-control-lane`, behind the existing `moves_rom_engine_v1` f
 ## QA / Validation
 
 - The ROM workbook suite re-evaluates every formula in the file from its formula text, including the Check sheet's, and compares each with its cached value. Every one agrees.
-- Pricing, orchestrator, ROM route, deck route and mobilization-plan suites: 1,952 / 1,952 after the tab-order update. `npm run typecheck` clean.
+- Pricing, orchestrator, ROM route, deck route and mobilization-plan suites: pass, 1,952 / 1,952 after the tab-order update. `npm run typecheck`: pass (clean).
 
 ## Rollout Plan
 
