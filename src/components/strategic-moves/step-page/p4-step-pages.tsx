@@ -415,6 +415,61 @@ function EstimateBasis({
   );
 }
 
+/** The sentence the financial-model row shows when the route gives none. */
+export const FINANCIAL_MODEL_FALLBACK_ERROR = "The financial model could not be downloaded. Nothing was changed; try again.";
+
+/** The workbook is offered only beside an evaluated case whose figures this viewer can see. */
+export function financialModelOffered(read: P4ValueReadback): boolean {
+  const result = read.body?.case && typeof read.body.case === "object" ? (read.body.case as Record<string, unknown>) : null;
+  return read.body?.figuresRedacted === false && result?.status === "evaluated";
+}
+
+/** Downloads the value case as a live-formula financial model. */
+export function FinancialModelDownload({ moveId }: { moveId: string }) {
+  const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const download = async () => {
+    setDownloading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/v1/programs/${encodeURIComponent(moveId)}/financial-model`, { credentials: "include" });
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { detail?: unknown } | null;
+        setError(typeof body?.detail === "string" && body.detail ? body.detail : FINANCIAL_MODEL_FALLBACK_ERROR);
+        return;
+      }
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `financial-model-${moveId}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError(FINANCIAL_MODEL_FALLBACK_ERROR);
+    } finally {
+      setDownloading(false);
+    }
+  };
+  return (
+    <div className={cx("field")}>
+      <p className={cx("item-note")}>
+        The case above as a live workbook: every lever input at low, base and high, the monthly
+        schedule, NPV, payback and the three-year bases as formulas, checked against the engine.
+      </p>
+      <button type="button" className={cx("btn-ink")} disabled={downloading} onClick={() => void download()}>
+        {downloading ? "Building the model…" : "Download financial model (.xlsx)"}
+      </button>
+      {error && (
+        <p role="alert" className={cx("item-note")}>
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function ValueCaseReadback({
   model,
   read,
@@ -1048,6 +1103,9 @@ function P4ValuePage({ host }: { host: StepPageHostProps }) {
                 model={value.kind === "model" ? value.model : null}
                 read={readback}
               />
+              {financialModelOffered(readback) && (
+                <FinancialModelDownload moveId={host.move.id} />
+              )}
               {value.kind === "model" ? (
                 <ValueReferences
                   model={value.model}
