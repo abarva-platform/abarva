@@ -94,7 +94,6 @@ function renderWorkspace(
   render(
     <MovesCaptureWorkspace
       moveId="move-1"
-      moveName="Demo move"
       phase={1}
       avaRole="Charter partner"
       avaThread={overrides.thread ?? STREAMING_THREAD}

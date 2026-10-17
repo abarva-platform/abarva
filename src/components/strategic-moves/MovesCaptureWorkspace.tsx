@@ -26,7 +26,6 @@ import { avaComposerAvailability } from "@/components/strategic-moves/ava-compos
  */
 export interface MovesCaptureWorkspaceProps {
   moveId: string;
-  moveName: string;
   phase: number;
   /** aVa eyebrow role for this phase (e.g. "Charter partner"). */
   avaRole: string;
@@ -68,7 +67,6 @@ export interface MovesCaptureWorkspaceProps {
 
 export function MovesCaptureWorkspace({
   moveId,
-  moveName,
   phase,
   avaRole,
   avaThread,
@@ -117,7 +115,8 @@ export function MovesCaptureWorkspace({
       minLeftPx={300}
       defaultLeftPercent={24}
       surfaceContext={{ moveId, phase }}
-      initialQuote={`Ask about the current charter step for ${moveName}.`}
+      // No "In reply to" quote: aVa's first message is this step's own briefing,
+      // not a reply, and no one asked the fixed question the quote used to show.
       thread={thread}
       suggestedActions={suggestedActions}
       composerDisabledReason={composer.disabledReason}

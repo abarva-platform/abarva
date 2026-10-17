@@ -24,6 +24,7 @@ jest.mock("@/components/agent/AgentDock", () => ({
       data-mode={props.defaultMode}
       data-disable-stored-mode={String(Boolean(props.disableStoredMode))}
       data-restore-mode={props.collapsedRestoreMode ?? ""}
+      data-initial-quote={props.initialQuote ?? ""}
     >
       {props.workspace}
     </div>
@@ -72,7 +73,6 @@ describe("MovesCaptureWorkspace", () => {
       render(
         <MovesCaptureWorkspace
           moveId="move-1"
-          moveName="Synthetic design walk"
           phase={3}
           avaRole="Design partner"
           avaThread={[]}
@@ -93,11 +93,26 @@ describe("MovesCaptureWorkspace", () => {
     }
   });
 
+  it.each([0, 1, 2, 3, 4, 5])("quotes no question nobody asked: P%i opens on its briefing, not an \"In reply to\"", (phase) => {
+    render(
+      <MovesCaptureWorkspace
+        moveId="move-1"
+        phase={phase}
+        avaRole="Partner"
+        avaThread={[]}
+        avaQuestions={[]}
+        onAvaMessage={jest.fn()}
+        openingBriefing="This step's briefing."
+        content={<h1>Step</h1>}
+      />,
+    );
+    expect(screen.getByTestId("agent-dock")).toHaveAttribute("data-initial-quote", "");
+  });
+
   it("hosts a step page in the same aVa dock, with aVa's briefing as its opening turn", () => {
     render(
       <MovesCaptureWorkspace
         moveId="move-1"
-        moveName="Governed data foundation"
         phase={3}
         avaRole="Design partner"
         avaThread={[{ id: "t1", role: "user", text: "What is open?" }]}
@@ -125,7 +140,6 @@ describe("MovesCaptureWorkspace", () => {
     render(
       <MovesCaptureWorkspace
         moveId="move-1"
-        moveName="Member-services AI assist"
         phase={1}
         avaRole="Charter partner"
         avaThread={[
@@ -158,7 +172,6 @@ describe("MovesCaptureWorkspace", () => {
     render(
       <MovesCaptureWorkspace
         moveId="m1"
-        moveName="A Move"
         phase={1}
         avaRole="Charter partner"
         avaThread={[]}
@@ -178,7 +191,6 @@ describe("MovesCaptureWorkspace", () => {
     render(
       <MovesCaptureWorkspace
         moveId="m1"
-        moveName="A Move"
         phase={1}
         avaRole="Charter partner"
         avaThread={[]}
