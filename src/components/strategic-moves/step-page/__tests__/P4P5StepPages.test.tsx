@@ -24,7 +24,7 @@ import {
 } from "@/lib/programs/value-engine/cost-basis";
 import { stepPageHref } from "@/lib/programs/step-page-views";
 import { P4_STEP_PAGES } from "../p4-step-pages";
-import { P5_STEP_PAGES } from "../p5-step-pages";
+import { MOBILIZATION_PLAN_FALLBACK_ERROR, P5_STEP_PAGES } from "../p5-step-pages";
 import type { StepPageHostProps } from "../phase-step-pages";
 import { P5TowerHandoff, P5TowerPublicationReadback } from "../P5TowerHandoff";
 import type { P5HandoffView } from "@/lib/programs/p5-measurement-plan";
@@ -1552,5 +1552,48 @@ describe("P4 and P5 step pages", () => {
       "mobilization_plan",
       "Mobilization plan names the operations owner role for handoff.",
     );
+  });
+});
+
+describe("P5 mobilization plan download", () => {
+  const plan = () => screen.getByRole("button", { name: "Download mobilization plan (.xlsx)" });
+
+  it("offers the plan workbook on the first-90-days page and downloads it", async () => {
+    const blob = new Blob(["xlsx"]);
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, blob: async () => blob });
+    const created = jest.fn().mockReturnValue("blob:plan");
+    const revoked = jest.fn();
+    Object.defineProperty(URL, "createObjectURL", { configurable: true, value: created });
+    Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: revoked });
+    const click = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    render(page(P5_STEP_PAGES, "p5-first-90", host(5)));
+    fireEvent.click(plan());
+    await waitFor(() => expect(created).toHaveBeenCalledWith(blob));
+    expect(global.fetch).toHaveBeenCalledWith(`/api/v1/programs/${host(5).move.id}/mobilization-plan`, { credentials: "include" });
+    expect(click).toHaveBeenCalledTimes(1);
+    expect(revoked).toHaveBeenCalledWith("blob:plan");
+    expect(screen.queryByRole("alert")).toBeNull();
+    click.mockRestore();
+  });
+
+  it("shows the route's own sentence when it refuses", async () => {
+    const detail = "Approve the delivery estimate in P3 first. The plan's build weeks and cost come from it.";
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 409, json: async () => ({ error: "estimate_not_approved", detail }) });
+    render(page(P5_STEP_PAGES, "p5-first-90", host(5)));
+    fireEvent.click(plan());
+    expect(await screen.findByRole("alert")).toHaveTextContent(detail);
+    expect(plan()).not.toBeDisabled();
+  });
+
+  it("says nothing changed when the refusal has no sentence or the request fails", async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500, json: async () => { throw new Error("not json"); } });
+    const first = render(page(P5_STEP_PAGES, "p5-first-90", host(5)));
+    fireEvent.click(plan());
+    expect(await screen.findByRole("alert")).toHaveTextContent(MOBILIZATION_PLAN_FALLBACK_ERROR);
+    first.unmount();
+    global.fetch = jest.fn().mockRejectedValue(new Error("offline"));
+    render(page(P5_STEP_PAGES, "p5-first-90", host(5)));
+    fireEvent.click(plan());
+    expect(await screen.findByRole("alert")).toHaveTextContent(MOBILIZATION_PLAN_FALLBACK_ERROR);
   });
 });
