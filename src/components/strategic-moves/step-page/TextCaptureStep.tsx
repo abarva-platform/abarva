@@ -17,6 +17,7 @@ import { CharterBasisField } from "../CharterBasisField";
 import styles from "./MovesStepPage.module.css";
 import { P1ParticipantBindingForm } from "./P1ParticipantBindingForm";
 import { p1ParticipantBindingsReady } from "@/lib/programs/p1-participant-binding";
+import { demoSafeClientText } from "@/lib/client-config";
 
 const cx = (...names: string[]) =>
   names.map((name) => styles[name] ?? name).join(" ");
@@ -432,7 +433,8 @@ export function TextCaptureStep({
   const phaseBase = `/strategic-moves/${encodeURIComponent(host.move.id)}/phase/${host.phase}`;
   const page = (
     <MovesStepPage
-      moveName={host.move.displayCode || host.move.name}
+      // The Move's name, as every other step page shows it; never its internal code.
+      moveName={demoSafeClientText(host.move.name)}
       clientDisplayName={host.move.tenant.name}
       syntheticNote="Synthetic demo data"
       tabs={host.chrome.tabs}
@@ -519,7 +521,8 @@ export function TextCaptureStep({
     />
   );
   return host.dock(page, {
-    briefing: `Review the saved ${config.title.toLowerCase()} answers and edit each field where needed. Existing drafts remain available for your review. I don't write figures.`,
+    // The step title is an instruction ("Name success measures"), so it is not spliced into a sentence.
+    briefing: "Review this step's saved answers and edit each field where needed. Existing drafts remain available for your review. I don't write figures.",
     actions: [],
     notesPanel: null,
   });

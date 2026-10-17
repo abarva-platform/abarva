@@ -159,6 +159,28 @@ const views: Array<[StepPageView, number, string]> = [
 ];
 
 describe("P0 and P1 text capture step pages", () => {
+  it("names the Move as every other step page does, never by its internal code, and briefs aVa in plain words", () => {
+    const briefings: string[] = [];
+    for (const [phase, pages] of [[0, P0_STEP_PAGES], [1, P1_STEP_PAGES]] as const) {
+      for (const [view, component] of Object.entries(pages)) {
+        if (!component) continue;
+        const props = host(phase);
+        props.dock = (rendered: ReactNode, options) => { briefings.push(String(options.briefing ?? "")); return <>{rendered}</>; };
+        const { unmount } = render(<>{component(props)}</>);
+        if (screen.queryAllByText(/SYNTHETIC-MOVE/).length) throw new Error(`${view} shows the internal code`);
+        unmount();
+      }
+    }
+    expect(briefings.length).toBeGreaterThan(0);
+    for (const briefing of briefings) expect(briefing).not.toMatch(/saved (?:name|record|confirm|state|set|agree|define|plan|choose) /i);
+    expect(briefings).toContain("Review this step's saved answers and edit each field where needed. Existing drafts remain available for your review. I don't write figures.");
+  });
+
+  it("shows the Move's name in the step page header", () => {
+    page("p0-signal", host(0));
+    expect(screen.getAllByText(/Synthetic Move/).length).toBeGreaterThan(0);
+  });
+
   it("keeps the step theme switch without changing saved answers or restoring bulk notes", () => {
     window.localStorage.removeItem("mv-theme");
     const props = host(0, {
