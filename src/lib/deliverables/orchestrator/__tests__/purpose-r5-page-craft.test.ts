@@ -62,6 +62,15 @@ const growingVolume = series(
 );
 
 describe("R5 §5 — a direction word must match the bound data", () => {
+  it("does not call an all-zero count series a decrease", () => {
+    expect(purposeChartTrend(series("Open items", "count", [0, 0, 0]))).toEqual(
+      {
+        direction: "steady",
+        phrase: "holds broadly steady",
+        strength: 0,
+      },
+    );
+  });
   it("refuses 'recovers after a dip' for a series that barely moved", () => {
     // The defect: any series ending above its start, with one lower interior point, was called a
     // recovery. This one moves under a point end to end, and never strays three points from its mean.

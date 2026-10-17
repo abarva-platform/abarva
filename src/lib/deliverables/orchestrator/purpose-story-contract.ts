@@ -110,7 +110,7 @@ export function purposeVisibleText(doc: RenderableDeliverable): string[] {
   return [
     doc.title,
     doc.subtitle || "",
-    doc.recommendation,
+    ...markdownClaims(doc.recommendation),
     ...doc.generatedSections.flatMap((s) => [
       s.title,
       ...markdownClaims(s.bodyMarkdown),

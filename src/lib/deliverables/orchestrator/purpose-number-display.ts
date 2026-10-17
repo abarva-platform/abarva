@@ -60,6 +60,69 @@ export function stripPurposeSourceVersionReferences(
   );
 }
 
+export interface PurposeSourceRecordReference {
+  identifier: string;
+  source: number;
+  locator: string;
+}
+
+/** Only a declared ID column establishes record identifiers; prose and amounts do not. */
+export function purposeSourceRecordReferences(
+  sourceTexts: readonly string[],
+): PurposeSourceRecordReference[] {
+  return sourceTexts.flatMap((text, sourceIndex) => {
+    let idColumns: number[] = [];
+    return text.split("\n").flatMap((line, lineIndex) => {
+      if (line.startsWith("Worksheet ")) idColumns = [];
+      const match = line.match(/^row (\d+): (\[.*\])$/);
+      if (!match) return [];
+      let cells: unknown;
+      try {
+        cells = JSON.parse(match[2]!);
+      } catch {
+        idColumns = [];
+        return [];
+      }
+      if (!Array.isArray(cells) || !cells.every((c) => typeof c === "string"))
+        return [];
+      if (match[1] === "1") {
+        idColumns = cells.flatMap((cell, index) =>
+          /(?:^id$|[_ ]id$)/i.test(cell.trim()) ? [index] : [],
+        );
+        return [];
+      }
+      return idColumns.flatMap((column) => {
+        const identifier = cells[column];
+        return typeof identifier === "string" &&
+          /^[A-Za-z][A-Za-z0-9_]*-[A-Za-z0-9_.-]*\d[A-Za-z0-9_.-]*$/.test(
+            identifier,
+          )
+          ? [
+              {
+                identifier,
+                source: sourceIndex + 1,
+                locator: `extracted line ${lineIndex + 1}`,
+              },
+            ]
+          : [];
+      });
+    });
+  });
+}
+
+export function stripPurposeSourceRecordReferences(
+  text: string,
+  references: readonly PurposeSourceRecordReference[],
+): string {
+  return references.reduce((value, reference) => {
+    const escaped = reference.identifier.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return value.replace(
+      new RegExp(`(?<![\\w.-])${escaped}(?![\\w.-])`, "g"),
+      "",
+    );
+  }, text);
+}
+
 /** Preserve source date components without changing existing figure-slot identities. */
 export function purposeSourceDatePart(
   line: string,

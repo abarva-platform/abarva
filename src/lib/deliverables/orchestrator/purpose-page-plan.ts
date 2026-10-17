@@ -1331,7 +1331,7 @@ export function purposeChartTrend(chart: PurposeChart): {
     direction: ReturnType<typeof purposeChartTrend>["direction"],
     phrase: string,
   ) => ({ direction, phrase, strength });
-  if (Math.abs(change) < threshold)
+  if (change === 0 || Math.abs(change) < threshold)
     return dip
       ? result("dips", "dips and returns to its starting level")
       : result("steady", "holds broadly steady");

@@ -16,6 +16,8 @@ import {
   assertPurposeUnitSlotUse,
   purposeSourceDatePart,
   stripPurposeSourceVersionReferences,
+  purposeSourceRecordReferences,
+  stripPurposeSourceRecordReferences,
 } from "../purpose-number-display";
 import { purposeFixture } from "../__fixtures__/purpose-pages";
 import {
@@ -30,6 +32,88 @@ import {
 } from "../purpose-story-contract";
 
 describe("R4 claim and export controls", () => {
+  it("does not give the offline writer limits that contradict the phase contract", () => {
+    const harness = readFileSync(
+      "scripts/deliverables/proof/purpose-fresh-source.ts",
+      "utf8",
+    );
+    expect(harness).toContain(
+      "Title and scope-note limits are exclusively defined by phaseContract",
+    );
+    expect(harness).not.toContain("assertion under ninety characters");
+    expect(harness).not.toContain("under one hundred and forty characters");
+  });
+  it("classifies rendered recommendation bullets rather than Markdown delimiters", () => {
+    const doc = purposeFixture();
+    doc.generatedSections = [];
+    doc.tables = [];
+    doc.deckSlides = [];
+    doc.exhibits = [];
+    doc.nextActions = [];
+    doc.actionRegister = [];
+    doc.recommendation =
+      "- **Hold if** the approval record is not yet available.\n- **Proceed if** the baseline has been reviewed.";
+    expect(
+      validatePurposeStory(doc, []).filter((e) =>
+        e.includes("unsupported_absence"),
+      ),
+    ).toEqual([]);
+    doc.recommendation = "- **No evidence was ever collected.**";
+    expect(
+      validatePurposeStory(doc, []).some((e) =>
+        e.includes("unsupported_absence"),
+      ),
+    ).toBe(true);
+    doc.recommendation =
+      "- **Hold if** the baseline is missing, and no responses were ever received.";
+    expect(
+      validatePurposeStory(doc, []).some((e) =>
+        e.includes("unsupported_absence"),
+      ),
+    ).toBe(true);
+  });
+  it("distinguishes declared record IDs from measured numbers", () => {
+    const source =
+      'row 1: ["control_id","restriction","cost"]\nrow 2: ["CTRL-01","Review before release","$100"]\nrow 3: ["CTRL-05","Human confirmation","$200"]';
+    const references = purposeSourceRecordReferences([source]);
+    expect(references).toEqual([
+      { identifier: "CTRL-01", source: 1, locator: "extracted line 2" },
+      { identifier: "CTRL-05", source: 1, locator: "extracted line 3" },
+    ]);
+    expect(
+      stripPurposeSourceRecordReferences(
+        "CTRL-01 and CTRL-05 cost $100",
+        references,
+      ),
+    ).toBe(" and  cost $100");
+  });
+
+  it.each(["CTRL-99", "CTRL-010", "CTRL-01.2", "xCTRL-01", "$100", "100"])(
+    "does not exempt unknown, partial or numeric reference %s",
+    (value) => {
+      const references = purposeSourceRecordReferences([
+        'row 1: ["id"]\nrow 2: ["CTRL-01"]',
+      ]);
+      expect(stripPurposeSourceRecordReferences(value, references)).toBe(value);
+    },
+  );
+
+  it("does not declare identifiers from prose or non-ID columns", () => {
+    expect(
+      purposeSourceRecordReferences([
+        "Mention CTRL-01 in a note.",
+        'row 1: ["description","amount"]\nrow 2: ["CTRL-01","$100"]',
+        'row 1: ["id"]\nrow 2: ["100"]',
+      ]),
+    ).toEqual([]);
+  });
+
+  it("does not carry an ID column into another worksheet", () => {
+    const refs = purposeSourceRecordReferences([
+      'Worksheet Controls\nrow 1: ["control_id"]\nrow 2: ["CTRL-01"]\nWorksheet Notes\nrow 1: ["description"]\nrow 2: ["CTRL-02"]',
+    ]);
+    expect(refs.map((r) => r.identifier)).toEqual(["CTRL-01"]);
+  });
   it("checks proposal confirmation against approval state without allowing an independent gap", () => {
     const text =
       "The change record contains a proposal, not yet confirmed, that business owns adoption [1].";
