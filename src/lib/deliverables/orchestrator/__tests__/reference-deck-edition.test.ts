@@ -932,15 +932,6 @@ describe("the AI-assisted scenario on the delivery-hours slide", () => {
     expect(comparisonRows(build(inputs))?.[5]).toEqual(["Payback", "14 months", "Not within horizon", "Not comparable"]);
   });
 
-  it("binds the funded NPV and payback once, for the comparison and the value ledger alike", () => {
-    const spec = buildReferenceEdition(scenarioInputs(), words(INVESTMENT_SEQUENCE.length));
-    const displays = (id: string) => new Set(spec.figureLedger.filter((figure) => figure.sourceId === id).map((figure) => figure.display));
-    expect(displays("engine:npv_base").size).toBe(1);
-    expect([...displays("engine:payback_month_base")]).toEqual([expect.stringMatching(/^\d+ months?$/)]);
-    const ledger = spec.slides.find((slide) => slide.archetype === "value_ledger")!.blocks.find((block) => block.kind === "metrics");
-    expect(ledger?.kind === "metrics" ? ledger.items.map((item) => item.label) : null).toEqual(["Net present value", "Payback", "Breakeven realisation"]);
-  });
-
   it("offers the slide words only the savings the scenario makes", () => {
     const table = buildReferenceSlotTable(scenarioInputs());
     expect(["rom.ai.weeks_saved", "rom.ai.hours_saved", "rom.ai.cost_saved", "rom.ai.tool_cost"].map((key) => [table[key]?.display, table[key]?.sourceId])).toEqual([
@@ -988,6 +979,15 @@ describe("the AI-assisted scenario on the delivery-hours slide", () => {
     expect(judgeRenderedDeck(rendered, { referenceDeck: spec }).findings.filter((finding) =>
       ["reference_layout", "off_canvas", "reference_source", "reference_edition", "reference_client_copy"].includes(finding.kind))).toEqual([]);
   }, 60_000);
+
+  it("binds the funded NPV and payback once, for the comparison and the value ledger alike", () => {
+    const spec = buildReferenceEdition(scenarioInputs(), words(INVESTMENT_SEQUENCE.length));
+    const displays = (id: string) => new Set(spec.figureLedger.filter((figure) => figure.sourceId === id).map((figure) => figure.display));
+    expect(displays("engine:npv_base").size).toBe(1);
+    expect([...displays("engine:payback_month_base")]).toEqual([expect.stringMatching(/^\d+ months?$/)]);
+    const ledger = spec.slides.find((slide) => slide.archetype === "value_ledger")!.blocks.find((block) => block.kind === "metrics");
+    expect(ledger?.kind === "metrics" ? ledger.items.map((item) => item.label) : null).toEqual(["Net present value", "Payback", "Breakeven realisation"]);
+  });
 
   it("never reaches the validation edition", () => {
     const inputs = scenarioInputs();
