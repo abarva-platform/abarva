@@ -23,6 +23,13 @@ import {
 } from "../purpose-number-display";
 import { formatConsultantCents } from "@/lib/programs/value-engine/format-money";
 
+/** A register's row codes leave its sentences for one final Source column. */
+const shownWithSource = (rows: string[][]) =>
+  rows.map((row) => [
+    ...row.map((cell) => cell.replace(/ \[\d+\]/g, "")),
+    row.join(" ").match(/\[\d+\]/)![0],
+  ]);
+
 describe("purpose page planning", () => {
   it("keeps note-only references out of the visible page footer", () => {
     const doc = purposeFixture();
@@ -72,9 +79,9 @@ describe("purpose page planning", () => {
           ],
           [
             "Unrecovered balance",
-            "$40.0M [1]",
-            "Prevent 18.0% of exposure [1]",
-            "Quarter schedule; recorded allowed exposure [1]",
+            "$40.0M [2]",
+            "Prevent 18.0% of exposure [2]",
+            "Quarter schedule; recorded allowed exposure [2]",
           ],
           [
             "Recovered cash on rejected items",
@@ -84,9 +91,9 @@ describe("purpose page planning", () => {
           ],
           [
             "Rework hours",
-            "80,000.0 hr [1]",
-            "Reduce by 20.0% [1]",
-            "Capacity until a role or contract release is recorded [1]",
+            "80,000.0 hr [2]",
+            "Reduce by 20.0% [2]",
+            "Capacity until a role or contract release is recorded [2]",
           ],
           [
             "Days in accounts receivable",
@@ -118,13 +125,15 @@ describe("purpose page planning", () => {
     );
     expect(compact).toHaveLength(1);
     expect(compact[0]!.tableFontSize).toBe(15);
-    expect(compact[0]!.rows).toEqual(doc.tables[0]!.rows);
+    expect(compact[0]!.rows).toEqual(shownWithSource(doc.tables[0]!.rows));
     doc.tables[0]!.rows.push(...doc.tables[0]!.rows.slice(0, 3));
     const pages = planPurposePages(doc).filter((page) =>
       page.id.startsWith("measures"),
     );
     expect(pages).toHaveLength(2);
-    expect(pages.flatMap((page) => page.rows!)).toEqual(doc.tables[0]!.rows);
+    expect(pages.flatMap((page) => page.rows!)).toEqual(
+      shownWithSource(doc.tables[0]!.rows),
+    );
     for (const page of pages) {
       const used =
         purposeTableHeaderHeight(page) +
@@ -135,11 +144,17 @@ describe("purpose page planning", () => {
     }
   });
   it("labels status once without losing the authored distinction", () => {
-    expect(purposeStatusLabel("condition", "Condition:")).toBe("CONDITION");
-    expect(purposeStatusLabel("later", "Later")).toBe("LATER");
-    expect(purposeStatusLabel("risk", "Access boundary")).toBe(
-      "RISK / Access boundary",
+    // A label that only restates the state becomes the client's word for it.
+    expect(purposeStatusLabel("condition", "Condition:")).toBe(
+      "CONDITIONS TO CLOSE",
     );
+    expect(purposeStatusLabel("later", "Later")).toBe("LATER APPROVAL");
+    // A label that NAMES the item is the distinction this test protects. It survives as the label;
+    // only the taxonomy prefix and the slash in front of it go.
+    expect(purposeStatusLabel("risk", "Access boundary")).toBe(
+      "Access boundary",
+    );
+    expect(purposeStatusLabel("risk", "Access boundary")).not.toContain("/");
   });
   it("bounds line axes around the recorded range and respects explicit bounds", () => {
     const chart = purposeChartFixture();
@@ -243,7 +258,9 @@ describe("purpose page planning", () => {
     );
     expect(pages).toHaveLength(1);
     expect(pages[0]!.compactTableRows).toBe(true);
-    expect(pages[0]!.rows).toEqual(rows);
+    expect(pages[0]!.rows).toEqual(
+      rows.map((row) => row.map((cell) => cell.replace(/ \[1\]$/, ""))),
+    );
   });
   it("keeps a bold statement label and moves its full assertion into the body", () => {
     const doc = purposeFixture();
@@ -302,10 +319,11 @@ describe("purpose page planning", () => {
         targetFormat: "pptx",
         pageShape: "register",
         columns: ["From", "To", "Handoff"],
-        rows: Array.from({ length: 5 }, () => [
+        // The handoff varies per row: a constant one is removed (covered in the R5 page-craft suite).
+        rows: Array.from({ length: 5 }, (_, i) => [
           "Exception: supervisor or specialist queue (Agent and supervisor)",
           "Key and verify interaction summary (Agent)",
-          "Declared connection",
+          `Handoff ${i + 1}`,
         ]),
       },
     ];
@@ -827,9 +845,13 @@ describe("purpose page planning", () => {
     expect(pages).toHaveLength(2);
     expect(new Set(pages.map((p) => p.title)).size).toBe(2);
     expect(pages[1]!.title.endsWith("(continued)")).toBe(true);
+    // Every row cites the same source, so it is stated once in the footer instead.
     expect(pages.flatMap((page) => page.rows!)).toEqual(
-      doc.tables.at(-1)!.rows,
+      doc.tables
+        .at(-1)!
+        .rows.map(([record]) => [record, "Evidence remains unreviewed."]),
     );
+    expect(pages.every((page) => page.sources.includes(1))).toBe(true);
     expect(
       pages.every((page) => page.columns?.join() === "Record,Detail"),
     ).toBe(true);

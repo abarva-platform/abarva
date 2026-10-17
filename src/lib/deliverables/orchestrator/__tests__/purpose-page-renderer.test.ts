@@ -146,9 +146,11 @@ describe("purpose page rendered objects", () => {
     );
     expect(pages).toHaveLength(1);
     expect(pages[0]!.semanticStatusColumn).toBe(true);
+    // Each row keeps its own label; the state travels as the row's colour, not as a slash prefix.
     expect(pages[0]!.rows!.map((r) => r[0])).toEqual(
-      tones.map((tone, i) => `${tone.toUpperCase()} / Position ${i}`),
+      tones.map((_, i) => `Position ${i}`),
     );
+    expect(pages[0]!.rows!.some((r) => r[0]!.includes("/"))).toBe(false);
     const zip = await JSZip.loadAsync(await renderPurposeDeck(doc));
     const xml = await zip.file("ppt/slides/slide2.xml")!.async("string");
     expect(xml).toContain('val="AE3547"');
@@ -158,7 +160,7 @@ describe("purpose page rendered objects", () => {
     const inspection = await inspectDeck(await renderPurposeDeck(doc));
     expect(inspection.slides[1].namedText?.["purpose:sources"]).toBe("[1]");
   });
-  it("keeps row-level attribution when a table mixes sources", async () => {
+  it("keeps row-level attribution in a Source column when a table mixes sources", async () => {
     const doc = purposeFixture();
     doc.exhibits = [];
     doc.nextActions = [];
@@ -188,7 +190,22 @@ describe("purpose page rendered objects", () => {
     ];
     const zip = await JSZip.loadAsync(await renderPurposeDeck(doc));
     const xml = await zip.file("ppt/slides/slide2.xml")!.async("string");
-    for (const row of doc.tables[0]!.rows) expect(xml).toContain(row[1]);
+    const cells = [...xml.matchAll(/<a:t>([^<]*)<\/a:t>/g)].map((m) => m[1]);
+    expect(cells).toEqual(
+      expect.arrayContaining([
+        "Source",
+        "Recorded handoff.",
+        "Separate observation.",
+      ]),
+    );
+    // The codes leave the sentences and each row keeps its own in the final column.
+    expect(cells.some((cell) => /handoff \[/.test(cell!))).toBe(false);
+    const source = cells.indexOf("Source");
+    const codes = cells.filter(
+      (cell, i) => i > source && /^\[[^\]]+\]$/.test(cell!),
+    );
+    expect(codes).toHaveLength(3);
+    expect(new Set(codes).size).toBe(2);
   });
   it("reserves a readable second scope line without moving short-note pages", async () => {
     const doc = purposeFixture();
@@ -499,6 +516,58 @@ describe("purpose page rendered objects", () => {
       expect(result.slides[1]!.namedText?.[`purpose:process:${i}`]).toBe(label),
     );
   });
+  it("draws recorded handoffs as a flow with one exception line, not a From/To table", async () => {
+    const doc = purposeFixture();
+    doc.tables = [];
+    doc.nextActions = [];
+    const labels = ["CRM context", "Claim status", "Eligibility", "Record"];
+    doc.exhibits = [
+      {
+        key: "flow",
+        title: "Recorded workflow",
+        description: "Synthetic process",
+        kind: "flow",
+        targetFormat: "pptx",
+        data: {
+          kind: "flow",
+          nodes: [
+            ...labels.map((label, i) => ({
+              id: `s${i}`,
+              label,
+              role: "Agent",
+            })),
+            { id: "x", label: "Supervisor review", role: "Supervisor" },
+          ],
+          edges: [
+            ...labels.slice(1).map((_, i) => ({
+              from: `s${i}`,
+              to: `s${i + 1}`,
+              label: "Declared connection",
+            })),
+            { from: "s2", to: "x", label: "Eligibility unclear" },
+          ],
+        },
+      },
+    ];
+    doc.deckSlides = [
+      {
+        key: "flow",
+        governingMessage: "Each handoff retains human accountability",
+        exhibitKey: "flow",
+      },
+    ];
+    const result = await inspectDeck(await renderPurposeDeck(doc));
+    const named = result.slides[1]!.namedText ?? {};
+    labels.forEach((label, i) =>
+      expect(named[`purpose:process:${i}`]).toBe(label),
+    );
+    expect(named["purpose:process:exception"]).toBe(
+      "Exception path: Eligibility → Supervisor review (Supervisor) (Eligibility unclear)",
+    );
+    expect(JSON.stringify(result.slides[1])).not.toContain(
+      "Declared connection",
+    );
+  });
   it("renders explicit status labels, labelled conclusions and display-size figures", async () => {
     const doc = purposeFixture();
     doc.exhibits = [];
@@ -553,7 +622,7 @@ describe("purpose page rendered objects", () => {
       buffer = await renderPurposeDeck(doc),
       inspection = await inspectDeck(buffer);
     expect(inspection.slides[1]!.namedText?.["purpose:statement-label:1"]).toBe(
-      "CONDITION / Conditions to close",
+      "CONDITIONS TO CLOSE",
     );
     expect(
       inspection.slides[2]!.purposeText?.find(
@@ -566,7 +635,7 @@ describe("purpose page rendered objects", () => {
     );
     for (const [slideNo, from, error] of [
       [2, "Required resolution", "takeaway_label_missing"],
-      [2, "Conditions to close", "statement_semantics_missing"],
+      [2, "CONDITIONS TO CLOSE", "statement_semantics_missing"],
       [3, 'sz="5400"', "display_number_missing"],
     ] as const) {
       const broken = await JSZip.loadAsync(buffer),
