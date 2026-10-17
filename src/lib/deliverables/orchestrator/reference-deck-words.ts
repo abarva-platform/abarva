@@ -93,7 +93,10 @@ const INVESTMENT_TITLE_SLOTS: Partial<Record<ReferenceArchetype, string>> = {
 function requiredTitleSlot(edition: ReferenceEdition, archetype: ReferenceArchetype | undefined, slots: ReferenceSlotTable): string | undefined {
   if (edition !== "investment" || !archetype) return undefined;
   const fixed = INVESTMENT_TITLE_SLOTS[archetype];
-  if (fixed) return fixed;
+  // Only a figure that exists is required. Without it the title states what is
+  // missing in its own words (the narrative rules still apply); a token for a
+  // figure that does not exist would only be withheld.
+  if (fixed) return slots[fixed]?.display ? fixed : undefined;
   if (archetype === "assumptions") {
     const open = slots["register.count.open"];
     return open?.display && open.display !== "0" ? "register.count.open" : undefined;
@@ -207,7 +210,7 @@ export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, sl
 
 const TITLE_REQUIREMENTS = { minimumWords: 5, maximumSentences: 1, case: "sentence case" } as const;
 const RULE_REQUIREMENTS: Record<string, string> = {
-  missing_title_slot: "Copy requiredTitleSlot exactly, including its single braces, into the title. Keep this binding token even when evidence is unavailable; the server renders the missing-input qualifier. Never substitute a value or an invented fact.",
+  missing_title_slot: "Copy requiredTitleSlot exactly, including its single braces, into the title. Never substitute a value or an invented fact.",
   title_format: "Write a title with at least five words and only one sentence. Do not return a short section label.",
   active_count_as_open: "The active assumption count includes open, confirmed and corrected items. Only the open-count token may describe open items.",
   unavailable_value_claim: "No counted value is available for this exhibit. State the evidence still needed; do not refer to an existing figure or total.",

@@ -49,7 +49,19 @@ const stateSlot = (key: string, display: string | null): ReferenceSlotTable[stri
 });
 
 describe("reference-deck words", () => {
-  it.each([[false, false], [true, false], [false, true], [true, true]])("gives concrete binding requirements to the existing title-slot retry; persistent rejection %s, missing value %s", async (persistent, missing) => {
+  it("does not require the title figure when the figure does not exist, so an honest title stands", async () => {
+    const honest = { ...safeWords.words[0]!, title: "The annual case needs a reviewed basis" };
+    const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({ words: [honest] }) }] });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    const missingValue = { ...slots, "value.annual.plan": stateSlot("value.annual.plan", null) };
+    expect(modelWordRule(honest, "investment", missingValue, "one_page")).toBeNull();
+    const result = await draftEditionWords({ ...input, edition: "investment", slots: missingValue });
+    expect(result).toEqual({ status: "ok", words: [honest], fallbackSlides: [] });
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(create.mock.calls[0][0].messages[0].content).slides[0]).not.toHaveProperty("requiredTitleSlot");
+  });
+
+  it.each([[false, false], [true, false]])("gives concrete binding requirements to the existing title-slot retry; persistent rejection %s, missing value %s", async (persistent, missing) => {
     const rejected = { ...safeWords.words[0]!, title: "The annual case needs a reviewed basis" };
     const repaired = { ...rejected, title: "The annual case counts {value.annual.plan} on its current basis" };
     const create = jest.fn()
