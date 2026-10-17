@@ -403,6 +403,36 @@ describe("reference-deck words", () => {
     }
   });
 
+  describe("the open-assumption count in the investment assumptions title", () => {
+    const withOpen = (display: string | null): ReferenceSlotTable => ({ ...slots,
+      "register.count.open": stateSlot("register.count.open", display),
+      "register.count.active": stateSlot("register.count.active", display === null ? null : "5") });
+    const plain = { title: "The working assumptions decide what can be claimed", answer: "Resolve the assumptions that could change the decision.",
+      notes: "The point: these assumptions are open. How to read: follow each row to its owner." };
+    const counted = { ...plain, title: "The {register.count.open} open assumptions decide what can be claimed" };
+
+    it("is required when the register has open assumptions", () => {
+      expect(modelWordRule(plain, "investment", withOpen("3"), "assumptions")).toBe("missing_title_slot");
+      expect(modelWordRule(counted, "investment", withOpen("3"), "assumptions")).toBeNull();
+    });
+
+    it("is not required with no open assumptions, an unread register, or in the validation edition", () => {
+      expect(modelWordRule(plain, "investment", withOpen("0"), "assumptions")).toBeNull();
+      expect(modelWordRule(plain, "investment", withOpen(null), "assumptions")).toBeNull();
+      expect(modelWordRule(plain, "validation", withOpen("3"), "assumptions")).toBeNull();
+    });
+
+    it("is asked for in the prompt only when it is required", async () => {
+      const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({ words: [counted] }) }] });
+      mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+      await draftEditionWords({ ...input, edition: "investment", archetypes: ["assumptions"], slots: withOpen("3") });
+      expect(JSON.parse(create.mock.calls[0][0].messages[0].content).slides[0].requiredTitleSlot).toBe("{register.count.open}");
+      create.mockClear();
+      await draftEditionWords({ ...input, edition: "investment", archetypes: ["assumptions"], slots: withOpen("0") });
+      expect(JSON.parse(create.mock.calls[0][0].messages[0].content).slides[0]).not.toHaveProperty("requiredTitleSlot");
+    });
+  });
+
   describe("a title the edition withholds", () => {
     const missingValue: ReferenceSlotTable = { ...slots, "value.annual.plan": stateSlot("value.annual.plan", null) };
     const shortTitle = { title: "Value: {value.annual.plan}. Pending.", answer: "Confirm the value basis before relying on it.",

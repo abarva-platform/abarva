@@ -84,6 +84,23 @@ const INVESTMENT_TITLE_SLOTS: Partial<Record<ReferenceArchetype, string>> = {
   rom_hours: "rom.total.plan",
 };
 
+/**
+ * The figure an investment title must carry: the slide's own figure, or for
+ * the assumptions slide the count of open assumptions when the register can
+ * supply a non-zero one. A title then states a sourced number instead of a
+ * general sentence; with no open assumptions nothing is required.
+ */
+function requiredTitleSlot(edition: ReferenceEdition, archetype: ReferenceArchetype | undefined, slots: ReferenceSlotTable): string | undefined {
+  if (edition !== "investment" || !archetype) return undefined;
+  const fixed = INVESTMENT_TITLE_SLOTS[archetype];
+  if (fixed) return fixed;
+  if (archetype === "assumptions") {
+    const open = slots["register.count.open"];
+    return open?.display && open.display !== "0" ? "register.count.open" : undefined;
+  }
+  return undefined;
+}
+
 const FALLBACK_ANSWERS: Partial<Record<ReferenceArchetype, string>> = {
   one_page: "The case can advance when its value basis and open questions are agreed.",
   big_number_context: "Confirm the value basis before drawing a conclusion.",
@@ -162,8 +179,8 @@ export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, sl
     if (!slot.editions.includes(edition)) return "edition_slot";
   }
   if ((archetype === "cover" || archetype === "divider") && tokens.length) return "slot_without_source_line";
-  const requiredTitleSlot = edition === "investment" && archetype ? INVESTMENT_TITLE_SLOTS[archetype] : undefined;
-  if (requiredTitleSlot && !entry.title.includes(`{${requiredTitleSlot}}`)) return "missing_title_slot";
+  const required = requiredTitleSlot(edition, archetype, slots);
+  if (required && !entry.title.includes(`{${required}}`)) return "missing_title_slot";
   const literal = prose.replace(SLOT_TOKEN, "");
   if (Object.keys(slots).some((key) => literal.includes(key))) return "malformed_slot";
   if (/[{}]/.test(literal)) return "malformed_slot";
@@ -232,8 +249,8 @@ export async function draftEditionWords(input: {
   const promptSlides = input.archetypes.map((archetype) => ({ archetype,
     titleRequirements: TITLE_REQUIREMENTS, evidence: promptEvidence(input.slots, archetype, input.edition),
     ...(archetype === "cover"
-      ? { coverTitleAndPromiseProvidedByServer: true } : {}), ...(input.edition === "investment" && INVESTMENT_TITLE_SLOTS[archetype]
-      ? { requiredTitleSlot: `{${INVESTMENT_TITLE_SLOTS[archetype]}}` } : {}) }));
+      ? { coverTitleAndPromiseProvidedByServer: true } : {}), ...(requiredTitleSlot(input.edition, archetype, input.slots)
+      ? { requiredTitleSlot: `{${requiredTitleSlot(input.edition, archetype, input.slots)}}` } : {}) }));
   const slotDefinitions = promptSlotDefinitions(input.slots, input.edition);
   const user = JSON.stringify({ profile, slides: promptSlides, slots: slotDefinitions });
   try {
@@ -366,8 +383,8 @@ export async function draftEditionWords(input: {
             ruleRequirements: RULE_REQUIREMENTS[rule], titleRequirements: TITLE_REQUIREMENTS,
             evidence: promptEvidence(input.slots, input.archetypes[index]!, input.edition),
             ...detail,
-            ...(input.edition === "investment" && INVESTMENT_TITLE_SLOTS[input.archetypes[index]!]
-              ? { requiredTitleSlot: `{${INVESTMENT_TITLE_SLOTS[input.archetypes[index]!]}}` } : {}),
+            ...(requiredTitleSlot(input.edition, input.archetypes[index], input.slots)
+              ? { requiredTitleSlot: `{${requiredTitleSlot(input.edition, input.archetypes[index], input.slots)}}` } : {}),
           })),
           slots: slotDefinitions,
         });
