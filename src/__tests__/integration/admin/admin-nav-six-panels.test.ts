@@ -27,6 +27,8 @@ describe('Setup left-nav after PR 1 (4 panels removed)', () => {
       'overview',
       'data-loads',
       'templates',
+      // Rate cards: the client's own rates for Moves estimates, loaded before a Move is priced.
+      'rate-cards',
       'data-layer-explorer',
       'data-trust',
       'connectors',
