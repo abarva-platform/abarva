@@ -403,6 +403,34 @@ describe("reference-deck words", () => {
     }
   });
 
+  describe("a title the edition withholds", () => {
+    const missingValue: ReferenceSlotTable = { ...slots, "value.annual.plan": stateSlot("value.annual.plan", null) };
+    const shortTitle = { title: "Value: {value.annual.plan}. Pending.", answer: "Confirm the value basis before relying on it.",
+      notes: "The point: the basis is open. How to read: follow the source line." };
+
+    it("is not failed on its form, because the server shows its own title instead", () => {
+      expect(modelWordRule(shortTitle, "investment", missingValue, "one_page")).toBeNull();
+      // With the figure available the same title would be shown, so its form still counts.
+      expect(modelWordRule(shortTitle, "investment", { ...missingValue, "value.annual.plan": stateSlot("value.annual.plan", "$12,000") }, "one_page")).toBe("title_format");
+      // One unavailable figure is enough for the edition to withhold the whole title.
+      const mixed = { ...shortTitle, title: "{value.annual.base} against {value.annual.plan}. Pending." };
+      expect(modelWordRule(mixed, "investment", missingValue, "one_page")).toBeNull();
+    });
+
+    it("still fails on content: an invented figure or an internal word", () => {
+      expect(modelWordRule({ ...shortTitle, title: "Value of $1,200 is {value.annual.plan}" }, "investment", missingValue, "one_page")).toBe("literal_figure");
+      expect(modelWordRule({ ...shortTitle, title: "The ROM case is {value.annual.plan}" }, "investment", missingValue, "one_page")).toBe("internal_client_word");
+    });
+
+    it("keeps the slide's drafted answer and notes instead of falling back", async () => {
+      const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({ words: [shortTitle] }) }] });
+      mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+      const result = await draftEditionWords({ ...input, edition: "investment", archetypes: ["one_page"], slots: missingValue });
+      expect(result).toEqual({ status: "ok", words: [shortTitle], fallbackSlides: [] });
+      expect(create).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("fallback causes and repair diagnostics", () => {
     const two = { ...input, archetypes: ["one_page", "assumptions"] as Parameters<typeof draftEditionWords>[0]["archetypes"] };
     const good = (title: string) => ({ title, answer: "Review the counted basis and its source.", notes: "The point: confirm the basis. How to read: inspect the source line." });
