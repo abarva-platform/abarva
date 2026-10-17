@@ -380,6 +380,68 @@ describe("live-input reference edition", () => {
       finding.kind === "reference_source" && "slide" in finding && finding.slide === 2)).toEqual([]);
   }, 60_000);
 
+  describe("investment economics on the value-ledger slide", () => {
+    const withEconomics = (extra: Record<string, unknown>) => {
+      const inputs = fixture("investment");
+      if (inputs.valueCase.status !== "ready") throw new Error("fixture");
+      const caseBody = inputs.valueCase.value.case as { economics: Record<string, unknown> };
+      Object.assign(caseBody.economics, extra);
+      return inputs;
+    };
+    const ECONOMICS = { npvCents: { base: 681_000_000 }, paybackMonth: { base: 13 }, breakevenRealisation: { base: 0.0731 } };
+    const ledger = (spec: ReturnType<typeof buildReferenceEdition>) => spec.slides.find((slide) => slide.archetype === "value_ledger")!;
+
+    it("shows NPV, payback and breakeven realisation, bound to the slots' sources and displays", async () => {
+      const inputs = withEconomics(ECONOMICS);
+      const spec = buildReferenceEdition(inputs, words(INVESTMENT_SEQUENCE.length));
+      const metricsBlock = ledger(spec).blocks.find((block) => block.kind === "metrics");
+      expect(metricsBlock && metricsBlock.kind === "metrics" ? metricsBlock.items.map((item) => [item.label, item.value]) : null).toEqual([
+        ["Net present value", { display: "$6.81M", sourceId: "engine:npv_base", workbookCell: expect.any(String) }],
+        ["Payback", { display: "month 13", sourceId: "engine:payback_month_base", workbookCell: expect.any(String) }],
+        ["Breakeven realisation", { display: "7%", sourceId: "engine:breakeven_realisation_base", workbookCell: expect.any(String) }],
+      ]);
+      // The three-year slide keeps its year-by-year chart.
+      expect(spec.slides.find((slide) => slide.archetype === "three_year_value")!.blocks.some((block) => block.kind === "bars")).toBe(true);
+      const slots = buildReferenceSlotTable(inputs);
+      expect(["value.npv.plan", "value.payback.plan", "value.breakeven.realisation"].map((key) => [slots[key]!.display, slots[key]!.sourceId])).toEqual([
+        ["$6.81M", "engine:npv_base"], ["month 13", "engine:payback_month_base"], ["7%", "engine:breakeven_realisation_base"],
+      ]);
+      const displays = new Map<string, Set<string>>();
+      for (const figure of spec.figureLedger) displays.set(figure.sourceId, (displays.get(figure.sourceId) ?? new Set()).add(figure.display));
+      expect(["engine:npv_base", "engine:payback_month_base", "engine:breakeven_realisation_base"].map((id) => displays.get(id)?.size)).toEqual([1, 1, 1]);
+      expect(validateReferenceDeck(spec).filter((finding) => finding.blocking)).toEqual([]);
+      const slideNumber = spec.slides.indexOf(ledger(spec)) + 1;
+      const findings = judgeRenderedDeck(await inspectDeck(await renderReferenceDeck(spec)), { referenceDeck: spec }).findings
+        .filter((finding) => "slide" in finding && finding.slide === slideNumber);
+      expect(findings).toEqual([]);
+    }, 60_000);
+
+    it("states a payback that is never reached as a finding, and a negative NPV in accounting form", () => {
+      const inputs = withEconomics({ npvCents: { base: -12_000_000 }, paybackMonth: { base: null }, breakevenRealisation: { base: 1.1016 } });
+      const spec = buildReferenceEdition(inputs, words(INVESTMENT_SEQUENCE.length));
+      const metricsBlock = ledger(spec).blocks.find((block) => block.kind === "metrics");
+      expect(metricsBlock && metricsBlock.kind === "metrics" ? metricsBlock.items.map((item) => typeof item.value === "string" ? item.value : item.value.display) : null)
+        .toEqual(["$(0.12)M", "Not within the horizon", "110%"]);
+      const payback = buildReferenceSlotTable(inputs)["value.payback.plan"]!;
+      expect([payback.display, payback.missingPhrase]).toEqual([null, "not reached within the horizon"]);
+    });
+
+    it("keeps the validation edition free of investment economics", () => {
+      const inputs = withEconomics(ECONOMICS);
+      inputs.edition = "validation";
+      const spec = buildReferenceEdition(inputs, words(VALIDATION_SEQUENCE.length));
+      expect(JSON.stringify(spec.slides.map((slide) => slide.blocks))).not.toMatch(/Net present value|Payback|Breakeven realisation/);
+      expect(spec.figureLedger.some((figure) => /npv|payback|breakeven/.test(figure.sourceId))).toBe(false);
+      const slots = buildReferenceSlotTable(inputs);
+      expect(["value.npv.plan", "value.payback.plan", "value.breakeven.realisation"].every((key) => !slots[key]!.editions.includes("validation"))).toBe(true);
+    });
+
+    it("adds no economics row when the case carries none of the three", () => {
+      const spec = buildReferenceEdition(fixture("investment"), words(INVESTMENT_SEQUENCE.length));
+      expect(ledger(spec).blocks.map((block) => block.kind)).toEqual(["table"]);
+    });
+  });
+
   it("uses one client-language panel for each empty exhibit and keeps partial rows", () => {
     const inputs = fixture("validation");
     inputs.register = { status: "ready", value: { assumptions: [], figuresRedacted: false } };

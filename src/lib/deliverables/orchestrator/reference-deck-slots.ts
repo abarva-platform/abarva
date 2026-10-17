@@ -1,6 +1,7 @@
 import type { EditionInputs } from "./reference-deck-inputs";
 import type { ReferenceArchetype, ReferenceEdition, ReferenceNarrativeEvidence } from "./reference-deck-model";
 import { parseOperatingAdoption } from "@/lib/programs/operating-adoption";
+import { formatConsultantCents, formatConsultantPercent } from "@/lib/programs/value-engine/format-money";
 
 export interface ReferenceSlot {
   key: string;
@@ -66,6 +67,26 @@ export function buildReferenceSlotTable(inputs: EditionInputs): ReferenceSlotTab
       `creditedEarned_year_${year + 1}`, Array.isArray(annual) ? cents(annual[year]) : null, investment);
   });
   value("roi.three_year.credited", "three-year credited return on investment", "creditedEarned_roi", ratio(basis("creditedEarned")?.roi), investment);
+  // The investment economics on credited cash received, as the engine computes
+  // them. Each display uses the exhibit's own formatter, so a title and the
+  // three-year slide's metrics read the same figure.
+  const scenarioBase = (key: string): unknown => obj(economics?.[key])?.base;
+  const npvCents = scenarioBase("npvCents");
+  value("value.npv.plan", "net present value of credited cash received over the horizon, after the one-time investment, on the value-engine base",
+    "npv_base", typeof npvCents === "number" && Number.isSafeInteger(npvCents) ? formatConsultantCents(npvCents) : null, investment);
+  const payback = scenarioBase("paybackMonth");
+  add({
+    key: "value.payback.plan", meaning: "the month in which cumulative credited cash received first covers the one-time investment, on the value-engine base",
+    display: typeof payback === "number" && Number.isInteger(payback) && payback > 0 ? `month ${payback}` : null,
+    sourceId: typeof payback === "number" && payback > 0 ? "engine:payback_month_base" : "gap:value_payback_plan",
+    sourceLabel: typeof payback === "number" && payback > 0 ? "Value engine: payback month base" : valueMissing,
+    // An evaluated case that never repays within its horizon is a finding, not a missing input.
+    missingPhrase: economics && payback === null ? "not reached within the horizon" : valueMissing,
+    editions: investment,
+  });
+  const realisation = scenarioBase("breakevenRealisation");
+  value("value.breakeven.realisation", "share of the modelled credited cash, received on the same schedule, at which net present value is zero",
+    "breakeven_realisation_base", typeof realisation === "number" && Number.isFinite(realisation) && realisation > 0 ? formatConsultantPercent(realisation) : null, investment);
   const rom = inputs.rom.status === "ready" ? inputs.rom.value : null;
   add({
     key: "rom.total.plan", meaning: "approved combined delivery estimate at plan basis",
