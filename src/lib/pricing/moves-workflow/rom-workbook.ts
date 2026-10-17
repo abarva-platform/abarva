@@ -47,6 +47,8 @@ export const ROM_WORKBOOK_SHEETS = {
   assumptions: "Assumptions",
   /** Added only when the ROM carries an AI-assisted scenario. */
   aiAssisted: "AI-Assisted Scenario",
+  /** The engine's figures beside the workbook's formulas; every difference is 0. */
+  check: "Check",
 } as const;
 
 export const ROM_WORKBOOK_CONTENT_TYPE =
@@ -79,6 +81,8 @@ export interface RomWorkbookLayout {
     highCents: string;
     naiveSumCents: string | null;
   };
+  /** On the Check sheet: the cell that sums every absolute difference, and how many figures it checks. */
+  check: { totalAbsoluteDifference: string; rows: number };
   /** Addresses on the AI-Assisted Scenario sheet, when the ROM carries one. */
   aiAssisted: {
     hours: string;
@@ -819,11 +823,57 @@ export function buildRomWorkbook(rom: RomResult): {
       })
     : null;
 
-  for (const ws of [est, lib, podWs, rel, asm]) {
+  // ── Check: the engine's own figures beside the formulas above. A reader
+  // who changes an input sees the difference move off 0 here.
+  const check = wb.addWorksheet(ROM_WORKBOOK_SHEETS.check);
+  styleHeader(check.addRow(["Figure", "Engine", "Workbook", "Difference", "Absolute difference"]));
+  const checks: { label: string; engine: number; sheet: string; address: string }[] = [];
+  const blockChecks = (name: string, block: RomPricedBlock, cells: RomWorkbookBlockCells) => {
+    checks.push(
+      { label: `${name}: hours`, engine: block.hours, sheet: ROM_WORKBOOK_SHEETS.estimate, address: cells.hours },
+      { label: `${name}: weeks`, engine: block.weeks, sheet: ROM_WORKBOOK_SHEETS.estimate, address: cells.weeks },
+      { label: `${name}: low (cents)`, engine: block.range.lowCents, sheet: ROM_WORKBOOK_SHEETS.estimate, address: cells.lowCents },
+      { label: `${name}: plan (cents)`, engine: block.range.planCents, sheet: ROM_WORKBOOK_SHEETS.estimate, address: cells.planCents },
+      { label: `${name}: high (cents)`, engine: block.range.highCents, sheet: ROM_WORKBOOK_SHEETS.estimate, address: cells.highCents },
+    );
+  };
+  for (const release of rom.releases) blockChecks(text(release.name), release.own, layoutReleases[release.code]!);
+  if (rom.foundation && foundationCells) blockChecks(text(rom.foundation.priced.name), rom.foundation.priced, foundationCells);
+  checks.push(
+    { label: "Total: hours", engine: rom.total.hours, sheet: ROM_WORKBOOK_SHEETS.releases, address: `E${totalRow}` },
+    { label: "Total: low (cents)", engine: rom.total.lowCents, sheet: ROM_WORKBOOK_SHEETS.releases, address: `G${totalRow}` },
+    { label: "Total: plan (cents)", engine: rom.total.planCents, sheet: ROM_WORKBOOK_SHEETS.releases, address: `H${totalRow}` },
+    { label: "Total: high (cents)", engine: rom.total.highCents, sheet: ROM_WORKBOOK_SHEETS.releases, address: `I${totalRow}` },
+  );
+  if (rom.aiAssisted && aiLayout) {
+    const ai = rom.aiAssisted;
+    checks.push(
+      { label: "AI-assisted scenario: hours", engine: ai.total.hours, sheet: ROM_WORKBOOK_SHEETS.aiAssisted, address: aiLayout.hours },
+      { label: "AI-assisted scenario: weeks", engine: ai.total.weeks, sheet: ROM_WORKBOOK_SHEETS.aiAssisted, address: aiLayout.weeks },
+      { label: "AI-assisted scenario: tool cost (cents)", engine: ai.toolCostCents, sheet: ROM_WORKBOOK_SHEETS.aiAssisted, address: aiLayout.toolCostCents },
+      { label: "AI-assisted scenario: plan (cents)", engine: ai.total.planCents, sheet: ROM_WORKBOOK_SHEETS.aiAssisted, address: aiLayout.planCents },
+    );
+  }
+  checks.forEach((entry, i) => {
+    const r = 2 + i;
+    check.getCell(`A${r}`).value = entry.label;
+    check.getCell(`B${r}`).value = entry.engine;
+    setFormula(check, `C${r}`, sheetRef(entry.sheet, entry.address), entry.engine);
+    setFormula(check, `D${r}`, `C${r}-B${r}`, 0);
+    setFormula(check, `E${r}`, `ABS(D${r})`, 0);
+  });
+  const checkTotalRow = 2 + checks.length + 1;
+  check.getCell(`A${checkTotalRow}`).value = "Total absolute difference (0 when the workbook matches the engine)";
+  check.getCell(`A${checkTotalRow}`).font = { bold: true };
+  setFormula(check, `E${checkTotalRow}`, `SUM(E2:E${checkTotalRow - 2})`, 0);
+  check.getCell(`E${checkTotalRow}`).font = { bold: true };
+
+  for (const ws of [est, lib, podWs, rel, asm, check]) {
     ws.columns.forEach((col) => {
       col.width = 18;
     });
   }
+  check.getColumn(1).width = 52;
   for (const [column, width] of [
     [1, 6], [2, 17], [3, 12], [4, 23], [5, 17], [6, 8],
     [8, 52], [10, 44], [12, 44], [16, 27], [17, 62], [18, 58],
@@ -851,6 +901,7 @@ export function buildRomWorkbook(rom: RomResult): {
         naiveSumCents: naiveCell,
       },
       aiAssisted: aiLayout,
+      check: { totalAbsoluteDifference: `E${checkTotalRow}`, rows: checks.length },
     },
   };
 }
