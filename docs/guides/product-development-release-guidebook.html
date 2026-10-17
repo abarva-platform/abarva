@@ -1,0 +1,1062 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AbarVa Product Development and Release Guidebook</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #172033;
+        --muted: #5b6475;
+        --soft: #f5f7fb;
+        --panel: #ffffff;
+        --line: #d9e0ea;
+        --navy: #071526;
+        --blue: #0d6efd;
+        --teal: #087f8c;
+        --green: #16794f;
+        --amber: #a15c00;
+        --red: #b42318;
+        --shadow: 0 18px 50px rgba(7, 21, 38, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #eef2f7;
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        line-height: 1.55;
+      }
+
+      a {
+        color: var(--blue);
+      }
+
+      .shell {
+        min-height: 100vh;
+      }
+
+      header {
+        background: var(--navy);
+        color: #fff;
+        padding: 40px 28px 34px;
+      }
+
+      .header-inner,
+      main {
+        width: min(1180px, calc(100vw - 40px));
+        margin: 0 auto;
+      }
+
+      .eyebrow {
+        margin: 0 0 14px;
+        color: #98d7ff;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 900px;
+        font-size: clamp(2.3rem, 6vw, 4.8rem);
+        line-height: 0.98;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        max-width: 850px;
+        margin: 22px 0 0;
+        color: #d5e2f4;
+        font-size: clamp(1.05rem, 2vw, 1.28rem);
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 28px;
+      }
+
+      .hero-card {
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 8px;
+        padding: 16px;
+        background: rgba(255, 255, 255, 0.07);
+      }
+
+      .hero-card b {
+        display: block;
+        margin-bottom: 5px;
+        color: #fff;
+      }
+
+      .hero-card span {
+        color: #bfd0e7;
+        font-size: 0.92rem;
+      }
+
+      main {
+        padding: 28px 0 64px;
+      }
+
+      .toc {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 26px;
+      }
+
+      .toc a {
+        display: flex;
+        align-items: center;
+        min-height: 54px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 12px;
+        background: var(--panel);
+        color: var(--ink);
+        font-size: 0.9rem;
+        font-weight: 750;
+        text-decoration: none;
+      }
+
+      section {
+        margin: 18px 0;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .section-head {
+        padding: 24px 26px 18px;
+        border-bottom: 1px solid var(--line);
+        background: linear-gradient(180deg, #fff, #f8fafc);
+      }
+
+      .section-head h2 {
+        margin: 0;
+        font-size: clamp(1.45rem, 3vw, 2.2rem);
+        line-height: 1.08;
+        letter-spacing: 0;
+      }
+
+      .section-head p {
+        max-width: 880px;
+        margin: 10px 0 0;
+        color: var(--muted);
+      }
+
+      .section-body {
+        padding: 24px 26px 28px;
+      }
+
+      h3 {
+        margin: 0 0 10px;
+        font-size: 1.08rem;
+      }
+
+      p {
+        margin: 0 0 14px;
+      }
+
+      ul,
+      ol {
+        margin-top: 0;
+        padding-left: 21px;
+      }
+
+      li {
+        margin: 7px 0;
+      }
+
+      code {
+        border: 1px solid #d5dde8;
+        border-radius: 5px;
+        padding: 1px 5px;
+        background: #f5f7fa;
+        color: #23324a;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-size: 0.9em;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .mini-card,
+      .callout {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 16px;
+        background: #fbfcff;
+      }
+
+      .callout {
+        margin: 16px 0;
+        border-left: 5px solid var(--blue);
+      }
+
+      .callout.warning {
+        border-left-color: var(--amber);
+      }
+
+      .callout.danger {
+        border-left-color: var(--red);
+      }
+
+      .callout.good {
+        border-left-color: var(--green);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 14px 0 18px;
+        font-size: 0.94rem;
+      }
+
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 11px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #f1f5fa;
+        color: #2a3850;
+        font-size: 0.82rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 3px 9px;
+        background: #edf4ff;
+        color: #164b8f;
+        font-size: 0.78rem;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .status-red {
+        background: #fff1f0;
+        color: var(--red);
+      }
+
+      .status-green {
+        background: #edf8f2;
+        color: var(--green);
+      }
+
+      .status-amber {
+        background: #fff7e8;
+        color: var(--amber);
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 10px;
+        margin: 16px 0;
+      }
+
+      .flow div {
+        position: relative;
+        min-height: 118px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px;
+        background: #fff;
+      }
+
+      .flow b {
+        display: block;
+        margin-bottom: 7px;
+        color: var(--teal);
+      }
+
+      .small {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .footer-note {
+        margin-top: 24px;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 980px) {
+        .hero-grid,
+        .toc,
+        .grid-3,
+        .flow {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .header-inner,
+        main {
+          width: min(100vw - 24px, 1180px);
+        }
+
+        header {
+          padding: 30px 16px;
+        }
+
+        .hero-grid,
+        .toc,
+        .grid-3,
+        .flow {
+          grid-template-columns: 1fr;
+        }
+
+        .section-head,
+        .section-body {
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+
+        table {
+          display: block;
+          overflow-x: auto;
+          white-space: nowrap;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <div class="header-inner">
+          <p class="eyebrow">AbarVa operating guidebook</p>
+          <h1>Product development and release for pilot-ready environments</h1>
+          <p class="subtitle">
+            The future way of building AbarVa: many contributors, many agents, one release spine.
+            This guide turns today's lab habits into a governed Product Dev, Product Preview, and
+            Product Prod operating model that can support pilot clients and new team members.
+          </p>
+          <div class="hero-grid" aria-label="Guidebook summary">
+            <div class="hero-card">
+              <b>One source of truth</b>
+              <span>Backlog, PR, release record, evidence, and runtime proof stay linked.</span>
+            </div>
+            <div class="hero-card">
+              <b>No direct-to-prod drift</b>
+              <span>Agents do not mutate shared production outside the approved lane.</span>
+            </div>
+            <div class="hero-card">
+              <b>Preview proves readiness</b>
+              <span>Client-impacting changes rehearse in Product Preview before Prod.</span>
+            </div>
+            <div class="hero-card">
+              <b>Browser proof wins</b>
+              <span>Deployed is not done until signed-in runtime behavior is verified.</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <nav class="toc" aria-label="Guidebook navigation">
+          <a href="#why">Why This Exists</a>
+          <a href="#environments">Environment Model</a>
+          <a href="#rules">Agent Rules</a>
+          <a href="#backlog">Backlog System</a>
+          <a href="#release">Release Flow</a>
+          <a href="#proof">Proof Standard</a>
+          <a href="#pilots">Pilot Readiness</a>
+          <a href="#cadence">Team Cadence</a>
+          <a href="#emergency">Emergency Path</a>
+          <a href="#starter">New Joiner Start</a>
+          <a href="#templates">Templates</a>
+          <a href="#current">Current Baseline</a>
+        </nav>
+
+        <section id="why">
+          <div class="section-head">
+            <h2>1. Why This Exists</h2>
+            <p>
+              The lab style was optimized for founder speed. The product style must be optimized
+              for pilot trust, team coexistence, and repeatable deployment evidence.
+            </p>
+          </div>
+          <div class="section-body">
+            <div class="grid-2">
+              <div class="mini-card">
+                <h3>Today risk</h3>
+                <ul>
+                  <li>Multiple agents can deploy unrelated changes into the same live surface.</li>
+                  <li>Runtime state can drift from merged code or from the intended image digest.</li>
+                  <li>Backlog intent, PR scope, release evidence, and browser proof are separated.</li>
+                  <li>New contributors cannot tell which lane is safe without asking Anand.</li>
+                </ul>
+              </div>
+              <div class="mini-card">
+                <h3>Target behavior</h3>
+                <ul>
+                  <li>Every change has one backlog item, one owning branch, and one release record.</li>
+                  <li>Dev absorbs iteration. Preview absorbs release-candidate rehearsal. Prod stays boring.</li>
+                  <li>Agent work is isolated, reviewable, and mergeable without hidden operational side effects.</li>
+                  <li>Client pilots get evidence, rollback, ownership, and signed-in proof by default.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="callout danger">
+              <h3>Product rule</h3>
+              <p>
+                No one, human or agent, calls a change ready for pilot clients because code merged,
+                an image built, or a health endpoint returned green. Readiness means the right
+                environment, the right data boundary, the right identity boundary, and the right
+                signed-in user journey all pass with captured evidence.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="environments">
+          <div class="section-head">
+            <h2>2. Environment Model</h2>
+            <p>
+              The Product lane has three shared environments. Client private planes are separate
+              lanes and should not be confused with Product Prod.
+            </p>
+          </div>
+          <div class="section-body">
+            <table>
+              <thead>
+                <tr>
+                  <th>Environment</th>
+                  <th>Purpose</th>
+                  <th>Allowed work</th>
+                  <th>Not allowed</th>
+                  <th>Exit gate</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="pill">Product Dev</span></td>
+                  <td>Integration lane for active product development.</td>
+                  <td>Feature integration, schema rehearsal, synthetic data, auth setup, module QA.</td>
+                  <td>Client production claims, public DNS cutover, destructive data moves.</td>
+                  <td>Focused tests, release record, Dev deployment proof, signed-in smoke when route-facing.</td>
+                </tr>
+                <tr>
+                  <td><span class="pill">Product Preview</span></td>
+                  <td>Release-candidate proving ground.</td>
+                  <td>End-to-end rehearsal, client-pilot dry run, migration rehearsal, stakeholder QA.</td>
+                  <td>Unreviewed experiments, direct agent hotfixes, unapproved client data loading.</td>
+                  <td>Go/no-go evidence packet, browser proof, rollback rehearsal, data and auth checks.</td>
+                </tr>
+                <tr>
+                  <td><span class="pill">Product Prod</span></td>
+                  <td>Stable shared product runtime.</td>
+                  <td>Approved release promotion only, monitored fixes, controlled flags.</td>
+                  <td>Direct-to-prod agent work, branch image tests, ad-hoc env changes, unproven migrations.</td>
+                  <td>Runtime invariant, traffic proof, signed-in proof, release status update.</td>
+                </tr>
+                <tr>
+                  <td><span class="pill">Client Preprod</span></td>
+                  <td>Client-specific rehearsal plane.</td>
+                  <td>Private data onboarding, tenant-specific integration, SSO rehearsal.</td>
+                  <td>Shared Product Prod mutation, synthetic claims presented as client truth.</td>
+                  <td>Client data lineage, retrieval proof, SSO proof, security approval.</td>
+                </tr>
+                <tr>
+                  <td><span class="pill">Client Prod</span></td>
+                  <td>Client-specific production plane when sold or approved.</td>
+                  <td>Client-approved production workloads only.</td>
+                  <td>Lab experimentation, shared demo data, unapproved model/data egress.</td>
+                  <td>Signed client go/no-go, rollback, monitoring, support owner.</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="callout">
+              <h3>Promotion principle</h3>
+              <p>
+                The default path is Product Dev to Product Preview to Product Prod. A client data
+                or private-plane lane adds Client Preprod before Client Prod. Skipping a lane is a
+                named exception, not a habit.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="rules">
+          <div class="section-head">
+            <h2>3. Agent And Workload Rules</h2>
+            <p>
+              These rules make multi-agent work possible without turning the platform into a race
+              between whoever deployed last.
+            </p>
+          </div>
+          <div class="section-body">
+            <div class="grid-3">
+              <div class="mini-card">
+                <h3>Branch discipline</h3>
+                <ul>
+                  <li>Start from current <code>origin/main</code>.</li>
+                  <li>Use one branch per backlog slice.</li>
+                  <li>Do not mix unrelated local changes into a release branch.</li>
+                  <li>Open a PR. Do not push directly to <code>main</code>.</li>
+                </ul>
+              </div>
+              <div class="mini-card">
+                <h3>Runtime discipline</h3>
+                <ul>
+                  <li>Do not use Vercel as product runtime evidence.</li>
+                  <li>Do not mutate shared ACA traffic from a feature branch.</li>
+                  <li>Use digest-pinned images for ACA web and worker runtime.</li>
+                  <li>Run runtime invariant checks after deploy or env changes.</li>
+                </ul>
+              </div>
+              <div class="mini-card">
+                <h3>Data discipline</h3>
+                <ul>
+                  <li>Data builds run as ACA Jobs, not web requests.</li>
+                  <li>Report loaded, indexed, retrievable, cited, and answer-used separately.</li>
+                  <li>Never send raw ungoverned context to Claude.</li>
+                  <li>Tenant scope and source lineage are mandatory.</li>
+                </ul>
+              </div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Action</th>
+                  <th>Allowed owner</th>
+                  <th>Required proof</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Build product web image</td>
+                  <td>Repo-owned ACA deploy workflow</td>
+                  <td>Git SHA, image digest, ACR policy check, Buildx cache used</td>
+                </tr>
+                <tr>
+                  <td>Promote to Product Preview or Prod</td>
+                  <td>Release owner through approved lane</td>
+                  <td>Release record, runtime invariant, health check, signed-in smoke</td>
+                </tr>
+                <tr>
+                  <td>Change env vars or secrets</td>
+                  <td>Named operator with release record</td>
+                  <td>Secret reference proof, no value exposure, runtime invariant after change</td>
+                </tr>
+                <tr>
+                  <td>Run data migration or build</td>
+                  <td>Data-plane owner through ACA Job</td>
+                  <td>Dry run, idempotency key, proof bundle, validation output, rollback plan</td>
+                </tr>
+                <tr>
+                  <td>Prune ACR images</td>
+                  <td>Ops owner only</td>
+                  <td>Dry run first, keep active digest and rollback window, named approval for untagged purge</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="backlog">
+          <div class="section-head">
+            <h2>4. Backlog Operating System</h2>
+            <p>
+              The backlog is not just a list of ideas. It is the control surface that tells agents
+              what to build, what not to touch, how to prove it, and where it may be released.
+            </p>
+          </div>
+          <div class="section-body">
+            <div class="flow" aria-label="Backlog flow">
+              <div><b>1. Intake</b><span>Capture problem, user, client impact, and why now.</span></div>
+              <div><b>2. Classify</b><span>Assign lane, module, environment, risk, owner, and proof bar.</span></div>
+              <div><b>3. Slice</b><span>Cut into PR-sized work that one agent or engineer can own.</span></div>
+              <div><b>4. Build</b><span>Implement on a branch with tests and release record.</span></div>
+              <div><b>5. Prove</b><span>Run local, deployed, signed-in, and data checks as applicable.</span></div>
+              <div><b>6. Close</b><span>Update backlog state with PR, deploy, screenshots, gaps, and next slice.</span></div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Meaning</th>
+                  <th>Move forward when</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="pill status-amber">Intake</span></td>
+                  <td>Problem is known but not shaped.</td>
+                  <td>Owner, client impact, and release lane are named.</td>
+                </tr>
+                <tr>
+                  <td><span class="pill status-amber">Ready to slice</span></td>
+                  <td>Scope is clear enough to break into agent work.</td>
+                  <td>Acceptance criteria and proof artifacts are written.</td>
+                </tr>
+                <tr>
+                  <td><span class="pill">In progress</span></td>
+                  <td>One owner is actively building.</td>
+                  <td>PR includes tests, release record, and evidence.</td>
+                </tr>
+                <tr>
+                  <td><span class="pill">Preview candidate</span></td>
+                  <td>Ready for Product Preview rehearsal.</td>
+                  <td>Preview smoke and go/no-go evidence pass.</td>
+                </tr>
+                <tr>
+                  <td><span class="pill status-green">Released</span></td>
+                  <td>Promoted to intended environment.</td>
+                  <td>Runtime proof, browser proof, and backlog closure are linked.</td>
+                </tr>
+                <tr>
+                  <td><span class="pill status-red">Blocked</span></td>
+                  <td>Needs decision, dependency, credential, data, or design input.</td>
+                  <td>Blocker owner and next decision date are explicit.</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="grid-2">
+              <div class="mini-card">
+                <h3>Backlog item must include</h3>
+                <ul>
+                  <li>Problem statement and desired user outcome.</li>
+                  <li>Release lane and target environment.</li>
+                  <li>Client applicability: all clients, specific tenants, internal only, or demo only.</li>
+                  <li>Files/modules likely touched and collision warning if another PR touches them.</li>
+                  <li>Acceptance criteria with commands and browser proof.</li>
+                  <li>Rollback or disablement approach.</li>
+                </ul>
+              </div>
+              <div class="mini-card">
+                <h3>Weekly backlog review</h3>
+                <ul>
+                  <li>Review pilot blockers first: auth, data, retrieval, module-critical UX, security.</li>
+                  <li>Promote only items with evidence, not optimistic status.</li>
+                  <li>Archive stale lab experiments that are not attached to a product lane.</li>
+                  <li>Reserve explicit capacity for bugs found by deployed browser QA.</li>
+                  <li>Keep a visible "do not start" list for gated migrations or client data moves.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="release">
+          <div class="section-head">
+            <h2>5. Release Flow</h2>
+            <p>
+              Every release walks through the same evidence ladder. The ladder is deliberately
+              plain because it is how new team members and agents avoid overclaiming.
+            </p>
+          </div>
+          <div class="section-body">
+            <table>
+              <thead>
+                <tr>
+                  <th>Step</th>
+                  <th>Question</th>
+                  <th>Required artifact</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Code ready</td>
+                  <td>Does the change exist on a branch with the expected diff?</td>
+                  <td>PR, focused diff, tests, release record.</td>
+                </tr>
+                <tr>
+                  <td>Merged</td>
+                  <td>Did the PR land in <code>main</code>?</td>
+                  <td>Squash merge commit and updated release record.</td>
+                </tr>
+                <tr>
+                  <td>Built</td>
+                  <td>Was the exact merge SHA built into an image?</td>
+                  <td>ACR tag, digest, Buildx cache proof, ACR SKU proof.</td>
+                </tr>
+                <tr>
+                  <td>Deployed</td>
+                  <td>Is the target ACA revision running the exact digest?</td>
+                  <td>Container App image, traffic revision, health response.</td>
+                </tr>
+                <tr>
+                  <td>Browser-visible</td>
+                  <td>Can the right signed-in user see and use it?</td>
+                  <td>Playwright screenshots, route URLs, console/network notes.</td>
+                </tr>
+                <tr>
+                  <td>Data-usable</td>
+                  <td>Can the app read, retrieve, cite, and answer from the right data?</td>
+                  <td>Counts, lineage, retrieval proof, answer transcript, tenant fence proof.</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="callout good">
+              <h3>Language standard</h3>
+              <p>
+                Use precise status words. Say "merged", "deployed", "browser-visible",
+                "signed-in proven", "retrieval-proven", or "blocked". Do not compress those
+                states into "done".
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="proof">
+          <div class="section-head">
+            <h2>6. Proof Standard</h2>
+            <p>
+              Proof is what lets a pilot buyer, auditor, founder, or new engineer trust the
+              platform without needing to know which agent made the change.
+            </p>
+          </div>
+          <div class="section-body">
+            <div class="grid-3">
+              <div class="mini-card">
+                <h3>Code proof</h3>
+                <ul>
+                  <li><code>git diff --check</code> on touched files.</li>
+                  <li>Focused unit or integration tests.</li>
+                  <li><code>npm run release:check</code> when release-relevant.</li>
+                  <li>Architecture/provider audits for runtime or data-plane changes.</li>
+                </ul>
+              </div>
+              <div class="mini-card">
+                <h3>Runtime proof</h3>
+                <ul>
+                  <li>Image digest and active ACA revision.</li>
+                  <li>100 percent traffic target for the expected revision.</li>
+                  <li>Health endpoint with Postgres and graph/data-plane status.</li>
+                  <li>Worker job image match when worker behavior changed.</li>
+                </ul>
+              </div>
+              <div class="mini-card">
+                <h3>Experience proof</h3>
+                <ul>
+                  <li>Signed-in route screenshots.</li>
+                  <li>Representative happy path and failure path.</li>
+                  <li>Client-friendly response quality review.</li>
+                  <li>No raw IDs, unexplained metrics, or internal debug language.</li>
+                </ul>
+              </div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Change type</th>
+                  <th>Minimum proof</th>
+                  <th>Extra proof before pilots</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Static doc or guide</td>
+                  <td>Link check, visual open, release record.</td>
+                  <td>Founder/team review and backlog adoption.</td>
+                </tr>
+                <tr>
+                  <td>UI or route</td>
+                  <td>Focused tests, browser screenshot, console check.</td>
+                  <td>Signed-in role test in Product Preview and Prod smoke if promoted.</td>
+                </tr>
+                <tr>
+                  <td>Auth or tenant access</td>
+                  <td>Clerk/user metadata proof without secret leakage.</td>
+                  <td>Per-tenant login, route access, tenant fence, sign-out/re-entry.</td>
+                </tr>
+                <tr>
+                  <td>Data or retrieval</td>
+                  <td>Dry run, lineage, counts, row/chunk facts, retrieval transcript.</td>
+                  <td>Tenant-scoped browser answer QA with citations and screenshots.</td>
+                </tr>
+                <tr>
+                  <td>Migration</td>
+                  <td>Dry run, destructive scan, rollback plan, empty-env replay if possible.</td>
+                  <td>Preview rehearsal, backup/restore posture, go/no-go approval.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="pilots">
+          <div class="section-head">
+            <h2>7. Pilot Client Readiness</h2>
+            <p>
+              Pilot readiness is a product and operations claim. It is not the same thing as a
+              feature demo.
+            </p>
+          </div>
+          <div class="section-body">
+            <div class="grid-2">
+              <div class="mini-card">
+                <h3>Must be green</h3>
+                <ul>
+                  <li>Product Dev and Product Preview are operational and current.</li>
+                  <li>Clerk or client SSO works for test personas in the target environment.</li>
+                  <li>Tenant metadata, default client, and roles are correct.</li>
+                  <li>Home, Intelligence, Moves, Source, and Tower route smoke passes.</li>
+                  <li>Client data sources have lineage, governance status, and retrieval proof.</li>
+                  <li>Rollback is rehearsed or operationally credible.</li>
+                </ul>
+              </div>
+              <div class="mini-card">
+                <h3>Must be explicit</h3>
+                <ul>
+                  <li>Which tenant data is synthetic, client-provided, or interview-derived.</li>
+                  <li>Which insights are deterministic versus Claude-generated narrative.</li>
+                  <li>Which datasets are loaded, indexed, retrievable, cited, and dashboard-visible.</li>
+                  <li>Which modules are in pilot scope and which are intentionally hidden.</li>
+                  <li>Who owns incidents, data corrections, client access, and release approval.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="callout warning">
+              <h3>Current blocker class</h3>
+              <p>
+                Auth cannot be hand-waved. If Clerk variables exist but signed-in routes redirect,
+                loop, time out, or fail hosted sign-in, the environment is not pilot-ready. The
+                guidebook treats that as a release blocker until signed-in browser proof passes.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="cadence">
+          <div class="section-head">
+            <h2>8. Team Cadence</h2>
+            <p>
+              The cadence keeps speed, but gives it rails. It also lets new team members work
+              without waiting for tribal knowledge.
+            </p>
+          </div>
+          <div class="section-body">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cadence</th>
+                  <th>Owner</th>
+                  <th>Output</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Daily release board check</td>
+                  <td>Release captain</td>
+                  <td>Active PRs, deployed digest, known blockers, environment health.</td>
+                </tr>
+                <tr>
+                  <td>Backlog triage</td>
+                  <td>Product owner plus engineering lead</td>
+                  <td>Prioritized slices, owner assignment, proof bar, stop-doing list.</td>
+                </tr>
+                <tr>
+                  <td>Preview rehearsal</td>
+                  <td>QA/release owner</td>
+                  <td>Product Preview smoke, screenshots, go/no-go packet.</td>
+                </tr>
+                <tr>
+                  <td>Prod promotion</td>
+                  <td>Release owner</td>
+                  <td>Approved digest, runtime invariant, signed-in proof, rollback note.</td>
+                </tr>
+                <tr>
+                  <td>Monthly governance review</td>
+                  <td>Founder and platform owner</td>
+                  <td>Cost, security, stale resources, release quality, pilot readiness.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="emergency">
+          <div class="section-head">
+            <h2>9. Emergency And Break-Glass Path</h2>
+            <p>
+              Emergencies need a path, but they should leave better evidence than normal work, not
+              less.
+            </p>
+          </div>
+          <div class="section-body">
+            <ol>
+              <li>Name the incident, affected environment, affected clients, and rollback owner.</li>
+              <li>Prefer rollback to last known good digest before forward-fixing Prod.</li>
+              <li>If a direct Azure mutation is unavoidable, record exact command intent before execution.</li>
+              <li>After mutation, prove image digest, revision traffic, health, and signed-in route behavior.</li>
+              <li>Create a follow-up PR that captures the fix, release record, and postmortem notes.</li>
+            </ol>
+            <div class="callout danger">
+              <h3>Forbidden emergency shortcuts</h3>
+              <p>
+                Do not quietly change Prod env vars, traffic, secrets, or data-plane state and call
+                it a small fix. Emergency work is allowed only when the operator leaves a durable
+                audit trail and restores the normal release lane afterward.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="starter">
+          <div class="section-head">
+            <h2>10. New Joiner Start</h2>
+            <p>
+              A new engineer or agent should be productive without gaining unsafe power over the
+              production lane.
+            </p>
+          </div>
+          <div class="section-body">
+            <div class="grid-2">
+              <div class="mini-card">
+                <h3>First day reading</h3>
+                <ul>
+                  <li><code>AGENTS.md</code></li>
+                  <li><code>docs/releases/RELEASE_CONTROL_POLICY.md</code></li>
+                  <li><code>docs/runbooks/deploy-authority-and-runtime-invariant.md</code></li>
+                  <li><code>docs/ops/aca-data-build-job-rule.md</code></li>
+                  <li>This guidebook</li>
+                </ul>
+              </div>
+              <div class="mini-card">
+                <h3>First week permissions</h3>
+                <ul>
+                  <li>Read access to repo, backlog, release records, and evidence folders.</li>
+                  <li>PR author rights before deployment rights.</li>
+                  <li>Product Dev validation before Product Preview or Prod access.</li>
+                  <li>No direct subscription owner rights unless a role-specific approval exists.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="templates">
+          <div class="section-head">
+            <h2>11. Templates</h2>
+            <p>
+              These short forms keep backlog and release conversations consistent.
+            </p>
+          </div>
+          <div class="section-body">
+            <h3>Backlog item</h3>
+            <table>
+              <tbody>
+                <tr><th>Field</th><th>Prompt</th></tr>
+                <tr><td>Title</td><td>What user-visible or operator-visible outcome changes?</td></tr>
+                <tr><td>Why now</td><td>Which pilot, migration, quality, security, or team-scaling need drives it?</td></tr>
+                <tr><td>Lane</td><td>Global control, client data, internal admin, public demo, or experimental?</td></tr>
+                <tr><td>Environment</td><td>Local only, Product Dev, Product Preview, Product Prod, Client Preprod, or Client Prod?</td></tr>
+                <tr><td>Acceptance</td><td>What exact checks and screenshots prove it?</td></tr>
+                <tr><td>Rollback</td><td>How do we disable, revert, or restore?</td></tr>
+              </tbody>
+            </table>
+
+            <h3>PR release note</h3>
+            <table>
+              <tbody>
+                <tr><th>Question</th><th>Required answer</th></tr>
+                <tr><td>What changed?</td><td>Plain-English summary with module and user impact.</td></tr>
+                <tr><td>Who gets it?</td><td>All clients, specific tenants, internal users, or no runtime user.</td></tr>
+                <tr><td>What did you prove?</td><td>Commands, screenshots, deployed evidence, and known gaps.</td></tr>
+                <tr><td>What can go wrong?</td><td>Risk, rollback, data/auth dependencies, and monitoring.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="current">
+          <div class="section-head">
+            <h2>12. Current Baseline And Next Moves</h2>
+            <p>
+              As of this guidebook, the Product runtime lane is improving, but the release process
+              is not yet ready to be treated as pilot-client operating muscle.
+            </p>
+          </div>
+          <div class="section-body">
+            <table>
+              <thead>
+                <tr>
+                  <th>Area</th>
+                  <th>Status</th>
+                  <th>Meaning</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Product Dev, Preview, Prod runtime</td>
+                  <td><span class="pill status-green">Operational at runtime layer</span></td>
+                  <td>ACA health and digest-based operational audit can pass.</td>
+                </tr>
+                <tr>
+                  <td>Signed-in Clerk smoke</td>
+                  <td><span class="pill status-red">Not pilot-ready</span></td>
+                  <td>Clerk env vars can exist while route access still fails. Browser proof is required.</td>
+                </tr>
+                <tr>
+                  <td>Backlog and release governance</td>
+                  <td><span class="pill status-amber">Needs adoption</span></td>
+                  <td>This guidebook should become the default operating agreement for all contributors.</td>
+                </tr>
+                <tr>
+                  <td>Multi-agent deployment</td>
+                  <td><span class="pill status-red">Must be constrained</span></td>
+                  <td>Agents need PR, environment, and deploy-authority rails before client pilot pressure.</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h3>Recommended next actions</h3>
+            <ol>
+              <li>Publish this guidebook and link it from onboarding and release runbooks.</li>
+              <li>Create a live release board that lists active branches, owners, target environment, and proof status.</li>
+              <li>Fix Product Clerk signed-in smoke before any pilot client migration rehearsal.</li>
+              <li>Require every agent prompt to name backlog item, release lane, touched files, and proof bar.</li>
+              <li>Convert recurring high-risk work into templates: auth setup, data load, UI release, migration, and rollback.</li>
+            </ol>
+
+            <p class="footer-note">
+              Last updated: 2026-07-05. This is an operating contract for the AbarVa Product lane,
+              not a claim that every environment is already pilot-ready.
+            </p>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
