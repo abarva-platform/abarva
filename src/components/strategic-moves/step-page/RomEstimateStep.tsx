@@ -1997,7 +1997,7 @@ export function RomEstimateStep(props: RomEstimateStepProps) {
           <span className={cx("item-note")} data-testid="rom-rates-source">
             {ratesUsed
               ? `Rates: your rate card v${ratesUsed.version}${ratesUsed.approvedAt ? `, approved ${shortDate(ratesUsed.approvedAt)}` : ""}.`
-              : "Rates: AbarVa reference rates. No client rate card is loaded for this workspace; a workspace admin can load one in Setup → Rate cards."}
+              : "Rates: AbarVa reference rates. No client rate card is loaded for this workspace; a workspace admin can load one in Admin → Rate cards."}
           </span>
         ) : null}
         {approvalCurrent && newerCard ? (

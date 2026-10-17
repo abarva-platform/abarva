@@ -17,7 +17,7 @@ import { requireTenantAdmin } from "@/lib/auth/tenant-roles";
 export const RATE_CARD_ADMIN_REQUIRED = {
   error: "rate_card_admin_required",
   detail:
-    "Only a workspace admin can load or approve this workspace's rate card. Ask your workspace admin to do it in Setup → Rate cards.",
+    "Only a workspace admin can load or approve this workspace's rate card. Ask your workspace admin to do it in Admin → Rate cards.",
 } as const;
 
 export async function canManageRateCards(tenancy: {
