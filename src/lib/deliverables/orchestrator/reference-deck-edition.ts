@@ -449,7 +449,9 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
         ["02  What", actualFlow ? `The work runs from ${shortLabel(actualFlow.full[0]!, 27)} to ${shortLabel(actualFlow.full.at(-1)!, 27)}.` : "The current handoffs remain to confirm.", "6–7"],
         ["03  Why", annual ? "Counted value has a stated basis for review." : "The value basis remains to confirm.", inputs.edition === "validation" ? "8–9" : "8–9, 11"],
         [inputs.edition === "validation" ? "04  Confirm" : "04  Validate", assumptions.length ? "Working assumptions could change the case." : "The assumptions remain to confirm.", inputs.edition === "validation" ? "10" : "10, 22"],
-        ["05  How", inputs.edition === "validation" ? "Published evidence shows what can be checked." : rom ? "Delivery choices follow the approved estimate." : "The delivery basis remains to confirm.", inputs.edition === "validation" ? "11" : "12–21"],
+        ["05  How", inputs.edition === "validation"
+          ? sourceRows.length ? "Published evidence shows what can be checked." : "Every source is listed; published evidence remains to confirm."
+          : rom ? "Delivery choices follow the approved estimate." : "The delivery basis remains to confirm.", inputs.edition === "validation" ? "11" : "12–21"],
       ])];
       case "divider": return [{ kind: "text", lines: ["The next decision rests on evidence your team can check."] }];
       case "big_number_context": return [
@@ -595,11 +597,29 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
         ...(acceptedOwners.length ? acceptedOwners.slice(0, 2).map((row) => [safeRead(row.owner?.name), "Own change", "Owner review", "Accepted"] as ReferenceCell[])
           : [["To confirm", "Own change", "Owner review", "To confirm"]]),
       ])];
-      case "sources": return sourceRows.length
-        ? [table(["Citation", "Published source"], sourceRows)]
-        : [gapPanel("Published evidence still needs to be confirmed",
-        "No published source has been approved for this case.",
-        "Review and approve the public sources that support the case.")];
+      case "sources": {
+        // Every source the deck rests on, as the reference standard lists them:
+        // published citations, the workshops, the working assumptions, the value
+        // model and, for the investment case, the approved estimate.
+        const rows: ReferenceCell[][] = [
+          ...sourceRows.map(([id, title]) => [id!, "Published source", title!]),
+          ...(sourceRows.length ? [] : [["Published sources", "Public evidence", "None approved yet"]]),
+          ...([[1, "Sponsor workshop", "Scope, commitment and success measures"],
+            [2, "Discovery workshop", "Current state, handoffs and data quality"],
+            [3, "Design workshop", "Operating model, controls and approach"]] as const)
+            .filter(([phase]) => inputs.capture[phase].status === "ready")
+            .map(([, name, use]) => [name, "Workshop evidence", use]),
+          ...(inputs.register.status === "ready" && !inputs.register.value.figuresRedacted && inputs.register.value.assumptions.length
+            ? [["Working assumptions", "Owner-reviewed assumptions", "Working figures to validate"]] : []),
+          ...(caseBody?.status === "evaluated" && economics ? [["Value model", "Calculated value case", "Value, timing and counting rules"]] : []),
+          ...(inputs.edition === "investment" && rom ? [["Delivery estimate", "Approved delivery estimate", "Effort, duration and team"]] : []),
+        ];
+        return sourceRows.length || rows.length > 1
+          ? [table(["Source", "What it is", "Used for"], rows)]
+          : [gapPanel("Published evidence still needs to be confirmed",
+            "No published source has been approved for this case.",
+            "Review and approve the public sources that support the case.")];
+      }
     }
   };
 
