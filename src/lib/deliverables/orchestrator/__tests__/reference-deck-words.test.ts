@@ -105,8 +105,8 @@ describe("reference-deck words", () => {
       await draftEditionWords({ ...input, archetypes: ["one_page", "sources"] });
       const sent = JSON.parse(create.mock.calls[0][0].messages[0].content);
       expect(sent.slides[0]).not.toHaveProperty("exhibit");
-      expect(sent.slides[1].exhibit).toMatch(/^A table of every source this deck rests on: approved public citations/);
-      expect(create.mock.calls[0][0].system).toContain("A slide with an exhibit description shows that exhibit");
+      expect(sent.slides[1].exhibit).toMatch(/^Rows for: approved public citations/);
+      expect(create.mock.calls[0][0].system).toContain("A slide with an exhibit description shows that exhibit: title it with a finding about what it shows, never with a description");
       // A panel title wins: a Sources slide that renders only a panel is described as the panel.
       create.mockClear();
       create.mockResolvedValue({ content: [{ type: "text", text: JSON.stringify({ words: [sourcesWords] }) }] });
@@ -124,7 +124,41 @@ describe("reference-deck words", () => {
       mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
       await draftEditionWords({ ...input, archetypes: ["sources"] });
       const retry = JSON.parse(create.mock.calls[1][0].messages[0].content);
-      expect(retry.rejectedSlides[0].exhibit).toMatch(/^A table of every source/);
+      expect(retry.rejectedSlides[0].exhibit).toMatch(/^Rows for: approved public citations/);
+    });
+
+    it.each([
+      "A table of every source this deck rests on",
+      "This slide lists the sources behind the case",
+      "The chart compares three years of credited value",
+      "These tables set out the working assumptions",
+    ])("refuses a title that describes the slide instead of stating a finding: %s", (title) => {
+      const entry = { title, answer: "Confirm the sources before relying on them.", notes: "The point: sources. How to read: rows." };
+      expect(modelWordRule(entry, "validation", slots, "sources")).toBe("title_describes_slide");
+    });
+
+    it.each([
+      "This deck rests on sources still being confirmed",
+      "Three workshops and no published source support the case",
+      "The case rests on workshops while published sources await approval",
+      // Only a title that opens by naming the slide's furniture is refused.
+      "Every source in the table still awaits approval by its owner",
+    ])("accepts a finding, even one that opens with a determiner: %s", (title) => {
+      const entry = { title, answer: "Confirm the sources before relying on them.", notes: "The point: sources. How to read: rows." };
+      expect(modelWordRule(entry, "validation", slots, "sources")).not.toBe("title_describes_slide");
+    });
+
+    it("repairs a slide-describing title with its own instruction", async () => {
+      const described = { title: "A table of every source this deck rests on", answer: "Confirm the sources before relying on them.", notes: "The point: sources. How to read: rows." };
+      const finding = { ...described, title: "This deck rests on sources still being confirmed" };
+      const create = jest.fn()
+        .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [described] }) }] })
+        .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ words: [finding] }) }] });
+      mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+      const result = await draftEditionWords({ ...input, archetypes: ["sources"] });
+      const retry = JSON.parse(create.mock.calls[1][0].messages[0].content);
+      expect(retry.rejectedSlides[0]).toMatchObject({ rejectedRule: "title_describes_slide", ruleRequirements: expect.stringContaining("Never describe the slide") });
+      expect(result).toEqual({ status: "ok", words: [finding], fallbackSlides: [] });
     });
 
     it("sends no panel title for a slide whose exhibit renders", async () => {
