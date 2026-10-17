@@ -26,6 +26,8 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
 const uploadMock = jest.fn();
 const insertMock = jest.fn();
 const updateEqMock = jest.fn();
+const readFilters = new Map<string, unknown>();
+let scopedRows: Array<Record<string, unknown>> | null = null;
 
 /** What the prior-version read answers. */
 let priorRead: { data: unknown; error: { message: string } | null } = {
@@ -60,6 +62,8 @@ beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(console, "warn").mockImplementation(() => {});
   priorRead = { data: [], error: null };
+  scopedRows = null;
+  readFilters.clear();
   supersedeResult = { data: null, error: null };
   uploadMock.mockResolvedValue(undefined);
   (getObjectStorageAdapter as jest.Mock).mockReturnValue({
@@ -69,13 +73,27 @@ beforeEach(() => {
   (getAzureWriteFluentClient as jest.Mock).mockReturnValue({
     from: () => ({
       select: () => ({
-        eq: function eq() {
+        eq: function eq(column: string, value: unknown) {
+          readFilters.set(column, value);
           return this;
         },
         order: function order() {
           return this;
         },
-        limit: async () => priorRead,
+        limit: async () =>
+          scopedRows === null
+            ? priorRead
+            : {
+                data: scopedRows
+                  .filter((row) =>
+                    [...readFilters].every(
+                      ([key, value]) => row[key] === value,
+                    ),
+                  )
+                  .sort((a, b) => Number(b.version) - Number(a.version))
+                  .slice(0, 1),
+                error: null,
+              },
       }),
       insert: (row: Record<string, unknown>) => {
         insertMock(row);
@@ -103,6 +121,77 @@ afterEach(() => {
 });
 
 describe("saveMoveArtifact version lineage", () => {
+  it.each([
+    "stage_readiness_workbook_proposal_set",
+    "stage_readiness_workbook_proposal_review",
+  ])(
+    "keeps %s independent across transitions and retains its prior Blob version",
+    async (artifactType) => {
+      scopedRows = [
+        {
+          move_id: "move-1",
+          artifact_type: artifactType,
+          phase: 2,
+          artifact_id: "p2-current",
+          version: 7,
+          lifecycle_state: "current",
+        },
+        {
+          move_id: "move-1",
+          artifact_type: artifactType,
+          phase: 3,
+          artifact_id: "p3-history",
+          version: 6,
+          lifecycle_state: "superseded",
+        },
+      ];
+      const saved = await saveMoveArtifact(ctx, {
+        ...input,
+        artifactType,
+        artifactFamily: "approval_artifact",
+        fileFormat: "json",
+        fileName: "review.json",
+      });
+      expect(saved.version).toBe(7);
+      expect(uploadMock.mock.calls[0][1]).toContain("/approvals/p3/v7/");
+      expect(updateEqMock).toHaveBeenCalledWith(
+        expect.anything(),
+        "p3-history",
+      );
+      expect(updateEqMock).not.toHaveBeenCalledWith(
+        expect.anything(),
+        "p2-current",
+      );
+      expect(insertMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          phase: 3,
+          supersedes_artifact_id: "p3-history",
+        }),
+      );
+    },
+  );
+
+  it("starts the first workbook for a new transition without superseding another phase", async () => {
+    const artifactType = "stage_readiness_workbook_proposal_set";
+    scopedRows = [
+      {
+        move_id: "move-1",
+        artifact_type: artifactType,
+        phase: 2,
+        artifact_id: "p2-current",
+        version: 7,
+        lifecycle_state: "current",
+      },
+    ];
+    const saved = await saveMoveArtifact(ctx, {
+      ...input,
+      artifactType,
+      artifactFamily: "approval_artifact",
+    });
+    expect(saved.version).toBe(1);
+    expect(updateEqMock).not.toHaveBeenCalled();
+  });
+
   it("refuses by name when the prior-version read failed", async () => {
     priorRead = { data: null, error: { message: "statement timeout" } };
     await expect(saveMoveArtifact(ctx, input)).rejects.toThrow(

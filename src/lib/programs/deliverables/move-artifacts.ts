@@ -145,18 +145,26 @@ export async function saveMoveArtifact(
   const sha = createHash("sha256").update(body).digest("hex");
   const family = input.artifactFamily ?? "generated_deliverable";
 
-  // Next version for this (move, artifactType) among current rows. The version
+  // Readiness workbooks and reviews belong to a transition. Reading history
+  // within that phase also prevents an older cross-phase supersede from
+  // restarting its Blob version at v1.
+  const phaseScopedReadiness =
+    input.artifactType === "stage_readiness_workbook_proposal_set" ||
+    input.artifactType === "stage_readiness_workbook_proposal_review";
+  let lineageQuery = sb
+    .from("move_artifacts")
+    .select("artifact_id, version")
+    .eq("move_id", input.moveId)
+    .eq("artifact_type", input.artifactType);
+  lineageQuery = phaseScopedReadiness
+    ? lineageQuery.eq("phase", input.phase)
+    : lineageQuery.eq("lifecycle_state", "current");
+
+  // Next version within the artifact's scope. The version
   // is the blob path, so a failed read cannot be answered with v1 — see
   // `move-artifact-version-lineage`. This refusal precedes both writes.
   const lineage = resolveMoveArtifactVersionLineage(
-    await sb
-      .from("move_artifacts")
-      .select("artifact_id, version")
-      .eq("move_id", input.moveId)
-      .eq("artifact_type", input.artifactType)
-      .eq("lifecycle_state", "current")
-      .order("version", { ascending: false })
-      .limit(1),
+    await lineageQuery.order("version", { ascending: false }).limit(1),
   );
   if (lineage.kind === "unreadable") {
     console.warn(
