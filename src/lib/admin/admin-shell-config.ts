@@ -4,6 +4,7 @@ export type AdminSubSectionId =
   | "overview"
   | "data-loads"
   | "templates"
+  | "rate-cards"
   | "data-layer-explorer"
   | "data-trust"
   | "connectors"

@@ -129,7 +129,8 @@ describe("resolveRoleRate — a card holding several providers and locations for
 });
 
 describe("resolveRoleRate — only hourly lines price an estimate", () => {
-  const line = (rate: number, unit: string | null) => ({
+  // `unit` undefined = a line from before the column existed.
+  const line = (rate: number, unit: string | undefined) => ({
     role_or_band_ref: "ROL-037",
     level: "LVL-07",
     rate_value: rate,
@@ -137,7 +138,7 @@ describe("resolveRoleRate — only hourly lines price an estimate", () => {
     card_version_id: "card-1",
     provider_ref: null,
     location_ref: null,
-    unit,
+    ...(unit === undefined ? {} : { unit }),
   });
   const card = (lines: RoleRateSnapshot["clientLines"]): RoleRateSnapshot => ({ ...baseSnapshot, clientLines: lines });
 
@@ -154,6 +155,6 @@ describe("resolveRoleRate — only hourly lines price an estimate", () => {
   });
 
   it("treats a line with no unit as hourly (lines from before the column)", () => {
-    expect(resolveRoleRate("ROL-037", "LVL-07", card([line(350, null)])).hourlyRateCents).toBe(35000);
+    expect(resolveRoleRate("ROL-037", "LVL-07", card([line(350, undefined)])).hourlyRateCents).toBe(35000);
   });
 });
