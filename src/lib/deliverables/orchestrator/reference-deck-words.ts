@@ -84,6 +84,26 @@ const INVESTMENT_TITLE_SLOTS: Partial<Record<ReferenceArchetype, string>> = {
   rom_hours: "rom.total.plan",
 };
 
+/**
+ * The figure an investment title must carry: the slide's own figure, or for
+ * the assumptions slide the count of open assumptions when the register can
+ * supply a non-zero one. A title then states a sourced number instead of a
+ * general sentence; with no open assumptions nothing is required.
+ */
+function requiredTitleSlot(edition: ReferenceEdition, archetype: ReferenceArchetype | undefined, slots: ReferenceSlotTable): string | undefined {
+  if (edition !== "investment" || !archetype) return undefined;
+  const fixed = INVESTMENT_TITLE_SLOTS[archetype];
+  // Only a figure that exists is required. Without it the title states what is
+  // missing in its own words (the narrative rules still apply); a token for a
+  // figure that does not exist would only be withheld.
+  if (fixed) return slots[fixed]?.display ? fixed : undefined;
+  if (archetype === "assumptions") {
+    const open = slots["register.count.open"];
+    return open?.display && open.display !== "0" ? "register.count.open" : undefined;
+  }
+  return undefined;
+}
+
 const FALLBACK_ANSWERS: Partial<Record<ReferenceArchetype, string>> = {
   one_page: "The case can advance when its value basis and open questions are agreed.",
   big_number_context: "Confirm the value basis before drawing a conclusion.",
@@ -152,6 +172,12 @@ const INITIAL_BATCH_SIZE = 8;
 const INITIAL_CALL_OPTIONS = { timeout: 65_000, maxRetries: 0 };
 const RECOVERY_CALL_OPTIONS = { timeout: 30_000, maxRetries: 0 };
 const REPAIR_CALL_OPTIONS = { timeout: 15_000, maxRetries: 0 };
+/**
+ * A second repair round starts only while this much of the request has passed,
+ * so with its own call timeout the words finish well inside the preview
+ * route's 120 s limit (and leave time to render).
+ */
+const SECOND_REPAIR_BUDGET_MS = 75_000;
 
 export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, slots: ReferenceSlotTable, archetype?: ReferenceArchetype): string | null {
   const prose = `${entry.title} ${entry.answer} ${entry.notes}`;
@@ -162,8 +188,8 @@ export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, sl
     if (!slot.editions.includes(edition)) return "edition_slot";
   }
   if ((archetype === "cover" || archetype === "divider") && tokens.length) return "slot_without_source_line";
-  const requiredTitleSlot = edition === "investment" && archetype ? INVESTMENT_TITLE_SLOTS[archetype] : undefined;
-  if (requiredTitleSlot && !entry.title.includes(`{${requiredTitleSlot}}`)) return "missing_title_slot";
+  const required = requiredTitleSlot(edition, archetype, slots);
+  if (required && !entry.title.includes(`{${required}}`)) return "missing_title_slot";
   const literal = prose.replace(SLOT_TOKEN, "");
   if (Object.keys(slots).some((key) => literal.includes(key))) return "malformed_slot";
   if (/[{}]/.test(literal)) return "malformed_slot";
@@ -188,9 +214,9 @@ export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, sl
   return null;
 }
 
-const TITLE_REQUIREMENTS = { minimumWords: 5, maximumSentences: 1 } as const;
+const TITLE_REQUIREMENTS = { minimumWords: 5, maximumSentences: 1, case: "sentence case" } as const;
 const RULE_REQUIREMENTS: Record<string, string> = {
-  missing_title_slot: "Copy requiredTitleSlot exactly, including its single braces, into the title. Keep this binding token even when evidence is unavailable; the server renders the missing-input qualifier. Never substitute a value or an invented fact.",
+  missing_title_slot: "Copy requiredTitleSlot exactly, including its single braces, into the title. Never substitute a value or an invented fact.",
   title_format: "Write a title with at least five words and only one sentence. Do not return a short section label.",
   active_count_as_open: "The active assumption count includes open, confirmed and corrected items. Only the open-count token may describe open items.",
   unavailable_value_claim: "No counted value is available for this exhibit. State the evidence still needed; do not refer to an existing figure or total.",
@@ -222,18 +248,19 @@ export async function draftEditionWords(input: {
   available: { valueCase: boolean; register: boolean; rom: boolean; publicSources: boolean; owners: boolean };
   slots: ReferenceSlotTable;
 }): Promise<DraftEditionWordsResult> {
+  const startedAt = Date.now();
   const unavailable = unavailableEditionWords(input.edition, input.archetypes);
   const allSlides = input.archetypes.map((_, index) => index + 1);
   const failure = (reason: WordsUnavailableReason): DraftEditionWordsResult =>
     ({ status: "unavailable", reason, words: unavailable, fallbackSlides: allSlides,
       fallbackCauses: allSlides.map((slide) => ({ slide, cause: reason })) });
-  const system = "Write client-ready slide language as JSON with a words array. Each entry has exactly title, answer, notes. Use the edition, use-case lens, phase stage and read-state controls. Every non-cover title, including a section divider, has at least five words and exactly one sentence. Keep the title and answer to one sentence each; use two short sentences in notes. The answer must interpret what the evidence means and the next decision, never list counts. Never prefix client text with a layout or archetype name such as big number context, plain English table, flow today or one step value. Do not put internal workflow words such as slot, readback, capture, register, governed, Move, flag, preview or ROM in the title or answer; consultant guidance belongs only in notes. Copy every requiredTitleSlot exactly into its title. Figure slots use one pair of braces, for example {value.annual.base}; never use double braces, a bare slot name, or a value. Use only supplied, edition-allowed slot tokens for figures; never write a digit, currency symbol or magnitude word outside a slot. Do not invent a client fact. Specific case facts require an approved model-ready context bundle, which this request does not supply. Use each slide evidence flag literally: false means the input is not confirmed. An unavailable input remains a visible gap after generation; do not write this figure, an approved estimate, mapped decision owners or verified citations as completed facts when that basis is absent. Active assumptions include open, confirmed and corrected items; only register.count.open describes open items. Notes begin 'The point:' and contain 'How to read:'. The server sets the cover title and promise from the use-case name and edition; do not put an edition rule on the cover. In validation answers, notes and non-cover titles, avoid cost, ROM, ROI, investment, solution, plan, roadmap and release even in a negated phrase.";
+  const system = "Write client-ready slide language as JSON with a words array. Each entry has exactly title, answer, notes. Use the edition, use-case lens, phase stage and read-state controls. Every non-cover title, including a section divider, has at least five words and exactly one sentence. Write titles and answers in sentence case: capitalize only the first word, proper nouns and acronyms, never every word. Write each non-cover title as a finding: a declarative sentence stating what the evidence shows or what remains unconfirmed, never a topic label, a description of the slide or a question. Keep titles under 14 words and answers under 25 words; the answer bar holds one short line. Keep the title and answer to one sentence each; use two short sentences in notes. The answer must interpret what the evidence means and the next decision, never list counts. Never prefix client text with a layout or archetype name such as big number context, plain English table, flow today or one step value. Do not put internal workflow words such as slot, readback, capture, register, governed, Move, flag, preview or ROM in the title or answer; consultant guidance belongs only in notes. Copy every requiredTitleSlot exactly into its title. Figure slots use one pair of braces, for example {value.annual.base}; never use double braces, a bare slot name, or a value. Use only supplied, edition-allowed slot tokens for figures; never write a digit, currency symbol or magnitude word outside a slot. Do not invent a client fact. Specific case facts require an approved model-ready context bundle, which this request does not supply. Use each slide evidence flag literally: false means the input is not confirmed. An unavailable input remains a visible gap after generation; do not write this figure, an approved estimate, mapped decision owners or verified citations as completed facts when that basis is absent. Active assumptions include open, confirmed and corrected items; only register.count.open describes open items. Notes begin 'The point:' and contain 'How to read:'. The server sets the cover title and promise from the use-case name and edition; do not put an edition rule on the cover. In validation answers, notes and non-cover titles, avoid cost, ROM, ROI, investment, solution, plan, roadmap and release even in a negated phrase.";
   const profile = { edition: input.edition, useCaseLens: DESIGN_LENS[input.useCaseType] ?? DESIGN_LENS.unclassified, phaseStage: input.phaseStage, available: input.available };
   const promptSlides = input.archetypes.map((archetype) => ({ archetype,
     titleRequirements: TITLE_REQUIREMENTS, evidence: promptEvidence(input.slots, archetype, input.edition),
     ...(archetype === "cover"
-      ? { coverTitleAndPromiseProvidedByServer: true } : {}), ...(input.edition === "investment" && INVESTMENT_TITLE_SLOTS[archetype]
-      ? { requiredTitleSlot: `{${INVESTMENT_TITLE_SLOTS[archetype]}}` } : {}) }));
+      ? { coverTitleAndPromiseProvidedByServer: true } : {}), ...(requiredTitleSlot(input.edition, archetype, input.slots)
+      ? { requiredTitleSlot: `{${requiredTitleSlot(input.edition, archetype, input.slots)}}` } : {}) }));
   const slotDefinitions = promptSlotDefinitions(input.slots, input.edition);
   const user = JSON.stringify({ profile, slides: promptSlides, slots: slotDefinitions });
   try {
@@ -354,10 +381,15 @@ export async function draftEditionWords(input: {
         ? clientCopyIssue(`${words[index]!.title} ${words[index]!.answer}`.replace(SLOT_TOKEN, "")) : null;
       return rule ? [{ index, rule, ...(blockedClientTerm ? { blockedClientTerm } : {}) }] : [];
     });
-    if (rejected.length) {
-      const repairSystem = `${system} This is a targeted retry. Return one words entry per rejected slide, in the same order. Correct each stated rule; never invent a fact or a figure. When a blockedClientTerm is supplied, remove that vocabulary and its forms from the title and answer. Use advance instead of move, confirm instead of capture, and identify instead of flag. Keep permitted figure tokens exactly as supplied.`;
-      const repairChunks = Array.from({ length: Math.ceil(rejected.length / PARSE_RECOVERY_CHUNK_SIZE) }, (_, chunk) =>
-        rejected.slice(chunk * PARSE_RECOVERY_CHUNK_SIZE, (chunk + 1) * PARSE_RECOVERY_CHUNK_SIZE));
+    type RepairTarget = (typeof rejected)[number];
+    type CallFailure = { slides: number[]; outcome: string; errorName?: string; status?: number | null };
+    /** One audited repair round over the given slides; accepted repairs replace their words. */
+    const repairRound = async (targets: RepairTarget[], round: 1 | 2): Promise<CallFailure[]> => {
+      const repairSystem = `${system} This is a targeted retry. Return one words entry per rejected slide, in the same order. Correct each stated rule; never invent a fact or a figure. When a blockedClientTerm is supplied, remove that vocabulary and its forms from the title and answer. Use advance instead of move, confirm instead of capture, and identify instead of flag. Keep permitted figure tokens exactly as supplied.${round === 2
+        ? " These slides were already retried once and still broke the stated rule. Rewrite each one from its evidence flags alone, more plainly and more conservatively; if in doubt, state what remains to be confirmed."
+        : ""}`;
+      const repairChunks = Array.from({ length: Math.ceil(targets.length / PARSE_RECOVERY_CHUNK_SIZE) }, (_, chunk) =>
+        targets.slice(chunk * PARSE_RECOVERY_CHUNK_SIZE, (chunk + 1) * PARSE_RECOVERY_CHUNK_SIZE));
       const repairs = await Promise.allSettled(repairChunks.map(async (chunk) => {
         const repairUser = JSON.stringify({
           profile,
@@ -366,8 +398,9 @@ export async function draftEditionWords(input: {
             ruleRequirements: RULE_REQUIREMENTS[rule], titleRequirements: TITLE_REQUIREMENTS,
             evidence: promptEvidence(input.slots, input.archetypes[index]!, input.edition),
             ...detail,
-            ...(input.edition === "investment" && INVESTMENT_TITLE_SLOTS[input.archetypes[index]!]
-              ? { requiredTitleSlot: `{${INVESTMENT_TITLE_SLOTS[input.archetypes[index]!]}}` } : {}),
+            ...(round === 2 ? { previousAttemptRejected: true } : {}),
+            ...(requiredTitleSlot(input.edition, input.archetypes[index], input.slots)
+              ? { requiredTitleSlot: `{${requiredTitleSlot(input.edition, input.archetypes[index], input.slots)}}` } : {}),
           })),
           slots: slotDefinitions,
         });
@@ -376,7 +409,7 @@ export async function draftEditionWords(input: {
           workflow: "moves:reference-deck:preview:words:repair", workload: "moves_reference_deck",
           prompt: `${repairSystem}\n${repairUser}`, model, dataClass: "internal",
           artifactType: "reference_deck_preview",
-          metadata: { edition: input.edition, slideCount: chunk.length, persist: false, repair: true },
+          metadata: { edition: input.edition, slideCount: chunk.length, persist: false, repair: true, repairRound: round },
         });
         if (repairPreflight.ok) {
           const repairResponse = await repairPreflight.client.messages.create({
@@ -389,7 +422,7 @@ export async function draftEditionWords(input: {
         }
         return null;
       }));
-      const callFailures: { slides: number[]; outcome: string; errorName?: string; status?: number | null }[] = [];
+      const callFailures: CallFailure[] = [];
       repairs.forEach((result, chunkIndex) => {
         const slides = repairChunks[chunkIndex]!.map(({ index }) => index + 1);
         if (result.status === "rejected") {
@@ -405,16 +438,29 @@ export async function draftEditionWords(input: {
           if (!modelWordRule(candidate, input.edition, input.slots, input.archetypes[index])) words[index] = candidate;
         });
       });
-      // Shape diagnostics only: rule names and slide numbers, never model prose.
-      const stillRejected = rejected.flatMap(({ index }) => {
-        const rule = ruleAt(index);
-        return rule ? [{ slide: index + 1, rule }] : [];
+      return callFailures;
+    };
+    if (rejected.length) {
+      const remaining = (): RepairTarget[] => rejected.flatMap((target) => {
+        const rule = ruleAt(target.index);
+        if (!rule) return [];
+        const blockedClientTerm = rule === "internal_client_word"
+          ? clientCopyIssue(`${words[target.index]!.title} ${words[target.index]!.answer}`.replace(SLOT_TOKEN, "")) : null;
+        return [{ index: target.index, rule, ...(blockedClientTerm ? { blockedClientTerm } : {}) }];
       });
+      const callFailures = await repairRound(rejected, 1);
+      // A second round only for slides the first could not fix, and only while
+      // the request can still finish inside the route's time limit.
+      const afterFirst = remaining();
+      const secondRound = afterFirst.length && Date.now() - startedAt < SECOND_REPAIR_BUDGET_MS
+        ? { attempted: afterFirst.length, callFailures: await repairRound(afterFirst, 2) } : null;
+      // Shape diagnostics only: rule names and slide numbers, never model prose.
+      const stillRejected = remaining().map(({ index, rule }) => ({ slide: index + 1, rule }));
       console.warn("[reference-deck-words-repair]", {
         requestId: input.requestId ?? null, edition: input.edition,
         attempted: rejected.length, repaired: rejected.length - stillRejected.length,
         initialRules: rejected.map(({ index, rule }) => ({ slide: index + 1, rule })),
-        stillRejected, callFailures,
+        stillRejected, callFailures, secondRound,
       });
     }
     const fallbackSlides: number[] = [...parseFailedSlides];
