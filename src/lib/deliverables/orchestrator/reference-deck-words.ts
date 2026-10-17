@@ -169,7 +169,11 @@ export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, sl
   if (/[{}]/.test(literal)) return "malformed_slot";
   if (LITERAL_FIGURE.test(literal)) return "literal_figure";
   if (!entry.notes.startsWith("The point:") || !entry.notes.includes("How to read:")) return "notes_format";
-  if (entry.title.trim().split(/\s+/).length < 5 || /[.!?]\s+\S/.test(entry.title)) return "title_format";
+  // A title holding an unavailable figure is never shown: the edition shows its own
+  // missing-input title and keeps this draft in the notes (`resolveVisibleSentence`).
+  // Its form cannot fail the slide; every content rule above and below still applies.
+  const titleWithheld = [...entry.title.matchAll(SLOT_TOKEN)].some((match) => slots[match[1]!]?.display === null);
+  if (!titleWithheld && (entry.title.trim().split(/\s+/).length < 5 || /[.!?]\s+\S/.test(entry.title))) return "title_format";
   // Validated tokens are binding metadata, not words shown to the client.
   if (clientCopyIssue(`${entry.title} ${entry.answer}`.replace(SLOT_TOKEN, ""))) return "internal_client_word";
   if (answerIsCountDump(entry.answer)) return "count_dump_answer";

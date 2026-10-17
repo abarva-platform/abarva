@@ -553,6 +553,20 @@ describe("live-input reference edition", () => {
     expect(validateReferenceDeck(spec).some((finding) => finding.code === "edition_violation" && finding.blocking)).toBe(true);
   });
 
+  it("replaces a withheld title of any form with its own sentence, keeping the draft in notes", async () => {
+    const inputs = fixture("investment");
+    inputs.valueCase = { status: "empty", detail: "No value levers yet; add them in P4 Step 3." };
+    const authored = words(INVESTMENT_SEQUENCE.length);
+    authored[1] = { title: "Value: {value.annual.plan}. Pending.", answer: "Confirm the value basis before relying on it.",
+      notes: "The point: the basis is open. How to read: follow the source line." };
+    const spec = buildReferenceEdition(inputs, authored);
+    expect(spec.slides[1]!.actionTitle).toBe("The value case still needs a confirmed basis");
+    expect(spec.slides[1]!.answer).toBe("Confirm the value basis before relying on it.");
+    expect(spec.slides[1]!.speakerNotes).toContain("Draft title awaiting input: Value: not yet modelled. Pending.");
+    expect(validateReferenceDeck(spec).filter((finding) => finding.blocking)).toEqual([]);
+    await expect(renderReferenceDeck(spec)).resolves.toBeInstanceOf(Buffer);
+  }, 60_000);
+
   it("shows a register-source gap instead of binding a figure to an invented source", () => {
     const inputs = fixture("validation");
     if (inputs.register.status !== "ready") throw new Error("synthetic register fixture missing");
