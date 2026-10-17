@@ -23,9 +23,13 @@ Release lanes: `internal-admin` and `global-control-lane`, with exact operations
 - Feature flag: explicit apply plus verified delegated approval for the exact Move, source set, count and release record.
 
 ## Changes Included
+The runtime image explicitly packages this release record. Exact per-run approvals are private rather than embedded in dataset manifests, so the manifest-only packager cannot discover this operator prerequisite. Its presence does not grant load or serving approval.
+
 Serialized exact-source index adapter, readiness proof contract, ACA operator entry and authoritative identity verification. Saved phase answers use the exact selected-row revision contract of the evidence consumer, an authenticated citation page and an exact JSON snapshot download. The existing phase scope remains unchanged. Citation inspection tolerates an existing readiness row only when its native binding is unchanged. Cohorts support up to 32 exact sources. Move-registry delegated loads must name the same Move as their assessment and bind the authenticated native tenant, exact source set, count and release record; serving delegation is unchanged.
 
 ## QA / Validation
+Packaging correction: the Docker build copies the existing record into the operator runtime; the release-control validator checks the updated image contract. Live execution must still prove the record exists before indexing or readiness changes.
+
 PASS: 151 targeted source preparation, saved-answer scope, identity, broker, admission, delegation and route tests. PASS: TypeScript, scoped ESLint and all 11 release checks. NOT RUN: live operator execution, signed-in original downloads and citation rendering, final admission readback and blocked-document regeneration.
 
 ## Rollout Plan
