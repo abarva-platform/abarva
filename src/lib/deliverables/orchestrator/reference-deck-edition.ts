@@ -50,9 +50,14 @@ const safeCaptured = (value: unknown, maxLength: number | null = 170): string =>
 };
 const hasGap = (value: ReferenceCell): boolean => typeof value === "string" && value.startsWith("Gap —");
 const clientCell = (value: ReferenceCell): ReferenceCell => hasGap(value) ? "To confirm" : value;
-const gapPanel = (title: string): ReferenceBlock => ({
-  kind: "gap", title, detail: "The evidence for this exhibit is still being confirmed with your team.",
-  nextAction: "Confirm the source and owner before relying on this exhibit.",
+/**
+ * A panel for an exhibit whose input is not confirmed. Each says what is
+ * missing and the one action that closes it, so a deck waiting on several
+ * inputs does not repeat one sentence on every slide. Client language only;
+ * the validation edition's excluded words never appear.
+ */
+const gapPanel = (title: string, detail: string, nextAction: string): ReferenceBlock => ({
+  kind: "gap", title, detail, nextAction,
 });
 const shortLabel = (value: string, max = 24): string => {
   const clean = value.trim().replace(/\s+/g, " ");
@@ -60,6 +65,11 @@ const shortLabel = (value: string, max = 24): string => {
   const prefix = clean.slice(0, max);
   const boundary = prefix.lastIndexOf(" ");
   return boundary > 0 ? `${prefix.slice(0, boundary).trimEnd()}…` : clean.split(" ")[0]!;
+};
+/** Recorded text placed mid-sentence: lower its first letter unless the first word is an acronym ("AI", "ED"). */
+const midSentence = (value: string): string => {
+  const first = value.split(/\s/, 1)[0] ?? "";
+  return /^[A-Z][a-z]/.test(first) || /^[A-Z]$/.test(first) ? `${value[0]!.toLowerCase()}${value.slice(1)}` : value;
 };
 const flowFromHandoffs = (value: string): { labels: string[]; full: string[] } | null => {
   const source = value.split(/[.!?]/, 1)[0]?.trim() ?? "";
@@ -83,24 +93,60 @@ const tablesFitBody = (tables: ReferenceTable[]): boolean => tables.reduce((y, b
   + layoutReferenceTable({ ...block, rows: block.rows.map((row) => row.map(clientCell)) }).height, REFERENCE_BODY_TOP) <= REFERENCE_BODY_BOTTOM;
 const cell = (row: number): string => `Deck Figures!B${row}`;
 
-function missingNarrative(archetype: ReferenceArchetype): { title: string; answer: string } {
-  if (["releases", "shared_foundation", "rom_hours"].includes(archetype)) return {
-    title: "The delivery estimate still needs an approved basis",
-    answer: "Confirm the delivery scope and estimate before comparing it with value.",
-  };
-  if (["users_decisions", "team"].includes(archetype)) return {
+/**
+ * What a slide says when its figure is not available yet. Each slide names
+ * its own gap, so a deck waiting on the same input never repeats one title
+ * on every slide. No sentence states a figure, and each says what is missing.
+ */
+const MISSING_NARRATIVE: Partial<Record<ReferenceArchetype, { title: string; answer: string }>> = {
+  one_page: {
+    title: "The case summary still needs a confirmed value basis",
+    answer: "Confirm how value is counted before relying on this summary.",
+  },
+  big_number_context: {
+    title: "The headline value still needs a confirmed basis",
+    answer: "Confirm the counting basis before quoting a headline value.",
+  },
+  one_step_value: {
+    title: "The annual value step still needs a confirmed basis",
+    answer: "Confirm the counted step and its source before relying on it.",
+  },
+  three_year_value: {
+    title: "The three-year value still needs a confirmed basis",
+    answer: "Confirm when value is earned and paid before comparing years.",
+  },
+  value_ledger: {
+    title: "Credited and program value still need a confirmed basis",
+    answer: "Confirm what is credited, and when, before relying on the comparison.",
+  },
+  releases: {
+    title: "The release sequence still needs an approved estimate",
+    answer: "Approve the delivery estimate before sequencing releases against value.",
+  },
+  shared_foundation: {
+    title: "The shared foundation still needs an approved estimate",
+    answer: "Approve the delivery estimate before sharing its effort across the case.",
+  },
+  rom_hours: {
+    title: "The delivery hours still need an approved estimate",
+    answer: "Confirm the delivery scope and working hours before using the estimate.",
+  },
+  users_decisions: {
     title: "Decision owners still need your team's agreement",
     answer: "Agree who owns each decision before delivery begins.",
-  };
-  if (archetype === "flow_today") return {
+  },
+  team: {
+    title: "The delivery team still needs agreed owners",
+    answer: "Agree who leads each part of the work before delivery begins.",
+  },
+  flow_today: {
     title: "The current handoffs still need an agreed basis",
     answer: "Confirm how the work moves between owners before relying on this account.",
-  };
-  if (["one_page", "big_number_context", "one_step_value", "three_year_value", "value_ledger"].includes(archetype)) return {
-    title: "The value case still needs a confirmed basis",
-    answer: "Confirm the source and counting basis before relying on this value.",
-  };
-  return {
+  },
+};
+
+function missingNarrative(archetype: ReferenceArchetype): { title: string; answer: string } {
+  return MISSING_NARRATIVE[archetype] ?? {
     title: "The evidence for this decision still needs confirmation",
     answer: "Confirm the supporting source with your team before relying on this conclusion.",
   };
@@ -199,6 +245,11 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
       safeRead(row.ownerRole), text(row.status)];
   });
   const firstAssumption = assumptionRows[0] ?? [GAP, GAP, GAP, GAP, GAP];
+  /** The register's open count, bound to the register; never an assumption's ID shown as a number. */
+  const openAssumptionCount = (): ReferenceCell => {
+    const slot = slots["register.count.open"];
+    return slot?.display && slot.editions.includes(inputs.edition) ? bind(slot.sourceId, slot.sourceLabel, slot.display) : GAP;
+  };
   const sourceIdsFor = (blocks: ReferenceBlock[], extra: string[] = []): string[] => {
     const ids = new Set(extra);
     const add = (value: ReferenceCell) => { if (typeof value !== "string") ids.add(value.sourceId); };
@@ -321,12 +372,24 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
         channels: "working channels", next_steps: "decisions",
       };
       if (!hasFigure && (gapCount >= block.rows.length * block.columns.length / 2 || allAnswersMissing || oneStepMissing))
-        return gapPanel(`The ${subject[archetype] ?? "supporting"} evidence still needs confirmation`);
+        return gapPanel(`The ${subject[archetype] ?? "supporting"} evidence still needs confirmation`,
+          `No confirmed answer is recorded yet for the ${subject[archetype] ?? "supporting evidence"}.`,
+          `Confirm the ${subject[archetype] ?? "supporting evidence"} with the people who own it.`);
       return { ...block, rows: block.rows.map((row) => row.map(clientCell)) };
     }
     if (block.kind === "metrics") {
       if (block.items.every((item) => hasGap(item.value)))
-        return gapPanel("The figures for this exhibit still need confirmation");
+        return archetype === "shared_foundation"
+          ? gapPanel("The shared delivery basis still needs an approved estimate",
+            "The shared foundation's effort comes from the approved delivery estimate.",
+            "Approve the delivery estimate before sharing its effort across the case.")
+          : archetype === "big_number_context"
+            ? gapPanel("The headline figures still need confirmation",
+              "No headline figure has a confirmed counting basis yet.",
+              "Confirm the counting basis before quoting a headline figure.")
+            : gapPanel("The figures for this exhibit still need confirmation",
+              "No counted figure behind this view has a confirmed basis yet.",
+              "Confirm how each figure is counted and where it comes from.");
       return { ...block, items: block.items.map((item) => ({ ...item, value: clientCell(item.value) })) };
     }
     if (block.kind === "architecture") return { ...block, layers: block.layers.map((layer) => ({
@@ -365,7 +428,7 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
         ] },
       ];
       case "contents": return [table(["Section", "The answer in this section", "Slides"], [
-        ["01  Context", !hasGap(safeRead(inputs.move.problemStatement)) ? `The problem is ${shortLabel(safeRead(inputs.move.problemStatement), 69)}.` : "The need remains to confirm.", "2–5"],
+        ["01  Context", !hasGap(safeRead(inputs.move.problemStatement)) ? `The problem is ${midSentence(shortLabel(safeRead(inputs.move.problemStatement), 69))}.` : "The need remains to confirm.", "2–5"],
         ["02  What", actualFlow ? `The work runs from ${shortLabel(actualFlow.full[0]!, 27)} to ${shortLabel(actualFlow.full.at(-1)!, 27)}.` : "The current handoffs remain to confirm.", "6–7"],
         ["03  Why", annual ? "Counted value has a stated basis for review." : "The value basis remains to confirm.", inputs.edition === "validation" ? "8–9" : "8–9, 11"],
         [inputs.edition === "validation" ? "04  Confirm" : "04  Validate", assumptions.length ? "Working assumptions could change the case." : "The assumptions remain to confirm.", inputs.edition === "validation" ? "10" : "10, 22"],
@@ -376,7 +439,7 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
         metrics([
           { label: "Annual counted value", value: valueCell(annual), meaning: "Current basis" },
           { label: "Credited earned", value: valueCell(threeTotal), meaning: "Three-year base" },
-          { label: "Open assumption", value: firstAssumption[0]!, meaning: "Working basis" },
+          { label: "Open assumptions", value: openAssumptionCount(), meaning: "To validate" },
         ]),
         { kind: "text", lines: [`Need: ${safeRead(inputs.move.problemStatement)}`] },
         table(["What the figure rests on", "Current position", "Owner or source"], [
@@ -392,7 +455,9 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
       case "flow_today": return actualFlow ? [
         { kind: "flow", nodes: actualFlow.labels, fullNodes: actualFlow.full },
         table(["Evidence", "Current position"], [["Discovery findings", capture(2, "current_state_findings")]]),
-      ] : [gapPanel("The current handoffs still need to be mapped")];
+      ] : [gapPanel("The current handoffs still need to be mapped",
+        "The steps between owners have not been recorded as a usable sequence.",
+        "Map each handoff, with its owner, in a working session.")];
       case "one_step_value": {
         const blocks: ReferenceBlock[] = [table(["Step", "Driver", "Working value", "Basis"], [
           ["Counted value", "Calculated case", valueCell(annual), "Earned or paid is explicit"],
@@ -419,7 +484,9 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
       }
       case "assumptions": return assumptionRows.length
         ? [table(["ID", "Assumption", "Working figure", "Owner", "Status"], assumptionRows, [0])]
-        : [gapPanel("Working assumptions still need to be agreed")];
+        : [gapPanel("Working assumptions still need to be agreed",
+        "No working assumption is recorded for this case yet.",
+        "Agree the assumptions that could change the decision, with an owner for each.")];
       case "value_ledger": return [table(["Basis", "Earned", "Paid", "Counted", "Source", "Review"], [
         ["Credited", valueCell(dollars("credited_earned_total", credited?.totalCents)), valueCell(dollars("credited_paid_total", creditedPaid?.totalCents)), "Calculated case", "Case model", "Check timing"],
         ["Program", valueCell(dollars("program_earned_total", programEarned?.totalCents)), valueCell(dollars("program_paid_total", programPaid?.totalCents)), "Calculated case", "Case model", "Check attribution"],
@@ -429,10 +496,14 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
           safeRead(row.name), safeRead(row.owner?.name),
           Object.keys(row.rights).filter((right) => row.rights[right as keyof typeof row.rights]?.value).join(", ") || GAP,
           "Owner review", "Accepted",
-        ]) : [])] : [gapPanel("Decision owners still need to be confirmed")];
+        ]) : [])] : [gapPanel("Decision owners still need to be confirmed",
+        "No one has yet accepted ownership of the decisions this work changes.",
+        "Name an owner for each decision and have them accept it.")];
       case "target_state": return inputs.capture[3].status !== "ready"
         || ["architecture_integration", "controls_governance", "solution_approach"].every((key) => hasGap(capture(3, key)))
-        ? [gapPanel("The proposed design still needs your team's input")]
+        ? [gapPanel("The proposed design still needs your team's input",
+        "The intake, controls and working approach have not been confirmed.",
+        "Review the proposed design with the team that will run it.")]
         : [{ kind: "architecture", layers: [
         { name: "Sources", items: [capture(2, "current_state_findings", true)] },
         { name: "Intake", items: [capture(3, "architecture_integration", true)] },
@@ -443,12 +514,16 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
       ], governance: "Access · traceability · approval" }];
       case "channels": return inputs.capture[3].status !== "ready"
         || ["workflow_delta", "operating_model"].every((key) => hasGap(capture(3, key)))
-        ? [gapPanel("The working channels still need to be agreed")]
+        ? [gapPanel("The working channels still need to be agreed",
+        "The channels, their inputs and their owners are not agreed.",
+        "Agree each channel's input, owner and control.")]
         : [table(["Channel", "Input", "Owner", "Control", "Readiness"], [
         ["Operational", capture(3, "workflow_delta"), capture(3, "operating_model"), "Owner controls", "Review"],
         ["Evidence", capture(2, "data_quality_governance"), "Data owner", "Source approval", "Review"],
       ])];
-      case "releases": return !rom || !rom.result.releases.length ? [gapPanel("The delivery sequence needs an approved estimate")]
+      case "releases": return !rom || !rom.result.releases.length ? [gapPanel("The delivery sequence needs an approved estimate",
+        "The order of releases comes from the approved delivery estimate.",
+        "Approve the delivery estimate, then sequence the releases.")]
         : [{ kind: "timeline", quarters: ["Foundation", "First release", "Later release"], rows: [
         { label: "Shared foundation", from: 0, to: 0 },
         ...((rom?.result.releases ?? []).slice(0, 2).map((release, index) => ({ label: safeRead(release.code), from: index + 1, to: index + 1 }))),
@@ -458,13 +533,17 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
         { label: "Published source", value: inputs.citations.status === "ready" && inputs.citations.value.length ? "Available" : GAP, meaning: "External evidence" },
       ])];
       case "client_needs": return hasGap(capture(3, "controls_governance")) && hasGap(capture(1, "success_criteria"))
-        ? [gapPanel("The team needs access and a clear measure")]
+        ? [gapPanel("The team needs access and a clear measure",
+        "Neither the access the team needs nor the measure of success is recorded.",
+        "Confirm who grants access and how success will be measured.")]
         : [table(["Need", "Input", "Decision"], [
         ["Access", capture(3, "controls_governance"), "Confirm owner"],
         ["Measurement", capture(1, "success_criteria"), "Confirm basis"],
       ])];
       case "ai_options": return hasGap(capture(3, "solution_approach"))
-        ? [gapPanel("Any AI option needs a reviewed working approach")]
+        ? [gapPanel("Any AI option needs a reviewed working approach",
+        "No working approach has been reviewed, so no AI option can be weighed.",
+        "Review the working approach before weighing any AI option.")]
         : [{ kind: "text", lines: [
         `Candidate: ${capture(3, "solution_approach")}`,
         "Value: support review of approved evidence.",
@@ -476,10 +555,14 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
         ["Review delivery basis", "Delivery team", rom ? "Approved estimate" : GAP],
       ])];
       case "rom_hours": {
-        if (!rom) return [gapPanel("The delivery estimate is still to confirm")];
+        if (!rom) return [gapPanel("The delivery estimate is still to confirm",
+        "No approved delivery estimate is available for this case.",
+        "Approve the delivery estimate with the delivery team.")];
         const units = Object.entries(rom.workbookStructure.unitHours).slice(0, 3)
           .flatMap(([driver, unit]) => unit ? [{ driver, unit }] : []);
-        if (!units.length) return [gapPanel("The delivery hours still need an approved basis")];
+        if (!units.length) return [gapPanel("The delivery hours still need an approved basis",
+        "The unit hours behind the estimate have no approved basis.",
+        "Confirm the unit-hour basis with the delivery team.")];
         const unitTable = (count: number, figure: Figure): ReferenceTable => table(["Driver", "Basis", "Unit hours", "Confidence", "Low", "Plan", "High", "Source"],
           units.slice(0, count).map(({ driver, unit }) => [ROM_DRIVER_LABELS[driver as RomDriver] ?? safeRead(driver), "Unit-hour driver",
             figure(`rom:${rom.id}:unit_hours:${driver}`, unit.source, `${unit.value} h`), unit.confidence, GAP, GAP, GAP, "Approved delivery estimate"])) as ReferenceTable;
@@ -497,7 +580,9 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
       ])];
       case "sources": return sourceRows.length
         ? [table(["Citation", "Published source"], sourceRows)]
-        : [gapPanel("Published evidence still needs to be confirmed")];
+        : [gapPanel("Published evidence still needs to be confirmed",
+        "No published source has been approved for this case.",
+        "Review and approve the public sources that support the case.")];
     }
   };
 
