@@ -69,6 +69,12 @@ export const ADMIN_SUB_SECTIONS: ReadonlyArray<AdminSubSection> = [
     href: "/admin/templates",
   },
   {
+    id: "rate-cards",
+    label: "Rate cards",
+    subtitle: "Your rates for Moves estimates",
+    href: "/admin/rate-cards",
+  },
+  {
     id: "data-layer-explorer",
     label: "Data Journey",
     subtitle: "Input-to-layer map and guardrails",

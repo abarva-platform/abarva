@@ -86,13 +86,13 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 | Audience | Route count | aVa posture |
 | --- | --- | --- |
 | client | 101 | Answer in the active tenant/workspace only; cite loaded context or name what is missing. |
-| admin | 70 | Explain setup/governance controls; avoid tenant data claims unless scoped evidence is supplied. |
+| admin | 71 | Explain setup/governance controls; avoid tenant data claims unless scoped evidence is supplied. |
 | public | 40 | Describe public/product material; never imply authenticated capability proof. |
 | internal | 8 | Treat as preview/demo/operator-only unless release evidence says otherwise. |
 
 | Product area | Route count |
 | --- | --- |
-| Admin | 68 |
+| Admin | 69 |
 | Engagements | 8 |
 | Home | 8 |
 | Intelligence | 1 |
@@ -148,6 +148,7 @@ Generated from `src/app/**/page.tsx`. Route groups are removed, dynamic segments
 | /admin/programs | admin | Admin | src/app/(maestro)/admin/programs/page.tsx |
 | /admin/programs/approvals | admin | Admin | src/app/(maestro)/admin/programs/approvals/page.tsx |
 | /admin/programs/approvals/[requestId] | admin | Admin | src/app/(maestro)/admin/programs/approvals/[requestId]/page.tsx |
+| /admin/rate-cards | admin | Admin | src/app/(maestro)/admin/rate-cards/page.tsx |
 | /admin/releases | admin | Admin | src/app/(maestro)/admin/releases/page.tsx |
 | /admin/segments | admin | Admin | src/app/(maestro)/admin/segments/page.tsx |
 | /admin/segments/[segmentId] | admin | Admin | src/app/(maestro)/admin/segments/[segmentId]/page.tsx |

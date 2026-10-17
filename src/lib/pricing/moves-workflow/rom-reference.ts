@@ -86,6 +86,30 @@ export function loadCommittedRomRoles(
   }));
 }
 
+/** The codes a client rate card may use for provider, location and level, with their labels. */
+export interface RateCardCodes {
+  providerClasses: { code: string; label: string }[];
+  locations: { code: string; label: string }[];
+  levels: { code: string; label: string }[];
+}
+
+export function loadCommittedRateCardCodes(
+  dir: string = path.join(process.cwd(), ROM_REFERENCE_PACK_RELATIVE_DIR),
+): RateCardCodes {
+  const active = (r: RawRow) => (r.status || "active") === "active";
+  return {
+    providerClasses: readCsv(dir, "pricing_provider_classes.csv")
+      .filter(active)
+      .map((r) => ({ code: r.provider_class_code, label: r.archetype_label || r.class_name || r.provider_class_code })),
+    locations: readCsv(dir, "pricing_delivery_locations.csv")
+      .filter(active)
+      .map((r) => ({ code: r.location_code, label: `${r.region_name || r.location_code} (${r.shore_category || "unknown"})` })),
+    levels: readCsv(dir, "pricing_seniority_levels.csv")
+      .filter(active)
+      .map((r) => ({ code: r.level_code, label: r.level_name || r.level_code })),
+  };
+}
+
 /** Loaders over the committed pack at `dir` (default: `<cwd>/datasets/reference/pricing-engine-v1`). */
 export function createCommittedRomReferenceLoaders(
   dir: string = path.join(process.cwd(), ROM_REFERENCE_PACK_RELATIVE_DIR),

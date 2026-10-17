@@ -46,6 +46,7 @@ const PRODUCTION_READINESS_NO_STORE_HEADERS = {
 } as const;
 export const ACTIVE_ADMIN_SUBROUTES = new Set<string>([
   "/admin/candidate-preview",
+  "/admin/rate-cards",
   "/admin/context-layer/approval-queue",
   "/admin/data-layer-explorer",
   "/admin/knowledge-preview",

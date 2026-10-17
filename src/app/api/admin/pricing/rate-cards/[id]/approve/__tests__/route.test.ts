@@ -3,6 +3,16 @@ import { NextRequest } from "next/server";
 const mockRequireTenancy = jest.fn();
 const mockCommitClientRateCardImport = jest.fn();
 
+const mockRequireTenantAdmin = jest.fn();
+const mockHasTenantAdminAccess = jest.fn();
+// The real rate-card authority runs; only the two role lookups under it are mocked.
+jest.mock("@/lib/auth/tenant-roles", () => ({
+  requireTenantAdmin: (...args: unknown[]) => mockRequireTenantAdmin(...args),
+}));
+jest.mock("@/lib/admin/tenant-admin-access", () => ({
+  hasTenantAdminAccess: (...args: unknown[]) => mockHasTenantAdminAccess(...args),
+}));
+
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: (...args: unknown[]) => mockRequireTenancy(...args),
   tenancyErrorResponse: () => new Response(JSON.stringify({ error: "unauthenticated" }), { status: 401 }),
@@ -34,7 +44,35 @@ describe("POST /api/admin/pricing/rate-cards/:id/approve", () => {
   beforeEach(() => {
     mockRequireTenancy.mockReset();
     mockCommitClientRateCardImport.mockReset();
-    mockRequireTenancy.mockResolvedValue({ clientId: "c1", clientKey: "apexretail", userId: "user-1" });
+    mockRequireTenancy.mockResolvedValue({ clientId: "c1", clientKey: "apexretail", userId: "user-1", clerkUserId: "clerk-1" });
+    mockRequireTenantAdmin.mockReset().mockResolvedValue(undefined);
+    mockHasTenantAdminAccess.mockReset().mockResolvedValue(false);
+  });
+
+  it("refuses a member who is not a workspace admin and commits nothing", async () => {
+    mockRequireTenantAdmin.mockRejectedValue(new Error("forbidden_tenant_admin_required"));
+    const response = await POST(jsonRequest({ lines: [validLine] }), { params: Promise.resolve({ id: "ENTERPRISE" }) });
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({ error: "rate_card_admin_required" });
+    expect(mockCommitClientRateCardImport).not.toHaveBeenCalled();
+    expect(mockRequireTenantAdmin).toHaveBeenCalledWith({ userId: "clerk-1", tenantKey: "apexretail" });
+  });
+
+  it("refuses when the role lookup itself fails and the policy does not admit the user", async () => {
+    mockRequireTenantAdmin.mockRejectedValue(new Error("clerk unavailable"));
+    mockHasTenantAdminAccess.mockRejectedValue(new Error("db down"));
+    const response = await POST(jsonRequest({ lines: [validLine] }), { params: Promise.resolve({ id: "ENTERPRISE" }) });
+    expect(response.status).toBe(403);
+    expect(mockCommitClientRateCardImport).not.toHaveBeenCalled();
+  });
+
+  it("admits a user whose access policy lets them administer the workspace", async () => {
+    mockRequireTenantAdmin.mockRejectedValue(new Error("forbidden_tenant_admin_required"));
+    mockHasTenantAdminAccess.mockResolvedValue(true);
+    mockCommitClientRateCardImport.mockResolvedValue({ action: "new_version", version: 2, previousVersion: 1, cardId: "card-2" });
+    const response = await POST(jsonRequest({ lines: [validLine] }), { params: Promise.resolve({ id: "ENTERPRISE" }) });
+    expect(response.status).toBe(200);
+    expect(mockCommitClientRateCardImport).toHaveBeenCalled();
   });
 
   it("400s when lines is missing", async () => {

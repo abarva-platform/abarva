@@ -49,7 +49,18 @@ import { INTERNAL_PROVIDER_CLASS, type ResolvedRate } from "./types";
 export { INTERNAL_PROVIDER_CLASS };
 
 type RateCardLine = Pick<PricingRateCardLineRow, "role_or_band_ref" | "level" | "rate_value" | "currency" | "card_version_id"> &
-  Partial<Pick<PricingRateCardLineRow, "provider_ref" | "location_ref">>;
+  Partial<Pick<PricingRateCardLineRow, "provider_ref" | "location_ref" | "unit">>;
+
+/**
+ * Units a line may state and still be an hourly rate. A card may also hold
+ * day or year rates (the template allows them), but this engine prices hours
+ * and never converts: hours per day and billable hours per year are the
+ * client's assumptions, not ours. A line with no unit predates the column.
+ */
+const HOURLY_UNITS: ReadonlySet<string> = new Set(["hour", "hours", "hr", "hrs", "hourly"]);
+function isHourly(line: RateCardLine): boolean {
+  return line.unit === undefined || line.unit === null || HOURLY_UNITS.has(line.unit.trim().toLowerCase());
+}
 
 export interface RoleRateSnapshot {
   roles: readonly Pick<PricingRoleRow, "role_code" | "default_rate_band_code">[];
@@ -64,7 +75,7 @@ export interface RateCardLineDimensions {
   locationCode?: string | null;
 }
 
-type LineMatch = { line: RateCardLine } | { ambiguous: string } | null;
+type LineMatch = { line: RateCardLine } | { gap: string } | null;
 
 // A line fits a member when each dimension the line names equals the member's.
 // The most specific fitting line wins: provider (4) outranks location (2),
@@ -92,6 +103,7 @@ function findLine(
   // grain (see PR2 migration comment, quoted in rate-card-repository.ts).
   const candidateRefs = [roleCode, ...(defaultRateBandCode ? [defaultRateBandCode] : [])];
   const scored: { line: RateCardLine; score: number }[] = [];
+  const otherUnits = new Set<string>();
   for (const line of lines) {
     if (!candidateRefs.includes(line.role_or_band_ref)) continue;
     let levelScore: number;
@@ -102,9 +114,23 @@ function findLine(
     const provider = dimensionScore(line.provider_ref, dims.providerClassCode, 4);
     const location = dimensionScore(line.location_ref, dims.locationCode, 2);
     if (provider === null || location === null) continue;
+    if (!isHourly(line)) {
+      otherUnits.add(String(line.unit));
+      continue;
+    }
     scored.push({ line, score: provider + location + levelScore });
   }
-  if (scored.length === 0) return null;
+  if (scored.length === 0) {
+    // The card prices this role, but not per hour: say so rather than fall
+    // through and silently ignore the client's card.
+    return otherUnits.size > 0
+      ? {
+          gap:
+            `the rate card prices role '${roleCode}' per ${[...otherUnits].join(" or ")}, not per hour` +
+            " — add an hourly line for it; estimates never convert units",
+        }
+      : null;
+  }
   const best = Math.max(...scored.map((c) => c.score));
   const top = scored.filter((c) => c.score === best);
   const providers = new Set(top.map((c) => c.line.provider_ref ?? null));
@@ -112,7 +138,7 @@ function findLine(
   if (providers.size > 1 || locations.size > 1) {
     const named = (values: Set<string | null>) => [...values].map((v) => v ?? "any").join(", ");
     return {
-      ambiguous:
+      gap:
         `the rate card has ${top.length} equally good lines for role '${roleCode}'` +
         (providers.size > 1 ? ` (providers: ${named(providers)})` : "") +
         (locations.size > 1 ? ` (locations: ${named(locations)})` : "") +
@@ -138,7 +164,7 @@ export function resolveRoleRate(
   ] as const) {
     const match = findLine(lines, roleCode, defaultRateBandCode, levelHint, dims);
     if (match === null) continue;
-    if ("ambiguous" in match) {
+    if ("gap" in match) {
       // Never fall through to a lower scope: that would silently ignore the card.
       return {
         resolvedFromScope: "missing",
@@ -147,7 +173,7 @@ export function resolveRoleRate(
         hourlyRateCents: null,
         currency: "USD",
         rateCardVersionId: null,
-        gapReason: `${scope} ${match.ambiguous}`,
+        gapReason: `${scope} ${match.gap}`,
       };
     }
     const { line } = match;

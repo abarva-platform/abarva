@@ -127,3 +127,33 @@ describe("resolveRoleRate — a card holding several providers and locations for
     expect(resolved.gapReason).toMatch(/internal rates come only from the client's own card/);
   });
 });
+
+describe("resolveRoleRate — only hourly lines price an estimate", () => {
+  const line = (rate: number, unit: string | null) => ({
+    role_or_band_ref: "ROL-037",
+    level: "LVL-07",
+    rate_value: rate,
+    currency: "USD",
+    card_version_id: "card-1",
+    provider_ref: null,
+    location_ref: null,
+    unit,
+  });
+  const card = (lines: RoleRateSnapshot["clientLines"]): RoleRateSnapshot => ({ ...baseSnapshot, clientLines: lines });
+
+  it("never prices an hour at a day or year rate: it states the gap and keeps the card", () => {
+    const resolved = resolveRoleRate("ROL-037", "LVL-07", card([line(2800, "day")]));
+    expect(resolved.resolvedFromScope).toBe("missing");
+    expect(resolved.hourlyRateCents).toBeNull();
+    expect(resolved.gapReason).toMatch(/per day, not per hour/);
+  });
+
+  it("uses the hourly line when the card holds both", () => {
+    const resolved = resolveRoleRate("ROL-037", "LVL-07", card([line(2800, "day"), line(350, "Hour")]));
+    expect(resolved.hourlyRateCents).toBe(35000);
+  });
+
+  it("treats a line with no unit as hourly (lines from before the column)", () => {
+    expect(resolveRoleRate("ROL-037", "LVL-07", card([line(350, null)])).hourlyRateCents).toBe(35000);
+  });
+});
