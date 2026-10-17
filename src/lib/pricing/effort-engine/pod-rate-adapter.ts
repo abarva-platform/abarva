@@ -24,16 +24,18 @@
  * (never multiplied by the raw tier, which would apply a tier twice), and an
  * unknown band basis is refused rather than guessed.
  *
- * ## Known limit of the existing resolver, handled here explicitly
+ * ## Rate-card lines are matched on provider and location
  *
- * `resolveRoleRate` matches a rate-card line on role/band and level only —
- * it ignores a line's `location_ref` and `provider_ref`. A card rate is
- * therefore used AS-IS (the tenant's committed number), with location and
- * provider multipliers shown as 1 and marked not-applied, rather than
- * layering a multiplier onto a number that may already be location- or
- * provider-specific. The location's `scarcity_multiplier` is not applied in
- * this increment (the band's own role scarcity is already in
- * `scarcity_adj_rate` / `indicative_bill_rate`).
+ * `resolveRoleRate` is given the member's provider class and location, so a
+ * card can hold a global-integrator rate, an offshore rate and the client's
+ * own internal rate for the same role side by side; the most specific line
+ * that fits wins, and an ambiguous card is a stated gap, not a guess. A card
+ * rate is used AS-IS (the tenant's committed number): location and provider
+ * multipliers are shown as 1 and marked not-applied, never layered onto a
+ * number the client already set for that provider or location. Internal
+ * staff (`INTERNAL`) are priced only from a client card line. The location's
+ * `scarcity_multiplier` is not applied in this increment (the band's own role
+ * scarcity is already in `scarcity_adj_rate` / `indicative_bill_rate`).
  *
  * Pure — no I/O. A DB-backed caller loads the same rows via
  * `reference-repository.ts` (`listRateBands`, `listDeliveryLocations`,
@@ -55,7 +57,11 @@ import type {
   PodToolLicence,
   ResolvedPodRate,
 } from "./pod-pricer";
-import { resolveRoleRate, type RoleRateSnapshot } from "./rate-card-resolver";
+import {
+  INTERNAL_PROVIDER_CLASS,
+  resolveRoleRate,
+  type RoleRateSnapshot,
+} from "./rate-card-resolver";
 import type { FormulaTerm, PricingAgentCostRow } from "./types";
 
 export type PodRateBand = Pick<
@@ -206,7 +212,8 @@ export function createReferencePodRateResolver(
           (p) => p.provider_class_code === member.providerClassCode,
         )
       : undefined;
-    if (member.providerClassCode && !memberClass) {
+    const internal = member.providerClassCode === INTERNAL_PROVIDER_CLASS;
+    if (member.providerClassCode && !memberClass && !internal) {
       return refusal(
         "unknown_provider_class",
         `provider class '${member.providerClassCode}' is not in the provider-class reference`,
@@ -217,28 +224,48 @@ export function createReferencePodRateResolver(
     // global card → band default); its rate IS the base rate below.
     let resolverBaseCents: number | null = null;
     if (basis === "bill_rate") {
-      const resolved = resolveRoleRate(member.roleCode, member.levelCode, {
-        roles: reference.rateCard?.roles ?? [],
-        clientLines: reference.rateCard?.clientLines ?? [],
-        globalLines: reference.rateCard?.globalLines ?? [],
-        rateBands: reference.rateBands,
-      });
+      const resolved = resolveRoleRate(
+        member.roleCode,
+        member.levelCode,
+        {
+          roles: reference.rateCard?.roles ?? [],
+          clientLines: reference.rateCard?.clientLines ?? [],
+          globalLines: reference.rateCard?.globalLines ?? [],
+          rateBands: reference.rateBands,
+        },
+        {
+          providerClassCode: member.providerClassCode ?? null,
+          locationCode: member.locationCode,
+        },
+      );
       if (
         resolved.resolvedFromScope === "missing" ||
         resolved.hourlyRateCents === null
       ) {
         return refusal(
-          "rate_missing",
+          internal ? "internal_rate_missing" : "rate_missing",
           resolved.gapReason ??
             `no rate resolves '${member.roleCode}' at '${member.levelCode}'`,
+        );
+      }
+      if (internal && resolved.resolvedFromScope !== "client") {
+        return refusal(
+          "internal_rate_missing",
+          `internal staff for '${member.roleCode}' must be priced from the client's own rate card, not a ${resolved.resolvedFromScope} rate`,
         );
       }
       if (
         resolved.resolvedFromScope === "client" ||
         resolved.resolvedFromScope === "global"
       ) {
+        const named = [
+          resolved.matchedProviderRef ? `provider ${resolved.matchedProviderRef}` : null,
+          resolved.matchedLocationRef ? `location ${resolved.matchedLocationRef}` : null,
+        ].filter(Boolean);
         const reason =
-          "rate-card line used as-is (the existing resolver does not match a line's location_ref/provider_ref)";
+          named.length > 0
+            ? `rate-card line set for ${named.join(" and ")}, used as-is`
+            : "generic rate-card line (no provider or location on the line), used as-is";
         const scope =
           resolved.resolvedFromScope === "client"
             ? "client_rate_card"

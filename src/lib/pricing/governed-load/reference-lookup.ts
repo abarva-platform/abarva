@@ -12,6 +12,8 @@
 import { azureRead } from "@/lib/data-plane/azureRead";
 import {
   getCurrentTaxonomyVersion,
+  listDeliveryLocations,
+  listProviderClasses,
   listRateBands,
   listRoles,
   listSeniorityLevels,
@@ -26,16 +28,22 @@ export async function loadRateCardReferenceSnapshot(): Promise<RateCardReference
       "pricing_taxonomy_not_loaded: no current pricing_taxonomy_versions row — run the PR1/PR2 reference-pack loader first",
     );
   }
-  const [roles, rateBands, levels] = await Promise.all([
+  const [roles, rateBands, levels, providerClasses, locations] = await Promise.all([
     listRoles(taxonomy.version),
     listRateBands(taxonomy.version),
     listSeniorityLevels(taxonomy.version),
+    listProviderClasses(taxonomy.version),
+    listDeliveryLocations(taxonomy.version),
   ]);
   return {
     taxonomyVersion: taxonomy.version,
     roleCodes: new Set(roles.map((r) => r.role_code)),
     rateBandCodes: new Set(rateBands.map((r) => r.rate_band_code)),
     levelCodes: new Set(levels.map((l) => l.level_code)),
+    // An empty reference table means "not loaded", not "nothing is valid":
+    // skip the check rather than reject every line that names a dimension.
+    providerClassCodes: providerClasses.length > 0 ? new Set(providerClasses.map((p) => p.provider_class_code)) : undefined,
+    locationCodes: locations.length > 0 ? new Set(locations.map((l) => l.location_code)) : undefined,
   };
 }
 

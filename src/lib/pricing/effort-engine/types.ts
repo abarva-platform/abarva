@@ -201,6 +201,13 @@ export interface EffortEnginePack {
 
 export type RateResolutionScope = "client" | "global" | "rate_band_default" | "missing";
 
+/**
+ * The provider class a client rate card uses for its OWN staff. It is not a
+ * reference provider class: an internal rate comes only from the client's
+ * card, never from a band default rebased by a supplier tier.
+ */
+export const INTERNAL_PROVIDER_CLASS = "INTERNAL";
+
 export interface ResolvedRate {
   resolvedFromScope: RateResolutionScope;
   roleCode: string;
@@ -209,6 +216,9 @@ export interface ResolvedRate {
   currency: string;
   rateCardVersionId: string | null;
   gapReason: string | null;
+  /** The provider class / location the matched rate-card line names (null = a generic line). Absent for band defaults. */
+  matchedProviderRef?: string | null;
+  matchedLocationRef?: string | null;
 }
 
 // ---------------------------------------------------------------------------
