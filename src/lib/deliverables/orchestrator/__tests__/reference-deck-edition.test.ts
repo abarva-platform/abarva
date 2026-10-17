@@ -112,6 +112,33 @@ describe("live-input reference edition", () => {
     }
   }, 60_000);
 
+  it.each([
+    ["a labelled restatement", "Working outcome hypothesis: Fragmented reporting across every facility", true],
+    ["the same words, punctuated differently", "fragmented reporting, across every facility!", true],
+    ["a part", "Fragmented reporting across every", true],
+    ["a distinct outcome", "Clearer decisions from one trusted facility view", false],
+  ] as const)("shows the outcome once in the summary when it is %s of the problem", (_, outcome, repeats) => {
+    const inputs = fixture("investment");
+    inputs.move = { ...inputs.move, problemStatement: "Fragmented reporting across every facility", targetOutcome: outcome };
+    const summary = buildReferenceEdition(inputs, words(INVESTMENT_SEQUENCE.length)).slides.find((slide) => slide.archetype === "one_page")!;
+    const lines = summary.blocks.flatMap((block) => block.kind === "text" ? block.lines : []);
+    expect(lines).toContain("Problem: Fragmented reporting across every facility");
+    expect(lines.filter((line) => line.startsWith("Outcome: "))).toEqual(
+      [repeats ? "Outcome: to confirm; the recorded outcome repeats the problem." : `Outcome: ${outcome}`]);
+  });
+
+  it.each([
+    ["Slow reports", "Slow reports", true],
+    ["Slow reports", "Slow reports delay every facility review and its decisions", false],
+    ["", "Fragmented reporting across every facility", false],
+  ] as const)("compares a short outcome only as a whole: %j against the problem", (outcome, problem, repeats) => {
+    const inputs = fixture("investment");
+    inputs.move = { ...inputs.move, problemStatement: problem, targetOutcome: outcome };
+    const summary = buildReferenceEdition(inputs, words(INVESTMENT_SEQUENCE.length)).slides.find((slide) => slide.archetype === "one_page")!;
+    const outcomeLine = summary.blocks.flatMap((block) => block.kind === "text" ? block.lines : []).find((line) => line.startsWith("Outcome: "));
+    expect(outcomeLine === "Outcome: to confirm; the recorded outcome repeats the problem.").toBe(repeats);
+  });
+
   it("binds active and open assumption counts to distinct governed sources", () => {
     const inputs = fixture("validation");
     if (inputs.register.status !== "ready") throw new Error("fixture unavailable");

@@ -27,6 +27,18 @@ export const INVESTMENT_SEQUENCE: ReferenceArchetype[] = [
 ];
 
 const GAP = "Gap — input unavailable";
+
+/** Words only: case and punctuation do not hide a restatement. */
+const comparableText = (value: unknown): string => typeof value !== "string" ? ""
+  : value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+/** An outcome that only repeats the problem says nothing new; the summary shows it once. */
+function restatesProblem(outcome: unknown, problem: unknown): boolean {
+  const said = comparableText(outcome);
+  const need = comparableText(problem);
+  // A short phrase inside a longer problem is not a restatement; the same words are.
+  return said === need || (Math.min(said.length, need.length) >= 20 && (said.includes(need) || need.includes(said)));
+}
 const text = (value: unknown, fallback = GAP): string =>
   typeof value === "string" && value.trim() ? value.trim() : fallback;
 const obj = (value: unknown): Record<string, unknown> | null =>
@@ -332,7 +344,9 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
         ]),
         { kind: "text", lines: [
           `Problem: ${safeRead(inputs.move.problemStatement)}`,
-          `Outcome: ${safeRead(inputs.move.targetOutcome)}`,
+          restatesProblem(inputs.move.targetOutcome, inputs.move.problemStatement)
+            ? "Outcome: to confirm; the recorded outcome repeats the problem."
+            : `Outcome: ${safeRead(inputs.move.targetOutcome)}`,
           "Decision: confirm the evidence and named owners.",
         ] },
       ];
