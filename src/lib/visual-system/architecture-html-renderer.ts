@@ -456,15 +456,21 @@ function svgLevel(
       false,
     );
   }
-  return svgTimeline(
-    level.nodes.map((n) => ({
-      id: n.id,
-      label: n.label,
-      detail: n.service ?? ARCH_LAYER_LABELS[n.layer],
-    })),
-    "var(--data)",
-    false,
-  );
+  const items = level.nodes.map((n) => ({
+    id: n.id,
+    label: n.label,
+    detail: n.service ?? ARCH_LAYER_LABELS[n.layer],
+  }));
+  const capacity = COLLECTION_COLUMNS * MAX_FLOW_VISUAL_ROWS;
+  const panels: string[] = [];
+  for (let start = 0; start < Math.max(1, items.length); start += capacity) {
+    const part = Math.floor(start / capacity) + 1;
+    const count = Math.ceil(items.length / capacity);
+    panels.push(
+      `${count > 1 ? `<div class="diagram-part">Part ${part} of ${count}</div>` : ""}${svgTimeline(items.slice(start, start + capacity), "var(--data)", false)}`,
+    );
+  }
+  return panels.join("");
 }
 
 function currentOperatingFlow(model: ArchitectureModel): string {

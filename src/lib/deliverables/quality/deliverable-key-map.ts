@@ -11,6 +11,7 @@ import type {
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 import type { ContractInput } from "./deliverable-quality-contract";
 import type { OutputFormat } from "@/lib/deliverables/orchestrator/types";
+import { isRootCauseTable } from "@/lib/deliverables/orchestrator/root-cause-table";
 
 /** Orchestrator deliverableType → profiled DeliverableKey. */
 const ORCH_TYPE_TO_KEY: Readonly<Record<string, DeliverableKey>> = {
@@ -103,7 +104,9 @@ function renderedExhibitsFromDoc(doc: RenderableDeliverable): ExhibitId[] {
 }
 
 const P2_DECK_SLIDE_EXHIBIT_MAP: Readonly<
-  Partial<Record<DeliverableKey, Readonly<Record<string, readonly ExhibitId[]>>>>
+  Partial<
+    Record<DeliverableKey, Readonly<Record<string, readonly ExhibitId[]>>>
+  >
 > = {
   discovery_report: {
     current_state: ["process_pain_map"],
@@ -113,7 +116,6 @@ const P2_DECK_SLIDE_EXHIBIT_MAP: Readonly<
     readiness: ["capability_maturity"],
   },
   root_cause_worksheet: {
-    what_is_not_working: ["symptom_cause_table"],
     root_causes: ["root_cause_tree"],
   },
 };
@@ -128,7 +130,14 @@ function renderedExhibitsFromDeckSlides(
   for (const slide of doc.deckSlides ?? []) {
     if (!slide.key) continue;
     ids.push(...(bySlideKey[slide.key] ?? []));
-    if (slide.exhibitKey && VALID_EXHIBITS.has(slide.exhibitKey)) {
+    if (
+      slide.exhibitKey &&
+      VALID_EXHIBITS.has(slide.exhibitKey) &&
+      !(
+        deliverableKey === "root_cause_worksheet" &&
+        slide.exhibitKey === "symptom_cause_table"
+      )
+    ) {
       ids.push(slide.exhibitKey as ExhibitId);
     }
   }
@@ -157,6 +166,10 @@ export function renderedContractExhibitsFromDocument(
       ...renderedExhibitsFromDoc(doc),
       ...renderedExhibitsFromDeckSlides(doc, deliverableKey),
       ...renderedWorkflowGuideExhibits(doc, deliverableKey),
+      ...(deliverableKey === "root_cause_worksheet" &&
+      doc.tables.some(isRootCauseTable)
+        ? ["symptom_cause_table" as const]
+        : []),
     ]),
   );
 }
