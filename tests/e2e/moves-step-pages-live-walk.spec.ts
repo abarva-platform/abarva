@@ -1191,6 +1191,8 @@ test("fetches both read-only reference-deck editions from the signed-in Move", a
     fallbackCount: number | null;
     /** "2:title_format,9:parse_failed": every fallback slide and why, names only. */
     fallbackCauses: string | null;
+    /** "4:reference_gap,9:thin_slide": every judge finding behind the score, codes only. */
+    fidelityFindings?: string | null;
     requestId: string | null;
     bytes: number;
     file: string | null;
@@ -1352,8 +1354,19 @@ test("fetches both read-only reference-deck editions from the signed-in Move", a
         expect(wordsReason).toMatch(
           /^(preflight_denied|model_error|parse_failed|slide_rejected)$/,
         );
+      // Absent only on a deploy older than the header.
+      const fidelityFindings =
+        response.headers()["x-abarva-deck-fidelity-findings"] ?? null;
+      if (fidelityFindings !== null) {
+        const codes = fidelityFindings === "none" ? [] : fidelityFindings.split(",");
+        const remainder = /^\+(\d+)$/.exec(codes.at(-1) ?? "");
+        const count = remainder ? codes.length - 1 + Number(remainder[1]) : codes.length;
+        expect(score).toBe(Math.max(0, 100 - 5 * count));
+      }
       if (score < 90)
-        failures.push(`${edition} ${format}: fidelity ${score} is below 90`);
+        failures.push(
+          `${edition} ${format}: fidelity ${score} is below 90${fidelityFindings ? ` (${fidelityFindings})` : ""}`,
+        );
       const fallbackCauses =
         response.headers()["x-abarva-deck-fallback-causes"] ?? null;
       if (wordsStatus === "unavailable")
@@ -1412,6 +1425,7 @@ test("fetches both read-only reference-deck editions from the signed-in Move", a
         wordsSlide,
         fallbackCount,
         fallbackCauses,
+        fidelityFindings,
         requestId,
         bytes: bytes.length,
         file: path.basename(file),

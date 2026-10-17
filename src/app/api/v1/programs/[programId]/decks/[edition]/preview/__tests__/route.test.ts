@@ -203,6 +203,7 @@ describe("read-only reference deck preview", () => {
     expect(result.headers.get("X-AbarVa-Deck-Words-Status")).toBe("ok");
     expect(result.headers.get("X-AbarVa-Deck-Fallback-Causes")).toBeNull();
     expect(result.headers.get("X-AbarVa-Deck-Fallback-Count")).toBe("0");
+    expect(result.headers.get("X-AbarVa-Deck-Fidelity-Findings")).toBe("none");
     expect(result.headers.get("X-AbarVa-Deck-Request-Id")).toMatch(/^[0-9a-f-]{36}$/);
     expect(result.headers.get("Cache-Control")).toContain("no-store");
     expect(mockAssemble).toHaveBeenCalledWith("synthetic-move", "validation");
@@ -213,6 +214,58 @@ describe("read-only reference deck preview", () => {
       available: expect.objectContaining({ rom: false, valueCase: false }),
     }));
     expect(Buffer.from(await result.arrayBuffer()).toString()).toBe("PK synthetic preview");
+  });
+
+  it.each(["pptx", "pdf"])("names every finding behind a %s score by code, without its message", async (format) => {
+    mockJudge.mockReturnValueOnce({ fidelityScore: 85, findings: [
+      { kind: "reference_gap", slide: 4, message: "secret gap wording" },
+      { kind: "thin_slide", slide: 7, message: "secret thin wording" },
+      { kind: "reference_count_dump", slide: 9, detailCode: "count_dump_answer", message: "secret answer" },
+    ] });
+    const result = await GET(request(format), params());
+    expect(result.status).toBe(200);
+    expect(result.headers.get("X-AbarVa-Deck-Fidelity-Score")).toBe("85");
+    expect(result.headers.get("X-AbarVa-Deck-Fidelity-Findings")).toBe("4:reference_gap,7:thin_slide,9:reference_count_dump/count_dump_answer");
+    expect([...result.headers.values()].join(" ")).not.toMatch(/secret/);
+  });
+
+  it("names a deck-wide finding without a slide, and caps a long list with the remainder", async () => {
+    mockJudge.mockReturnValueOnce({ fidelityScore: 0, findings: [
+      { kind: "slide_count", message: "synthetic" },
+      ...Array.from({ length: 44 }, (_, i) => ({ kind: "thin_slide", slide: i + 1, message: "synthetic" })),
+    ] });
+    const result = await GET(request(), params());
+    const codes = result.headers.get("X-AbarVa-Deck-Fidelity-Findings")!.split(",");
+    expect(codes[0]).toBe("-:slide_count");
+    expect(codes).toHaveLength(41);
+    expect(codes[39]).toBe("39:thin_slide");
+    expect(codes[40]).toBe("+5");
+  });
+
+  it.each([[40, 40, null], [41, 41, "+1"]])("caps at forty codes: %i findings give %i entries", async (total, entries, last) => {
+    mockJudge.mockReturnValueOnce({ fidelityScore: 0, findings: Array.from({ length: total }, (_, i) => ({ kind: "thin_slide", slide: i + 1, message: "synthetic" })) });
+    const codes = (await GET(request(), params())).headers.get("X-AbarVa-Deck-Fidelity-Findings")!.split(",");
+    expect(codes).toHaveLength(entries);
+    expect(codes.at(-1)).toBe(last ?? `${total}:thin_slide`);
+  });
+
+  it("names the findings on a render refusal too, beside its body", async () => {
+    mockJudge.mockReturnValueOnce({ fidelityScore: 90, findings: [
+      { kind: "reference_layout", slide: 3, detailCode: "table_fit", message: "private" },
+      { kind: "thin_slide", slide: 5, message: "private" },
+    ] });
+    const result = await GET(request(), params());
+    expect(result.status).toBe(422);
+    expect(result.headers.get("X-AbarVa-Deck-Fidelity-Findings")).toBe("3:reference_layout/table_fit,5:thin_slide");
+  });
+
+  it("states no findings header where the deck was never judged", async () => {
+    mockBuild.mockImplementationOnce(() => { throw new ReferenceDeckLineageRefusal([
+      { slide: 8, code: "unsupported_narrative", message: "private", blocking: true },
+    ]); });
+    const result = await GET(request(), params());
+    expect(result.status).toBe(422);
+    expect(result.headers.get("X-AbarVa-Deck-Fidelity-Findings")).toBeNull();
   });
 
   it("refuses unsupported formats without reading data", async () => {
