@@ -1600,6 +1600,15 @@ describe("P4 and P5 step pages", () => {
     expect(screen.queryByText(/\[A:V-FIRST\]/)).not.toBeInTheDocument();
   });
 
+  it("briefs aVa on a capture step without splicing the step's instruction into a sentence", () => {
+    const props = host(5);
+    let briefing = "";
+    props.dock = (content, options) => { briefing = String(options.briefing ?? ""); return <>{content}</>; };
+    render(page(P5_STEP_PAGES, "p5-owners", props));
+    expect(briefing).toMatch(/^I can use this step's saved answers and the evidence shown here\./);
+    expect(briefing).not.toMatch(/saved name /i);
+  });
+
   it("keeps a note-derived answer in review until the person accepts it", () => {
     const props = host(5);
     props.dock = (content, options) => (

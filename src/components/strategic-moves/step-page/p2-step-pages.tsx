@@ -201,7 +201,8 @@ function P2Page({
     />
   );
   return host.dock(page, {
-    briefing: `I read the saved ${title.toLowerCase()} and the current governed gate readback. I can help you organize notes, but I do not approve evidence, attest baselines, or confirm the solution route. Drafts stay drafts until you accept them. I don't write figures.`,
+    // The step title is an instruction ("Establish the baseline"); it is not spliced into a sentence.
+    briefing: `I read this step's saved answers and the current governed gate readback. I can help you organize notes, but I do not approve evidence, attest baselines, or confirm the solution route. Drafts stay drafts until you accept them. I don't write figures.`,
     actions: [],
     notesPanel,
   });
