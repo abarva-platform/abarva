@@ -1657,6 +1657,12 @@ describe("AgentDock · thread render", () => {
     );
 
     expect(screen.getByText("Chat export")).toBeInTheDocument();
+    // A narrow dock wraps the actions below the wordmark instead of drawing them over it.
+    const header = screen.getByRole("group", { name: "Export aVa chat session only" }).parentElement!.parentElement!;
+    const markRow = header.firstElementChild as HTMLElement;
+    expect(within(markRow).getByTestId("ava-ask-mark")).toBeInTheDocument();
+    expect(header.style.flexWrap).toBe("wrap");
+    expect(markRow.style.minWidth).toBe("62px");
 
     fireEvent.click(
       screen.getByRole("button", {

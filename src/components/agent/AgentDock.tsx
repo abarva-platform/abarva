@@ -2558,6 +2558,10 @@ const HEADER_STYLE: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
+  // A narrow dock cannot hold the wordmark, the chat export and the mode
+  // controls on one line; the actions wrap below rather than draw over the mark.
+  flexWrap: "wrap",
+  rowGap: 8,
   gap: 12,
   padding: "14px 18px 12px",
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
@@ -2577,17 +2581,20 @@ const HEADER_ACTIONS_STYLE: CSSProperties = {
   flexShrink: 0,
 };
 
+const AGENT_WORDMARK_WIDTH = 62;
+
+const AGENT_WORDMARK_STYLE: CSSProperties = {
+  width: AGENT_WORDMARK_WIDTH,
+  height: "auto",
+  flexShrink: 0,
+};
+
+/** Never narrower than the wordmark, so the mark is never drawn under the actions. */
 const AGENT_ROW_STYLE: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   gap: 12,
-  minWidth: 0,
-};
-
-const AGENT_WORDMARK_STYLE: CSSProperties = {
-  width: 62,
-  height: "auto",
-  flexShrink: 0,
+  minWidth: AGENT_WORDMARK_WIDTH,
 };
 
 const AGENT_ROLE_STYLE: CSSProperties = {

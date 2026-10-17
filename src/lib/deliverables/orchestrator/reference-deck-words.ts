@@ -16,7 +16,15 @@ export interface EditionWords {
 export type WordsUnavailableReason = "preflight_denied" | "model_error" | "parse_failed" | "slide_rejected";
 export type DraftEditionWordsResult =
   | { status: "ok"; words: EditionWords[]; fallbackSlides: [] }
-  | { status: "unavailable"; reason: WordsUnavailableReason; rule?: string; slide?: number; words: EditionWords[]; fallbackSlides: number[] };
+  | { status: "unavailable"; reason: WordsUnavailableReason; rule?: string; slide?: number; words: EditionWords[]; fallbackSlides: number[];
+    /** Why each fallback slide fell back, in slide order: a word rule, or the call that returned no words. Names only, never prose. */
+    fallbackCauses: WordsFallbackCause[] };
+
+/** One fallback slide and why: a `modelWordRule` name, `parse_failed`, `model_error` or `preflight_denied`. */
+export interface WordsFallbackCause {
+  slide: number;
+  cause: string;
+}
 
 export type UseCasePromptType =
   | "strategic_transformation" | "workflow_automation" | "platform_modernization"
@@ -175,7 +183,11 @@ export function modelWordRule(entry: EditionWords, edition: ReferenceEdition, sl
   if (/[{}]/.test(literal)) return "malformed_slot";
   if (LITERAL_FIGURE.test(literal)) return "literal_figure";
   if (!entry.notes.startsWith("The point:") || !entry.notes.includes("How to read:")) return "notes_format";
-  if (entry.title.trim().split(/\s+/).length < 5 || /[.!?]\s+\S/.test(entry.title)) return "title_format";
+  // A title holding an unavailable figure is never shown: the edition shows its own
+  // missing-input title and keeps this draft in the notes (`resolveVisibleSentence`).
+  // Its form cannot fail the slide; every content rule above and below still applies.
+  const titleWithheld = [...entry.title.matchAll(SLOT_TOKEN)].some((match) => slots[match[1]!]?.display === null);
+  if (!titleWithheld && (entry.title.trim().split(/\s+/).length < 5 || /[.!?]\s+\S/.test(entry.title))) return "title_format";
   // Validated tokens are binding metadata, not words shown to the client.
   if (clientCopyIssue(`${entry.title} ${entry.answer}`.replace(SLOT_TOKEN, ""))) return "internal_client_word";
   if (answerIsCountDump(entry.answer)) return "count_dump_answer";
@@ -231,7 +243,8 @@ export async function draftEditionWords(input: {
   const unavailable = unavailableEditionWords(input.edition, input.archetypes);
   const allSlides = input.archetypes.map((_, index) => index + 1);
   const failure = (reason: WordsUnavailableReason): DraftEditionWordsResult =>
-    ({ status: "unavailable", reason, words: unavailable, fallbackSlides: allSlides });
+    ({ status: "unavailable", reason, words: unavailable, fallbackSlides: allSlides,
+      fallbackCauses: allSlides.map((slide) => ({ slide, cause: reason })) });
   const system = "Write client-ready slide language as JSON with a words array. Each entry has exactly title, answer, notes. Use the edition, use-case lens, phase stage and read-state controls. Every non-cover title, including a section divider, has at least five words and exactly one sentence. Keep the title and answer to one sentence each; use two short sentences in notes. The answer must interpret what the evidence means and the next decision, never list counts. Never prefix client text with a layout or archetype name such as big number context, plain English table, flow today or one step value. Do not put internal workflow words such as slot, readback, capture, register, governed, Move, flag, preview or ROM in the title or answer; consultant guidance belongs only in notes. Copy every requiredTitleSlot exactly into its title. Figure slots use one pair of braces, for example {value.annual.base}; never use double braces, a bare slot name, or a value. Use only supplied, edition-allowed slot tokens for figures; never write a digit, currency symbol or magnitude word outside a slot. Do not invent a client fact. Specific case facts require an approved model-ready context bundle, which this request does not supply. Use each slide evidence flag literally: false means the input is not confirmed. An unavailable input remains a visible gap after generation; do not write this figure, an approved estimate, mapped decision owners or verified citations as completed facts when that basis is absent. Active assumptions include open, confirmed and corrected items; only register.count.open describes open items. Slots beginning rom.ai describe an AI-assisted delivery scenario priced beside the approved estimate: use them only on a slide whose evidence has aiScenarioAvailable true, name it a scenario or comparison in the same sentence, keep it out of the title, and never present it as the estimate or the funding basis. Notes begin 'The point:' and contain 'How to read:'. The server sets the cover title and promise from the use-case name and edition; do not put an edition rule on the cover. In validation answers, notes and non-cover titles, avoid cost, ROM, ROI, investment, solution, plan, roadmap and release even in a negated phrase.";
   const profile = { edition: input.edition, useCaseLens: DESIGN_LENS[input.useCaseType] ?? DESIGN_LENS.unclassified, phaseStage: input.phaseStage, available: input.available };
   const promptSlides = input.archetypes.map((archetype) => ({ archetype,
@@ -394,21 +407,48 @@ export async function draftEditionWords(input: {
         }
         return null;
       }));
+      const callFailures: { slides: number[]; outcome: string; errorName?: string; status?: number | null }[] = [];
       repairs.forEach((result, chunkIndex) => {
-        if (result.status !== "fulfilled" || !result.value) return;
+        const slides = repairChunks[chunkIndex]!.map(({ index }) => index + 1);
+        if (result.status === "rejected") {
+          const error = result.reason;
+          callFailures.push({ slides, outcome: "call_failed", errorName: error instanceof Error ? error.name : "unknown",
+            status: typeof error === "object" && error !== null && "status" in error && typeof error.status === "number" ? error.status : null });
+          return;
+        }
+        if (!result.value) { callFailures.push({ slides, outcome: "denied_or_unparsed" }); return; }
         result.value.forEach((entry, repairIndex) => {
           const index = repairChunks[chunkIndex]![repairIndex]!.index;
           const candidate = normalizeKnownSlotTokens(entry, input.edition, input.slots);
           if (!modelWordRule(candidate, input.edition, input.slots, input.archetypes[index])) words[index] = candidate;
         });
       });
+      // Shape diagnostics only: rule names and slide numbers, never model prose.
+      const stillRejected = rejected.flatMap(({ index }) => {
+        const rule = ruleAt(index);
+        return rule ? [{ slide: index + 1, rule }] : [];
+      });
+      console.warn("[reference-deck-words-repair]", {
+        requestId: input.requestId ?? null, edition: input.edition,
+        attempted: rejected.length, repaired: rejected.length - stillRejected.length,
+        initialRules: rejected.map(({ index, rule }) => ({ slide: index + 1, rule })),
+        stillRejected, callFailures,
+      });
     }
     const fallbackSlides: number[] = [...parseFailedSlides];
+    // Built in slide order: a slide with no words names the call; a rejected slide names its rule.
+    const fallbackCauses: WordsFallbackCause[] = [];
     let firstRule: string | undefined;
     words.forEach((_, index) => {
+      const slide = index + 1;
+      if (parseFailedSlides.includes(slide)) {
+        fallbackCauses.push({ slide, cause: deniedSlides.has(slide) ? "preflight_denied" : modelFailedSlides.has(slide) ? "model_error" : "parse_failed" });
+        return;
+      }
       const rule = ruleAt(index);
       if (!rule) return;
-      fallbackSlides.push(index + 1);
+      fallbackSlides.push(slide);
+      fallbackCauses.push({ slide, cause: rule });
       firstRule ??= rule;
       words[index] = unavailable[index]!;
     });
@@ -420,7 +460,7 @@ export async function draftEditionWords(input: {
         : firstParseFailure === firstSlide ? "parse_failed" : "slide_rejected";
     return fallbackSlides.length
       ? { status: "unavailable", reason,
-        ...(reason === "slide_rejected" ? { rule: firstRule } : {}), slide: firstSlide, words, fallbackSlides }
+        ...(reason === "slide_rejected" ? { rule: firstRule } : {}), slide: firstSlide, words, fallbackSlides, fallbackCauses }
       : { status: "ok", words, fallbackSlides: [] };
   } catch {
     return failure("model_error");
