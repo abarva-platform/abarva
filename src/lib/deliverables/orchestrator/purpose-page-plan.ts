@@ -65,11 +65,90 @@ export type PurposeFamily =
   | "trend";
 export type PurposeTone = "candidate" | "condition" | "later" | "risk";
 
+/**
+ * The one label a client reads for each internal state.
+ *
+ * Labels used to render as `CANDIDATE / Proposed decision` and `CONDITION / Outside the evidence`:
+ * an internal taxonomy code, a slash, then the writer's own sub-label. A reader meets the
+ * classification system rather than the decision. Each state now has exactly one client label, and
+ * a candidate is the only state with two, because "proposed" and "supported now" are different
+ * claims about the same option.
+ */
+export function purposeClientLabel(tone: PurposeTone, label: string): string {
+  // The reference decks' own wording, which is what a reviewer compares against: DESIGN CANDIDATE,
+  // CONDITIONS TO CLOSE, LATER APPROVAL. A candidate the evidence already supports says so.
+  if (tone === "candidate")
+    return /\bsupport/i.test(label) ? "Supported now" : "Design candidate";
+  return tone === "condition"
+    ? "Conditions to close"
+    : tone === "later"
+      ? "Later approval"
+      : "Open risk";
+}
+
+/** Whether the writer's label only restates the state, rather than naming the item. */
+function isStateSynonym(tone: PurposeTone, label: string): boolean {
+  const value = label.trim().replace(/:$/, "").toLowerCase();
+  return (
+    !value ||
+    value === tone ||
+    value === purposeClientLabel(tone, label).toLowerCase() ||
+    /^(?:proposed decision|supported now|candidate|design candidate|conditions?(?: to close)?|later(?: approval)?|(?:open )?risk)$/.test(
+      value,
+    )
+  );
+}
+
+/**
+ * The label a reader sees: the client state where the writer only restated it, otherwise the
+ * writer's own name for the item. Never both, and never the slash form.
+ *
+ * A risk labelled "Access boundary" is the name of the risk, and dropping it would lose which risk
+ * it is -- so a name survives as the label. What goes is the taxonomy prefix in front of it.
+ */
 export function purposeStatusLabel(tone: PurposeTone, label: string): string {
-  const normalized = label.trim().replace(/:$/, "");
-  return normalized.toLowerCase() === tone
-    ? tone.toUpperCase()
-    : `${tone.toUpperCase()} / ${normalized}`;
+  return isStateSynonym(tone, label)
+    ? purposeClientLabel(tone, label).toUpperCase()
+    : label.trim().replace(/:$/, "");
+}
+
+/**
+ * One row per client label, in the order each label first appears.
+ *
+ * Three conditions used to take three rows, each repeating the same status, which is how a decision
+ * page reached five or six rows. Grouping them is what lets the page carry the decision in three,
+ * the way the reference decks do. Details keep their own citations; nothing moves between claims.
+ */
+export function groupPurposeStatusItems<
+  T extends { label: string; tone?: PurposeTone; detail: string },
+>(items: T[]): T[] {
+  if (!items.some((item) => item.tone)) return items;
+  const groups = new Map<string, T>();
+  for (const item of items) {
+    const key = item.tone
+      ? purposeClientLabel(item.tone, item.label)
+      : `untoned:${item.label}`;
+    // A grouped row is labelled by its state, so an item's own name moves to lead its detail rather
+    // than being lost when it stops being the row label.
+    const named =
+      item.tone && !isStateSynonym(item.tone, item.label)
+        ? `${item.label.trim().replace(/:$/, "")}: ${item.detail}`
+        : item.detail;
+    const existing = groups.get(key);
+    groups.set(
+      key,
+      existing
+        ? { ...existing, detail: `${existing.detail}\n${named}` }
+        : {
+            ...item,
+            // The display form, so every later path renders the same words whether or not it
+            // passes the label back through purposeStatusLabel (which leaves it unchanged).
+            label: item.tone ? purposeStatusLabel(item.tone, key) : item.label,
+            detail: named,
+          },
+    );
+  }
+  return [...groups.values()];
 }
 export interface PageIntent {
   question: string;
@@ -152,6 +231,16 @@ export interface PurposePage {
   columnWeights?: number[];
   sourceRegister?: boolean;
   semanticStatusColumn?: boolean;
+  /**
+   * Each row's status, carried beside the row rather than parsed back out of its label. Colour used
+   * to be recovered by splitting the display label on " / ", which tied the row's meaning to the
+   * very taxonomy prefix a reader should not see.
+   */
+  rowTones?: (PurposeTone | undefined)[];
+  /** One line under a process flow naming the branch off the main path. */
+  exceptionPath?: string;
+  /** Sources a table shared on every row, moved off the canvas and stated once in the footer. */
+  footerSources?: number[];
   compactTableRows?: boolean;
   tableFontSize?: 14 | 15;
   rows?: string[][];
@@ -535,10 +624,18 @@ function paginateRawContent(input: PurposePage): PurposePage[] {
       else if (cuts[0])
         groups.splice(0, 2, rows.slice(0, cuts[0].at), tail(cuts[0].at));
     }
+    // A split partitions the original row objects without copying them, so each row's status is
+    // found again by identity rather than by index -- an inserted continuation row cannot shift it.
+    const toneOf = new Map(
+      (page.rows ?? []).map((row, i) => [row, page.rowTones?.[i]] as const),
+    );
     return groups.map((rows, i) => ({
       ...page,
       id: `${page.id}:${i + 1}`,
       rows,
+      ...(page.rowTones
+        ? { rowTones: rows.map((row) => toneOf.get(row)) }
+        : {}),
       title: i ? `${page.title} (continued)` : page.title,
     }));
   }
@@ -683,6 +780,7 @@ function paginateContent(page: PurposePage): PurposePage[] {
       compact: true,
       columns: ["Status and statement", "Evidence or condition"],
       semanticStatusColumn: true,
+      rowTones: page.items.map((item) => item.tone),
       rows: page.items.map((item) => [
         purposeStatusLabel(item.tone!, item.label),
         item.detail,
@@ -784,6 +882,13 @@ function basePage(slide: RenderableDeckSlide, index: number): PurposePage {
   };
 }
 
+const SHAPED_TABLE_FAMILIES = new Set<string>([
+  "roles",
+  "labelled_statements",
+  "big_numbers",
+  "decision",
+]);
+
 function tablePage(table: RenderableTable, base: PurposePage): PurposePage {
   if (table.numericCells?.length) {
     const rows = table.rows.map((r) => [...r]);
@@ -797,9 +902,193 @@ function tablePage(table: RenderableTable, base: PurposePage): PurposePage {
   if (!table.rows.length) throw new PurposePageError("empty_table", base.id);
   if (table.rows.some((row) => row.length !== table.columns.length))
     throw new PurposePageError("table_shape", base.id);
+  // Sources are collected before any column is removed, so dropping a constant column can never
+  // drop a source from the page footer.
   const sources = [
     ...new Set([...base.sources, ...sourceIds(table.rows.flat().join(" "))]),
   ];
+  let notes = base.notes;
+  // Any table that is not one of the shaped families renders as a plain register -- including a
+  // declared comparison and a writer's undeclared shape -- so every one gets the same hygiene.
+  if (!SHAPED_TABLE_FAMILIES.has(table.pageShape ?? "")) {
+    table = withoutConstantColumns(table);
+    const sourced = withSourceColumn(table);
+    table = sourced.table;
+    if (sourced.cellSources.length)
+      notes += `\nCell sources: ${sourced.cellSources.join("; ")}`;
+    if (sourced.sharedSources)
+      base = { ...base, footerSources: sourced.sharedSources };
+  }
+  return shapedTablePage(table, { ...base, notes }, sources);
+}
+
+/**
+ * Moves a register's citation codes out of its sentences into one narrow final Source column, the
+ * way a reader expects a table to attribute. The codes stay on the canvas, so the page footer, which
+ * describes visible evidence, keeps every source. Where cells in one row cited different sources,
+ * that claim-level attribution is returned for the notes rather than dropped.
+ *
+ * A table that already has a Source column is left alone. One whose every row cites the same
+ * sources has them returned as shared, for the page footer to state once.
+ */
+export function withSourceColumn<
+  T extends { columns: string[]; rows: string[][] },
+>(table: T): { table: T; cellSources: string[]; sharedSources?: number[] } {
+  const unchanged = { table, cellSources: [] };
+  if (table.columns.some((column) => /^sources?$/i.test(column.trim())))
+    return unchanged;
+  const rowIds = table.rows.map((row) => sourceIds(row.join(" ")));
+  if (!rowIds.some((ids) => ids.length)) return unchanged;
+  const keys = new Set(rowIds.map((ids) => ids.join(",")));
+  // Every row citing the same sources is one attribution for the whole table: it is stated once in
+  // the footer, not repeated down a column that would then say nothing per row.
+  if (keys.size === 1)
+    return {
+      table: {
+        ...table,
+        rows: table.rows.map((row) => row.map(stripCitations)),
+      },
+      cellSources: [],
+      sharedSources: rowIds[0]!,
+    };
+  const cellSources: string[] = [];
+  const rows = table.rows.map((row, r) => {
+    const cited = row
+      .map((cell, c) => ({ column: table.columns[c]!, ids: sourceIds(cell) }))
+      .filter((cell) => cell.ids.length);
+    if (new Set(cited.map((cell) => cell.ids.join(","))).size > 1)
+      cellSources.push(
+        `${stripCitations(row[0]!)}: ${cited
+          .map(
+            (cell) => `${cell.column} ${compactPurposeCitationIds(cell.ids)}`,
+          )
+          .join(", ")}`,
+      );
+    return [...row.map(stripCitations), compactPurposeCitationIds(rowIds[r]!)];
+  });
+  return {
+    table: { ...table, columns: [...table.columns, "Source"], rows },
+    cellSources,
+  };
+}
+
+function stripCitations(value: string): string {
+  return value
+    .replace(/\s*\[\d+(?:\s*[-–,]\s*\d+)*\]/g, "")
+    .replace(/\s+([.,;:!?])/g, "$1")
+    .replace(/ {2,}/g, " ")
+    .trim();
+}
+
+type PurposeFlowData = {
+  nodes: { id: string; label: string; role?: string }[];
+  edges: { from: string; to: string; label?: string }[];
+};
+
+/**
+ * Reads a recorded handoff graph as a numbered flow: the main path follows the declared node order
+ * while each node hands off to the next, and every remaining edge becomes one exception-path line.
+ * A handoff label that is identical on every main-path edge says nothing per step, so it is dropped
+ * the way a constant table column is. Distinct handoff labels, an unconnected node, too many steps
+ * fewer than three steps (a fork reads better as a register) or a branch that cannot be said in one
+ * line keep the edge register, which loses nothing.
+ */
+export function purposeFlowSteps(
+  data: PurposeFlowData,
+  nodeLabel: (id: string) => string,
+  unconnectedCount = 0,
+): { steps: PurposeFlowData["nodes"]; exceptionPath?: string } | null {
+  if (unconnectedCount > 0 || data.nodes.length < 2) return null;
+  const steps = [data.nodes[0]!];
+  const mainEdges = new Set<PurposeFlowData["edges"][number]>();
+  for (const node of data.nodes.slice(1)) {
+    const edge = data.edges.find(
+      (item) =>
+        item.from === steps[steps.length - 1]!.id && item.to === node.id,
+    );
+    if (!edge) break;
+    mainEdges.add(edge);
+    steps.push(node);
+  }
+  if (steps.length < 3 || steps.length > PURPOSE_LAYOUTS.process.maxItems)
+    return null;
+  const handoffs = new Set(
+    [...mainEdges].map((edge) => (edge.label || "").trim().toLowerCase()),
+  );
+  if (handoffs.size > 1) return null;
+  const branches = data.edges.filter((edge) => !mainEdges.has(edge));
+  const onPath = new Set(steps.map((node) => node.id));
+  if (branches.length > 2 || data.nodes.length - steps.length > 2) return null;
+  if (!branches.length) return { steps };
+  const name = (id: string) =>
+    onPath.has(id) ? data.nodes.find((n) => n.id === id)!.label : nodeLabel(id);
+  const exceptionPath = branches
+    .map(
+      (edge) =>
+        `${name(edge.from)} → ${name(edge.to)}${edge.label ? ` (${edge.label.trim()})` : ""}`,
+    )
+    .join("; ");
+  if (exceptionPath.length > PURPOSE_CAVEAT_MAX_CHARS) return null;
+  return { steps, exceptionPath };
+}
+
+/**
+ * R5 §4: a column that says the same thing on every row says it once.
+ *
+ * A handoff column reading "Declared connection" down every row costs a column's width and tells a
+ * reader nothing per row. It is removed, and its value is stated once in the header of the first
+ * column, where it stays visible. That matters when the shared value is a status: a register whose
+ * every row reads "Pending" must not lose "Pending" from the page, or the rows read as settled. The
+ * header is the same place the action register already carries its shared proposal status.
+ *
+ * Deliberately narrow. Only tables that render as a plain register, at least three rows so
+ * that "every row" is a pattern rather than a coincidence, at least three columns so that two remain,
+ * and a short value -- a long sentence repeated down a column is more likely a writer's error than a
+ * shared status.
+ *
+ * And only an uncited value. The page footer is rebuilt from the evidence that stays visible, so
+ * removing a cited column would leave its value on the page with its source gone. A cited constant
+ * stays where its citation is attached.
+ */
+export function withoutConstantColumns<
+  T extends { columns: string[]; rows: string[][] },
+>(table: T): T {
+  if (table.rows.length < 3 || table.columns.length < 3) return table;
+  const constant = table.columns
+    .map((_, column) => column)
+    .filter(
+      (column) =>
+        column > 0 &&
+        Boolean(table.rows[0]![column]?.trim()) &&
+        table.rows.every((row) => row[column] === table.rows[0]![column]) &&
+        sourceIds(table.rows[0]![column]!).length === 0 &&
+        purposePlainText(table.rows[0]![column]!).length <= 40,
+    );
+  if (!constant.length || table.columns.length - constant.length < 2)
+    return table;
+  const note = constant
+    .map(
+      (column) =>
+        `${table.columns[column]!.toLowerCase()}: ${table.rows[0]![
+          column
+        ]!.replace(/\s*\[[^\]]*\]/g, "").trim()}`,
+    )
+    .join("; ");
+  const keep = (row: string[]) => row.filter((_, i) => !constant.includes(i));
+  return {
+    ...table,
+    columns: keep(table.columns).map((header, i) =>
+      i === 0 ? `${header} (${note})` : header,
+    ),
+    rows: table.rows.map(keep),
+  };
+}
+
+function shapedTablePage(
+  table: RenderableTable,
+  base: PurposePage,
+  sources: number[],
+): PurposePage {
   const family =
     table.pageShape === "roles"
       ? "roles"
@@ -862,32 +1151,38 @@ function tablePage(table: RenderableTable, base: PurposePage): PurposePage {
       ...base,
       family,
       sources,
-      items: table.rows.map((row, i) => {
-        const statement =
-          family === "labelled_statements"
-            ? labelledStatementParts(row[0]!)
-            : { label: row[0]!, body: "" };
-        return {
-          label: statement.label,
-          tone: table.rowTones?.[i],
-          ...(family === "big_numbers"
-            ? { value: compactDisplayValue(row[1]!) }
-            : {}),
-          detail: [
-            statement.body,
-            row
-              .slice(family === "big_numbers" ? 2 : 1)
-              .map((cell, i) =>
-                table.columns.length === 2 || family === "big_numbers"
-                  ? cell
-                  : `${table.columns[i + 1]}: ${cell}`,
-              )
+      // Only the decision page groups by state. A readiness page listing five distinct conditions is
+      // five items, and labelling each by its own name keeps it from repeating one state five times.
+      items: (family === "decision"
+        ? groupPurposeStatusItems
+        : <T>(rows: T[]) => rows)(
+        table.rows.map((row, i) => {
+          const statement =
+            family === "labelled_statements"
+              ? labelledStatementParts(row[0]!)
+              : { label: row[0]!, body: "" };
+          return {
+            label: statement.label,
+            tone: table.rowTones?.[i],
+            ...(family === "big_numbers"
+              ? { value: compactDisplayValue(row[1]!) }
+              : {}),
+            detail: [
+              statement.body,
+              row
+                .slice(family === "big_numbers" ? 2 : 1)
+                .map((cell, i) =>
+                  table.columns.length === 2 || family === "big_numbers"
+                    ? cell
+                    : `${table.columns[i + 1]}: ${cell}`,
+                )
+                .join("\n"),
+            ]
+              .filter(Boolean)
               .join("\n"),
-          ]
-            .filter(Boolean)
-            .join("\n"),
-        };
-      }),
+          };
+        }),
+      ),
     };
   }
   return {
@@ -970,18 +1265,83 @@ export function purposeChartHeadline(
   }
   if (message !== "endpoints")
     throw new PurposePageError("unknown_chart_message", "chart");
-  return charts
-    .map((chart) => {
-      const first = chart.points[0]?.value;
-      const last = chart.points.at(-1)?.value;
-      if (first === undefined || last === undefined)
-        throw new PurposePageError("chart_without_data", chart.key);
-      const interior = chart.points.slice(1, -1).map((p) => p.value);
-      const recovery = last > first && interior.some((v) => v < first);
-      const retreat = last < first && interior.some((v) => v > first);
-      return `${chart.metric} ${recovery ? "recovers after a dip" : retreat ? "falls after a rise" : last > first ? "increases overall" : last < first ? "decreases overall" : "ends unchanged"}`;
-    })
-    .join("; ");
+  const trends = charts.map((chart) => ({
+    chart,
+    ...purposeChartTrend(chart),
+  }));
+  // One clause, never a semicolon. Two series used to be joined with "; ", which made every
+  // two-chart title two findings, put a capital letter mid-sentence, and broke the title limit the
+  // writer was then told to copy verbatim.
+  const subject = (metric: string, first: boolean) =>
+    first || /^[A-Z0-9]{2,}\b/.test(metric)
+      ? metric
+      : metric.charAt(0).toLowerCase() + metric.slice(1);
+  const joined = trends
+    .map((t, i) => `${subject(t.chart.metric, i === 0)} ${t.phrase}`)
+    .join(" while ");
+  if (joined.length <= PURPOSE_TITLE_MAX_CHARS || trends.length === 1)
+    return joined;
+  // Too long to be one title: lead with the series that moved most, measured against its own
+  // threshold so a large-unit series cannot win on scale alone.
+  const lead = [...trends].sort((a, b) => b.strength - a.strength)[0]!;
+  return trends.every((t) => t.direction === "steady")
+    ? "Both measures hold broadly steady"
+    : `${lead.chart.metric} ${lead.phrase}`;
+}
+
+/** Longest title a page can carry as one finding on one line. */
+export const PURPOSE_TITLE_MAX_CHARS = 72;
+/** Longest scope note that still reads as a caveat rather than a second paragraph. */
+export const PURPOSE_CAVEAT_MAX_CHARS = 110;
+/** The decision page holds at most this many rows once grouped by state; the rest belong later. */
+export const PURPOSE_DECISION_MAX_ROWS = 3;
+
+/**
+ * Whether a series moved enough to earn a direction word, computed from the bound points only.
+ *
+ * The headline used to call any series that ended above where it started, with one lower interior
+ * point, a recovery -- with no magnitude test at all. A first-contact rate moving two points around
+ * seventy-five per cent was published as "recovers after a dip". A direction word is a claim about
+ * the data, so the data has to support it: the first-to-last change, and the largest excursion from
+ * the mean, each against a threshold of five per cent of the mean, or three points for a series
+ * already measured in per cent.
+ */
+export function purposeChartTrend(chart: PurposeChart): {
+  direction: "recovers" | "retreats" | "rises" | "falls" | "dips" | "steady";
+  phrase: string;
+  strength: number;
+} {
+  const values = chart.points.map((p) => p.value);
+  const first = values[0];
+  const last = values.at(-1);
+  if (first === undefined || last === undefined)
+    throw new PurposePageError("chart_without_data", chart.key);
+  const mean = values.reduce((sum, v) => sum + v, 0) / values.length;
+  const threshold = /\bpercent\b|%/i.test(chart.unit)
+    ? 3
+    : Math.abs(mean) * 0.05;
+  const interior = values.slice(1, -1);
+  const change = last - first;
+  const dip = interior.some((v) => v < first && mean - v >= threshold);
+  const peak = interior.some((v) => v > first && v - mean >= threshold);
+  const excursion = Math.max(0, ...values.map((v) => Math.abs(v - mean)));
+  const strength =
+    threshold > 0 ? Math.max(Math.abs(change), excursion) / threshold : 0;
+  const result = (
+    direction: ReturnType<typeof purposeChartTrend>["direction"],
+    phrase: string,
+  ) => ({ direction, phrase, strength });
+  if (Math.abs(change) < threshold)
+    return dip
+      ? result("dips", "dips and returns to its starting level")
+      : result("steady", "holds broadly steady");
+  if (change > 0)
+    return dip
+      ? result("recovers", "recovers after a dip")
+      : result("rises", "increases overall");
+  return peak
+    ? result("retreats", "falls after a rise")
+    : result("falls", "decreases overall");
 }
 
 /** Presentation only: preserve the authored sequence and declared graph edges. */
@@ -1157,29 +1517,20 @@ export function planPurposePages(
           ],
           items: [],
         };
-        const chain =
-          data.nodes.length <= PURPOSE_LAYOUTS.process.maxItems &&
-          data.edges.length === data.nodes.length - 1 &&
-          data.nodes
-            .slice(0, -1)
-            .every((node, i) =>
-              data.edges.some(
-                (edge) =>
-                  edge.from === node.id &&
-                  edge.to === data.nodes[i + 1]!.id &&
-                  !edge.label,
-              ),
-            );
-        if (chain)
+        const flow = purposeFlowSteps(data, nodeLabel, unconnected.length);
+        if (flow)
           page = {
             ...page,
             family: "process",
             columns: undefined,
             rows: undefined,
-            items: data.nodes.map((node) => ({
+            items: flow.steps.map((node) => ({
               label: node.label,
               detail: node.role || "",
             })),
+            ...(flow.exceptionPath
+              ? { exceptionPath: flow.exceptionPath }
+              : {}),
           };
       } else if (
         "lanes" in data &&
@@ -1415,6 +1766,7 @@ export function planPurposePages(
           ? []
           : page.sources),
         ...visibleSources,
+        ...(page.footerSources ?? []),
       ]),
     ];
     validateFrame(page, known);

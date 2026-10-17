@@ -60,7 +60,8 @@ describe("fresh purpose storyline contract", () => {
     doc.deckSlides![0]!.governingMessage = "Measurement definitions differ";
     doc.deckSlides![0]!.pageIntent = {
       question: "Next decision?",
-      scopeNote: "This page establishes no funding approval.",
+      // A scope disclaimer in the round-5 form: what the page shows, and what it does not.
+      scopeNote: "Shows the next decision; establishes no funding approval.",
       takeaway: "Hold design until definitions agree.",
     };
     expect(validatePurposeStory(doc, [])).toEqual([]);
@@ -299,8 +300,8 @@ describe("fresh purpose storyline contract", () => {
       {
         key: "evidence",
         title: "Evidence status",
-      groundingMode: "expert_template",
-      citationsUsed: [1],
+        groundingMode: "expert_template",
+        citationsUsed: [1],
         bodyMarkdown:
           "| Item | Status | Basis |\n| --- | --- | --- |\n| Baseline | No baseline has been collected. | [1] |\n| Interviews | Planned | [2] |",
       },

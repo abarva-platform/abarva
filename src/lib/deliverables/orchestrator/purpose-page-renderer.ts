@@ -497,7 +497,20 @@ function options(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
 
 function renderProcess(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
   const TOP = purposeScopeLayout(page).bodyTop;
-  const H = purposeBodyHeight(page);
+  // The exception path takes one line under the steps rather than a column beside them.
+  const exceptionH = page.exceptionPath ? 0.55 : 0;
+  const H = purposeBodyHeight(page) - exceptionH;
+  if (page.exceptionPath)
+    text(
+      slide,
+      `Exception path: ${copy(page, page.exceptionPath)}`,
+      X,
+      TOP + H + 0.1,
+      W,
+      0.4,
+      18,
+      { objectName: "purpose:process:exception", color: C.navy },
+    );
   const gap = 0.4,
     w = (W - (page.items.length - 1) * gap) / page.items.length;
   const layouts = [24, 22, 20].map((font) => {
@@ -638,15 +651,10 @@ function renderPage(
                 (page.sourceRegister && !row[0]) ||
                 (page.semanticStatusColumn && column === 0),
               ),
-              ...(page.semanticStatusColumn && column === 0
-                ? {
-                    color:
-                      semanticColors[
-                        cell
-                          .split(" / ")[0]!
-                          .toLowerCase() as keyof typeof semanticColors
-                      ],
-                  }
+              ...(page.semanticStatusColumn &&
+              column === 0 &&
+              page.rowTones?.[i]
+                ? { color: semanticColors[page.rowTones[i]!] }
                 : {}),
               fill: {
                 color:
