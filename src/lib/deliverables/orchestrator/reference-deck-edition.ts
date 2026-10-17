@@ -447,7 +447,9 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
           { label: "Annual value", value: valueCell(annual), meaning: "Current basis" },
           { label: "Credited value", value: valueCell(threeTotal), meaning: "Earned basis" },
           { label: "Delivery estimate", value: valueCell(romCombined), meaning: "Approved basis" },
-          { label: "Three-year return", value: valueCell(roi("creditedEarned")), meaning: calculated("Calculated base") },
+          // Breakeven, not return: the estimate prices the build only, so a return on it is an
+          // upper bound, while the share of value that must come true to break even is not.
+          { label: "Breakeven realisation", value: valueCell(realisation), meaning: "Share of modelled value" },
         ]),
         { kind: "text", lines: [
           `Problem: ${safeRead(inputs.move.problemStatement)}`,
