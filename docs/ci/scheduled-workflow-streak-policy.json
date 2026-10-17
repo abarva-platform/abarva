@@ -1,0 +1,67 @@
+{
+  "note": "How many times in a row a scheduled workflow may fail before scripts/ci/scheduled-workflow-streak.mjs reports it. Item C-578a. Every entry under `exceptions` is a DATED DEBT, not a waiver: the control fails on the expiry date, and it also fails on an exception covering a workflow that has recovered, so a stale entry cannot sit here quietly.",
+  "ceilingBasis": "Measured on 2026-10-04 over `event=schedule` runs read from the Actions API, one 100-run page per workflow. Every failure burst a scheduled workflow RECOVERED from was 4 runs or shorter (aca-runtime-drift-monitor tops out at 2; the longest anywhere is 4, on migration-drift-nightly). The one longer run of consecutive failures in the data that ended in a success is 70, also on migration-drift-nightly, and that was a multi-week outage somebody repaired rather than flake -- precisely what this control is for. 5 therefore sits strictly above every observed transient and far below every dead condition (5, 31, 73, and three at or beyond the read window). Re-measure before changing it; do not round it.",
+  "defaultCeiling": 5,
+  "exceptionContract": "workflow (exact filename in .github/workflows), reason, owner, remediation, expires (ISO date). observedStreak/observedAt record what was measured when the entry was filed, so a reader can tell whether the condition moved.",
+  "exceptions": [
+    {
+      "workflow": "ai-cost-daily.yml",
+      "reason": "Known-open: every scheduled run has failed since 2026-07-23 and the window holds no success. Declared so the control ships green over conditions that predate it rather than arriving already red, which teaches people to ignore a gate.",
+      "owner": "platform",
+      "remediation": "Diagnose the daily digest job and either repair it or retire the schedule; then delete this entry.",
+      "expires": "2026-11-04",
+      "observedStreak": 73,
+      "observedAt": "2026-10-04",
+      "observedNote": "window exhausted at 73 runs with no success; the streak is a lower bound"
+    },
+    {
+      "workflow": "atlas-prod-comprehensive-surface.yml",
+      "reason": "Known-open: no success in the 100-run read window; the oldest failure read is 2026-06-26, so the condition is at least that old.",
+      "owner": "platform",
+      "remediation": "Diagnose the surface sweep against the current deployment and either repair it or retire the schedule; then delete this entry.",
+      "expires": "2026-11-04",
+      "observedStreak": 100,
+      "observedAt": "2026-10-04",
+      "observedNote": "window exhausted; >=100"
+    },
+    {
+      "workflow": "canonical-tenant-drift.yml",
+      "reason": "Known-open: 31 consecutive failures, last success 2026-09-02. This one is the clearest case for the control, because it worked and then stopped and nothing said so.",
+      "owner": "platform",
+      "remediation": "Diagnose what changed on 2026-09-03 and repair the drift check; then delete this entry.",
+      "expires": "2026-11-04",
+      "observedStreak": 31,
+      "observedAt": "2026-10-04"
+    },
+    {
+      "workflow": "l10-soc2-evidence-pack.yml",
+      "reason": "Known-open: five scheduled runs in its entire history, all failures, the oldest 2026-06-01. It has never succeeded. At exactly the ceiling today, so it would breach on its next run.",
+      "owner": "platform",
+      "remediation": "Establish whether the evidence pack job was ever wired for its inputs; repair or retire; then delete this entry.",
+      "expires": "2026-11-04",
+      "observedStreak": 5,
+      "observedAt": "2026-10-04",
+      "observedNote": "exact, not truncated: five runs is the whole history"
+    },
+    {
+      "workflow": "rls-regression.yml",
+      "reason": "Known-open: no success in the 100-run read window; oldest failure read is 2026-06-26.",
+      "owner": "platform",
+      "remediation": "Diagnose the regression suite's scheduled lane and either repair it or retire the schedule; then delete this entry.",
+      "expires": "2026-11-04",
+      "observedStreak": 100,
+      "observedAt": "2026-10-04",
+      "observedNote": "window exhausted; >=100"
+    },
+    {
+      "workflow": "sec-p0-post-deploy.yml",
+      "reason": "Known-open AND operator-blocked: the probe lane cannot reach a verdict without credentials only an operator can mint, so no agent can close it. This is the workflow whose 142-run silence produced this control.",
+      "owner": "operator",
+      "remediation": "Internal item C-577 provisions the probe inputs for one environment; once a scheduled run reaches a real verdict, delete this entry.",
+      "expires": "2026-11-04",
+      "observedStreak": 100,
+      "observedAt": "2026-10-04",
+      "observedNote": "window exhausted; >=100"
+    }
+  ]
+}

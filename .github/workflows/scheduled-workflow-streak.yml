@@ -1,0 +1,91 @@
+# Who watches the scheduled workflows? (item C-578a)
+#
+# A scheduled workflow that fails identically for months raises nothing. One
+# control in this repository was red 142 consecutive times with no successes
+# and no alert, and a human reading a run list found it. When this monitor was
+# written, SIX of the thirteen scheduled workflows were in that state at once.
+#
+# This is the LIVE half: it reads `event=schedule` runs from the Actions API,
+# computes each workflow's consecutive-failure streak and last success, and
+# fails when a streak exceeds the ceiling declared in
+# docs/ci/scheduled-workflow-streak-policy.json with no live declared
+# exception. The offline half -- the mechanism's suite and the policy file's
+# validity, including expiry -- runs on every pull request inside the required
+# `Run hygiene_gate.sh` job, so a lapsed exception fails a merge rather than
+# waiting for a monitor somebody has to be reading.
+#
+# It scans itself along with the rest. That covers the case where this workflow
+# fails and recovers; it cannot cover one where it never runs again, and that
+# residual needs a second, independent actor rather than a comment pretending
+# otherwise.
+#
+# Read-only: `actions: read` is the whole of the permission it holds.
+
+name: Scheduled workflow streaks
+
+on:
+  schedule:
+    # 06:40 UTC, after the nightly cohort has run and before a working day.
+    - cron: "40 6 * * *"
+  workflow_dispatch:
+  # So a change to the control or its policy is proved on the branch that makes
+  # it, against live data, rather than first running after it has merged.
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/ci/scheduled-workflow-streak.*"
+      - "docs/ci/scheduled-workflow-streak-policy.json"
+      - ".github/workflows/scheduled-workflow-streak.yml"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  streaks:
+    name: Scheduled workflow failure streaks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Report consecutive failure streaks
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/ci/scheduled-workflow-streak.mjs --check | tee streak-report.txt
+
+      - name: Write the report to the job summary
+        if: always()
+        run: |
+          {
+            echo '## Scheduled workflow failure streaks'
+            echo ''
+            echo '```'
+            cat streak-report.txt 2>/dev/null || echo 'no report produced'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the machine-readable report
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/ci/scheduled-workflow-streak.mjs --check --json > streak-report.json || true
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: scheduled-workflow-streaks
+          path: |
+            streak-report.txt
+            streak-report.json
+          retention-days: 30
