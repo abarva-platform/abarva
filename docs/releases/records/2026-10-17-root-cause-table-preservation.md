@@ -1,4 +1,4 @@
-# 2026-10-17-root-cause-table-preservation — Preserve diagnostic matrices in exports
+# 2026-10-17-root-cause-table-preservation — Preserve required content in diagnostic and architecture exports
 
 ## Release ID
 
@@ -12,13 +12,15 @@
 
 A root-cause worksheet could contain its required symptom/cause matrix in a generated section while synthesis omitted the native export table. Assembly now preserves that actual matrix, including evidence references and uncertainty, as an editable table. Empty or malformed matrices remain blocked.
 
+Architecture component diagrams now continue onto another panel when they exceed twelve components. Every component remains present, and the existing density and source-identity checks remain unchanged.
+
 ## Layer Impact
 
 `global-control-lane`. Layer 4 product document assembly and export validation only. No intake, adapter, canonical source, approval, or tenant identity changes.
 
 ## Client Applicability
 
-- All clients: newly generated root-cause worksheets.
+- All clients: newly generated root-cause worksheets and architecture exports.
 - Specific clients: none.
 - Internal only: no.
 - Public/demo only: no.
@@ -26,11 +28,13 @@ A root-cause worksheet could contain its required symptom/cause matrix in a gene
 
 ## Changes Included
 
-Root-cause section-to-table preservation, native-table quality recognition, and regression coverage. A slide label alone does not establish the required matrix. Other deliverable types are unchanged.
+Root-cause section-to-table preservation, native-table quality recognition, architecture component pagination, and regression coverage. A slide label alone does not establish the required matrix. Pagination preserves component IDs and uses the existing continuation-panel export path.
 
 ## QA / Validation
 
 Passed: 42 targeted assembly, quality, and PowerPoint tests; targeted ESLint; repository TypeScript check. The tests verify retained source cells and citations, editable table export through both renderers, and rejection of empty, malformed, fenced-example, and workbook-only matrices. A private reproduction recovered the complete matrix and rendered it legibly. Release-control checks must pass before merge; CI results are recorded on the PR. Live regeneration is not-run until deployment.
+
+Passed: 32 architecture renderer and composition tests, including actual exported continuation panels with all component IDs retained and the unchanged architecture quality gate.
 
 ## Rollout Plan
 
