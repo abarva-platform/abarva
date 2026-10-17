@@ -422,6 +422,7 @@ describe("reference-deck words", () => {
     const request = create.mock.calls[0][0];
     expect(request.system).toContain("Write titles and answers in sentence case: capitalize only the first word, proper nouns and acronyms, never every word.");
     expect(request.system).toContain("Write each non-cover title as a finding: a declarative sentence stating what the evidence shows or what remains unconfirmed, never a topic label, a description of the slide or a question.");
+    expect(request.system).toContain("Keep titles under 14 words and answers under 25 words; the answer bar holds one short line.");
     expect(JSON.parse(request.messages[0].content).slides[0].titleRequirements).toEqual({ minimumWords: 5, maximumSentences: 1, case: "sentence case" });
   });
 

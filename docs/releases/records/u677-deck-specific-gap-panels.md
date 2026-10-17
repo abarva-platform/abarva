@@ -19,6 +19,8 @@ Each panel now says what is missing and the one action that closes it. Examples:
 
 The validation edition's panels avoid its excluded words.
 
+The words request also asks for titles under 14 words and answers under 25 words. The live deck's answer bars ran to two crowded lines, and the reference decks keep both short. This is guidance, not a rejection rule.
+
 The headline slide's third metric showed an assumption's ID ("[A:A1]") as its big number. It now shows the open-assumption count, bound to the assumptions register like every other deck figure.
 
 ## Layer Impact
