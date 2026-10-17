@@ -48,7 +48,8 @@ See `docs/architecture/ec-slice-acceptance.md`, the semantic map, pure adapter/r
 - Pass: generic disposable physical admission on local Postgres 18, effective-role read RLS, cross-tenant endpoint rejection, independent raw-byte readback, replay refusal, unverified excerpt persistence and exact shadow comparison. No product projection rows changed.
 - Pass: independent technical clearance to execute the generic fixture only. Private dataset approval remains held.
 - Pass: operator-only rule placement and unchanged library-orphan baseline; reader-view grain, canonical assertion references, null-safe subjects and UTC-only QA guards.
-- Pending: Postgres 16 CI and final adoption review. No private dataset load or product proof claimed.
+- Pass: final independent code-local generic review, with the isolation inventory corrected to the operator-only rule path.
+- Pending: Postgres 16 CI. No private dataset load or product proof claimed.
 
 ## Rollout Plan
 

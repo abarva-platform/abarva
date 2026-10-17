@@ -415,7 +415,7 @@ describe("non-serving candidate advisory readiness", () => {
       "scripts/ecl/adapt_ec_private_candidate_v0",
       "scripts/ecl/ec_private_candidate_types",
       "scripts/ecl/ec_slice_v6_shadow",
-      "src/lib/ecl/insights/ec-slice-rules",
+      "scripts/ecl/ec_slice_rules",
     ]);
     const consumers = runtimeFiles(path.join(ROOT, "src")).flatMap(
       (filename) => {

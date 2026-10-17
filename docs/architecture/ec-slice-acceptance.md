@@ -31,7 +31,7 @@ Twelve steps: decisions; clean worktree; semantic map; isolated schema delta; un
 
 ## Still Owed
 
-Final independent adoption review, Postgres 16 CI and merge evidence remain pending. Full private-package persistence is not proven by the generic fixture. Production migration, source-owner review, signed declaration and exact-version load approval, indexing, retrieval, serving approval and signed-in browser proof are outside this slice. No unsigned draft may enter the active dataset registry.
+Postgres 16 CI and merge evidence remain pending. Independent code-local generic review is accepted; its final inventory-path correction is included. Full private-package persistence is not proven by the generic fixture. Production migration, source-owner review, signed declaration and exact-version load approval, indexing, retrieval, serving approval and signed-in browser proof are outside this slice. No unsigned draft may enter the active dataset registry.
 
 An extra audit found defects in the private producer's temporal selection, scope revision identity, QA guards and qualifier checks. The new integration has targeted guards and tests; that does not retroactively correct the producer or grant authority to load its output. Its private dataset remains held and unchanged. Test-fixture proof is separate from admission of a governed dataset.
 
