@@ -1,4 +1,6 @@
 import { notFound, redirect } from "next/navigation";
+import { canonicalTenantKey } from "@/lib/tenant/aliases";
+import { isDeclaredSyntheticDemoTenant } from "@/lib/tenant/declared-synthetic-tenant";
 import { requireProductModule } from "@/lib/auth/server-module-access";
 import {
   getModuleState,
@@ -1607,6 +1609,7 @@ export default async function StrategicMovePhaseWorkspacePage({
         carriesForwardContent={carriesForwardContent}
         p3PriorPhaseContent={p3PriorPhaseContent}
         currentStateReadiness={currentStateReadiness}
+        syntheticNote={isDeclaredSyntheticDemoTenant(canonicalTenantKey(ctx.clientKey) ?? "") ? "Synthetic demo data" : undefined}
         evidenceReadinessAvailable={evidenceReadinessAvailable}
         currentUser={{
           email: ctx.email ?? null,

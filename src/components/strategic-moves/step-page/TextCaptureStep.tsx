@@ -436,7 +436,7 @@ export function TextCaptureStep({
       // The Move's name, as every other step page shows it; never its internal code.
       moveName={demoSafeClientText(host.move.name)}
       clientDisplayName={host.move.tenant.name}
-      syntheticNote="Synthetic demo data"
+      syntheticNote={host.syntheticNote}
       tabs={host.chrome.tabs}
       phases={host.chrome.phases}
       steps={host.chrome.steps}

@@ -37,6 +37,7 @@ export interface StepPageDockOptions {
 }
 
 export interface StepPageHostProps {
+  syntheticNote?: string;
   move: StrategicMove;
   phase: number;
   values: Readonly<Record<string, string>>;
