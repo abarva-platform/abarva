@@ -72,12 +72,18 @@ function argvFor(contract, mode = "preflight", extra = []) {
   ];
 }
 
-await test("exactly fourteen tenant-neutral process contracts are registered", () => {
-  assert.equal(PROCESS_CONTRACTS.length, 14);
-  assert.equal(new Set(PROCESS_CONTRACTS.map((contract) => contract.suffix)).size, 14);
+await test("exactly fifteen tenant-neutral process contracts are registered", () => {
+  assert.equal(PROCESS_CONTRACTS.length, 15);
+  assert.equal(new Set(PROCESS_CONTRACTS.map((contract) => contract.suffix)).size, 15);
 });
 
-await test("all fourteen process contracts pass preflight and write a standard audit envelope", async () => {
+await test("narrative generation runs after projection build and before Home read model", () => {
+  const order = PROCESS_CONTRACTS.map((contract) => contract.suffix);
+  assert.ok(order.indexOf("projection-build-v1") < order.indexOf("knowledge-narrative-generate-v1"));
+  assert.ok(order.indexOf("knowledge-narrative-generate-v1") < order.indexOf("home-readmodel-v1"));
+});
+
+await test("all fifteen process contracts pass preflight and write a standard audit envelope", async () => {
   for (const contract of PROCESS_CONTRACTS) {
     const envelope = await runJobRunner({
       argv: argvFor(contract, "preflight"),
@@ -95,7 +101,7 @@ await test("all fourteen process contracts pass preflight and write a standard a
   }
 });
 
-await test("all fourteen process contracts pass no-op dispatch without network access", async () => {
+await test("all fifteen process contracts pass no-op dispatch without network access", async () => {
   for (const contract of PROCESS_CONTRACTS) {
     let networkCalls = 0;
     const envelope = await runJobRunner({
