@@ -334,6 +334,18 @@ describe("live-input reference edition", () => {
       .toContainEqual(expect.objectContaining({ kind: "reference_structure", slide: 3, detailCode: "contents_number_missing" }));
   });
 
+  it.each([
+    ["A governed data foundation for claims", "The problem is a governed data foundation for claims."],
+    ["Fragmented reporting", "The problem is fragmented reporting."],
+    ["AI answers lack sources", "The problem is AI answers lack sources."],
+  ])("places the problem statement mid-sentence in the contents: %s", (problemStatement, expected) => {
+    const inputs = fixture("investment");
+    inputs.move = { ...inputs.move, problemStatement };
+    const spec = buildReferenceEdition(inputs, words(INVESTMENT_SEQUENCE.length));
+    const contents = spec.slides[INVESTMENT_SEQUENCE.indexOf("contents")]!.blocks[0]!;
+    expect(contents.kind === "table" ? contents.rows[0]![1] : null).toBe(expected);
+  });
+
   it("preserves domain wording in the use-case name while refusing internal phrases", () => {
     const inputs = fixture("validation");
     inputs.move.name = "Governed data foundation for AI";

@@ -57,6 +57,11 @@ const shortLabel = (value: string, max = 24): string => {
   const boundary = prefix.lastIndexOf(" ");
   return boundary > 0 ? `${prefix.slice(0, boundary).trimEnd()}…` : clean.split(" ")[0]!;
 };
+/** Recorded text placed mid-sentence: lower its first letter unless the first word is an acronym ("AI", "ED"). */
+const midSentence = (value: string): string => {
+  const first = value.split(/\s/, 1)[0] ?? "";
+  return /^[A-Z][a-z]/.test(first) || /^[A-Z]$/.test(first) ? `${value[0]!.toLowerCase()}${value.slice(1)}` : value;
+};
 const flowFromHandoffs = (value: string): { labels: string[]; full: string[] } | null => {
   const source = value.split(/[.!?]/, 1)[0]?.trim() ?? "";
   const parts = source.split(/\s*(?:→|->|=>|;|,|\n)\s*/).map((part) =>
@@ -310,7 +315,7 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
         ] },
       ];
       case "contents": return [table(["Section", "The answer in this section", "Slides"], [
-        ["01  Context", !hasGap(safeRead(inputs.move.problemStatement)) ? `The problem is ${shortLabel(safeRead(inputs.move.problemStatement), 69)}.` : "The need remains to confirm.", "2–5"],
+        ["01  Context", !hasGap(safeRead(inputs.move.problemStatement)) ? `The problem is ${midSentence(shortLabel(safeRead(inputs.move.problemStatement), 69))}.` : "The need remains to confirm.", "2–5"],
         ["02  What", actualFlow ? `The work runs from ${shortLabel(actualFlow.full[0]!, 27)} to ${shortLabel(actualFlow.full.at(-1)!, 27)}.` : "The current handoffs remain to confirm.", "6–7"],
         ["03  Why", annual ? "Counted value has a stated basis for review." : "The value basis remains to confirm.", inputs.edition === "validation" ? "8–9" : "8–9, 11"],
         [inputs.edition === "validation" ? "04  Confirm" : "04  Validate", assumptions.length ? "Working assumptions could change the case." : "The assumptions remain to confirm.", inputs.edition === "validation" ? "10" : "10, 22"],

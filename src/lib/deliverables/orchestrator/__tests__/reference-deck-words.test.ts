@@ -84,7 +84,7 @@ describe("reference-deck words", () => {
     expect(result).toEqual({ status: "ok", fallbackSlides: [], words: [repaired] });
     const retry = JSON.parse(create.mock.calls[1][0].messages[0].content);
     expect(retry.rejectedSlides[0]).toMatchObject({ rejectedRule: "title_format",
-      titleRequirements: { minimumWords: 5, maximumSentences: 1 }, ruleRequirements: expect.stringContaining("at least five words") });
+      titleRequirements: { minimumWords: 5, maximumSentences: 1, case: "sentence case" }, ruleRequirements: expect.stringContaining("at least five words") });
     expect(JSON.stringify(retry)).not.toContain(rejected.title);
     expect(mockPreflight.mock.calls[1][0].workflow).toBe("moves:reference-deck:preview:words:repair");
   });
@@ -401,6 +401,16 @@ describe("reference-deck words", () => {
     } finally {
       warn.mockRestore();
     }
+  });
+
+  it("asks for sentence-case titles and answers, as the reference decks are written", async () => {
+    const create = jest.fn().mockResolvedValue({ content: [{ type: "text", text: JSON.stringify(safeWords) }] });
+    mockPreflight.mockResolvedValue({ ok: true, client: { messages: { create } } });
+    await draftEditionWords(input);
+    const request = create.mock.calls[0][0];
+    expect(request.system).toContain("Write titles and answers in sentence case: capitalize only the first word, proper nouns and acronyms, never every word.");
+    expect(request.system).toContain("Write each non-cover title as a finding: a declarative sentence stating what the evidence shows or what remains unconfirmed, never a topic label, a description of the slide or a question.");
+    expect(JSON.parse(request.messages[0].content).slides[0].titleRequirements).toEqual({ minimumWords: 5, maximumSentences: 1, case: "sentence case" });
   });
 
   describe("the open-assumption count in the investment assumptions title", () => {
