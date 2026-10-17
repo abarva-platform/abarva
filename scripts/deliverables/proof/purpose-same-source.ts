@@ -16,7 +16,8 @@ import { inspectDeck } from "@/lib/deliverables/orchestrator/deck-inspection";
 import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
 
 async function main() {
-  const [packageArg, storyArg, outArg] = process.argv.slice(2);
+  const [packageArg, storyArg, outArg, sourceMetadataArg] =
+    process.argv.slice(2);
   if (!packageArg || !storyArg || !outArg)
     throw new Error(
       "Pass source package, reviewed storyline JSON, and external output directory.",
@@ -48,6 +49,30 @@ async function main() {
   } = JSON.parse(readFileSync(resolve(storyArg), "utf8"));
   if (story.basis !== "frozen-reviewed-storyline")
     throw new Error("Declare the benchmark's frozen narrative basis.");
+  // Legacy Office adapters can omit register purpose metadata. Enrich only from
+  // an explicit, hash-matched manifest; never rewrite the reviewed narrative.
+  if (sourceMetadataArg) {
+    const metadata = JSON.parse(
+      readFileSync(resolve(sourceMetadataArg), "utf8"),
+    );
+    if (metadata.synthetic !== true) throw new Error("Synthetic metadata only");
+    for (const doc of [story.charter, story.discovery])
+      for (const ref of doc.sourceRegister) {
+        const item = metadata.sources.find(
+          (s: { id: string }) => s.id === ref.referenceId,
+        );
+        const source = sources.find(
+          (s: { id: string }) => s.id === ref.referenceId,
+        );
+        if (!item || !source || item.sha256 !== source.sha256)
+          throw new Error(
+            "Register metadata must match the declared source hash",
+          );
+        ref.label = item.label || ref.label;
+        ref.evidenceFamily = item.family;
+        ref.useAndLimitation = item.purpose;
+      }
+  }
   const allowed = new Set(sources.map((s: { id: string }) => s.id));
   for (const doc of [story.charter, story.discovery])
     for (const ref of doc.sourceRegister) {
@@ -79,6 +104,7 @@ async function main() {
         basis:
           "Same source files and frozen reviewed narrative through product export code. No model call, database load, gate approval or fresh live generation.",
         sourceHashes: sources,
+        metadataManifest: sourceMetadataArg ? resolve(sourceMetadataArg) : null,
         charterSourceIds: story.charter.sourceRegister.map(
           (source) => source.referenceId,
         ),

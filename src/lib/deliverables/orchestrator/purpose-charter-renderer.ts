@@ -25,6 +25,10 @@ import {
   purposeSourceGroups,
 } from "./purpose-page-plan";
 import { purposeBrand } from "./purpose-page-brand";
+import {
+  layoutReferenceTable,
+  referenceCellTextHeight,
+} from "./reference-deck-layout";
 
 const FONT = "Arial",
   INK = "1C2428",
@@ -75,7 +79,7 @@ function table(
 ): Table {
   if (!columns.length || rows.some((row) => row.length !== columns.length))
     throw new PurposePageError("table_shape", "charter");
-  const weights =
+  let weights =
     columnWeights ||
     (columns.length === 2 &&
     /^in scope(?:\s*\[[A-Z0-9,\s]+\])*$/i.test(columns[0]!) &&
@@ -86,9 +90,36 @@ function table(
         : columns.length === 3
           ? [1.5, 3.5, 2]
           : columns.map(() => 7 / columns.length));
-  const compactTable =
-    rows.length <= 6 &&
-    rows.every((row) => row.every((cell) => cell.length < 240));
+  if (!columnWeights && columns.length >= 3) {
+    const adaptive = layoutReferenceTable(
+      { kind: "table", columns, rows },
+      7,
+    ).columnWidths;
+    const height = (widths: number[]) =>
+      [columns, ...rows].reduce(
+        (sum, row) =>
+          sum +
+          Math.max(
+            ...row.map((cell, i) =>
+              referenceCellTextHeight(cell, widths[i]! - 0.16, 10),
+            ),
+          ),
+        0,
+      );
+    if (height(adaptive) < height(weights)) weights = adaptive;
+  }
+  // Keep a short table together; for long tables retain at least a two-row tail.
+  const estimatedLines = rows.reduce(
+    (sum, row) =>
+      sum +
+      Math.max(
+        ...row.map((cell, col) =>
+          Math.ceil(cell.length / Math.max(12, weights[col]! * 13)),
+        ),
+      ),
+    0,
+  );
+  const compactTable = rows.length <= 8 && estimatedLines <= 14;
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     columnWidths: weights.map((w) => Math.round(w * 1440)),
@@ -115,7 +146,10 @@ function table(
                 children: [
                   new Paragraph({
                     spacing: { after: 30, line: 240 },
-                    keepNext: keepNext || (compactTable && i < rows.length),
+                    keepNext:
+                      keepNext ||
+                      (i < rows.length &&
+                        (compactTable || i === 0 || i === rows.length - 1)),
                     children: [
                       new TextRun({
                         text,
@@ -157,7 +191,10 @@ function plain(nodes: PhrasingContent[]): string {
     )
     .join("");
 }
-function blocks(node: RootContent): (Paragraph | Table)[] {
+function blocks(
+  node: RootContent,
+  keepWithTable = false,
+): (Paragraph | Table)[] {
   switch (node.type) {
     case "heading":
       return [heading(plain(node.children), 2)];
@@ -166,6 +203,7 @@ function blocks(node: RootContent): (Paragraph | Table)[] {
         new Paragraph({
           children: inline(node.children),
           keepLines: true,
+          keepNext: keepWithTable,
           spacing: { after: 140, line: 260 },
         }),
       ];
@@ -187,17 +225,21 @@ function blocks(node: RootContent): (Paragraph | Table)[] {
           if (child.type !== "paragraph") return blocks(child as RootContent);
           return [
             new Paragraph({
-              children: [
-                run(node.ordered ? `${(node.start ?? 1) + i}. ` : "- "),
-                ...inline(child.children),
-              ],
+              children: node.ordered
+                ? [run(`${(node.start ?? 1) + i}. `), ...inline(child.children)]
+                : inline(child.children),
+              bullet: node.ordered ? undefined : { level: 0 },
+              indent: { left: 240, hanging: 180 },
+              keepLines: true,
               spacing: { after: 100, line: 260 },
             }),
           ];
         }),
       );
     case "blockquote":
-      return node.children.flatMap(blocks);
+      return node.children.flatMap((child, index) =>
+        blocks(child, node.children[index + 1]?.type === "table"),
+      );
     case "code":
       return [para(node.value)];
     default:
@@ -274,7 +316,7 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       spacing: { after: 140 },
     }),
     para(
-      "Reading guide: decision and scope; outcomes and measures; evidence and owners; controls; authorization and sources.",
+      "Reading guide: proposed decision and scope; success measures; roles and dependencies; conditions; next actions, decision record and sources.",
     ),
   ];
   const used = new Set<string>();
@@ -284,7 +326,11 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       extensions: [gfm()],
       mdastExtensions: [gfmFromMarkdown()],
     });
-    children.push(...tree.children.flatMap(blocks));
+    children.push(
+      ...tree.children.flatMap((node, index) =>
+        blocks(node, tree.children[index + 1]?.type === "table"),
+      ),
+    );
     for (const item of doc.tables.filter(
       (t) =>
         t.targetFormat !== "xlsx" &&
@@ -333,8 +379,11 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       ),
     );
   children.push(
-    heading("Review and authorization"),
-    para(cite(doc.recommendation)),
+    heading("Next decision and review"),
+    para(
+      cite(doc.recommendation),
+      Boolean(doc.actionRegister?.length || doc.nextActions.length),
+    ),
   );
   if (doc.actionRegister?.length)
     children.push(
@@ -360,7 +409,7 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
     }),
     para(
       "This draft does not authorize Discovery, funding or implementation. Only the authorized reviewer can record the decision, its scope and any conditions below.",
-      doc.sourceRegister.length <= 8,
+      true,
     ),
     table(
       ["Decision record", "Guidance (not a recorded decision)"],
@@ -377,8 +426,6 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
           "Name any condition to close, accountable role and excluded work.",
         ],
       ],
-      undefined,
-      doc.sourceRegister.length <= 8,
     ),
     heading("Source register", 2),
   );

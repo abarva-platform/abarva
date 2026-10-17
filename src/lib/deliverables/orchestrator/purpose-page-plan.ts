@@ -25,6 +25,31 @@ function compactDisplayValue(value: string): string {
     .replace(/^approximately\s+/i, "~");
 }
 
+function labelledStatementParts(value: string): {
+  label: string;
+  body: string;
+} {
+  const node = fromMarkdown(value).children[0];
+  if (node?.type !== "paragraph" || node.children[0]?.type !== "strong")
+    return { label: value, body: "" };
+  const label = node.children[0].children;
+  const rest = node.children.slice(1);
+  if (
+    label.some((n) => n.type !== "text") ||
+    rest.some((n) => n.type !== "text")
+  )
+    return { label: value, body: "" };
+  const labelText = label
+    .map((n) => (n.type === "text" ? n.value : ""))
+    .join("");
+  const body = rest
+    .map((n) => (n.type === "text" ? n.value : ""))
+    .join("")
+    .replace(/^\s*[-–—:]\s*/, "")
+    .trim();
+  return body ? { label: labelText, body } : { label: value, body: "" };
+}
+
 export type PurposeFamily =
   | "cover"
   | "statement"
@@ -48,6 +73,7 @@ export interface PageIntent {
   takeaway?: string;
   takeawayLabel?: string;
   chartKeys?: string[];
+  chartMessage?: "endpoints" | "measurement_boundary";
 }
 
 /** Supplied by a governed read, never parsed from model-authored prose. */
@@ -60,6 +86,8 @@ export interface PurposeChart {
   sourceIds: number[];
   points: { label: string; value: number; sourceRow: string }[];
   interpretation: string;
+  comparisonSubject?: string;
+  population?: string;
   axisMin?: number;
   axisMax?: number;
 }
@@ -96,6 +124,8 @@ export interface PurposePage {
   columns?: string[];
   columnWeights?: number[];
   sourceRegister?: boolean;
+  semanticStatusColumn?: boolean;
+  compactTableRows?: boolean;
   rows?: string[][];
   chart?: PurposeChart;
   charts?: PurposeChart[];
@@ -122,8 +152,20 @@ export class PurposePageError extends Error {
 const draftScope =
   "Working draft for human review. No phase approval or funding commitment is recorded by this output.";
 const sourceIds = purposeCitationIds;
+export function purposeScopeLayout(page: PurposePage) {
+  const value = purposeCitations(page.scope, page.referenceLabels || {});
+  for (const height of [0.36, 0.55]) {
+    const fontSize = [14, 13, 12].find(
+      (size) => referenceCellTextHeight(value, 12.05, size) <= height,
+    );
+    if (fontSize)
+      return { height, fontSize, bodyTop: height === 0.36 ? 2.08 : 2.3 };
+  }
+  throw new PurposePageError("scope_needs_edit", page.id);
+}
 export const purposeBodyHeight = (page: PurposePage) =>
-  page.sourceRegister ? 4.45 : page.takeaway ? 3.9 : 4.1;
+  (page.sourceRegister ? 6.53 : page.takeaway ? 5.98 : 6.18) -
+  purposeScopeLayout(page).bodyTop;
 export const purposeTableHeaderHeight = (page: PurposePage) =>
   page.sourceRegister
     ? 0.38
@@ -217,7 +259,7 @@ export function purposeRowHeight(page: PurposePage, row: string[]): number {
           purposeCitations(cell, page.referenceLabels || {}),
           widths[i]!,
           16,
-        ) + (page.sourceRegister ? 0.04 : 0.06),
+        ) + (page.sourceRegister ? 0.04 : page.compactTableRows ? 0.02 : 0.06),
     ),
   );
 }
@@ -310,6 +352,50 @@ function paginateRawContent(input: PurposePage): PurposePage[] {
     const total = (p: PurposePage) =>
       p.rows!.reduce((sum, row) => sum + purposeRowHeight(p, row), 0);
     if (total(weighted) < total(page)) page = weighted;
+    if (
+      total(page) + purposeTableHeaderHeight(page) >
+      purposeBodyHeight(page)
+    ) {
+      // Try readable column allocations before creating a continuation. Long
+      // handoff labels often need width that a short status column does not.
+      const allocations = (count: number, remaining: number): number[][] =>
+        count === 1
+          ? remaining >= 3
+            ? [[remaining]]
+            : []
+          : Array.from(
+              { length: Math.max(0, remaining - 3 * (count - 1) - 2) },
+              (_, i) => i + 3,
+            ).flatMap((width) =>
+              allocations(count - 1, remaining - width).map((rest) => [
+                width,
+                ...rest,
+              ]),
+            );
+      let best = total(page) + purposeTableHeaderHeight(page);
+      for (const columnWeights of allocations(page.columns!.length, 24)) {
+        const candidate = { ...page, columnWeights };
+        const height = total(candidate) + purposeTableHeaderHeight(candidate);
+        if (height < best - 0.001) {
+          page = candidate;
+          best = height;
+        }
+      }
+    }
+  }
+  if (page.columns && page.rows && !page.sourceRegister) {
+    const compact = { ...page, compactTableRows: true };
+    const height = (candidate: PurposePage) =>
+      purposeTableHeaderHeight(candidate) +
+      candidate.rows!.reduce(
+        (sum, row) => sum + purposeRowHeight(candidate, row),
+        0,
+      );
+    if (
+      height(page) > purposeBodyHeight(page) &&
+      height(compact) <= purposeBodyHeight(compact) + 0.001
+    )
+      page = compact;
   }
   const bodyHeight = purposeBodyHeight(page);
   const headerHeight = purposeTableHeaderHeight(page);
@@ -389,8 +475,11 @@ function paginateRawContent(input: PurposePage): PurposePage[] {
         : page.family === "decision"
           ? 550
           : 360;
-    if (estimatedLines(item.label, 27) > 2)
-      throw new PurposePageError("label_needs_edit", page.id);
+    const labelFits =
+      page.family === "big_numbers"
+        ? referenceCellTextHeight(item.label, 5.7, 22) <= 0.9
+        : estimatedLines(item.label, 27) <= 2;
+    if (!labelFits) throw new PurposePageError("label_needs_edit", page.id);
     const parts = splitText(item.detail, max);
     return (parts.length ? parts : [""]).map((detail, i) => ({
       ...item,
@@ -514,6 +603,41 @@ function paginateContent(page: PurposePage): PurposePage[] {
     );
     if (labelWidth !== undefined)
       return [{ ...page, compact: true, statementLabelWidth: labelWidth }];
+    const compactStatus: PurposePage = {
+      ...page,
+      family: "register",
+      compact: true,
+      columns: ["Status and statement", "Evidence or condition"],
+      semanticStatusColumn: true,
+      rows: page.items.map((item) => [
+        `${item.tone!.toUpperCase()} / ${item.label}`,
+        item.detail,
+      ]),
+      items: [],
+    };
+    try {
+      return paginateContent(compactStatus);
+    } catch (error) {
+      if (
+        !(error instanceof PurposePageError) ||
+        ![
+          "sparse_continuation",
+          "continuation_fill_needs_edit",
+          "message_needs_edit",
+        ].includes(error.code)
+      )
+        throw error;
+    }
+    page = {
+      ...compactStatus,
+      columns: ["Status", "Statement", "Evidence or condition"],
+      columnWeights: [1.45, 5.8, 4.8],
+      rows: page.items.map((item) => [
+        item.tone!.toUpperCase(),
+        item.label,
+        item.detail,
+      ]),
+    };
   }
   if (
     ["concepts", "options", "roles", "decision"].includes(page.family) &&
@@ -664,21 +788,32 @@ function tablePage(table: RenderableTable, base: PurposePage): PurposePage {
       ...base,
       family,
       sources,
-      items: table.rows.map((row, i) => ({
-        label: row[0]!,
-        tone: table.rowTones?.[i],
-        ...(family === "big_numbers"
-          ? { value: compactDisplayValue(row[1]!) }
-          : {}),
-        detail: row
-          .slice(family === "big_numbers" ? 2 : 1)
-          .map((cell, i) =>
-            table.columns.length === 2 || family === "big_numbers"
-              ? cell
-              : `${table.columns[i + 1]}: ${cell}`,
-          )
-          .join("\n"),
-      })),
+      items: table.rows.map((row, i) => {
+        const statement =
+          family === "labelled_statements"
+            ? labelledStatementParts(row[0]!)
+            : { label: row[0]!, body: "" };
+        return {
+          label: statement.label,
+          tone: table.rowTones?.[i],
+          ...(family === "big_numbers"
+            ? { value: compactDisplayValue(row[1]!) }
+            : {}),
+          detail: [
+            statement.body,
+            row
+              .slice(family === "big_numbers" ? 2 : 1)
+              .map((cell, i) =>
+                table.columns.length === 2 || family === "big_numbers"
+                  ? cell
+                  : `${table.columns[i + 1]}: ${cell}`,
+              )
+              .join("\n"),
+          ]
+            .filter(Boolean)
+            .join("\n"),
+        };
+      }),
     };
   }
   return {
@@ -738,15 +873,39 @@ export function validatePurposeChart(
     throw new PurposePageError("chart_point_invalid", chart.key);
 }
 
-/** Endpoint comparisons only: no causal or statistical trend is inferred. */
-export function purposeChartHeadline(charts: readonly PurposeChart[]): string {
+/** Descriptive series comparisons only: no causal or statistical trend is inferred. */
+export function purposeChartHeadline(
+  charts: readonly PurposeChart[],
+  message: PageIntent["chartMessage"] = "endpoints",
+): string {
+  if (message === "measurement_boundary") {
+    if (
+      charts.length !== 2 ||
+      charts.some(
+        (c) => !c.comparisonSubject?.trim() || !c.population?.trim(),
+      ) ||
+      charts[0]!.unit === charts[1]!.unit ||
+      charts[0]!.population === charts[1]!.population ||
+      charts[0]!.period !== charts[1]!.period
+    )
+      throw new PurposePageError(
+        "chart_boundary_needs_distinct_measures",
+        "chart",
+      );
+    return `${charts[0]!.comparisonSubject} and ${charts[1]!.comparisonSubject} need separate measures`;
+  }
+  if (message !== "endpoints")
+    throw new PurposePageError("unknown_chart_message", "chart");
   return charts
     .map((chart) => {
       const first = chart.points[0]?.value;
       const last = chart.points.at(-1)?.value;
       if (first === undefined || last === undefined)
         throw new PurposePageError("chart_without_data", chart.key);
-      return `${chart.metric} ends ${last > first ? "higher" : last < first ? "lower" : "unchanged"}`;
+      const interior = chart.points.slice(1, -1).map((p) => p.value);
+      const recovery = last > first && interior.some((v) => v < first);
+      const retreat = last < first && interior.some((v) => v > first);
+      return `${chart.metric} ${recovery ? "recovers after a dip" : retreat ? "falls after a rise" : last > first ? "increases overall" : last < first ? "decreases overall" : "ends unchanged"}`;
     })
     .join("; ");
 }
@@ -830,12 +989,19 @@ export function planPurposePages(
         usedCharts.add(key);
         return chart;
       });
-      if (slide.governingMessage !== purposeChartHeadline(selected))
+      const message = slide.pageIntent.chartMessage || "endpoints";
+      if (slide.governingMessage !== purposeChartHeadline(selected, message))
         throw new PurposePageError(
           "chart_headline_not_bound_to_measures",
           page.id,
         );
-      if (slide.pageIntent.takeaway || slide.points?.length)
+      const boundary = `${selected[0]!.period}. Separate populations and axes; no intervention effect is established.`;
+      if (
+        slide.points?.length ||
+        (slide.pageIntent.takeaway &&
+          (message !== "measurement_boundary" ||
+            slide.pageIntent.takeaway !== boundary))
+      )
         throw new PurposePageError(
           "chart_interpretation_needs_governed_binding",
           page.id,
@@ -1084,7 +1250,16 @@ export function planPurposePages(
       new Set(entries.map((s) => s.reviewStatus)).size === 1
         ? entries[0]?.reviewStatus
         : undefined;
-    const scope = `${commonReview ? `${commonReview} · ` : ""}Source presence is not approval · ${[...new Set(entries.map((s) => s.asOf).filter(Boolean))].join(", ") || "Snapshot date not recorded"}`;
+    const reviewStates = [
+      ...new Set(entries.map((s) => s.reviewStatus).filter(Boolean)),
+    ];
+    const keyedReview =
+      !commonReview && reviewStates.length > 1 && reviewStates.length <= 3;
+    const reviewKey = (state: string) => `R${reviewStates.indexOf(state) + 1}`;
+    const reviewLegend = keyedReview
+      ? reviewStates.map((s) => `${reviewKey(s!)}: ${s}`).join("; ")
+      : commonReview;
+    const scope = `${reviewLegend ? `${reviewLegend} · ` : ""}Source presence is not approval · ${[...new Set(entries.map((s) => s.asOf).filter(Boolean))].join(", ") || "Snapshot date not recorded"}`;
     const name = (value: string) =>
       value.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
     const register: PurposePage = {
@@ -1099,11 +1274,12 @@ export function planPurposePages(
       columns: ["Ref", "Source", "Use and limitation"],
       columnWeights: [0.85, 4.8, 6.4],
       sourceRegister: true,
+      referenceLabels,
       rows: grouped.flatMap((group) => [
         ["", name(group.family), ""],
         ...group.entries.map((source) => [
           `[${source.referenceId || source.citationNumber}]`,
-          `${name(source.label)}${!commonReview && source.reviewStatus ? ` (${source.reviewStatus})` : ""}`,
+          `${name(source.label)}${!commonReview && source.reviewStatus ? ` (${keyedReview ? reviewKey(source.reviewStatus) : source.reviewStatus})` : ""}`,
           source.useAndLimitation?.replace(
             /;?\s*human approval remains separate\.?/gi,
             "",
@@ -1113,6 +1289,19 @@ export function planPurposePages(
       ]),
       items: [],
     };
+    register.columnWeights = [4.8, 5.0, 5.2, 5.4, 5.6, 5.8, 6.0, 6.2, 6.4]
+      .map((width) => {
+        const weights = [0.85, width, 11.2 - width];
+        const candidate = { ...register, columnWeights: weights };
+        return {
+          weights,
+          height: register.rows!.reduce(
+            (sum, row) => sum + purposeRowHeight(candidate, row),
+            0,
+          ),
+        };
+      })
+      .sort((a, b) => a.height - b.height)[0]!.weights;
     pages.push(...paginate(register));
   }
   for (const page of pages) {

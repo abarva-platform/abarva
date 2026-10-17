@@ -16,9 +16,10 @@ Preserves the prohibition on self-authorizing drafts. Input approval state is
 carried independently from confidence and source presence. Also deduplicates
 citations, balances overflowing tables and replaces the supplied print logos.
 
-The four offline fresh-writing outputs render, but independent automated visual
-reviews score 71, 70, 72 and 71 out of 100. The required minimum is 85 for each.
-This is an incomplete candidate, not an accepted export release.
+Four offline fresh-writing lineages, including audited editorial revisions,
+render. Independent automated visual reviews remain below the required minimum
+of 85 per artifact. This is an incomplete candidate, not an accepted export
+release. Original responses, rejected attempts and prior reviews are retained.
 
 ## Layer Impact
 
@@ -48,21 +49,31 @@ This is an incomplete candidate, not an accepted export release.
   readable source groups, semantic status labels and computed chart headlines.
 - Corrected transparent print assets with edge-alpha regression tests.
 - Native Office text oracle and hash-gated fresh-source replay diagnostics.
+- Local support for structured proposal rows and quoted negative claims; separate
+  cells cannot combine a prohibited behavior and an owner label into proof of a fact.
+- A shared scope-note layout contract, readable two-line scopes, adaptive table
+  columns, compact row spacing and semantic status-table fallback before splitting.
+- Charter table-width balancing, native bullets and section-aware page keeps.
+- Source-bound chart measurement comparisons, alongside computed endpoint messages.
+- Audited editorial revision mode for the offline proof harness. This is not
+  production generation wiring or a substitute for independent acceptance.
 
 ## QA / Validation
 
-- PASS: 76 orchestrator suites, 1,182 tests, including the labelled claim corpus,
+- PASS: 76 orchestrator suites, 1,192 tests, including the labelled claim corpus,
   contradictory bundle gaps, authorization mutations, citation scope and logos.
-- PASS: Node 24 typecheck with 12 GiB heap; changed-file ESLint; diff whitespace.
-- PASS: release checks 11/11. Private HTML review opens all 36 page images and
-  linked files without missing assets or horizontal overflow at 1440/390 pixels.
+- PASS: Node 24 typecheck with 8 GiB heap; changed-file ESLint; diff whitespace.
+- PASS: release check, 11 of 11. Private review HTML checked at 1440 px and 390 px:
+  all 39 images and local links load, no console errors or horizontal overflow.
 - PASS: native golden P1/P2 text, 432 blocks, zero claim-policy flags.
-- LIMITED: the text oracle is not an authoring-schema or all-page-validator pass.
-  The older frozen chart narrative conflicts with the current computed-title
-  requirement. That discrepancy remains open; it is not waived for this candidate.
-- PASS: four fresh outputs render at 150 dpi. Current drafts have 36 total pages.
-  Source re-extraction verifies 31 figure bindings and 24 chart points, with input
-  hashes and row/line locators. This is traceability, not financial validation.
+- LIMITED: the text oracle is not an authoring-schema pass. Native Office text
+  does not contain the current authoring keys. The frozen narrative now renders
+  through the page and geometry checks with explicit source-bound measurement
+  metadata; it does not authorize arbitrary narrative over a chart.
+- PASS: four fresh-writing outputs render at 150 dpi, with 39 total pages.
+  Re-extraction verifies 67 source-slot bindings and 24 chart points against input
+  hashes and row/line locators. This proves provenance, not that every citation supports
+  its surrounding interpretation, nor financial validation.
 - NOT ACCEPTED: independent automated Claude page scores are below 85 in all four
   cases. Reviewed image hashes match the delivered pages. This is not human sign-off.
 - NOT RUN: live product generation, signed-in export acceptance or runtime proof.
@@ -70,8 +81,8 @@ This is an incomplete candidate, not an accepted export release.
 ## Rollout Plan
 
 No rollout in this draft. Keep the feature disabled and do not start later-phase
-expansion. Resolve writing quality, the golden chart-policy discrepancy and
-production typed-number/chart bindings before requesting enrollment. A later
+expansion. Resolve writing quality, citation-to-claim fit and production
+typed-number/chart bindings before requesting enrollment. A later
 release must include signed-in generation/export acceptance separately.
 
 ## Deployment Authority
@@ -100,8 +111,9 @@ branding changes through a reviewed PR if they are later merged and regress.
 
 ## Known Gaps
 
-- Writing repeats conditions, omits some supported comparisons and leaves sparse
-  or uneven pages. All four scores remain below acceptance.
+- Writing still repeats conditions and leaves sparse or uneven pages. Review also
+  found proposed owner assignments and evidence-status interpretations requiring
+  correction. A sourced figure alone does not establish its claimed business use.
 - Textual claim support is conservative, not general semantic entailment.
   Bundle completeness is explicit in offline tests; it is not inferred for live inputs.
 - Native text validation does not establish every structural/page-policy oracle.

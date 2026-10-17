@@ -23,6 +23,58 @@ import {
 } from "../purpose-story-contract";
 
 describe("R4 claim and export controls", () => {
+  it("checks a structured no-change proposal against its own value and status", () => {
+    const statement = [
+      'row 1: ["question","synthetic_hypothesis","status"]',
+      'row 2: ["role_accountability_change","none","proposed_not_confirmed"]',
+    ].join("\n");
+    const check = (
+      source: string,
+      claim = "No role-accountability change is proposed [1].",
+    ) =>
+      classifyPurposeClaims(claim, [
+        { citationNumber: 1, statement: source },
+      ])[0]?.supported;
+    expect(check(statement)).toBe(true);
+    expect(check(statement.replace('"none"', '"limited"'))).toBe(false);
+    expect(
+      check(statement.replace('"proposed_not_confirmed"', '"unknown"')),
+    ).toBe(false);
+    expect(check(statement, "No staffing change is proposed [1].")).toBe(false);
+    expect(check(statement, "No role-accountability change exists [1].")).toBe(
+      false,
+    );
+    expect(
+      check(statement, "No role-accountability change is proposed [2]."),
+    ).toBe(false);
+  });
+  it("fits mixed-status source registers by balancing columns, without losing review states", () => {
+    const doc = purposeFixture();
+    doc.sourceRegister = Array.from({ length: 17 }, (_, i) => ({
+      citationNumber: i + 1,
+      referenceId: `E${String(i + 1).padStart(2, "0")}`,
+      label:
+        i % 2
+          ? "Knowledge ownership and currency"
+          : "Metric definitions and comparability",
+      evidenceFamily:
+        i < 6 ? "Decision inputs" : i < 12 ? "Diagnostic evidence" : "Controls",
+      confidence: "low" as const,
+      reviewStatus: i % 2 ? "Owner review pending" : "Reviewed for context",
+      useAndLimitation: "Defines the measure and its limitations.",
+    }));
+    const pages = planPurposePages(doc).filter((p) => p.sourceRegister);
+    expect(pages).toHaveLength(2);
+    expect(pages.flatMap((p) => p.rows!).filter((r) => r[0])).toHaveLength(17);
+    expect(
+      pages.every(
+        (p) =>
+          p.scope.includes("R1: Reviewed for context") &&
+          p.scope.includes("R2: Owner review pending"),
+      ),
+    ).toBe(true);
+    expect(pages.every((p) => p.columnWeights![1]! >= 4.8)).toBe(true);
+  });
   it.each(corpus)("classifies $sentence", (row) => {
     const result = classifyPurposeClaims(
       row.sentence,
@@ -34,6 +86,70 @@ describe("R4 claim and export controls", () => {
     expect(result.every((r) => r.supported)).toBe(row.expected);
   });
   it("rejects a contradicted bundle gap, incomplete search and ambiguous review", () => {
+    const baselineGap =
+      "No Finance-validated baseline exists in this package [1].";
+    const absentBaseline = {
+      citationNumber: 1,
+      statement: "No Finance-validated baseline exists.",
+    };
+    const controlRow = {
+      citationNumber: 2,
+      statement:
+        'row 2: ["Claim savings without validated baseline and capacity","State unknown/unvalidated","Finance Value Owner"]',
+    };
+    expect(
+      classifyPurposeClaims(baselineGap, [absentBaseline, controlRow], {
+        completeInputBundle: true,
+      })[0]?.supported,
+    ).toBe(true);
+    expect(
+      classifyPurposeClaims(baselineGap, [absentBaseline], {
+        completeInputBundle: true,
+      })[0]?.supported,
+    ).toBe(true);
+    expect(
+      classifyPurposeClaims(
+        baselineGap,
+        [
+          absentBaseline,
+          {
+            citationNumber: 2,
+            statement:
+              "Finance-validated baseline: approved period and denominator.",
+          },
+        ],
+        { completeInputBundle: true },
+      )[0]?.supported,
+    ).toBe(false);
+    const briefGap = "No measurement method stated in the brief [1].";
+    expect(
+      classifyPurposeClaims(
+        briefGap,
+        [
+          {
+            citationNumber: 1,
+            statement: "Sponsor proposes an adoption outcome.",
+          },
+        ],
+        { completeInputBundle: true },
+      )[0]?.supported,
+    ).toBe(true);
+    expect(
+      classifyPurposeClaims(
+        briefGap,
+        [
+          {
+            citationNumber: 1,
+            statement: "Measurement method: activity log review.",
+          },
+        ],
+        { completeInputBundle: true },
+      )[0]?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims(briefGap, [], { completeInputBundle: false })[0]
+        ?.supported,
+    ).toBe(false);
     const text = "No meeting rhythm is recorded in the supplied inputs.";
     expect(
       classifyPurposeClaims(
@@ -96,6 +212,88 @@ describe("R4 claim and export controls", () => {
     ).toEqual([true, false]);
   });
   it("supports a factual claim only with the cited local source span", () => {
+    expect(
+      classifyPurposeClaims("Records no approval or resourcing.", [], {
+        textRole: "scope",
+      })[0]?.classification,
+    ).toBe("draft_status");
+    expect(
+      classifyPurposeClaims("Records no approval or resourcing.", [])[0]
+        ?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims(
+        "Recorded change position: no staffing model change is proposed [1].",
+        [
+          {
+            citationNumber: 1,
+            statement: "No staffing model change is proposed.",
+          },
+        ],
+      )[0]?.supported,
+    ).toBe(true);
+    const row = {
+      citationNumber: 1,
+      statement: '"claim_status","status timestamp missing in sampled records"',
+    };
+    expect(
+      classifyPurposeClaims(
+        "Claim status timestamp missing in sampled records [1]",
+        [row],
+      )[0]?.supported,
+    ).toBe(true);
+    expect(
+      classifyPurposeClaims(
+        "Claim status timestamp missing in all records [1]",
+        [row],
+      )[0]?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims(
+        "Measures cannot be blended into a baseline; no baseline exists.",
+        [],
+      ).map((v) => [v.classification, v.supported]),
+    ).toEqual([
+      ["decision_condition", true],
+      ["factual_claim", false],
+    ]);
+    expect(
+      classifyPurposeClaims(
+        "Two handle-time measures differ by definition and cannot form one baseline.",
+        [],
+      )[0]?.classification,
+    ).toBe("decision_condition");
+    expect(
+      classifyPurposeClaims("Routes compared, none selected.", [])[0]
+        ?.classification,
+    ).toBe("draft_status");
+    expect(
+      classifyPurposeClaims("No vendor was selected last year.", [])[0]
+        ?.supported,
+    ).toBe(false);
+    const target = "No approved target [1]";
+    expect(
+      classifyPurposeClaims(target, [
+        {
+          citationNumber: 1,
+          statement: "No target or benefit is approved at P1.",
+        },
+      ])[0]?.supported,
+    ).toBe(true);
+    expect(
+      classifyPurposeClaims(target, [
+        {
+          citationNumber: 1,
+          statement: "The target is approved. No benefit is approved.",
+        },
+      ])[0]?.supported,
+    ).toBe(false);
+    expect(
+      classifyPurposeClaims(
+        "Discovery should evaluate the options, so no single route is assumed before evidence is reviewed.",
+        [],
+      )[0]?.classification,
+    ).toBe("decision_condition");
     const claim = "Routing lacks a shared accountable rule [5].";
     expect(
       classifyPurposeClaims(claim, [
@@ -151,6 +349,22 @@ describe("R4 claim and export controls", () => {
     expect(absenceErrors()).toHaveLength(1);
   });
   it("keeps cited quotations intact across lists and sentence boundaries", () => {
+    const quotedPolicy =
+      'Work in this bundle is confined to the supplied planning package, which records "No PHI" [2].';
+    expect(
+      classifyPurposeClaims(
+        quotedPolicy,
+        [{ citationNumber: 2, statement: "Use only package files. No PHI." }],
+        { completeInputBundle: true },
+      ).map((v) => [v.classification, v.supported]),
+    ).toEqual([["factual_claim", true]]);
+    expect(
+      classifyPurposeClaims(
+        quotedPolicy,
+        [{ citationNumber: 2, statement: "No missing PHI controls." }],
+        { completeInputBundle: true },
+      )[0]?.supported,
+    ).toBe(false);
     const fact =
       "Source teams cannot reliably distinguish expired coverage, authorization mismatch, administrative coding errors and missing attachments.";
     const evidence = [{ citationNumber: 1, statement: fact }];
@@ -314,7 +528,7 @@ describe("R4 claim and export controls", () => {
     expect(pages).toHaveLength(1);
     expect(pages[0]!.rows).toHaveLength(7);
     expect(pages[0]!.takeaway).toBe("Confirm each record.");
-    expect(purposeBodyHeight(pages[0]!)).toBe(3.9);
+    expect(purposeBodyHeight(pages[0]!)).toBeCloseTo(3.9);
   });
   it("retains the input-approval guard without confusing an access prerequisite", () => {
     const doc = { deliverableType: "charter", sourceRegister: [] };

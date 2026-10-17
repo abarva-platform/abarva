@@ -30,7 +30,8 @@ const purposeNegativeClaim =
   /\b(?:no(?!-double-count)|none|missing|absent|unavailable|unrecorded|uncollected|lacks?|cannot|not\s+(?:yet\s+)?(?:collected|received|available|recorded|provided|loaded|supplied|established|approved|confirmed))\b/i;
 const clean = (s: string) =>
   s
-    .replace(/\[(?:\d+)(?:\s*[-–,]\s*\d+)*\]|[*_"“”]/g, "")
+    .replace(/\[(?:\d+)(?:\s*[-–,]\s*\d+)*\]|[*"“”]/g, "")
+    .replace(/_/g, " ")
     .replace(/\s+/g, " ")
     .trim()
     .replace(/[.!?]+$/, "")
@@ -38,11 +39,11 @@ const clean = (s: string) =>
     .toLowerCase();
 const request = /^(?:confirm|check|test|review|validate|determine) whether\b/i;
 const bounded =
-  /\b(?:in|from|across|against|within) (?:the |these |this |our )?(?:(?:supplied|provided|loaded|current|available|p[01](?: or p[01])?) )?(?:inputs|evidence|sources|context bundle|source bundle|bundle|records)\b/i;
+  /\b(?:in|from|across|against|within) (?:the |these |this |our )?(?:(?:supplied|provided|loaded|current|available|p[01](?: or p[01])?) )?(?:inputs|evidence|sources|context bundle|source bundle|bundle|records|brief|package)\b/i;
 const status =
   /\b(?:this|the) (?:(?:revised|current) )?(?:draft|document|charter|readout|page|slide|inventory)\b|\b(?:here|on this page|proposed decision|draft decision|(?:in|at) p[01])\b/i;
 const authority =
-  /\b(?:approval|approved|signature|authoriz\w*|selected|funding|benefit|value|savings|statement|cause|baseline|target|roadmap|business case|operating.model|execution plan|role reduction|role elimination|role accountability|accountability assumptions|connection is proven)\b/i;
+  /\b(?:approval|approved|signature|authoriz\w*|selected|route|funding|benefit|value|savings|statement|cause|baseline|target|roadmap|business case|operating.model|execution plan|role reduction|role elimination|role accountability|accountability assumptions|connection is proven)\b/i;
 const historical =
   /\b(?:ever|historically|previously|collected|received|arrived|exists?|existed|missing|absent|unavailable)\b/i;
 const conditional =
@@ -55,6 +56,7 @@ function tokens(s: string): Set<string> {
     transcripts: "transcript",
     timestamps: "timestamp",
     samples: "sample",
+    sampled: "sample",
     claims: "claim",
     cannot: "not",
     lacks: "missing",
@@ -85,10 +87,53 @@ function tokens(s: string): Set<string> {
     ),
   );
   return new Set(
-    (clean(s).match(/[a-z][a-z-]+|\d+(?:\.\d+)?/g) || [])
+    (
+      clean(s)
+        .replace(/-/g, " ")
+        .match(/[a-z][a-z]+|\d+(?:\.\d+)?/g) || []
+    )
       .map((t) => aliases[t] || t)
       .filter((t) => !ignored.has(t)),
   );
+}
+
+function structuredProposalSupports(claim: string, statement: string): boolean {
+  const subject = claim.match(/^no (.+?) is proposed$/)?.[1];
+  if (!subject) return false;
+  const rows: string[][] = [];
+  for (const line of statement.split("\n")) {
+    const json = line.match(/^row \d+: (\[.*\])$/)?.[1];
+    if (!json) continue;
+    try {
+      const cells: unknown = JSON.parse(json);
+      if (Array.isArray(cells) && cells.every((c) => typeof c === "string"))
+        rows.push(cells);
+    } catch {
+      // Malformed extracts cannot substantiate a claim.
+    }
+  }
+  const header = rows[0]?.map(clean);
+  if (!header) return false;
+  const subjectColumn = header.findIndex((h) =>
+    /^(?:question|subject)$/.test(h),
+  );
+  const valueColumn = header.findIndex((h) =>
+    /^(?:(?:synthetic|proposed) )?hypothesis$|^proposed value$/.test(h),
+  );
+  const statusColumn = header.indexOf("status");
+  if ([subjectColumn, valueColumn, statusColumn].some((index) => index < 0))
+    return false;
+  const wanted = [...tokens(subject)].sort().join(" ");
+  return rows
+    .slice(1)
+    .some(
+      (row) =>
+        [...tokens(row[subjectColumn] || "")].sort().join(" ") === wanted &&
+        clean(row[valueColumn] || "") === "none" &&
+        /^proposed(?: not confirmed| not approved)?$/.test(
+          clean(row[statusColumn] || ""),
+        ),
+    );
 }
 
 /** Textual support is local to a cited sentence or extract row, not a whole file. */
@@ -97,8 +142,11 @@ function purposeClaimHasSupport(
   sources: readonly PurposeClaimEvidence[],
   ids: number[],
 ): boolean {
-  const normalized = clean(claim).replace(/^source states:\s*/, "");
-  const terms = tokens(claim);
+  const normalized = clean(claim).replace(
+    /^(?:source states|recorded change position):\s*/,
+    "",
+  );
+  const terms = tokens(normalized);
   const absentSubject = normalized.match(
     /\bno (.+?) (?:exists?|is|are|was|were|has|have)\b/,
   )?.[1];
@@ -111,10 +159,26 @@ function purposeClaimHasSupport(
       .map((match) => [...tokens(match[1]!)][0])
       .filter((term): term is string => Boolean(term));
   const targets = negativeTargets(claim);
+  const unapproved = normalized.match(
+    /^no approved (target|benefit|baseline)(?:\b|$)/,
+  )?.[1];
   return sources.some(
     (source) =>
       ids.includes(source.citationNumber) &&
       (clean(source.statement).includes(normalized) ||
+        structuredProposalSupports(normalized, source.statement) ||
+        (unapproved !== undefined &&
+          source.statement
+            .split(/\n|(?<=[.!?])\s+/)
+            .some(
+              (line) =>
+                new RegExp(
+                  `^no (?:target|benefit|baseline)(?: (?:or|and) (?:target|benefit|baseline))* (?:is|are) approved\\b`,
+                ).test(clean(line)) &&
+                new RegExp(`\\b${unapproved}\\b`).test(
+                  clean(line).split(/ (?:is|are) approved/)[0]!,
+                ),
+            )) ||
         source.statement
           .split(/\n|(?<=[.!?])\s+|;\s+|\s+but\s+/)
           .some((line) => {
@@ -138,7 +202,10 @@ function gapSubjects(sentence: string): string[] {
   const value = clean(sentence);
   const lead =
     value.match(
-      /\bno\s+(.+?)(?:\s+(?:is|are|has been|have been)\s+|\s+(?:in|from)\s+)/,
+      /^no\s+(.+?)\s+(?:(?:is|are) )?(?:stated|recorded|provided|supplied)\s+(?:in|from)\b/,
+    )?.[1] ||
+    value.match(
+      /\bno\s+(.+?)(?:\s+(?:is|are|exists?|has been|have been)\s+|\s+(?:in|from)\s+)/,
     )?.[1] ||
     value.match(
       /^(.+?) (?:is|are) (?:missing|absent|unavailable|not (?:recorded|provided|established)) (?:in|from)\b/,
@@ -166,17 +233,33 @@ function bundleHasSubject(
         : null;
   const wanted = tokens(subject);
   return evidence.some((e) =>
-    e.statement.split(/\n|(?<=[.!?])\s+/).some((line) => {
-      if (
-        /\b(?:planned|to collect|not recorded|not provided|pending|not named|none|no|missing|not approved)\b/i.test(
-          line,
+    e.statement
+      .split(/\n|(?<=[.!?])\s+/)
+      .flatMap((line) => {
+        const cells = line.match(/^row \d+: (\[.*\])$/)?.[1];
+        if (!cells) return [line];
+        try {
+          const parsed: unknown = JSON.parse(cells);
+          // A role column cannot turn a prohibited behavior in another cell into evidence.
+          return Array.isArray(parsed) &&
+            parsed.every((v) => typeof v === "string")
+            ? parsed
+            : [];
+        } catch {
+          return [];
+        }
+      })
+      .some((line) => {
+        if (
+          /\b(?:planned|to collect|not recorded|not provided|pending|not named|none|no|missing|not approved)\b/i.test(
+            line,
+          )
         )
-      )
-        return false;
-      return aliases
-        ? aliases.test(line)
-        : wanted.size > 0 && [...wanted].every((t) => tokens(line).has(t));
-    }),
+          return false;
+        return aliases
+          ? aliases.test(line)
+          : wanted.size > 0 && [...wanted].every((t) => tokens(line).has(t));
+      }),
   );
 }
 
@@ -221,6 +304,18 @@ export function classifyPurposeClaims(
       /;|,\s+and\s+(?=(?:that\s+)?[\w -]{1,60}\b(?:cannot|lacks?|has no|have no|is not|are not)\b)|(?:,\s+(?:with\s+)?|\s+and\s+)(?=(?:and )?(?:no|none|missing|absent)\b)/i,
     );
     return clauses
+      .flatMap((clause) => {
+        const quotes = [...clause.matchAll(/["“]([^"”]+)["”]/g)]
+          .map((m) => m[1]!)
+          .filter((q) => purposeNegativeClaim.test(q));
+        if (!quotes.length) return [clause];
+        const outer = clause.replace(/["“][^"”]+["”]/g, "");
+        // Classify the assertion inside the quote, not its attribution's scope.
+        return [
+          ...quotes,
+          ...(purposeNegativeClaim.test(outer) ? [outer] : []),
+        ];
+      })
       .filter((clause) => purposeNegativeClaim.test(clean(clause)))
       .map((clause) => {
         const value = clean(clause).replace(/^that /, "");
@@ -240,6 +335,38 @@ export function classifyPurposeClaims(
             "decision_condition",
             true,
             "Question to validate, not an asserted absence",
+          );
+        if (
+          !historical.test(value) &&
+          /\b(?:measures?|definitions?|baselines?)\b/.test(value) &&
+          /\bcannot (?:be (?:blended|combined|averaged)|form (?:one|a single) baseline)\b/.test(
+            value,
+          )
+        )
+          return result(
+            "decision_condition",
+            true,
+            "Restriction on combining measures, not a claim about evidence availability",
+          );
+        if (
+          context.textRole === "scope" &&
+          /^none is (?:yet )?confirmed in (?:this|the supplied) evidence base$/.test(
+            value,
+          )
+        )
+          return result(
+            "draft_status",
+            true,
+            "This page declines to confirm its candidates",
+          );
+        if (
+          /^none selected$/.test(value) &&
+          /^routes compared,? none selected/.test(clean(sentence))
+        )
+          return result(
+            "draft_status",
+            true,
+            "Comparison heading does not select a route",
           );
         if (
           !historical.test(value) &&
@@ -316,7 +443,7 @@ export function classifyPurposeClaims(
         if (
           context.textRole === "scope" &&
           !historical.test(value) &&
-          /\b(?:(?:establishes?|asserts?|proves?|demonstrates?|attributes?|validates?|evidences?|scores?|confirms?) no|no .+ (?:is|are) (?:sought|claimed|asserted))\b/.test(
+          /\b(?:(?:records?|establishes?|asserts?|proves?|demonstrates?|attributes?|validates?|evidences?|scores?|confirms?) no|no .+ (?:is|are) (?:sought|claimed|asserted))\b/.test(
             value,
           )
         )

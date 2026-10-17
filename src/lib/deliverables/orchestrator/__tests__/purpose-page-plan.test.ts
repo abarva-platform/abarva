@@ -19,6 +19,207 @@ import {
 import { formatConsultantCents } from "@/lib/programs/value-engine/format-money";
 
 describe("purpose page planning", () => {
+  it("tries compact row padding before leaving one table row on a continuation", () => {
+    const doc = purposeFixture();
+    doc.exhibits = [];
+    doc.nextActions = [];
+    const rows = [
+      [
+        "Fragmented context; identifiers repeated across systems",
+        "Workshop account and recorded step sequence [1]",
+        "Timed observation of the routine path",
+      ],
+      [
+        "Exception handling depends on supervisor or specialist",
+        "Escalation is the longest recorded step [1]",
+        "Exception sample with recorded reasons",
+      ],
+      [
+        "Source currency not always visible to the operator",
+        "Status timestamp absent in the reviewed sample [1]",
+        "Freshness display agreed with the platform owner",
+      ],
+      [
+        "Attachment metadata mismatch in the reviewed records",
+        "Mismatch in the reviewed records; missing-document status could be wrong [1]",
+        "Owner review of attachment metadata",
+      ],
+      [
+        "Published article may sit outside its review target",
+        "Published status is not proof of current content [1]",
+        "Owner review against the recorded target [1]",
+      ],
+    ];
+    doc.tables = [
+      {
+        key: "causes",
+        title: "Candidate causes",
+        targetFormat: "pptx",
+        pageShape: "register",
+        columns: ["Candidate cause", "Recorded evidence", "Proposed test"],
+        rows,
+      },
+    ];
+    doc.deckSlides = [
+      {
+        key: "causes",
+        governingMessage: "The candidate causes require distinct tests",
+        pageIntent: {
+          question: "What needs testing?",
+          scopeNote: "Hypotheses, not confirmed causes.",
+          tableKey: "causes",
+          takeaway: "Review the evidence.",
+        },
+      },
+    ];
+    const pages = planPurposePages(doc).filter((p) =>
+      p.id.startsWith("causes"),
+    );
+    expect(pages).toHaveLength(1);
+    expect(pages[0]!.compactTableRows).toBe(true);
+    expect(pages[0]!.rows).toEqual(rows);
+  });
+  it("keeps a bold statement label and moves its full assertion into the body", () => {
+    const doc = purposeFixture();
+    doc.exhibits = [];
+    doc.nextActions = [];
+    doc.tables = [
+      {
+        key: "decision",
+        title: "Decision",
+        targetFormat: "pptx",
+        pageShape: "labelled_statements",
+        columns: ["Status", "Basis"],
+        rowTones: ["candidate", "condition"],
+        rows: [
+          [
+            "**Proposed direction** - review the operating alternatives before choosing a route",
+            "The source remains pending [1].",
+          ],
+          [
+            "**Condition**: confirm the decision owner",
+            "Record the review [1].",
+          ],
+        ],
+      },
+    ];
+    doc.deckSlides = [
+      {
+        key: "decision",
+        governingMessage: "The choice remains conditional",
+        pageIntent: {
+          question: "What is proposed?",
+          scopeNote: "For review.",
+          tableKey: "decision",
+        },
+      },
+    ];
+    const page = planPurposePages(doc).find((p) =>
+      p.id.startsWith("decision"),
+    )!;
+    expect(page.family).toBe("labelled_statements");
+    expect(page.items[0]!.label).toBe("Proposed direction");
+    expect(page.items[0]!.detail).toContain(
+      "review the operating alternatives before choosing a route",
+    );
+    expect(page.items[0]!.detail).toContain("The source remains pending [1].");
+    expect(page.items[0]!.tone).toBe("candidate");
+  });
+  it("allocates width to long handoff labels before creating a sparse continuation", () => {
+    const doc = purposeFixture();
+    doc.exhibits = [];
+    doc.nextActions = [];
+    doc.tables = [
+      {
+        key: "handoffs",
+        title: "Handoffs",
+        targetFormat: "pptx",
+        pageShape: "register",
+        columns: ["From", "To", "Handoff"],
+        rows: Array.from({ length: 5 }, () => [
+          "Exception: supervisor or specialist queue (Agent and supervisor)",
+          "Key and verify interaction summary (Agent)",
+          "Declared connection",
+        ]),
+      },
+    ];
+    doc.deckSlides = [
+      {
+        key: "handoffs",
+        governingMessage: "Each handoff retains its declared owner",
+        pageIntent: {
+          question: "Who hands over?",
+          scopeNote: "Recorded connections only.",
+          tableKey: "handoffs",
+          takeaway: "Review the handoffs.",
+        },
+      },
+    ];
+    const pages = planPurposePages(doc).filter((p) =>
+      p.id.startsWith("handoffs"),
+    );
+    expect(pages).toHaveLength(1);
+    expect(pages[0]!.rows).toEqual(doc.tables[0]!.rows);
+    expect(pages[0]!.columnWeights![0]).toBeGreaterThan(
+      pages[0]!.columnWeights![2]!,
+    );
+  });
+  it("binds measurement cautions to declared subjects, populations and units", () => {
+    const a = {
+      ...purposeChartFixture(),
+      comparisonSubject: "Demand",
+      population: "incoming work",
+    };
+    const b = {
+      ...a,
+      key: "completion",
+      comparisonSubject: "service performance",
+      population: "eligible work",
+      unit: "percent",
+    };
+    const doc = purposeFixture();
+    doc.tables = [];
+    doc.exhibits = [];
+    doc.deckSlides = [
+      {
+        key: "method",
+        governingMessage: purposeChartHeadline([a, b], "measurement_boundary"),
+        pageIntent: {
+          question: "How are the measures compared?",
+          scopeNote: "Descriptive observations only.",
+          chartKeys: [a.key, b.key],
+          chartMessage: "measurement_boundary",
+          takeaway: `${a.period}. Separate populations and axes; no intervention effect is established.`,
+        },
+      },
+    ];
+    expect(() => planPurposePages(doc, [a, b])).not.toThrow();
+    expect(() =>
+      planPurposePages(doc, [a, { ...b, population: a.population }]),
+    ).toThrow("distinct_measures");
+    expect(() => planPurposePages(doc, [a, { ...b, unit: a.unit }])).toThrow(
+      "distinct_measures",
+    );
+    expect(() =>
+      planPurposePages(doc, [a, { ...b, comparisonSubject: "profitability" }]),
+    ).toThrow("headline_not_bound");
+    doc.deckSlides[0]!.pageIntent!.takeaway =
+      "The intervention improved performance.";
+    expect(() => planPurposePages(doc, [a, b])).toThrow(
+      "interpretation_needs_governed_binding",
+    );
+  });
+  it("describes an interior dip as a recovery, not a steady trend", () => {
+    const chart = purposeChartFixture();
+    chart.points = [4, 3, 5].map((value, i) => ({
+      value,
+      label: `Period ${i}`,
+      sourceRow: `row ${i}`,
+    }));
+    expect(purposeChartHeadline([chart])).toContain("recovers after a dip");
+    chart.points[1]!.value = 4.5;
+    expect(purposeChartHeadline([chart])).toContain("increases overall");
+  });
   it("widens long statement labels before splitting five short status rows", () => {
     const doc = purposeFixture();
     doc.tables = [

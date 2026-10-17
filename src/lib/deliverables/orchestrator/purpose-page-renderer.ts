@@ -13,6 +13,7 @@ import {
   purposeRowHeight,
   purposeBodyHeight,
   purposeTableHeaderHeight,
+  purposeScopeLayout,
   type PurposeChart,
   type PurposePage,
 } from "./purpose-page-plan";
@@ -27,8 +28,7 @@ C.skyPale = PURPOSE_COLORS.pale;
 C.deckInk = PURPOSE_COLORS.ink;
 C.deckMuted = PURPOSE_COLORS.muted;
 const X = 0.64,
-  W = 12.05,
-  TOP = 2.08;
+  W = 12.05;
 type Slide = PptxGenJS.Slide;
 
 export function purposeDensity(page: PurposePage) {
@@ -170,21 +170,17 @@ function frame(
       objectName: "purpose:title",
     },
   );
-  const scopeFont = cover
-    ? 22
-    : [14, 13, 12].find(
-        (size) =>
-          referenceCellTextHeight(copy(page, page.scope), W, size) <= 0.36,
-      );
-  if (!scopeFont) throw new PurposePageError("scope_needs_edit", page.id);
+  const scopeLayout = cover
+    ? { fontSize: 22, height: 0.85 }
+    : purposeScopeLayout(page);
   text(
     slide,
     copy(page, page.scope),
     X,
     cover ? 5.0 : 1.65,
     W,
-    cover ? 0.85 : 0.36,
-    scopeFont,
+    scopeLayout.height,
+    scopeLayout.fontSize,
     {
       color: muted,
       objectName: "purpose:scope",
@@ -247,6 +243,7 @@ function frame(
 }
 
 function labelledStatements(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
+  const TOP = purposeScopeLayout(page).bodyTop;
   const h = purposeBodyHeight(page) / page.items.length;
   const labelWidth = page.statementLabelWidth ?? 3.2;
   const inset = page.compact ? 0.06 : 0.18;
@@ -292,11 +289,12 @@ function labelledStatements(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
 }
 
 function bigNumbers(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
+  const TOP = purposeScopeLayout(page).bodyTop;
   const w = (W - 0.65) / 2;
   page.items.forEach((item, i) => {
     const x = X + i * (w + 0.65),
       color = semanticColors[item.tone || (i ? "condition" : "candidate")];
-    text(slide, item.label, x, TOP + 0.15, w, 0.8, 22, { bold: true });
+    text(slide, item.label, x, TOP + 0.15, w, 0.9, 22, { bold: true });
     text(slide, item.value!, x, TOP + 1.15, w, 1.2, 54, {
       color,
       bold: true,
@@ -310,6 +308,7 @@ function bigNumbers(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
 }
 
 function cards(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
+  const TOP = purposeScopeLayout(page).bodyTop;
   const H = purposeBodyHeight(page);
   const count = page.items.length;
   const columns = page.family === "decision" ? 2 : Math.max(1, count);
@@ -378,6 +377,7 @@ function rule(
 }
 
 function decision(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
+  const TOP = purposeScopeLayout(page).bodyTop;
   const w = (W - 0.6) / 2;
   page.items.forEach((item, i) => {
     const x = X + i * (w + 0.6),
@@ -398,6 +398,7 @@ function decision(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
 }
 
 function roles(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
+  const TOP = purposeScopeLayout(page).bodyTop;
   const H = purposeBodyHeight(page);
   const bodyH =
     purposeDensity(page).variant === "compact"
@@ -439,6 +440,7 @@ function roles(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
 }
 
 function options(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
+  const TOP = purposeScopeLayout(page).bodyTop;
   const H = purposeBodyHeight(page);
   const gap = 0.5,
     w = (W - (page.items.length - 1) * gap) / page.items.length;
@@ -480,6 +482,7 @@ function options(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
 }
 
 function renderProcess(pptx: PptxGenJS, slide: Slide, page: PurposePage) {
+  const TOP = purposeScopeLayout(page).bodyTop;
   const H = purposeBodyHeight(page);
   const gap = 0.4,
     w = (W - (page.items.length - 1) * gap) / page.items.length;
@@ -552,6 +555,7 @@ function renderPage(
   total: number,
 ) {
   const slide = frame(pptx, page, index, total);
+  const TOP = purposeScopeLayout(page).bodyTop;
   const H = purposeBodyHeight(page);
   if (page.family === "cover") {
     text(slide, page.items[0]!.label, X, 1.35, W, 0.5, 22, {
@@ -592,10 +596,23 @@ function renderPage(
           options: { bold: true, color: C.white, fill: { color: C.navy } },
         })),
         ...rows.map((row, i) =>
-          row.map((cell) => ({
+          row.map((cell, column) => ({
             text: copy(page, cell),
             options: {
-              bold: Boolean(page.sourceRegister && !row[0]),
+              bold: Boolean(
+                (page.sourceRegister && !row[0]) ||
+                (page.semanticStatusColumn && column === 0),
+              ),
+              ...(page.semanticStatusColumn && column === 0
+                ? {
+                    color:
+                      semanticColors[
+                        cell
+                          .split(" / ")[0]!
+                          .toLowerCase() as keyof typeof semanticColors
+                      ],
+                  }
+                : {}),
               fill: {
                 color:
                   page.sourceRegister && !row[0]
@@ -617,7 +634,11 @@ function renderPage(
         fontFace: "Arial",
         fontSize: 16,
         color: C.deckInk,
-        margin: page.sourceRegister ? 0.025 : 0.08,
+        margin: page.sourceRegister
+          ? 0.025
+          : page.compactTableRows
+            ? [0.01, 0.08, 0.01, 0.08]
+            : 0.08,
         border: { type: "solid", color: C.deckRule, pt: 0.5 },
         fill: { color: C.white },
         valign: "top",
