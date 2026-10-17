@@ -1,5 +1,5 @@
 import { buildReferenceEdition, INVESTMENT_SEQUENCE, VALIDATION_SEQUENCE } from "../reference-deck-edition";
-import { validateReferenceDeck, ReferenceDeckLineageRefusal } from "../reference-deck-model";
+import { validateReferenceDeck, ReferenceDeckLineageRefusal, type ReferenceBlock } from "../reference-deck-model";
 import { renderReferenceDeck } from "../reference-deck-renderer";
 import { inspectDeck } from "../deck-inspection";
 import { judgeRenderedDeck } from "../deck-quality";
@@ -578,6 +578,30 @@ describe("live-input reference edition", () => {
     expect(judgeRenderedDeck(rendered, { referenceDeck: spec }).findings.filter((finding) =>
       ["reference_client_copy", "reference_edition"].includes(finding.kind))).toEqual([]);
   }, 60_000);
+
+  it.each(["validation", "investment"] as const)("gives each %s gap panel its own missing input and next action", (edition) => {
+    const inputs = fixture(edition);
+    inputs.valueCase = { status: "empty", detail: "No value levers yet; add them in P4 Step 3." };
+    inputs.citations = { status: "ready", value: [] };
+    inputs.capture[2] = { status: "ready", value: {} };
+    inputs.capture[3] = { status: "ready", value: {} };
+    const sequence = edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
+    const spec = buildReferenceEdition(inputs, unavailableEditionWords(edition, sequence));
+    const gaps = spec.slides.flatMap((slide) => slide.blocks).filter((block): block is Extract<ReferenceBlock, { kind: "gap" }> => block.kind === "gap");
+    expect(gaps.length).toBeGreaterThanOrEqual(3);
+    expect(new Set(gaps.map((gap) => gap.detail)).size).toBe(gaps.length);
+    expect(new Set(gaps.map((gap) => gap.nextAction)).size).toBe(gaps.length);
+    if (edition === "validation")
+      for (const gap of gaps) expect(`${gap.title} ${gap.detail} ${gap.nextAction}`).not.toMatch(/\b(?:cost|rom|roi|investment|solution|plan|roadmap|release)\b/i);
+    expect(validateReferenceDeck(spec).filter((finding) => finding.blocking)).toEqual([]);
+  });
+
+  it("states the open-assumption count on the headline slide, bound to the register, never an assumption ID", () => {
+    const spec = buildReferenceEdition(fixture("investment"), words(INVESTMENT_SEQUENCE.length));
+    const headline = spec.slides[INVESTMENT_SEQUENCE.indexOf("big_number_context")]!.blocks.find((block) => block.kind === "metrics");
+    const open = headline?.kind === "metrics" ? headline.items.find((item) => item.label === "Open assumptions")?.value : null;
+    expect(open).toMatchObject({ display: "1", sourceId: "evidence:register_open_count" });
+  });
 
   it("replaces a withheld title of any form with its own sentence, keeping the draft in notes", async () => {
     const inputs = fixture("investment");
