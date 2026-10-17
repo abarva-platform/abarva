@@ -22,6 +22,8 @@ The synthetic golden decks end on a Sources page that names every input: evidenc
 
 The slide is still a gap panel when the deck rests on nothing at all.
 
+The validation contents slide claimed "Published evidence shows what can be checked" for that section, even with no approved published source. It now says that only when there is published evidence, and otherwise: "Every source is listed; published evidence remains to confirm."
+
 ## Layer Impact
 
 Release lane: `global-control-lane`.
@@ -38,19 +40,21 @@ Release lane: `global-control-lane`.
 
 ## Changes Included
 
-- `src/lib/deliverables/orchestrator/reference-deck-edition.ts`: the Sources exhibit.
+- `src/lib/deliverables/orchestrator/reference-deck-edition.ts`: the Sources exhibit, and the validation contents row for the section.
 - `src/lib/deliverables/orchestrator/__tests__/reference-deck-edition.test.ts`: tests for:
   - the full investment list, with no judge finding on the rendered slide;
   - the validation edition naming no estimate and no investment term;
   - the "None approved yet" row;
-  - the gap panel when nothing is recorded.
+  - the gap panel when nothing is recorded;
+  - the contents row with and without published evidence.
 
   Two existing tests now reflect that Sources is no longer a gap when workshops exist.
 
 ## QA / Validation
 
 - Deck suites (orchestrator plus decks routes): pass, 78 suites, 1237 tests.
-- Mutation testing: 6 / 6 killed:
+- Mutation testing: 7 / 7 killed:
+  - the contents row always claims published evidence;
   - "None approved yet" row dropped;
   - unrecorded workshops listed;
   - estimate shown in validation;
@@ -79,7 +83,7 @@ Revert the squash commit and redeploy.
 
 ## Known Gaps
 
-- **The contents slide still describes section 05 as published evidence.** Its words come from the drafted contents row.
+- None known.
 
 ## Audit Evidence
 

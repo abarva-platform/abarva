@@ -399,6 +399,11 @@ describe("live-input reference edition", () => {
       ["Design workshop", "Workshop evidence", "Operating model, controls and approach"],
       ["Value model", "Calculated value case", "Value, timing and counting rules"],
     ]);
+    // The contents row for that section claims published evidence only when there is some.
+    const contents = (deck: typeof spec) => deck.slides.find((slide) => slide.archetype === "contents")!.blocks[0];
+    const howRow = (deck: typeof spec) => { const block = contents(deck); return block?.kind === "table" ? block.rows.find((row) => String(row[0]).includes("How"))?.[1] : null; };
+    expect(howRow(spec)).toBe("Every source is listed; published evidence remains to confirm.");
+    expect(howRow(buildReferenceEdition(fixture("validation"), words(VALIDATION_SEQUENCE.length)))).toBe("Published evidence shows what can be checked.");
     const bare = fixture("validation");
     bare.register = { status: "ready", value: { assumptions: [], figuresRedacted: false } };
     bare.citations = { status: "ready", value: [] };

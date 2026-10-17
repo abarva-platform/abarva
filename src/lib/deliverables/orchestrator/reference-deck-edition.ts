@@ -432,7 +432,9 @@ export function buildReferenceEdition(inputs: EditionInputs, words: EditionWords
         ["02  What", actualFlow ? `The work runs from ${shortLabel(actualFlow.full[0]!, 27)} to ${shortLabel(actualFlow.full.at(-1)!, 27)}.` : "The current handoffs remain to confirm.", "6–7"],
         ["03  Why", annual ? "Counted value has a stated basis for review." : "The value basis remains to confirm.", inputs.edition === "validation" ? "8–9" : "8–9, 11"],
         [inputs.edition === "validation" ? "04  Confirm" : "04  Validate", assumptions.length ? "Working assumptions could change the case." : "The assumptions remain to confirm.", inputs.edition === "validation" ? "10" : "10, 22"],
-        ["05  How", inputs.edition === "validation" ? "Published evidence shows what can be checked." : rom ? "Delivery choices follow the approved estimate." : "The delivery basis remains to confirm.", inputs.edition === "validation" ? "11" : "12–21"],
+        ["05  How", inputs.edition === "validation"
+          ? sourceRows.length ? "Published evidence shows what can be checked." : "Every source is listed; published evidence remains to confirm."
+          : rom ? "Delivery choices follow the approved estimate." : "The delivery basis remains to confirm.", inputs.edition === "validation" ? "11" : "12–21"],
       ])];
       case "divider": return [{ kind: "text", lines: ["The next decision rests on evidence your team can check."] }];
       case "big_number_context": return [
