@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { readValueModel } from "@/lib/programs/value-model-capture";
+import { VALUE_CASE_REFUSAL } from "@/lib/programs/value-engine/value-case-view";
 
 export interface P4ValueReadback {
   body: Record<string, unknown> | null;
@@ -11,6 +13,25 @@ export interface P4ValueReadback {
 }
 
 const READING = "Reading the value case…";
+
+/**
+ * The refusal the value-case route would return for a saved plan the engine
+ * cannot evaluate, decided from the same text the route reads. A saved free-text
+ * or malformed plan is answered here instead of by a 409 the page asked for.
+ */
+function unevaluablePlanDetail(modelText: string): string | null {
+  if (modelText.trim() === "") {
+    return VALUE_CASE_REFUSAL.value_model_absent.detail;
+  }
+  const read = readValueModel(modelText);
+  if (read.kind === "legacy_text") {
+    return VALUE_CASE_REFUSAL.value_model_not_structured.detail;
+  }
+  if (read.kind === "invalid") {
+    return VALUE_CASE_REFUSAL.value_model_invalid.detail;
+  }
+  return null;
+}
 
 export function useP4ValueReadback({
   moveId,
@@ -32,10 +53,11 @@ export function useP4ValueReadback({
   } | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const key = JSON.stringify([moveId, modelText, retryKey]);
+  const unevaluable = unevaluablePlanDetail(modelText);
 
   useEffect(() => {
     let live = true;
-    if (!enabled || !captureSaved) {
+    if (!enabled || !captureSaved || unevaluable !== null) {
       setRead(null);
       return;
     }
@@ -84,9 +106,12 @@ export function useP4ValueReadback({
     return () => {
       live = false;
     };
-  }, [moveId, key, enabled, captureSaved]);
+  }, [moveId, key, enabled, captureSaved, unevaluable]);
 
-  const current = enabled && captureSaved && read?.key === key ? read : null;
+  const current =
+    enabled && captureSaved && unevaluable === null && read?.key === key
+      ? read
+      : null;
   const body = current?.body ?? null;
   const status = !enabled
     ? ""
@@ -95,7 +120,7 @@ export function useP4ValueReadback({
         (modelText.trim()
           ? "The value plan is still saving. Wait for its saved readback."
           : "Record and save a structured value plan before reading its value case.")
-      : (current?.status ?? READING);
+      : (unevaluable ?? current?.status ?? READING);
   const result = body?.case as Record<string, unknown> | undefined;
   const cost = body?.costBasis as Record<string, unknown> | undefined;
   const ready =
@@ -109,7 +134,12 @@ export function useP4ValueReadback({
     body,
     status,
     ready,
-    canRetry: enabled && captureSaved && !body && status !== READING,
+    canRetry:
+      enabled &&
+      captureSaved &&
+      unevaluable === null &&
+      !body &&
+      status !== READING,
     retry: () => setRetryKey((count) => count + 1),
   };
 }
