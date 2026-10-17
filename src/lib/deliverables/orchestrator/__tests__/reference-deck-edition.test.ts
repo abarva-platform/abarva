@@ -115,6 +115,30 @@ describe("live-input reference edition", () => {
     }
   }, 60_000);
 
+  const CALCULATED = /\b(?:Calculated case|Case model|Calculated cost|Calculated base)\b/;
+  const shown = (spec: ReturnType<typeof buildReferenceEdition>) => JSON.stringify(spec.slides.map((slide) => slide.blocks));
+
+  it.each([
+    ["empty", (inputs: EditionInputs) => { inputs.valueCase = { status: "empty", detail: "Synthetic value case not modelled." }; }],
+    ["failed", (inputs: EditionInputs) => { inputs.valueCase = { status: "failed", detail: "Synthetic read failed." }; }],
+    ["withheld", (inputs: EditionInputs) => { if (inputs.valueCase.status === "ready") inputs.valueCase.value.figuresRedacted = true; }],
+    ["blocked", (inputs: EditionInputs) => { if (inputs.valueCase.status === "ready") inputs.valueCase.value.case = { status: "blocked", economics: null }; }],
+    ["evaluated without figures", (inputs: EditionInputs) => { if (inputs.valueCase.status === "ready") inputs.valueCase.value.case = { status: "evaluated" }; }],
+  ] as const)("claims no calculated case when the value case is %s", (_, alter) => {
+    for (const edition of ["validation", "investment"] as const) {
+      const inputs = fixture(edition);
+      alter(inputs);
+      const sequence = edition === "validation" ? VALIDATION_SEQUENCE : INVESTMENT_SEQUENCE;
+      const spec = buildReferenceEdition(inputs, unavailableEditionWords(edition, sequence));
+      expect(shown(spec)).not.toMatch(CALCULATED);
+    }
+  });
+
+  it("names each calculated basis when the case is evaluated", () => {
+    const text = shown(buildReferenceEdition(fixture("investment"), words(INVESTMENT_SEQUENCE.length)));
+    for (const label of ["Calculated case", "Case model", "Calculated cost", "Calculated base"]) expect(text).toContain(label);
+  });
+
   it("binds active and open assumption counts to distinct governed sources", () => {
     const inputs = fixture("validation");
     if (inputs.register.status !== "ready") throw new Error("fixture unavailable");
