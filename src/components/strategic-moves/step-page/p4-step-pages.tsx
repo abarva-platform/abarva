@@ -293,7 +293,7 @@ export function CaptureStepPage({
     />
   ) : null;
   return host.dock(page, {
-    briefing: `I can use the saved ${title.toLowerCase()} answers and evidence shown here. I leave decisions and figures to the team. Drafts stay drafts until you accept them. I don't write figures.`,
+    briefing: `I can use this step's saved answers and the evidence shown here. I leave decisions and figures to the team. Drafts stay drafts until you accept them. I don't write figures.`,
     actions: [],
     notesPanel,
   });

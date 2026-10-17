@@ -118,6 +118,18 @@ function page(view: keyof typeof P2_STEP_PAGES, props: StepPageHostProps) {
 }
 
 describe("P2 step pages", () => {
+  it("briefs aVa without splicing the step's instruction into a sentence", () => {
+    for (const view of ["p2-evidence-plan", "p2-baseline", "p2-validate"] as const) {
+      const props = host();
+      let briefing = "";
+      props.dock = (content: ReactNode, options) => { briefing = String(options.briefing ?? ""); return <>{content}</>; };
+      const { unmount } = render(page(view, props));
+      expect(briefing).toMatch(/^I read this step's saved answers and the current governed gate readback\./);
+      expect(briefing).not.toMatch(/saved (?:establish|record|validate|plan|confirm) /i);
+      unmount();
+    }
+  });
+
   it("keeps the blocked Evidence Plan's refusal and canonical empty work state visible", () => {
     const props = host();
     props.p2Evidence = {
