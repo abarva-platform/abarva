@@ -11,9 +11,191 @@ import {
 } from "../purpose-page-renderer";
 import { renderDeliverableDocx, renderDeliverablePptx } from "../renderers";
 import { inspectDeck } from "../deck-inspection";
-import { planPurposePages, purposeCitations } from "../purpose-page-plan";
+import {
+  planPurposePages,
+  purposeCitations,
+  purposeChartHeadline,
+  purposeScopeLayout,
+} from "../purpose-page-plan";
 
 describe("purpose page rendered objects", () => {
+  it("compacts status statements into one native table while retaining their semantic colour and labels", async () => {
+    const doc = purposeFixture();
+    doc.exhibits = [];
+    doc.nextActions = [];
+    const tones = [
+      "candidate",
+      "candidate",
+      "risk",
+      "condition",
+      "later",
+    ] as const;
+    doc.tables = [
+      {
+        key: "status",
+        title: "Decision",
+        targetFormat: "pptx",
+        pageShape: "labelled_statements",
+        columns: ["Position", "Basis"],
+        rowTones: [...tones],
+        rows: tones.map((_, i) => [
+          `Position ${i}`,
+          "Review the documented operating alternatives and the accountable owner before choosing the next route for delivery [1].",
+        ]),
+      },
+    ];
+    doc.deckSlides = [
+      {
+        key: "status",
+        governingMessage: "The decision retains each condition",
+        pageIntent: {
+          question: "What is proposed?",
+          scopeNote: "For review.",
+          tableKey: "status",
+          takeaway: "Confirm the evidence.",
+        },
+      },
+    ];
+    const pages = planPurposePages(doc).filter((p) =>
+      p.id.startsWith("status"),
+    );
+    expect(pages).toHaveLength(1);
+    expect(pages[0]!.semanticStatusColumn).toBe(true);
+    expect(pages[0]!.rows!.map((r) => r[0])).toEqual(
+      tones.map((tone, i) => `${tone.toUpperCase()} / Position ${i}`),
+    );
+    const zip = await JSZip.loadAsync(await renderPurposeDeck(doc));
+    const xml = await zip.file("ppt/slides/slide2.xml")!.async("string");
+    expect(xml).toContain('val="AE3547"');
+    expect(xml).toContain('val="9C650E"');
+    for (const row of doc.tables[0]!.rows) expect(xml).toContain(row[1]);
+  });
+  it("reserves a readable second scope line without moving short-note pages", async () => {
+    const doc = purposeFixture();
+    doc.exhibits = [];
+    doc.tables = [];
+    doc.nextActions = [];
+    const scope =
+      "This page describes the recorded review conditions and the questions to resolve before the next decision; it does not establish a causal relationship, a funding approval or a validated financial result.";
+    doc.deckSlides = [
+      {
+        key: "scope",
+        governingMessage: "Review conditions remain explicit",
+        points: ["Confirm the evidence before deciding [1]."],
+        pageIntent: { question: "What remains to review?", scopeNote: scope },
+      },
+    ];
+    const pages = planPurposePages(doc);
+    const page = pages.find((p) => p.id.startsWith("scope"))!;
+    expect(purposeScopeLayout(page).bodyTop).toBe(2.3);
+    expect(purposeScopeLayout({ ...page, scope: "For review." }).bodyTop).toBe(
+      2.08,
+    );
+    const inspection = await inspectDeck(await renderPurposeDeck(doc));
+    const slide = inspection.slides[pages.indexOf(page)]!;
+    const scopeBox = slide.purposeText!.find(
+      (b) => b.name === "purpose:scope",
+    )!;
+    expect(scopeBox.text).toBe(scope);
+    expect(scopeBox.heightIn).toBeCloseTo(0.55);
+    expect(scopeBox.fontSize).toBeGreaterThanOrEqual(12);
+    const damaged = structuredClone(inspection);
+    damaged.slides[pages.indexOf(page)]!.purposeText!.find(
+      (b) => b.name === "purpose:scope",
+    )!.heightIn = 0.36;
+    expect(() => validatePurposeInspection(damaged, pages)).toThrow(
+      "text_does_not_fit",
+    );
+  });
+  it("uses native bullets and keeps a compact seven-role table together", async () => {
+    const doc = purposeFixture();
+    doc.deliverableType = "charter";
+    doc.purposePageDesign = true;
+    doc.exhibits = [];
+    doc.tables = [];
+    doc.recommendation = "Review the evidence before the next decision.";
+    doc.actionRegister = [
+      {
+        owner: "Sponsor",
+        action: "Review the draft",
+        evidence: "Reviewed record",
+      },
+    ];
+    doc.generatedSections = [
+      {
+        key: "sponsorship_governance",
+        title: "Decision owners",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+        bodyMarkdown:
+          "- **Review:** Confirm scope before approval [1].\n- **Evidence:** Review the baseline [1].\n\n| Role | Responsibility |\n| --- | --- |\n" +
+          Array.from(
+            { length: 7 },
+            (_, i) => `| Role ${i + 1} | Review assigned evidence [1]. |`,
+          ).join("\n"),
+      },
+    ];
+    const zip = await JSZip.loadAsync(
+      await Packer.toBuffer(renderDeliverableDocx(doc)),
+    );
+    const xml = await zip.file("word/document.xml")!.async("string");
+    const paragraphs = [...xml.matchAll(/<w:p[ >][\s\S]*?<\/w:p>/g)].map(
+      (x) => x[0],
+    );
+    expect(paragraphs.find((p) => p.includes(doc.recommendation))).toContain(
+      "<w:keepNext/>",
+    );
+    for (const term of ["Review:", "Evidence:"]) {
+      const bullet = paragraphs.find((p) => p.includes(`>${term}<`));
+      expect(bullet).toContain("<w:numPr>");
+      expect(bullet).not.toContain(">- </w:t>");
+    }
+    const table = [...xml.matchAll(/<w:tbl>[\s\S]*?<\/w:tbl>/g)]
+      .map((x) => x[0])
+      .find((x) => x.includes(">Role 7<"))!;
+    const rows = [...table.matchAll(/<w:tr>[\s\S]*?<\/w:tr>/g)].map(
+      (x) => x[0],
+    );
+    expect(rows).toHaveLength(8);
+    expect(rows.slice(0, -1).every((row) => row.includes("<w:keepNext"))).toBe(
+      true,
+    );
+    expect(rows.at(-1)).toMatch(/<w:keepNext w:val="false"\/>/);
+  });
+  it("lets charter sources follow the decision record without a forced blank continuation", async () => {
+    const doc = purposeFixture();
+    doc.deliverableType = "charter";
+    doc.purposePageDesign = true;
+    doc.exhibits = [];
+    doc.sourceRegister = Array.from({ length: 5 }, (_, i) => ({
+      citationNumber: i + 1,
+      label: `Reviewed input ${i + 1}`,
+      confidence: "low" as const,
+      evidenceFamily: "Planning",
+      reviewStatus: "Owner review pending",
+      useAndLimitation: "Planning input; human approval remains separate.",
+    }));
+    const zip = await JSZip.loadAsync(
+      await Packer.toBuffer(renderDeliverableDocx(doc)),
+    );
+    const xml = await zip.file("word/document.xml")!.async("string");
+    const sourceHeading = [...xml.matchAll(/<w:p[ >][\s\S]*?<\/w:p>/g)].find(
+      (p) => p[0].includes(">Source register<"),
+    )?.[0];
+    expect(sourceHeading).toBeDefined();
+    expect(sourceHeading).not.toMatch(
+      /<w:pageBreakBefore(?:\/>| w:val="true")/,
+    );
+    expect(xml.match(/Owner review pending/g)).toHaveLength(1);
+    expect(xml).not.toContain("human approval remains separate");
+    const decisionTable = [...xml.matchAll(/<w:tbl>[\s\S]*?<\/w:tbl>/g)]
+      .map((match) => match[0])
+      .find((value) => value.includes(">Decision record<"))!;
+    const lastRow = [...decisionTable.matchAll(/<w:tr>[\s\S]*?<\/w:tr>/g)].at(
+      -1,
+    )?.[0];
+    expect(lastRow).toContain('<w:keepNext w:val="false"/>');
+  });
   it("keeps native table rows inside the body above the takeaway", async () => {
     const doc = purposeFixture();
     doc.exhibits = [];
@@ -156,7 +338,7 @@ describe("purpose page rendered objects", () => {
       buffer = await renderPurposeDeck(doc),
       inspection = await inspectDeck(buffer);
     expect(inspection.slides[1]!.namedText?.["purpose:statement-label:1"]).toBe(
-      "Conditions to close",
+      "CONDITION / Conditions to close",
     );
     expect(
       inspection.slides[2]!.purposeText?.find(
@@ -211,7 +393,7 @@ describe("purpose page rendered objects", () => {
       };
     doc.deckSlides!.push({
       key: "paired",
-      governingMessage: `${first.title} and ${second.title}`,
+      governingMessage: purposeChartHeadline([first, second]),
       citationsUsed: [1],
       pageIntent: {
         question: "What changed?",
@@ -224,7 +406,7 @@ describe("purpose page rendered objects", () => {
     const buffer = await renderPurposeDeck(doc, [first, second]);
     const inspection = await inspectDeck(buffer);
     expect(inspection.slides[0]!.namedText?.["purpose:scope"]).toBe(
-      "Scope for review [C01, E01].",
+      doc.deckSlides![0]!.pageIntent!.question,
     );
     expect(
       inspection.slides[1]!.namedText?.["purpose:annotation:takeaway"],
@@ -262,6 +444,7 @@ describe("purpose page rendered objects", () => {
       citationNumber: i + 1,
       referenceId: `E${String(i + 1).padStart(2, "0")}`,
       label: `Evidence ${i + 1}`,
+      useAndLimitation: "Definition and scope.",
     }));
     doc.deckSlides![0]!.citationsUsed = doc.sourceRegister.map(
       (s) => s.citationNumber,
@@ -271,7 +454,10 @@ describe("purpose page rendered objects", () => {
     );
     const sources = report.slides[1]!.namedText?.["purpose:sources"] || "";
     expect(sources).toContain("E01");
-    expect(sources).toContain("E17");
+    expect(sources).toContain("+12");
+    expect(report.slides[1]!.namedText?.["purpose:page-number"]).toMatch(
+      /^2 \/ \d+$/,
+    );
     expect(() =>
       validatePurposeInspection(
         report,
@@ -315,7 +501,7 @@ describe("purpose page rendered objects", () => {
       await Packer.toBuffer(renderDeliverableDocx(doc)),
     );
     const xml = await zip.file("word/document.xml")!.async("string");
-    expect(xml.match(/<w:tbl>/g)?.length).toBe(2);
+    expect(xml.match(/<w:tbl>/g)?.length).toBe(4);
     expect(xml).toContain("[C01]");
     expect(xml).toContain("Bounded discovery proposal [C01].");
     expect(xml).toContain('w:ascii="Arial"');
@@ -572,7 +758,7 @@ describe("purpose page rendered objects", () => {
     expect(xml).toContain("Approver and role");
     expect(xml).toContain("Build funding remains unapproved");
     expect(xml.indexOf("Decision requested")).toBeLessThan(
-      xml.indexOf("Review and authorization"),
+      xml.indexOf("Next decision and review"),
     );
     doc.purposePageDesign = false;
     const legacy = await JSZip.loadAsync(

@@ -3,25 +3,26 @@ import {
   deckContract,
   renderDeckContractPrompt,
 } from "../shared/deck-story-contract";
-import type { GovernedEvidenceItem, RenderableDeliverable } from "./types";
+import type { RenderableDeliverable } from "./types";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import { gfmFromMarkdown } from "mdast-util-gfm";
 import { gfm } from "micromark-extension-gfm";
 import type { Nodes } from "mdast";
+import {
+  classifyPurposeClaims,
+  type PurposeClaimContext,
+  type PurposeClaimEvidence,
+} from "./purpose-claim-classifier";
+import {
+  purposeCitationIds,
+  compactPurposeCitationIds,
+} from "./purpose-citations";
 
 const marker = /\b(?:synthetic|invented|fixture|demo)\b/i;
 const operatorProse =
   /\b(?:seed rows?|scoped rebind|rebind(?:ing)? the (?:tenant|dataset)|run the (?:loader|migration)|feature[_ -]flag|fixture loader)\b/i;
 const uncertainty =
   /\b(?:hypothes(?:is|es)|suspected|possible|potential|may|might|could|to (?:test|validate|confirm))\b/i;
-const absence =
-  /\b(?:no|none|missing|absent|unavailable|unrecorded|uncollected|lacks?|not\s+(?:yet\s+)?(?:collected|received|available|recorded|provided|loaded|supplied|established))\b/i;
-const normalize = (s: string) =>
-  s
-    .replace(/\[(?:\d+|[A-Z]+\d+)(?:\s*,\s*(?:\d+|[A-Z]+\d+))*\]|[*_"“”]/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLowerCase();
 
 function strings(value: unknown): string[] {
   if (typeof value === "string") return [value];
@@ -37,7 +38,7 @@ function strings(value: unknown): string[] {
 }
 
 export function purposePhasePrompt(type: string): string {
-  const phase =
+  let phase =
     type === "charter"
       ? `P1 CHARTER CONTRACT. Emit these section keys exactly once in this order:\n${CHARTER_CONTRACT.sections.map((s) => `${s.key}: ${s.intent} Maximum ${s.maxWords} words.`).join("\n")}\n${CHARTER_CONTRACT.boundaryStatement}\nDRAFT STATUS: the preceding boundary describes the instrument's scope, not an approval already granted. Qualify authorization language with "If approved" in the same sentence. A program budget ceiling is not a phase budget or permission to spend. Keep each amount's original scope and qualifier. Preserve negation and conditions from sources exactly.`
       : `${renderDeckContractPrompt("REF_DECK_P2_DISCOVERY_READOUT")}\nUse each contract slide id as the slide key, in this order: ${deckContract(
@@ -47,7 +48,16 @@ export function purposePhasePrompt(type: string): string {
           .join(
             ", ",
           )}. The first slide states the finding AND a proposed proceed, hold or stop decision. Put the decision in the title, points, table or takeaway, not only speaker notes. Never open with an ask to authorize Discovery, test whether, or repeat the Charter request. Findings may remain conditional; do not invent a resolved cause. Optional permitted evidence-detail appendices follow the complete core spine and use unique appendix_ keys. Do not add appendices merely to reach a slide count.`;
-  return `${phase}\nVisible titles, body, scope notes and takeaways contain no synthetic/invented/fixture/demo markers; classification is carried by the server footer. Retain hypotheses, constraints and source limitations. If a scope note calls the explanation a hypothesis, the headline must also say hypothesis, possible, suspected or may. Qualifications that change a claim's meaning stay visible next to that claim, not only in notes. A planned row supports planned, not not-collected. Any absence claim must quote the exact explicit absence from its cited source; otherwise ask the owner to confirm the state. Do not paraphrase absence into a stronger claim. Use a structured actionRegister [{owner, action, evidence}] instead of repeated nextActions prose. Evidence is a short completion test plus citations. Keep number slots intact; the server formats their declared units. Prefer one message per page, short cells, and source-specific scope notes. Exclude source-package operator instructions (seed rows, scoped rebind, loaders and feature flags) from client business controls. Translate status labels into ordinary words, not underscore codes. Charter success_measures must contain a native Markdown table separating outcome, measure and basis or next validation; never a dense baseline/target paragraph. Chart slides use the exact supplied chart title, or two chart titles joined by " and ", as their governingMessage. Omit points and takeaway on chart slides: the governed chart interpretation supplies the boundary. Put causal diagnoses on their own evidence-supported page, never over unrelated time series.`;
+  if (type === "charter")
+    phase +=
+      "\nWrite at most 650 words including tables, excluding the server-owned decision record and source register. The per-section limits above are ceilings, not targets. Use a short title naming the charter and decision record, not an authorization already granted. Lead with the proposed decision in at most 45 words. Use the opportunity section for the business problem and value direction in at most 90 words, not a list of every measure or target. Put scope boundaries only in scope, measures only in success_measures, decision rights only in sponsorship_governance, dependencies only in known_constraints_dependencies, and proposed authorization conditions only in authorization_conditions. Each message appears once. Use short tables for scope, measures, role responsibilities and control limits. Every success measure needs its own definition or validation path; an owner responsibility is not a metric. Each actionRegister evidence field is explicitly a future completion test (e.g. 'Required: reviewed baseline'), with a citation to the reason it is required, never a claim that the future record already exists. Paraphrase ordinary positive statements with citations; keep a factual negative quotation short and integrated, never introduce it with assembly commentary such as 'carried verbatim from'. Write full sentences naming the next action and accountable role rather than copying status placeholders. Planned evidence remains planned. Use at most one citation group per table row, placed in its final cell, where all cells share the same source. The recommendation should name the next decision record to complete in one sentence, not repeat the opening decision. All headings use sentence case.";
+  phase +=
+    type === "charter"
+      ? "\nEDITORIAL COVERAGE: Read all supplied P0/P1 sources before selecting the story. Preserve each distinct outcome the sponsor is asking to test, including service or experience outcomes as well as cost. Retain supported baseline/target pairs and scope footprint with their qualifications. Where the brief names alternative routes, compare them briefly in opportunity_context instead of silently treating one route as selected. Include delivery/ramp dependencies only where recorded. Avoid repeating a budget ceiling, permission boundary or evidence status in multiple sections. Measures use Outcome | Measure and target | Validation; roles use Role | Decision or responsibility. Keep roles together and concise. Use ordinary complete clauses; never leave a sentence hanging before a citation."
+      : "\nEDITORIAL COVERAGE: First assign every decision-relevant source finding to one core beat. executive_answer is a short thesis and proposed decision, not the detailed condition list used at the end. what_we_assessed bounds the inquiry; current_state shows recorded steps, handoffs and timings when supplied, not identical generic role labels. what_is_working names specific controls worth keeping. what_is_not_working shows the material operational problem. root_causes separates candidate mechanisms and the evidence needed to test each. metrics_evidence exposes the measurement reconciliation or series. implications compares the routes actually named in the evidence using Route | Why consider it | What changes the decision, rather than another caveat list. readiness names dependency, accountable role and exit evidence. proceed_hold_stop names the bounded decision and material conditions; actionRegister specifies the next work without repeating those conditions. Use each material comparison or outcome from the supplied evidence where it affects the decision. Retain distinct workflow branches; a short table is better than dropping a branch to fit a diagram. Reuse a qualification only when its absence would change a claim's meaning. Put detailed evidence notes in speaker notes. Section chips advance CONTEXT, WHAT, WHY, VALIDATE, HOW in that order: implications/readiness stay VALIDATE and the final decision/actions use HOW. A short page is acceptable when its message is complete; do not pad it with generic caveats. Sources use meaningful complete purpose statements, never raw filenames as prose.";
+  phase +=
+    "\nMEASURE-TO-EVIDENCE FIT: A citation to a real file does not make it a suitable validation method. Use an evidence item only for the question it actually measures. A timed walkthrough can support task effort, not adoption or experience on its own. When the source names an outcome but supplies no measurement method, label the method as a proposed next measurement decision; do not assert a convenient existing file validates it. Separate deliverable completion/classification from business outcome metrics. The structured actionRegister renders under the heading 'Next actions'; use that heading for forward references.";
+  return `${phase}\nVisible titles, body, scope notes and takeaways contain no synthetic/invented/fixture/demo markers; classification is carried by the server footer. Retain hypotheses, constraints and source limitations. If a scope note calls the explanation a hypothesis, the headline must also say hypothesis, possible, suspected or may. Qualifications that change a claim's meaning stay visible next to that claim, not only in notes. A planned row supports planned, not not-collected. Classify negative claims: draft document status and conditional decision boundaries are allowed; an evidence gap must be limited to the supplied input bundle and checked against it; a factual claim about the business needs a citation supporting that exact meaning. Do not infer missing evidence from a planned row. Input approval states are explicit; never call pending, proposed or unknown inputs approved. Use a structured actionRegister [{owner, action, evidence}] instead of repeated nextActions prose. Evidence is a short completion test plus citations. Keep number slots intact; the server formats their declared units. Prefer one message per page, short cells, and source-specific scope notes. Exclude source-package operator instructions (seed rows, scoped rebind, loaders and feature flags) from client business controls. Translate status labels into ordinary words, not underscore codes. Charter success_measures must contain a native Markdown table separating outcome, measure and basis or next validation; never a dense baseline/target paragraph. Chart slides use the supplied computed endpoint headline as their governingMessage. Omit points and takeaway on chart slides: the governed chart interpretation supplies the boundary. Put causal diagnoses on their own evidence-supported page, never over unrelated time series.`;
 }
 
 function markdownClaims(markdown: string): string[] {
@@ -78,7 +88,7 @@ function markdownClaims(markdown: string): string[] {
       const cites =
         cells
           .join(" ")
-          .match(/\[\d+(?:\s*,\s*\d+)*\]/g)
+          .match(/\[\d+(?:\s*[,–-]\s*\d+)*\]/g)
           ?.join(" ") || "";
       return cells.map((cell) => `${cell} ${cites}`);
     });
@@ -94,13 +104,20 @@ export function purposeVisibleText(doc: RenderableDeliverable): string[] {
       s.title,
       ...markdownClaims(s.bodyMarkdown),
     ]),
-    ...(doc.deckSlides || []).flatMap((s) => [
-      s.governingMessage,
-      ...(s.points || []),
-      s.pageIntent?.scopeNote || "",
-      s.pageIntent?.takeaway || "",
-      s.pageIntent?.takeawayLabel || "",
-    ]),
+    ...(doc.deckSlides || []).flatMap((s) =>
+      [
+        s.governingMessage,
+        ...(s.points || []),
+        s.pageIntent?.scopeNote || "",
+        s.pageIntent?.takeaway || "",
+        s.pageIntent?.takeawayLabel || "",
+      ]
+        .filter(Boolean)
+        .map(
+          (text) =>
+            `${text}${s.citationsUsed?.length ? ` ${compactPurposeCitationIds(s.citationsUsed)}` : ""}`,
+        ),
+    ),
     ...doc.tables.flatMap((t) => [
       t.title,
       ...(t.columns || []),
@@ -108,7 +125,7 @@ export function purposeVisibleText(doc: RenderableDeliverable): string[] {
         const cites =
           row
             .join(" ")
-            .match(/\[(?:\d+|[A-Z]+\d+)(?:\s*,\s*(?:\d+|[A-Z]+\d+))*\]/g)
+            .match(/\[(?:\d+|[A-Z]+\d+)(?:\s*[,–-]\s*(?:\d+|[A-Z]+\d+))*\]/g)
             ?.join(" ") || "";
         const slideCites = (doc.deckSlides || [])
           .filter((s) => s.pageIntent?.tableKey === t.key)
@@ -131,75 +148,18 @@ export function purposeVisibleText(doc: RenderableDeliverable): string[] {
 /** Conservative textual proof, not a semantic entailment or historical-completeness claim. */
 export function unsupportedPurposeAbsences(
   text: string,
-  evidence: readonly Pick<
-    GovernedEvidenceItem,
-    "citationNumber" | "statement"
-  >[],
+  evidence: readonly PurposeClaimEvidence[],
+  context: PurposeClaimContext = {},
 ): string[] {
-  const chunks = text
-    .split(/\n|(?<=[.!?])\s+(?!\[)/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return chunks.filter((sentence) => {
-    const factualText = sentence
-      .replace(/\bno-double-count(?:ing)?\b/gi, "overlap control")
-      .replace(
-        /\bno (?:approval|signature) is recorded in this (?:draft|document)\b/gi,
-        "draft decision record",
-      )
-      .replace(
-        /\bno (?:benefit|funding|implementation) is approved (?:here|by this (?:draft|document))\b/gi,
-        "draft authority boundary",
-      )
-      .replace(
-        /\bthis (?:page|readout|document) attributes no cause and sizes no benefit\b/gi,
-        "document scope",
-      )
-      .replace(
-        /\b(?:this|the) (?:charter|document|readout|page|slide) (?:commits|defines|authorizes|sets) no (?:implementation funding|architecture|investment|operating model|roadmap|baseline|target|benefit)\b/gi,
-        "draft scope boundary",
-      );
-    // A draft's own scope boundary is not a statement about evidence history.
-    if (
-      !absence.test(factualText) ||
-      /^(?:(?:confirm|check|test|review|validate|determine) whether\b|if\b)/i.test(
-        normalize(sentence),
-      )
-    )
-      return false;
-    const cites = [...sentence.matchAll(/\[(\d+(?:\s*,\s*\d+)*)\]/g)].flatMap(
-      (m) => m[1]!.split(/\s*,\s*/).map(Number),
-    );
-    const quotes = [...sentence.matchAll(/["“]([^"”]+)["”]/g)]
-      .map((m) => m[1]!)
-      .filter((q) => absence.test(q));
-    const outer = sentence.replace(/["“][^"”]+["”]/g, "");
-    const claims = quotes.length
-      ? [...quotes, ...(absence.test(outer) ? [outer] : [])]
-      : [sentence];
-    return !claims.every((claim) =>
-      cites.some((id) =>
-        evidence.some(
-          (e) =>
-            e.citationNumber === id &&
-            absence.test(e.statement) &&
-            normalize(e.statement).includes(
-              normalize(claim)
-                .replace(/[.!?]+$/, "")
-                .trim(),
-            ),
-        ),
-      ),
-    );
-  });
+  return classifyPurposeClaims(text, evidence, context)
+    .filter((c) => !c.supported)
+    .map((c) => c.sentence);
 }
 
 export function validatePurposeStory(
   doc: RenderableDeliverable,
-  evidence: readonly Pick<
-    GovernedEvidenceItem,
-    "citationNumber" | "statement"
-  >[],
+  evidence: readonly PurposeClaimEvidence[],
+  context: PurposeClaimContext = {},
 ): string[] {
   const errors: string[] = [];
   if (!["charter", "discovery_report"].includes(doc.deliverableType || ""))
@@ -291,58 +251,118 @@ export function validatePurposeStory(
     if (!/\b(?:proceed|hold|stop)\b/i.test(opener))
       errors.push("purpose_story:opening_decision_missing");
   }
-  for (const text of purposeVisibleText(doc)) {
-    if (operatorProse.test(text))
+  const scopeNotes = new Set(
+    (doc.deckSlides || [])
+      .map((s) =>
+        s.pageIntent?.scopeNote
+          ? `${s.pageIntent.scopeNote}${s.citationsUsed?.length ? ` ${compactPurposeCitationIds(s.citationsUsed)}` : ""}`
+          : "",
+      )
+      .filter(Boolean),
+  );
+  for (const text of purposeVisibleText(doc))
+    errors.push(
+      ...validatePurposeText(text, doc, evidence, {
+        ...context,
+        textRole: scopeNotes.has(text) ? "scope" : "body",
+      }),
+    );
+  return [...new Set(errors)];
+}
+
+export function validatePurposeText(
+  text: string,
+  doc: Pick<RenderableDeliverable, "deliverableType" | "sourceRegister">,
+  evidence: readonly PurposeClaimEvidence[],
+  context: PurposeClaimContext = {},
+): string[] {
+  const errors: string[] = [];
+  const charter = doc.deliverableType === "charter";
+
+  for (const sentence of text.split(/\n|(?<=[.!?])\s+/))
+    if (operatorProse.test(sentence))
       errors.push(
-        `purpose_story:operator_instructions_in_body:${text.slice(0, 100)}`,
+        `purpose_story:operator_instructions_in_body:${sentence.slice(0, 100)}`,
       );
+  if (
+    /\b(?:not_reviewed|not_verified|review_pending|owner_review_pending|source_asserted|client_confirmed|one_source)\b/i.test(
+      text,
+    )
+  )
+    errors.push(`purpose_story:raw_status_in_body:${text.slice(0, 100)}`);
+  if (
+    charter &&
+    text
+      .split(/\n|(?<=[.!?])\s+/)
+      .some(
+        (sentence) =>
+          /\bthis charter authori[sz]es\b/i.test(sentence) &&
+          !/\b(?:once|when|if) approved\b/i.test(sentence),
+      )
+  )
+    errors.push("purpose_story:draft_claims_authorization");
+  const sourceDisclosure = ["source", "disclosure"].includes(
+    context.textRole || "",
+  );
+  const scenarioScope =
+    context.textRole === "scope" &&
+    context.syntheticInputBundle &&
+    /\bsynthetic\b/i.test(text) &&
+    !/\b(?:invented|fixture|demo)\b/i.test(text);
+  const permittedDataControl =
+    /\b(?:use synthetic or approved de-identified material|no raw (?:member identifiers|PHI).{0,60}(?:model prompts|demo uploads))\b/i.test(
+      text,
+    ) && !/\b(?:invented|fixture)\b/i.test(text);
+  if (
+    marker.test(text) &&
+    !sourceDisclosure &&
+    !scenarioScope &&
+    !permittedDataControl
+  )
+    errors.push(`purpose_story:classification_in_body:${text.slice(0, 100)}`);
+  const citedText = text.replace(
+    /\[([A-Z]+\d+(?:\s*[,–-]\s*[A-Z]*\d+)*)\]/g,
+    (match, body: string) => {
+      const ids: number[] = [];
+      for (const piece of body.split(/\s*,\s*/)) {
+        const [start, end] = piece.split(/\s*[–-]\s*/);
+        const a = doc.sourceRegister.find(
+          (s) => s.referenceId === start,
+        )?.citationNumber;
+        const endLabel =
+          end && /^\d/.test(end) ? start!.replace(/\d+$/, end) : end;
+        const b = endLabel
+          ? doc.sourceRegister.find((s) => s.referenceId === endLabel)
+              ?.citationNumber
+          : a;
+        if (!a || !b || b < a) return match;
+        for (let i = a; i <= b; i++) ids.push(i);
+      }
+      return compactPurposeCitationIds(ids);
+    },
+  );
+  for (const sentence of citedText.split(/\n|(?<=[.!?])\s+(?!\s*\[)/)) {
     if (
-      /\b(?:not_reviewed|not_verified|review_pending|owner_review_pending|source_asserted|client_confirmed|one_source)\b/i.test(
-        text,
+      !/\b(?:approved (?:input(?: package)?|source (?:file|package|record)|(?:P[0-5](?: and |,?\s*))*package(?: files)?|charter)|(?:input|source|package|charter) (?:is |was |has been )approved)\b/i.test(
+        sentence,
+      ) ||
+      /\b(?:not approved|if approved|once approved|when approved)\b/i.test(
+        sentence,
       )
     )
-      errors.push(`purpose_story:raw_status_in_body:${text.slice(0, 100)}`);
+      continue;
+    const ids = purposeCitationIds(sentence);
     if (
-      charter &&
-      text
-        .split(/\n|(?<=[.!?])\s+/)
-        .some(
-          (sentence) =>
-            /\bthis charter authorizes\b/i.test(sentence) &&
-            !/\b(?:once|when|if) approved\b/i.test(sentence),
-        )
+      !ids.length ||
+      ids.some(
+        (id) =>
+          evidence.find((e) => e.citationNumber === id)?.approvalState !==
+          "approved",
+      )
     )
       errors.push("purpose_story:draft_claims_authorization");
-    if (marker.test(text))
-      errors.push(`purpose_story:classification_in_body:${text.slice(0, 100)}`);
-    const citedText = doc.sourceRegister.reduce(
-      (value, s) =>
-        s.referenceId
-          ? value.replace(
-              new RegExp(
-                `\\b${s.referenceId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
-                "g",
-              ),
-              `[${s.citationNumber}]`,
-            )
-          : value,
-      text,
-    );
-    const isScope = doc.deckSlides?.some(
-      (s) => s.pageIntent?.scopeNote === text,
-    );
-    const boundaryOnly =
-      isScope &&
-      /\bestablish(?:es)? no\b|\bdoes not (?:establish|authorize|approve)\b|\brecords no (?:build )?approval\b|\b(?:no|none)\b.{0,100}\b(?:selected|proposed|approved|ranked|costed|sequenced|preferred)\b.{0,20}\b(?:here|on this page)\b/i.test(
-        text,
-      ) &&
-      !/\b(?:received|collected|arrived|exists?|existed|missing|absent)\b/i.test(
-        text,
-      );
-    for (const claim of boundaryOnly
-      ? []
-      : unsupportedPurposeAbsences(citedText, evidence))
-      errors.push(`purpose_story:unsupported_absence:${claim.slice(0, 160)}`);
   }
+  for (const claim of unsupportedPurposeAbsences(citedText, evidence, context))
+    errors.push(`purpose_story:unsupported_absence:${claim.slice(0, 160)}`);
   return [...new Set(errors)];
 }

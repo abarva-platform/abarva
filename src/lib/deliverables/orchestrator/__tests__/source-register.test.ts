@@ -3,9 +3,35 @@ import {
   humanizeSourceFamily,
   humanizeSourceLabel,
   scanForInternalLeaks,
+  renderEvidenceForPrompt,
 } from "../source-register";
 
 describe("source-label hygiene", () => {
+  it("carries explicit input approval separately from confidence", () => {
+    const base = {
+      label: "Evidence",
+      statement: "For review.",
+      evidenceFamily: "document",
+      confidence: "high" as const,
+      provenanceRef: "test",
+    };
+    const { evidence } = buildSourceRegister([
+      base,
+      { ...base, approvalState: "pending" },
+      { ...base, approvalState: "proposed" },
+      { ...base, approvalState: "approved" },
+    ]);
+    expect(evidence.map((e) => e.approvalState)).toEqual([
+      "unknown",
+      "pending",
+      "proposed",
+      "approved",
+    ]);
+    for (const state of ["unknown", "pending", "proposed", "approved"])
+      expect(renderEvidenceForPrompt(evidence)).toContain(
+        `input approval: ${state}`,
+      );
+  });
   it("maps known internal ids to human source names", () => {
     expect(humanizeSourceLabel("document_extract:stakeholder_map")).toBe(
       "Stakeholder Map",

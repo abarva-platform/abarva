@@ -17,6 +17,7 @@ export interface GovernedCandidateLike {
   statement: string;
   evidenceFamily: string;
   confidence: "high" | "medium" | "low";
+  approvalState?: GovernedEvidenceItem["approvalState"];
   asOf?: string;
   useAndLimitation?: string;
   disclosureTier?: "vendor_facing" | "internal_only" | "aggregate_only";
@@ -126,6 +127,7 @@ export function buildSourceRegister(
     statement: c.statement,
     evidenceFamily: humanizeSourceFamily(c.evidenceFamily),
     confidence: c.confidence,
+    approvalState: c.approvalState ?? "unknown",
     asOf: c.asOf,
     disclosureTier: c.disclosureTier ?? "vendor_facing",
     provenanceRef: c.provenanceRef,
@@ -150,10 +152,16 @@ export function renderEvidenceForPrompt(
   evidence: GovernedEvidenceItem[],
 ): string {
   if (evidence.length === 0)
-    return "(no governed evidence available — treat ALL client facts as missing)";
+    return "(no governed evidence supplied to this request; do not infer that evidence is absent from the enterprise)";
   return evidence
     .map((e) => {
-      const meta = [e.confidence, e.asOf].filter(Boolean).join(", ");
+      const meta = [
+        e.confidence,
+        `input approval: ${e.approvalState ?? "unknown"}`,
+        e.asOf,
+      ]
+        .filter(Boolean)
+        .join(", ");
       return `[${e.citationNumber}] ${e.label}: ${e.statement}${meta ? ` (${meta})` : ""}`;
     })
     .join("\n");

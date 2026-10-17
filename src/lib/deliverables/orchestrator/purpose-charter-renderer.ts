@@ -25,6 +25,10 @@ import {
   purposeSourceGroups,
 } from "./purpose-page-plan";
 import { purposeBrand } from "./purpose-page-brand";
+import {
+  layoutReferenceTable,
+  referenceCellTextHeight,
+} from "./reference-deck-layout";
 
 const FONT = "Arial",
   INK = "1C2428",
@@ -43,10 +47,11 @@ const order = [
 ];
 const run = (text: string, bold = false) =>
   new TextRun({ text, font: FONT, size: 22, color: INK, bold });
-const para = (text: string) =>
+const para = (text: string, keepNext = false) =>
   new Paragraph({
     children: [run(text)],
     keepLines: true,
+    keepNext,
     spacing: { after: 140, line: 260 },
   });
 const heading = (text: string, level: 1 | 2 = 1, pageBreakBefore = false) =>
@@ -70,10 +75,11 @@ function table(
   columns: string[],
   rows: string[][],
   columnWeights?: number[],
+  keepNext = false,
 ): Table {
   if (!columns.length || rows.some((row) => row.length !== columns.length))
     throw new PurposePageError("table_shape", "charter");
-  const weights =
+  let weights =
     columnWeights ||
     (columns.length === 2 &&
     /^in scope(?:\s*\[[A-Z0-9,\s]+\])*$/i.test(columns[0]!) &&
@@ -84,6 +90,36 @@ function table(
         : columns.length === 3
           ? [1.5, 3.5, 2]
           : columns.map(() => 7 / columns.length));
+  if (!columnWeights && columns.length >= 3) {
+    const adaptive = layoutReferenceTable(
+      { kind: "table", columns, rows },
+      7,
+    ).columnWidths;
+    const height = (widths: number[]) =>
+      [columns, ...rows].reduce(
+        (sum, row) =>
+          sum +
+          Math.max(
+            ...row.map((cell, i) =>
+              referenceCellTextHeight(cell, widths[i]! - 0.16, 10),
+            ),
+          ),
+        0,
+      );
+    if (height(adaptive) < height(weights)) weights = adaptive;
+  }
+  // Keep a short table together; for long tables retain at least a two-row tail.
+  const estimatedLines = rows.reduce(
+    (sum, row) =>
+      sum +
+      Math.max(
+        ...row.map((cell, col) =>
+          Math.ceil(cell.length / Math.max(12, weights[col]! * 13)),
+        ),
+      ),
+    0,
+  );
+  const compactTable = rows.length <= 8 && estimatedLines <= 14;
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     columnWidths: weights.map((w) => Math.round(w * 1440)),
@@ -110,6 +146,10 @@ function table(
                 children: [
                   new Paragraph({
                     spacing: { after: 30, line: 240 },
+                    keepNext:
+                      keepNext ||
+                      (i < rows.length &&
+                        (compactTable || i === 0 || i === rows.length - 1)),
                     children: [
                       new TextRun({
                         text,
@@ -151,7 +191,10 @@ function plain(nodes: PhrasingContent[]): string {
     )
     .join("");
 }
-function blocks(node: RootContent): (Paragraph | Table)[] {
+function blocks(
+  node: RootContent,
+  keepWithTable = false,
+): (Paragraph | Table)[] {
   switch (node.type) {
     case "heading":
       return [heading(plain(node.children), 2)];
@@ -160,6 +203,7 @@ function blocks(node: RootContent): (Paragraph | Table)[] {
         new Paragraph({
           children: inline(node.children),
           keepLines: true,
+          keepNext: keepWithTable,
           spacing: { after: 140, line: 260 },
         }),
       ];
@@ -167,7 +211,13 @@ function blocks(node: RootContent): (Paragraph | Table)[] {
       const rows = node.children.map((row) =>
         row.children.map((cell) => plain(cell.children)),
       );
-      return [table(rows[0]!, rows.slice(1)), para("")];
+      return [
+        table(rows[0]!, rows.slice(1)),
+        new Paragraph({
+          children: [new TextRun({ text: "", size: 2 })],
+          spacing: { line: 20, after: 80 },
+        }),
+      ];
     }
     case "list":
       return node.children.flatMap((item, i) =>
@@ -175,17 +225,21 @@ function blocks(node: RootContent): (Paragraph | Table)[] {
           if (child.type !== "paragraph") return blocks(child as RootContent);
           return [
             new Paragraph({
-              children: [
-                run(node.ordered ? `${(node.start ?? 1) + i}. ` : "- "),
-                ...inline(child.children),
-              ],
+              children: node.ordered
+                ? [run(`${(node.start ?? 1) + i}. `), ...inline(child.children)]
+                : inline(child.children),
+              bullet: node.ordered ? undefined : { level: 0 },
+              indent: { left: 240, hanging: 180 },
+              keepLines: true,
               spacing: { after: 100, line: 260 },
             }),
           ];
         }),
       );
     case "blockquote":
-      return node.children.flatMap(blocks);
+      return node.children.flatMap((child, index) =>
+        blocks(child, node.children[index + 1]?.type === "table"),
+      );
     case "code":
       return [para(node.value)];
     default:
@@ -262,7 +316,7 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       spacing: { after: 140 },
     }),
     para(
-      "Reading guide: decision and scope; outcomes and measures; evidence and owners; controls; authorization and sources.",
+      "Reading guide: proposed decision and scope; success measures; roles and dependencies; conditions; next actions, decision record and sources.",
     ),
   ];
   const used = new Set<string>();
@@ -272,7 +326,11 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       extensions: [gfm()],
       mdastExtensions: [gfmFromMarkdown()],
     });
-    children.push(...tree.children.flatMap(blocks));
+    children.push(
+      ...tree.children.flatMap((node, index) =>
+        blocks(node, tree.children[index + 1]?.type === "table"),
+      ),
+    );
     for (const item of doc.tables.filter(
       (t) =>
         t.targetFormat !== "xlsx" &&
@@ -321,8 +379,11 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       ),
     );
   children.push(
-    heading("Review and authorization"),
-    para(cite(doc.recommendation)),
+    heading("Next decision and review"),
+    para(
+      cite(doc.recommendation),
+      Boolean(doc.actionRegister?.length || doc.nextActions.length),
+    ),
   );
   if (doc.actionRegister?.length)
     children.push(
@@ -342,8 +403,13 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
       ...doc.nextActions.map((a) => para(cite(a))),
     );
   children.push(
+    new Paragraph({
+      children: [new TextRun({ text: "", size: 2 })],
+      spacing: { line: 20, after: 120 },
+    }),
     para(
       "This draft does not authorize Discovery, funding or implementation. Only the authorized reviewer can record the decision, its scope and any conditions below.",
+      true,
     ),
     table(
       ["Decision record", "Guidance (not a recorded decision)"],
@@ -361,28 +427,35 @@ export function renderPurposeCharter(doc: RenderableDeliverable): Document {
         ],
       ],
     ),
-    heading("Source register", 2, doc.sourceRegister.length >= 4),
+    heading("Source register", 2),
   );
+  const commonReview =
+    new Set(doc.sourceRegister.map((s) => s.reviewStatus)).size === 1
+      ? doc.sourceRegister[0]?.reviewStatus
+      : undefined;
+  if (commonReview)
+    children.push(
+      para(
+        `${commonReview}. Source presence is not approval.${doc.sourceRegister.every((s) => !s.asOf) ? " Snapshot date not recorded." : ""}`,
+        true,
+      ),
+    );
+  const sourceUse = (value: string | undefined) =>
+    value?.replace(/;?\s*human approval remains separate\.?/gi, "") ||
+    "Use and limitations not recorded; confirm before relying on this source.";
   for (const { family, entries } of purposeSourceGroups(doc.sourceRegister)) {
-    if (entries.length === 1) {
-      const s = entries[0]!;
-      children.push(
-        heading(family, 2),
-        para(
-          `[${s.referenceId || s.citationNumber}] ${s.label}. ${s.reviewStatus || `${s.confidence} confidence`}. Use in this document: ${s.useAndLimitation || "Confirm the intended use with the source owner."}`,
-        ),
-      );
-      continue;
-    }
     children.push(
       heading(family, 2),
       table(
-        ["ID", "Source and review", "Use in this document"],
+        [
+          "ID",
+          commonReview ? "Source" : "Source and review",
+          "Use in this document",
+        ],
         entries.map((s) => [
           `[${s.referenceId || s.citationNumber}]`,
-          `${s.label}\n${s.reviewStatus || `${s.confidence} confidence`}${s.asOf ? ` / ${s.asOf}` : ""}`,
-          s.useAndLimitation ||
-            "Use and limitations not recorded; confirm before relying on this source.",
+          `${s.label}${commonReview ? "" : `\n${s.reviewStatus || `${s.confidence} confidence`}`}${s.asOf ? ` / ${s.asOf}` : ""}`,
+          sourceUse(s.useAndLimitation),
         ]),
         [0.6, 2.0, 4.4],
       ),
