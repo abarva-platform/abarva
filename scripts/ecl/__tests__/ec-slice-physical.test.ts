@@ -32,7 +32,12 @@ test('refuses external databases, alternate databases, overrides and unguarded c
       process.env.ECL_ADMISSION_TEST_DATABASE_URL = raw;
       assert.throws(disposableConnection);
     }
-    await assert.rejects(initializeDisposableSchema(new pg.Client()), /unguarded database client/);
+    const unguarded=new pg.Client();
+    let unguardedQueries=0;
+    Object.defineProperty(unguarded,'query',{value:()=>{unguardedQueries+=1;throw new Error('Unexpected unguarded query');}});
+    await assert.rejects(initializeDisposableSchema(unguarded), /unguarded database client/);
+    await assert.rejects(insertFixtureRow(unguarded,'ecl_context.object',{}), /unguarded database client/);
+    assert.equal(unguardedQueries,0);
   } finally {
     if (prior === undefined) delete process.env.ECL_ADMISSION_TEST_DATABASE_URL;
     else process.env.ECL_ADMISSION_TEST_DATABASE_URL = prior;

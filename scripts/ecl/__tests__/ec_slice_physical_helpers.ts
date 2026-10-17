@@ -70,6 +70,7 @@ const TABLES = new Set([
 ]);
 
 export async function insertFixtureRow(db: pg.Client, table: string, row: Record<string, unknown>) {
+  await assertDisposableServer(db);
   if (!TABLES.has(table)) throw new Error('Not an isolated contract-proof table');
   const entries = Object.entries(row);
   if (entries.some(([key]) => !/^[a-z_]+$/.test(key))) throw new Error('Invalid column');
