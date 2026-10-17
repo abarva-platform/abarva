@@ -197,6 +197,7 @@ describe("POST .../rom/preview — success", () => {
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(await res.arrayBuffer());
     expect(wb.worksheets.map((w) => w.name)).toEqual([
+      "README",
       "Estimate",
       "Component Library",
       "Pod & Rates",

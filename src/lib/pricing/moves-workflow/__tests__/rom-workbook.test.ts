@@ -440,9 +440,10 @@ describe("ROM workbook", () => {
   const rom = priced(golden());
   const { layout } = buildRomWorkbook(rom);
 
-  it("has the five tabs in order, then the Check", async () => {
+  it("opens on its README, then the five tabs in order, then the Check", async () => {
     const wb = await readBack(rom);
     expect(wb.worksheets.map((w) => w.name)).toEqual([
+      "README",
       "Estimate",
       "Component Library",
       "Pod & Rates",
@@ -450,6 +451,23 @@ describe("ROM workbook", () => {
       "Assumptions",
       "Check",
     ]);
+  });
+
+  it("explains how to read it: every sheet by name, units, rates and what the estimate covers", async () => {
+    const wb = await readBack(rom);
+    const readme = wb.getWorksheet(ROM_WORKBOOK_SHEETS.readme)!;
+    const rows = Object.fromEntries([...Array(8).keys()].map((i) => readme.getRow(3 + i)).filter((row) => row.getCell(1).value)
+      .map((row) => [String(row.getCell(1).value), String(row.getCell(2).value)]));
+    expect(Object.keys(rows)).toEqual(["What this is", "Sheets", "Units", "Changing an input", "Rates", "What it covers"]);
+    for (const sheet of wb.worksheets.map((ws) => ws.name).filter((name) => name !== "README")) expect(rows.Sheets).toContain(sheet);
+    expect(rows.Units).toContain("whole cents");
+    expect(rows["What it covers"]).toContain("not in this estimate");
+    // The rate line agrees with the Assumptions sheet's rate approval status.
+    const assumptions = wb.getWorksheet(ROM_WORKBOOK_SHEETS.assumptions)!;
+    let status = "";
+    assumptions.eachRow((row) => { if (row.getCell(1).value === "Rate approval status") status = String(row.getCell(2).value); });
+    expect(rows.Rates.startsWith("Planning rates, not approved")).toBe(status === "planning rates, not approved");
+    expect(readme.getCell("A1").value).toBe("Delivery estimate: how to read this workbook");
   });
 
   it("checks every block and total against the engine, and the differences sum to 0", async () => {
@@ -719,8 +737,18 @@ describe("ROM workbook — the AI-assisted scenario sheet", () => {
 
   it("is added only when the ROM carries a scenario, after the estimate's five tabs", async () => {
     const wb = await readBack(rom);
-    expect(wb.worksheets.map((w) => w.name)).toEqual(["Estimate", "Component Library", "Pod & Rates", "Releases", "Assumptions", AI, "Check"]);
+    expect(wb.worksheets.map((w) => w.name)).toEqual(["README", "Estimate", "Component Library", "Pod & Rates", "Releases", "Assumptions", AI, "Check"]);
     expect(buildRomWorkbook(priced(golden())).layout.aiAssisted).toBeNull();
+    // The README names the scenario sheet and states that it is not the funding basis, only when there is one.
+    const readmeText = (workbook: ExcelJS.Workbook) => {
+      const lines: string[] = [];
+      workbook.getWorksheet(ROM_WORKBOOK_SHEETS.readme)!.eachRow((row) => lines.push(`${row.getCell(1).value} ${row.getCell(2).value}`));
+      return lines.join("\n");
+    };
+    expect(readmeText(wb)).toMatch(/AI-assisted scenario A comparison priced beside the estimate.*The estimate is the funding basis/);
+    expect(readmeText(wb)).toContain(AI);
+    const plainBook = await readBack(priced(golden()));
+    expect(readmeText(plainBook)).not.toMatch(/AI-assisted|AI-Assisted/);
   });
 
   it("checks the scenario's hours, weeks, tool cost and plan against the engine too", async () => {
