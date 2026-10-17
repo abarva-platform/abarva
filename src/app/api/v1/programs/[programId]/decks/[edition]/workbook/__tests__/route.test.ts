@@ -69,7 +69,8 @@ describe("read-only reference workbook", () => {
     expect(result.headers.get("X-AbarVa-Deck-Figure-Hash")).toMatch(/^[0-9a-f]{64}$/);
     expect(result.headers.get("Cache-Control")).toContain("no-store");
     expect(Buffer.from(await result.arrayBuffer()).toString()).toBe("PK synthetic workbook");
-    expect(mockWorkbook).toHaveBeenCalledWith({ edition: "validation" }, { edition: "validation", figureLedger: [] });
+    // The approval's pinned rate card is read under the signed-in workspace's canonical key only.
+    expect(mockWorkbook).toHaveBeenCalledWith({ edition: "validation" }, { edition: "validation", figureLedger: [] }, "meridian-health");
   });
 
   it("refuses a stale formula result without publishing a workbook", async () => {

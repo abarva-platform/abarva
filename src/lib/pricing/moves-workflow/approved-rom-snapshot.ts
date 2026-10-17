@@ -148,7 +148,8 @@ export async function readApprovedRomSnapshot(
         approvedAt: approval.approvedAt,
         result: approval,
         workbookHref: `${movePath}/rom/preview?format=xlsx`,
-        workbookStructure: build.structure,
+        // Recomputed on the rates it was approved on, never today's card.
+        workbookStructure: { ...build.structure, rateCard: approval.rateCard ?? { mode: "reference" } },
       },
     };
   } catch {

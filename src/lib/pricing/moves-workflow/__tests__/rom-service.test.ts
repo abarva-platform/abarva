@@ -884,3 +884,59 @@ describe("role-mapping status", () => {
     ).toBe("confirmed");
   });
 });
+
+describe("computeRom — the workspace's own rate card", () => {
+  const billRated = (rateCard?: unknown) =>
+    mutate((s) => {
+      s.pod.rateBasis = "bill_rate";
+      if (rateCard !== undefined) (s as Record<string, unknown>).rateCard = rateCard;
+    });
+  const card = {
+    cardVersionId: "card-v2",
+    roles: [],
+    lines: [
+      {
+        role_or_band_ref: "ROL-T01",
+        level: "LVL-T1",
+        rate_value: 150,
+        currency: "USD",
+        card_version_id: "card-v2",
+        provider_ref: null,
+        location_ref: null,
+      },
+    ],
+  };
+  const withCard = (served = card) =>
+    testLoaders({ loadClientRateCard: (id: string) => (id === served.cardVersionId ? served : null) });
+  const rateOf = (rom: RomResult, role: string) =>
+    rom.foundation!.priced.pod.memberLines.find((l) => l.member.roleCode === role)!.rate;
+
+  it("prices a client pin from that card version's lines, as-is", () => {
+    const rom = priced(billRated({ mode: "client", cardVersionId: "card-v2" }), withCard());
+    expect(rateOf(rom, "ROL-T01")).toMatchObject({ hourlyRateCents: 15000, baseSource: "client_rate_card:card-v2" });
+    // A role the card does not cover still prices from its reference band.
+    expect(rateOf(rom, "ROL-T02").baseSource).toMatch(/^rate_band:ROL-T02-LVL-T2/);
+    expect(rom.structure.rateCard).toEqual({ mode: "client", cardVersionId: "card-v2" });
+  });
+
+  it("prices an absent pin exactly as a reference pin, on reference rates", () => {
+    const absent = priced(billRated(), withCard());
+    const reference = priced(billRated({ mode: "reference" }), withCard());
+    expect(reference.total).toEqual(absent.total);
+    expect(rateOf(absent, "ROL-T01").baseSource).toMatch(/^rate_band:/);
+  });
+
+  it("refuses a client pin whose card is not loaded — never re-prices it on reference rates", () => {
+    expect(refused(billRated({ mode: "client", cardVersionId: "card-v2" })).code).toBe("rate_card_unavailable");
+    const other = { ...card, cardVersionId: "card-v9" };
+    const loaders = testLoaders({ loadClientRateCard: () => other });
+    expect(refused(billRated({ mode: "client", cardVersionId: "card-v2" }), loaders).code).toBe("rate_card_unavailable");
+  });
+
+  it("refuses an unresolved current-card pin and a malformed pin", () => {
+    expect(refused(billRated({ mode: "client_current" })).code).toBe("rate_card_unresolved");
+    expect(refused(billRated({ mode: "client" })).code).toBe("invalid_rate_card_pin");
+    expect(refused(billRated({ mode: "partner" })).code).toBe("invalid_rate_card_pin");
+    expect(refused(billRated("client")).code).toBe("invalid_rate_card_pin");
+  });
+});

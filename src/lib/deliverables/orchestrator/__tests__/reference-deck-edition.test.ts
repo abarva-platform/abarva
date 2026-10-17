@@ -3,7 +3,15 @@ import { validateReferenceDeck, ReferenceDeckLineageRefusal } from "../reference
 import { renderReferenceDeck } from "../reference-deck-renderer";
 import { inspectDeck } from "../deck-inspection";
 import { judgeRenderedDeck } from "../deck-quality";
-import { buildReferenceWorkbook } from "../reference-deck-workbook";
+import { approvedRomLoaders, buildReferenceWorkbook } from "../reference-deck-workbook";
+
+const mockListRateCardVersions = jest.fn();
+const mockListRateCardLines = jest.fn();
+jest.mock("@/lib/pricing/rate-card-repository", () => ({
+  getCurrentRateCard: async () => null,
+  listRateCardVersions: (...args: unknown[]) => mockListRateCardVersions(...args),
+  listRateCardLines: (...args: unknown[]) => mockListRateCardLines(...args),
+}));
 import ExcelJS from "exceljs";
 import fs from "node:fs";
 import type { EditionInputs } from "../reference-deck-inputs";
@@ -580,4 +588,32 @@ describe("live-input reference edition", () => {
     if (process.env.REFERENCE_DECK_VISUAL_OUTPUT)
       fs.writeFileSync(`${process.env.REFERENCE_DECK_VISUAL_OUTPUT}-${edition}.pdf`, Buffer.concat(chunks));
   }, 60_000);
+});
+
+describe("approvedRomLoaders — the deck workbook recomputes on the approval's own card", () => {
+  const version = (id: string, status: string) => ({ id, card_code: "ENTERPRISE", version: 3, status, approved_at: null });
+  beforeEach(() => {
+    mockListRateCardVersions.mockReset();
+    mockListRateCardLines.mockReset();
+  });
+
+  it("serves exactly the pinned client card version for this tenant", async () => {
+    mockListRateCardVersions.mockResolvedValue([version("card-v3", "superseded")]);
+    mockListRateCardLines.mockResolvedValue([{ role_or_band_ref: "ROL-037", level: "LVL-07", rate_value: 150, currency: "USD", card_version_id: "card-v3" }]);
+    const loaders = await approvedRomLoaders("meridian-health", { mode: "client", cardVersionId: "card-v3" });
+    expect(mockListRateCardVersions).toHaveBeenCalledWith("client", "meridian-health", "ENTERPRISE");
+    expect(loaders.loadClientRateCard?.("card-v3")?.lines).toHaveLength(1);
+    expect(loaders.loadClientRateCard?.("card-v4")).toBeNull();
+  });
+
+  it("treats a pinned card that is not this tenant's approved card as a mismatch, never a reference re-price", async () => {
+    mockListRateCardVersions.mockResolvedValue([version("card-v3", "draft")]);
+    await expect(approvedRomLoaders("meridian-health", { mode: "client", cardVersionId: "card-v3" })).rejects.toThrow("reference_rom_workbook_mismatch");
+  });
+
+  it("uses reference rates for an approval that names none", async () => {
+    const loaders = await approvedRomLoaders("meridian-health", undefined);
+    expect(loaders.loadClientRateCard).toBeUndefined();
+    expect(mockListRateCardVersions).not.toHaveBeenCalled();
+  });
 });

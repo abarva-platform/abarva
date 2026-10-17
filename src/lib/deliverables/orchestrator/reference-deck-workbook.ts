@@ -4,7 +4,9 @@ import ExcelJS from "exceljs";
 import type { EditionInputs } from "./reference-deck-inputs";
 import type { ReferenceDeckSpec } from "./reference-deck-model";
 import { computeRom } from "@/lib/pricing/moves-workflow/rom-service";
-import { createCommittedRomReferenceLoaders } from "@/lib/pricing/moves-workflow/rom-reference";
+import { createCommittedRomReferenceLoaders, loadCommittedRomRoles } from "@/lib/pricing/moves-workflow/rom-reference";
+import { resolveRomRateCard, withClientRateCard } from "@/lib/pricing/moves-workflow/rom-rate-card";
+import type { RomReferenceLoaders } from "@/lib/pricing/moves-workflow/rom-service";
 import { buildRomWorkbook } from "@/lib/pricing/moves-workflow/rom-workbook";
 import { previewMatchesApproval } from "@/lib/pricing/moves-workflow/approved-rom-snapshot";
 
@@ -21,11 +23,29 @@ function addHeader(sheet: ExcelJS.Worksheet, cells: string[]): void {
   row.height = 25;
 }
 
+/**
+ * Loaders for recomputing an approved ROM on the rates it was approved on:
+ * the committed reference pack, plus the pinned client card version when the
+ * approval names one. A pinned card that is no longer readable is a mismatch,
+ * never a silent re-price on reference rates.
+ */
+export async function approvedRomLoaders(tenantKey: string, pin: unknown): Promise<RomReferenceLoaders> {
+  const base = createCommittedRomReferenceLoaders();
+  const resolution = await resolveRomRateCard(tenantKey, pin, loadCommittedRomRoles());
+  if (!resolution.ok) throw new Error("reference_rom_workbook_mismatch");
+  return withClientRateCard(base, resolution.card);
+}
+
 /** The worksheet cell in each ReferenceFigure is physically written here. */
-export async function buildReferenceWorkbook(inputs: EditionInputs, spec: ReferenceDeckSpec): Promise<Buffer> {
+export async function buildReferenceWorkbook(
+  inputs: EditionInputs,
+  spec: ReferenceDeckSpec,
+  tenantKey = "",
+): Promise<Buffer> {
   let workbook: ExcelJS.Workbook;
   if (spec.edition === "investment" && inputs.rom.status === "ready") {
-    const result = computeRom(inputs.rom.value.workbookStructure, createCommittedRomReferenceLoaders());
+    const structure = inputs.rom.value.workbookStructure;
+    const result = computeRom(structure, await approvedRomLoaders(tenantKey, structure.rateCard));
     if (!result.ok || !previewMatchesApproval(result, inputs.rom.value.result)) {
       throw new Error("reference_rom_workbook_mismatch");
     }
